@@ -1,0 +1,4 @@
+[submodule "src/rhbp"]
+	path = src/rhbp
+	url = https://gitlab.tubit.tu-berlin.de/hrabia/rhbp.git
+	branch = master
