@@ -1,7 +1,12 @@
 <launch>
-	<node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
-		name="mac_ros_bridge_node" output="screen"
-		>
-           <param name="agent_name" value="foobar" />
-	</node>
+    <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
+        name="mac_ros_bridge_node" output="screen"
+        >
+           <param name="agent_name" value="a1" />
+    </node>
+    <node pkg="mac_ros_bridge" type="dummy_agent.py"
+        name="agent" output="screen"
+        >
+           <param name="agent_name" value="a1" />
+    </node>
 </launch>
