@@ -5,7 +5,7 @@
            <param name="agent_name" value="a1" />
     </node>
     <node pkg="mac_ros_bridge" type="dummy_agent.py"
-        name="agent" output="screen"
+        name="agent_node" output="screen"
         >
            <param name="agent_name" value="a1" />
     </node>
