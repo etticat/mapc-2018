@@ -47,4 +47,4 @@ qtcreator-*
 # Catkin custom files
 CATKIN_IGNORE
 /src/CMakeLists.txt
-/.pydevproject
+.pydevproject

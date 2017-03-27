@@ -3,8 +3,8 @@
 # Thanks to Python-DTU for inspiration!
 # Parts of code taken from Communicator class
 
-#import roslib
-#import rospy
+import roslib
+import rospy
 
 #import geometry_msgs.msg
 
@@ -28,17 +28,19 @@ class MacRosBridge (threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         print "init"
-#        rospy.init_node('mac_ros_bridge_node')
 
-#        self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
-        self.name = name
+        rospy.init_node('mac_ros_bridge_node', anonymous=True)
+
+        self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+
+#        self.name = name
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><authentication password="test" username="test"/></message>''')
         self.message_id = -1
 
     def connect(self): # -> bool:
         try:
-            print "Connecting...", self.name
+            print "Connecting...", self.agent_name
             self.s = socket.create_connection(ADDRESS, RETRY_DELAY)
             self.s.settimeout(None) # enable blocking mode until simulation starts
             return True
@@ -68,7 +70,7 @@ class MacRosBridge (threading.Thread):
         
     def authenticate(self):
         auth_element = self.auth.find('authentication')
-        auth_element.attrib['username'] = self.name
+        auth_element.attrib['username'] = self.agent_name
         auth_element.attrib['password'] = PASSWORD
         self.s.send(eT.tostring(self.auth) + SEPARATOR)
         
@@ -139,51 +141,50 @@ class MacRosBridge (threading.Thread):
 
 if __name__ == '__main__':
     print "mac_ros_bridge::main"
-#    try:
+    try:
+        bridge = MacRosBridge(rospy.get_param('~agent_name', 'UNKNOWN')).start()
+#     bridge = MacRosBridge("a2").start()
+#     bridge = MacRosBridge("a3").start()
+#     bridge = MacRosBridge("a4").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("a5").start()
+#     bridge = MacRosBridge("a6").start()
+#     bridge = MacRosBridge("a7").start()
+#     bridge = MacRosBridge("a8").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("a9").start()
+#     bridge = MacRosBridge("a10").start()
+#     bridge = MacRosBridge("a11").start()
+#     bridge = MacRosBridge("a12").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("a13").start()
+#     bridge = MacRosBridge("a14").start()
+#     bridge = MacRosBridge("a15").start()
+#     bridge = MacRosBridge("a16").start()
+#     time.sleep(RETRY_DELAY)
+# 
+#     bridge = MacRosBridge("b1").start()
+#     bridge = MacRosBridge("b2").start()
+#     bridge = MacRosBridge("b3").start()
+#     bridge = MacRosBridge("b4").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("b5").start()
+#     bridge = MacRosBridge("b6").start()
+#     bridge = MacRosBridge("b7").start()
+#     bridge = MacRosBridge("b8").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("b9").start()
+#     bridge = MacRosBridge("b10").start()
+#     bridge = MacRosBridge("b11").start()
+#     bridge = MacRosBridge("b12").start()
+#     time.sleep(RETRY_DELAY)
+#     bridge = MacRosBridge("b13").start()
+#     bridge = MacRosBridge("b14").start()
+#     bridge = MacRosBridge("b15").start()
+#     bridge = MacRosBridge("b16").start()
+#     time.sleep(RETRY_DELAY)
 
-    bridge = MacRosBridge("a1").start()
-    bridge = MacRosBridge("a2").start()
-    bridge = MacRosBridge("a3").start()
-    bridge = MacRosBridge("a4").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("a5").start()
-    bridge = MacRosBridge("a6").start()
-    bridge = MacRosBridge("a7").start()
-    bridge = MacRosBridge("a8").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("a9").start()
-    bridge = MacRosBridge("a10").start()
-    bridge = MacRosBridge("a11").start()
-    bridge = MacRosBridge("a12").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("a13").start()
-    bridge = MacRosBridge("a14").start()
-    bridge = MacRosBridge("a15").start()
-    bridge = MacRosBridge("a16").start()
-    time.sleep(RETRY_DELAY)
+        rospy.spin()
 
-    bridge = MacRosBridge("b1").start()
-    bridge = MacRosBridge("b2").start()
-    bridge = MacRosBridge("b3").start()
-    bridge = MacRosBridge("b4").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("b5").start()
-    bridge = MacRosBridge("b6").start()
-    bridge = MacRosBridge("b7").start()
-    bridge = MacRosBridge("b8").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("b9").start()
-    bridge = MacRosBridge("b10").start()
-    bridge = MacRosBridge("b11").start()
-    bridge = MacRosBridge("b12").start()
-    time.sleep(RETRY_DELAY)
-    bridge = MacRosBridge("b13").start()
-    bridge = MacRosBridge("b14").start()
-    bridge = MacRosBridge("b15").start()
-    bridge = MacRosBridge("b16").start()
-    time.sleep(RETRY_DELAY)
-
-#        rospy.spin()
-
-#    except rospy.ROSInterruptException:
-#        rospy.logerr("program interrupted before completion")
+    except rospy.ROSInterruptException:
+        rospy.logerr("program interrupted before completion")
