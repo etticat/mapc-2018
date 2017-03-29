@@ -14,6 +14,7 @@ import time
 
 import xml.etree.cElementTree as eT
 from symbol import except_clause
+from std_msgs.msg import String
 
 
 ADDRESS = ('130.149.232.33', 12300)
@@ -27,17 +28,24 @@ SEPARATOR = b'\0'
 class MacRosBridge (threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
-        print "init"
+        print "MacRosBridge::init"
 
         rospy.init_node('mac_ros_bridge_node', anonymous=True)
 
         self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+        print "nodename =", rospy.get_name() #name is with leading slash / namespace
 
 #        self.name = name
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><authentication password="test" username="test"/></message>''')
         self.message_id = -1
-
+        
+        rospy.Subscriber("action", String, self.callback)
+        
+        self.pub = rospy.Publisher('~perception', String, queue_size = 10)
+        
+        self.rate = rospy.Rate(10) # 10hz
+        
     def connect(self): # -> bool:
         try:
             print "Connecting...", self.agent_name
@@ -53,7 +61,6 @@ class MacRosBridge (threading.Thread):
         except socket.error as e:
             print('Error connecting to {}: {}'.format(ADDRESS, e))
             return False
-
         
     def reconnect(self):
         try:
@@ -85,7 +92,8 @@ class MacRosBridge (threading.Thread):
             
             # TODO doing something
             
-            self.send("skip")
+#            self.send("skip")
+            self.publish_perception("" + self.message_id)
             
         elif typ == 'sim-start':
             print "sim-start: steps = ", message.find('simulation').get('steps')
@@ -104,7 +112,7 @@ class MacRosBridge (threading.Thread):
         
 
     def run(self):
-        print "run"
+        print "MacRosBridge::run"
         while not self.connect():
             time.sleep(RETRY_DELAY)
         self.authenticate()
@@ -139,8 +147,18 @@ class MacRosBridge (threading.Thread):
                     buffer = buffer[index + 1:]
                     index = buffer.find(SEPARATOR)
 
+    def callback(self, data):
+        print "MacRosBridge::callback", data.data
+        self.send(data.data)
+    
+    def publish_perception(self, percept_str):
+        print "MacRosBridge::publish_perception", percept_str
+        rospy.loginfo(percept_str)
+        self.pub.publish(percept_str)
+#        self.rate.sleep()
+        
 if __name__ == '__main__':
-    print "mac_ros_bridge::main"
+    print "mac_ros_bridge_node::main"
     try:
         bridge = MacRosBridge(rospy.get_param('~agent_name', 'UNKNOWN')).start()
 #     bridge = MacRosBridge("a2").start()
@@ -183,8 +201,9 @@ if __name__ == '__main__':
 #     bridge = MacRosBridge("b15").start()
 #     bridge = MacRosBridge("b16").start()
 #     time.sleep(RETRY_DELAY)
-
+        print "before spin()"
         rospy.spin()
+        print "after spin()"
 
     except rospy.ROSInterruptException:
         rospy.logerr("program interrupted before completion")

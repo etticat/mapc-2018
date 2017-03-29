@@ -1,6 +1,6 @@
 <launch>
     <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
-        name="mac_ros_bridge_node" output="screen"
+        name="a1" output="screen"
         >
            <param name="agent_name" value="a1" />
     </node>
