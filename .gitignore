@@ -47,4 +47,9 @@ qtcreator-*
 # Catkin custom files
 CATKIN_IGNORE
 /src/CMakeLists.txt
+
+#Pydev
 .pydevproject
+
+#Pycharm
+.idea

@@ -1,0 +1,8 @@
+uint32 timestamp
+string simulation_id
+uint32 steps
+string team
+Role role
+Product[] products
+Tool[] tools
+---

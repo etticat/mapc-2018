@@ -6,7 +6,7 @@
 import roslib
 import rospy
 
-#import geometry_msgs.msg
+from mac_ros_bridge.msg import RequestAction,GenericAction
 
 import socket
 import threading
