@@ -62,6 +62,7 @@ add_message_files(
   Team.msg
   Tool.msg
   Workshop.msg
+  Entity.msg
 )
 
 ## Generate services in the 'srv' folder
