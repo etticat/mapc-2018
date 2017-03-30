@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from std_msgs.msg import String
+from mac_ros_bridge.msg import RequestAction, GenericAction
 
 class DummyAgent:
     def __init__(self):
@@ -10,22 +10,40 @@ class DummyAgent:
         self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
 
         rospy.init_node('agent_node', anonymous=True)
-        
-        self.pub = rospy.Publisher('action', String, queue_size = 10)
-        
-        self.rate = rospy.Rate(10) # 10hz
-        
-        rospy.Subscriber("perception", String, self.callback)
 
-    def publish_action(self):
-        action_str = "skip"
-        rospy.loginfo(action_str)
-        self.pub.publish(action_str)
-        self.rate.sleep()
+        self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+
+        self._agent_topic_prefix = 'bridge_node_' + self.agent_name + '/'
         
-    def callback(self, data):
-        print "DummyAgent::callback", data
-        self.publish_action()
+        self._pub_generic_action = rospy.Publisher('~generic_action', GenericAction, queue_size = 10)
+        
+        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self.callback)
+
+    def publish_action(self, related_request):
+        """
+        :param related_request: the request we are answering
+        :type related_request: RequestAction
+        """
+        action_str = "skip"
+
+        msg = GenericAction()
+        msg.id=related_request.id
+        msg.target_deadline=related_request.deadline
+        msg.action_type = action_str
+        msg.param=""
+
+        rospy.loginfo("Published action %s", msg)
+
+        self._pub_generic_action.publish(msg)
+
+    def callback(self, msg):
+        """
+        :param msg: the message
+        :type msg: RequestAction
+        :return:
+        """
+        print "DummyAgent::callback", msg
+        self.publish_action(related_request=msg)
         
 if __name__ == '__main__':
     print "dummy_agent::main"

@@ -1,12 +1,17 @@
 <launch>
+    <arg name="agent_name" value="a1" />
+
     <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
-        name="a1" output="screen"
+        name="bridge_node_$(arg agent_name)" output="screen"
         >
-           <param name="agent_name" value="a1" />
+            <param name="agent_name" value="$(arg agent_name)" />
+            <param name="server_ip" value="localhost" />
     </node>
+
     <node pkg="mac_ros_bridge" type="dummy_agent.py"
-        name="agent_node" output="screen"
+        name="agent_node_$(arg agent_name)" output="screen"
         >
-           <param name="agent_name" value="a1" />
+            <param name="agent_name" value="$(arg agent_name)" />
     </node>
+
 </launch>

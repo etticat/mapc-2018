@@ -1,4 +1,4 @@
-uint32 timestamp
+uint64 timestamp
 Position pos
 uint32 charge
 uint32 load

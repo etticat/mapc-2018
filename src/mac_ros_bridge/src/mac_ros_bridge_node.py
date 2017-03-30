@@ -6,7 +6,7 @@
 import roslib
 import rospy
 
-from mac_ros_bridge.msg import RequestAction,GenericAction
+from mac_ros_bridge.msg import RequestAction, GenericAction
 
 import socket
 import threading
@@ -14,10 +14,8 @@ import time
 
 import xml.etree.cElementTree as eT
 from symbol import except_clause
-from std_msgs.msg import String
 
-
-ADDRESS = ('130.149.232.33', 12300)
+ADDRESS = ('localhost', 12300)
 RETRY_DELAY = 1.0
 RECV_SIZE = 8192
 
@@ -33,19 +31,17 @@ class MacRosBridge (threading.Thread):
         rospy.init_node('mac_ros_bridge_node', anonymous=True)
 
         self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
-        print "nodename =", rospy.get_name() #name is with leading slash / namespace
 
-#        self.name = name
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><authentication password="test" username="test"/></message>''')
         self.message_id = -1
-        
-        rospy.Subscriber("action", String, self.callback)
-        
-        self.pub = rospy.Publisher('~perception', String, queue_size = 10)
-        
-        self.rate = rospy.Rate(10) # 10hz
-        
+
+        self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
+
+        self._agent_topic_prefix = "agent_node_" + self.agent_name + "/"
+
+        rospy.Subscriber(self._agent_topic_prefix + "generic_action", GenericAction, self.callback_generic_action)
+
     def connect(self): # -> bool:
         try:
             print "Connecting...", self.agent_name
@@ -86,14 +82,17 @@ class MacRosBridge (threading.Thread):
         typ = message.get('type')
 
         if typ == 'request-action':
-            self.id = message.find('perception').get('id')
+            timestamp = message.get('timestamp')
+            perception = message.find('perception')
+            self.id = perception.get('id')
             print "request-action: perception id = ", self.id
-            self.message_id = message.find('perception').get('id')
+            self.message_id = perception.get('id')
+            # TODO why are self.id and self.message_id the same? is this correct?
             
-            # TODO doing something
-            
-#            self.send("skip")
-            self.publish_perception("" + self.message_id)
+            # TODO add the other publishers
+            self._publish_request_action(timestamp=timestamp, perception=perception)
+            #self.send(action_type="skip")
+
             
         elif typ == 'sim-start':
             print "sim-start: steps = ", message.find('simulation').get('steps')
@@ -105,11 +104,10 @@ class MacRosBridge (threading.Thread):
         elif typ == 'bye':
             print "Do somethingmeaningful on system exit"
             
-    def send(self, message):
+    def send(self, action_type):
             response = eT.Element('message', type='action')
-            action = eT.SubElement(response, 'action', id=self.message_id, type=message)
+            action = eT.SubElement(response, 'action', id=self.message_id, type=action_type)
             self.s.send(eT.tostring(response) + SEPARATOR)
-        
 
     def run(self):
         print "MacRosBridge::run"
@@ -117,7 +115,7 @@ class MacRosBridge (threading.Thread):
             time.sleep(RETRY_DELAY)
         self.authenticate()
         buffer = b''
-        while True:
+        while (not rospy.is_shutdown()):
             try:
                 data = self.s.recv(RECV_SIZE)
             except socket.timeout:
@@ -126,7 +124,7 @@ class MacRosBridge (threading.Thread):
                 buffer = b''
                 continue
             except socket.error as e:
-                if e.errno == errno.ECONNRESET:
+                if e.errno == errno.ECONNRESET: #TODO check "errno" this is neither defined nor imported
                     # connection closed by server
                     data = b''
                 else:
@@ -147,16 +145,29 @@ class MacRosBridge (threading.Thread):
                     buffer = buffer[index + 1:]
                     index = buffer.find(SEPARATOR)
 
-    def callback(self, data):
-        print "MacRosBridge::callback", data.data
-        self.send(data.data)
-    
-    def publish_perception(self, percept_str):
-        print "MacRosBridge::publish_perception", percept_str
-        rospy.loginfo(percept_str)
-        self.pub.publish(percept_str)
-#        self.rate.sleep()
-        
+    def callback_generic_action(self, msg):
+        """
+        :param msg: ros message
+        :type msg: GenericAction
+        """
+        rospy.logdebug("MacRosBridge::callback_generic_action %s", msg)
+        self.send(action_type=msg.action_type)
+
+    def _publish_request_action(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  #TODO coorect?
+        """
+        msg = RequestAction()
+        msg.timestamp = long(timestamp)
+        msg.id = perception.get('id')
+        msg.simulation_step = int(perception.find('simulation').get('step'))
+        msg.deadline = long(perception.get('deadline'))
+        rospy.loginfo("Request action %s", msg)
+        self._pub_request_action.publish(msg)
+
 if __name__ == '__main__':
     print "mac_ros_bridge_node::main"
     try:

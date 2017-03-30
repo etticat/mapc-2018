@@ -1,4 +1,4 @@
-uint32 timestamp
+uint64 timestamp
 string id
 Storage storage
 uint32 begin

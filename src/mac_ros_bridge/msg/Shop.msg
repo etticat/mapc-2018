@@ -1,4 +1,4 @@
-uint32 timestamp
+uint64 timestamp
 string name
 Position pos
 Item[] items
