@@ -6,7 +6,7 @@
 import roslib
 import rospy
 
-from mac_ros_bridge.msg import RequestAction, GenericAction
+from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, ChargingStation, DumpLocation, Item, PricedJob, Product, Shop, Storage,Team, Workshop, Position, Entity, Role
 
 import socket
 import threading
@@ -37,6 +37,9 @@ class MacRosBridge (threading.Thread):
         self.message_id = -1
 
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
+        self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 10, latch=True)
+        self._pub_team = rospy.Publisher('~team', Team, queue_size=10, latch=True)
+        self._pub_entity = rospy.Publisher('~entity', Entity, queue_size=10, latch=True)
 
         self._agent_topic_prefix = "agent_node_" + self.agent_name + "/"
 
@@ -82,7 +85,7 @@ class MacRosBridge (threading.Thread):
         typ = message.get('type')
 
         if typ == 'request-action':
-            timestamp = message.get('timestamp')
+            timestamp = long(message.get('timestamp'))
             perception = message.find('perception')
             self.id = perception.get('id')
             print "request-action: perception id = ", self.id
@@ -91,6 +94,9 @@ class MacRosBridge (threading.Thread):
             
             # TODO add the other publishers
             self._publish_request_action(timestamp=timestamp, perception=perception)
+            self._publish_agent(timestamp=timestamp, perception=perception)
+            self._publish_team(timestamp=timestamp, perception=perception)
+            self._publish_entity(timestamp=timestamp, perception=perception)
             #self.send(action_type="skip")
 
             
@@ -156,17 +162,76 @@ class MacRosBridge (threading.Thread):
     def _publish_request_action(self, timestamp, perception):
         """
         :param timestamp: message timestamp
-        :type timestamp: int
+        :type timestamp: long
         :param perception: full perception object
         :type perception: eT  #TODO coorect?
         """
         msg = RequestAction()
-        msg.timestamp = long(timestamp)
+        msg.timestamp = timestamp
         msg.id = perception.get('id')
         msg.simulation_step = int(perception.find('simulation').get('step'))
         msg.deadline = long(perception.get('deadline'))
         rospy.loginfo("Request action %s", msg)
         self._pub_request_action.publish(msg)
+
+    def _publish_agent(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  #TODO coorect?
+        """
+        agent_self = perception.find('self')
+
+        msg = Agent()
+        msg.timestamp = timestamp
+        msg.charge = int(agent_self.get('charge'))
+        msg.load = int(agent_self.get('load'))
+        msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
+        msg.route_length = int(agent_self.get('routeLength'))
+
+        #TODO maybe extract into own helper method
+        for xml_item in agent_self.findall('item'):
+            item = Item()
+            item.name = xml_item.get('name')
+            amount = xml_item.get('amount')
+            item.amount = int(amount)
+            msg.items.append(item)
+
+        self._pub_agent.publish(msg)
+
+    def _publish_team(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  #TODO coorect?
+        """
+        team = perception.find('team')
+
+        msg = Team()
+        msg.money = int(team.get('money'))
+        msg.timestamp = timestamp
+        self._pub_team.publish(msg)
+
+    def _publish_entity(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  #TODO coorect?
+        """
+        entities = perception.find('entities')
+
+        for xml_item in entities.findall('entity'):
+            entity = Entity()
+            entity.name = xml_item.get('name')
+            entity.team = xml_item.get('team')
+            entity.role = Role(name=xml_item.get('role'))
+            entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            entity.timestamp = timestamp
+
+            self._pub_entity.publish(entity)
 
 if __name__ == '__main__':
     print "mac_ros_bridge_node::main"
