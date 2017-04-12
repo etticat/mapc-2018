@@ -30,7 +30,7 @@ class DummyAgent:
         msg.id=related_request.id
         msg.target_deadline=related_request.deadline
         msg.action_type = action_str
-        msg.param=""
+        msg.params={}
 
         rospy.loginfo("Published action %s", msg)
 

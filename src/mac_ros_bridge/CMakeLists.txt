@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  diagnostic_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -49,7 +50,7 @@ add_message_files(
   Agent.msg
   AuctionJob.msg
   ChargingStation.msg
-  DumpLocation.msg
+  Dump.msg
   GenericAction.msg
   Item.msg
   Position.msg
@@ -84,6 +85,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  diagnostic_msgs
 )
 
 ###################################
