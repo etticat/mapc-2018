@@ -54,7 +54,7 @@ add_message_files(
   GenericAction.msg
   Item.msg
   Position.msg
-  PricedJob.msg
+  Job.msg
   Product.msg
   RequestAction.msg
   Role.msg
@@ -64,6 +64,7 @@ add_message_files(
   Tool.msg
   Workshop.msg
   Entity.msg
+  Resource.msg
 )
 
 ## Generate services in the 'srv' folder

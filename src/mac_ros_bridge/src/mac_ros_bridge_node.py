@@ -6,8 +6,8 @@
 import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
-    ChargingStation, Dump, Item, PricedJob, Product, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role
+    ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
+    Workshop, Position, Entity, Role, Resource
 
 import socket
 import threading
@@ -24,6 +24,9 @@ PASSWORD = "1"
 SEPARATOR = b'\0'
 
 class MacRosBridge (threading.Thread):
+
+    SOCKET_TIMEOUT = 2
+
     def __init__(self, name):
         """
         :param name: agent name
@@ -31,23 +34,31 @@ class MacRosBridge (threading.Thread):
         threading.Thread.__init__(self)
         rospy.loginfo("MacRosBridge::init")
 
-        rospy.init_node('mac_ros_bridge_node', anonymous=True)
+        rospy.init_node('mac_ros_bridge_node', anonymous=True, log_level=rospy.DEBUG)
 
-        self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+        if not name:
+            self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+        else:
+            self.agent_name = name
 
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-            <message type="auth-request"><authentication password="test" username="test"/></message>''')
+            <message type="auth-request"><auth-request username="test" password="test"/></message>''')
         self.message_id = -1
 
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
         self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 10, latch=True)
-        self._pub_team = rospy.Publisher('~team', Team, queue_size=10, latch=True)
+        self._pub_team = rospy.Publisher('/team', Team, queue_size=10, latch=True)
         self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
         self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
         self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
         self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
         self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
         self._pub_workshop = rospy.Publisher('/workshop', Workshop, queue_size=10, latch=True)
+        self._pub_priced_job = rospy.Publisher('/priced_job', Job, queue_size=10, latch=True)
+        self._pub_posted_job = rospy.Publisher('/posted_job', Job, queue_size=10, latch=True)
+        self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJob, queue_size=10, latch=True)
+        self._pub_mission = rospy.Publisher('/mission_job', Job, queue_size=10, latch=True)
+        self._pub_resource = rospy.Publisher('/resource', Resource, queue_size=10, latch=True)
 
         self._agent_topic_prefix = "agent_node_" + self.agent_name + "/"
 
@@ -93,7 +104,8 @@ class MacRosBridge (threading.Thread):
         """
         Autheticate on the contest server
         """
-        auth_element = self.auth.find('authentication')
+        rospy.loginfo("Autheticate...%s", self.agent_name)
+        auth_element = self.auth.find('auth-request')
         auth_element.attrib['username'] = self.agent_name
         auth_element.attrib['password'] = PASSWORD
         self.socket.send(eT.tostring(self.auth) + SEPARATOR)
@@ -108,11 +120,14 @@ class MacRosBridge (threading.Thread):
         typ = message.get('type')
 
         if typ == 'request-action':
+
             timestamp = long(message.get('timestamp'))
-            perception = message.find('perception')
+            perception = message.find('percept')
+
+            eT.dump(perception) #TODO remove this
 
             self.message_id = perception.get('id')
-            rospy.logdebug("request-action: perception id = ", self.message_id)
+            rospy.logdebug("request-action: perception id = %s", self.message_id)
 
             # TODO add the other publishers
             self._publish_request_action(timestamp=timestamp, perception=perception)
@@ -120,18 +135,20 @@ class MacRosBridge (threading.Thread):
             self._publish_team(timestamp=timestamp, perception=perception)
             self._publish_entity(timestamp=timestamp, perception=perception)
             self._publish_facilities(timestamp=timestamp, perception=perception)
-            #self.send(action_type="skip")
+            self._publish_jobs(timestamp=timestamp, perception=perception)
+            self._publish_resources(timestamp=timestamp, perception=perception)
+            #self.send(action_type="skip") # can be enabled for dummy answers
 
             
         elif typ == 'sim-start':
             rospy.loginfo("sim-start: steps = %s", message.find('simulation').get('steps'))
         elif typ == 'auth-response':
-            rospy.loginfo("auth-response: %s", message.find('authentication').get('result'))
+            rospy.loginfo("auth-response: %s", message.find('auth-response').get('result'))
         elif typ == 'sim-end':
             rospy.loginfo("ranking= %s", message.find('sim-result').get('ranking'))
             rospy.loginfo("score= %s", message.find('sim-result').get('score'))
         elif typ == 'bye':
-            rospy.loginfo("Do somethingmeaningful on system exit")
+            rospy.loginfo("Do something meaningful on system exit")
             
     def send_action(self, action_type, params={}):
         """
@@ -156,6 +173,8 @@ class MacRosBridge (threading.Thread):
         while not self.connect():
             time.sleep(RETRY_DELAY)
         self.authenticate()
+
+        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         buffer = b''
         while (not rospy.is_shutdown()):
             try:
@@ -231,7 +250,7 @@ class MacRosBridge (threading.Thread):
             msg.charge = int(agent_self.get('charge'))
             msg.load = int(agent_self.get('load'))
             msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
-            msg.route_length = int(agent_self.get('routeLength'))
+            #msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
 
             msg.items = self._get_items(elem=agent_self)
 
@@ -286,9 +305,8 @@ class MacRosBridge (threading.Thread):
         :type perception: eT  ElementTree
         """
         if self._pub_entity.get_num_connections() > 0:
-            entities = perception.find('entities')
 
-            for xml_item in entities.findall('entity'):
+            for xml_item in perception.findall('entity'):
                 entity = Entity()
                 entity.name = xml_item.get('name')
                 entity.team = xml_item.get('team')
@@ -306,11 +324,10 @@ class MacRosBridge (threading.Thread):
         :param perception: full perception object
         :type perception: eT  ElementTree
         """
-        entities = perception.find('facilities')
 
         if self._pub_shop.get_num_connections() > 0:
-            for xml_item in entities.findall('shop'):
-                eT.dump(xml_item)
+            for xml_item in perception.findall('shop'):
+
                 shop = Shop()
                 shop.timestamp = timestamp
                 shop.name = xml_item.get('name')
@@ -322,7 +339,7 @@ class MacRosBridge (threading.Thread):
                 self._pub_shop.publish(shop)
 
         if self._pub_workshop.get_num_connections() > 0:
-            for xml_item in entities.findall('workshop'):
+            for xml_item in perception.findall('workshop'):
                 workshop = Workshop()
                 workshop.timestamp = timestamp
                 workshop.name = xml_item.get('name')
@@ -330,18 +347,16 @@ class MacRosBridge (threading.Thread):
                 self._pub_workshop.publish(workshop)
 
         if self._pub_charging_station.get_num_connections() > 0:
-            for xml_item in entities.findall('chargingStation'):
+            for xml_item in perception.findall('chargingStation'):
                 cs = ChargingStation()
                 cs.timestamp = timestamp
                 cs.name = xml_item.get('name')
                 cs.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
                 cs.rate = int(xml_item.get('rate'))
-                cs.slots = int(xml_item.get('slots')) #TODO available in server message but not clear if still used 2017
-                #TODO charging stations also still has a price, contradicts the changelog
                 self._pub_charging_station.publish(cs)
 
         if self._pub_dump.get_num_connections() > 0:
-            for xml_item in entities.findall('dump'):
+            for xml_item in perception.findall('dump'):
                 dump = Dump()
                 dump.timestamp = timestamp
                 dump.name = xml_item.get('name')
@@ -349,7 +364,7 @@ class MacRosBridge (threading.Thread):
                 self._pub_dump.publish(dump)
 
         if self._pub_storage.get_num_connections() > 0:
-            for xml_item in entities.findall('storage'):
+            for xml_item in perception.findall('storage'):
                 storage = Storage()
                 storage.timestamp = timestamp
                 storage.name = xml_item.get('name')
@@ -359,12 +374,94 @@ class MacRosBridge (threading.Thread):
                 storage.items = self._get_items(elem=xml_item)
                 self._pub_storage.publish(storage)
 
+    def _get_common_job(self, elem, timestamp):
+        """
+        Extract common job from an xml element
+        :param elem: xml Element
+        :return: Job
+        """
+        job = Job()
+        job.timestamp = timestamp
+        job.id = elem.get('id')
+        job.storage_name = elem.get('storage')
+        job.reward = int(elem.get('reward'))
+        job.begin = int(elem.get('begin'))
+        job.end = int(elem.get('end'))
+        fine = elem.get('fine')
+        if fine:
+            job.fine = int(fine)
+        job.items = self._get_items(elem=elem)
+
+        return  job
+
+
+
+    def _publish_jobs(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  ElementTree
+        """
+
+        if self._pub_priced_job.get_num_connections() > 0:
+            for xml_item in perception.findall('pricedJob'):
+                job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+
+                self._pub_priced_job.publish(job)
+
+        if self._pub_priced_job.get_num_connections() > 0:
+            for xml_item in perception.findall('mission'):
+                job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+
+                self._pub_mission.publish(job)
+
+        if self._pub_auction_job.get_num_connections() > 0:
+            for xml_item in perception.findall('auctionJob'):
+                job = AuctionJob()
+                job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+
+                lowest_bid = xml_item.get('lowestBid')
+                if lowest_bid:
+                    job.lowest_bid= int(lowest_bid)
+
+                job.max_bid = int(xml_item.get('maxBid'))
+
+                auction_time = xml_item.get('auctionTime')
+                if auction_time:
+                    job.auction_time = int(auction_time)
+
+                self._pub_priced_job.publish(job)
+
+    def _publish_resources(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  ElementTree
+        """
+
+        #TODO
+
+        if self._pub_resource.get_num_connections() > 0:
+            for xml_item in perception.findall('resource'):
+                eT.dump(xml_item)
+                shop = Shop()
+                shop.timestamp = timestamp
+                shop.name = xml_item.get('name')
+                shop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+                restock = xml_item.get('restock')
+                if restock:  # TODO not always included in server message, potential bug
+                    shop.restock = int(restock)
+                shop.items = self._get_items(elem=xml_item)
+                self._pub_shop.publish(shop)
+
 
 
 if __name__ == '__main__':
     rospy.logdebug("mac_ros_bridge_node::main")
     try:
-        bridge = MacRosBridge(name=rospy.get_param('~agent_name', 'UNKNOWN')).start()
+        bridge = MacRosBridge(name=rospy.get_param('~agent_name', 'agentA1')).start()
 #     bridge = MacRosBridge("a2").start()
 #     bridge = MacRosBridge("a3").start()
 #     bridge = MacRosBridge("a4").start()
