@@ -27,7 +27,7 @@ class MacRosBridge (threading.Thread):
 
     SOCKET_TIMEOUT = 2
 
-    def __init__(self, name):
+    def __init__(self, name=None):
         """
         :param name: agent name
         """
@@ -461,7 +461,8 @@ class MacRosBridge (threading.Thread):
 if __name__ == '__main__':
     rospy.logdebug("mac_ros_bridge_node::main")
     try:
-        bridge = MacRosBridge(name=rospy.get_param('~agent_name', 'agentA1')).start()
+        bridge = MacRosBridge().start()
+#     bridge = MacRosBridge("a1").start()
 #     bridge = MacRosBridge("a2").start()
 #     bridge = MacRosBridge("a3").start()
 #     bridge = MacRosBridge("a4").start()
@@ -481,7 +482,7 @@ if __name__ == '__main__':
 #     bridge = MacRosBridge("a15").start()
 #     bridge = MacRosBridge("a16").start()
 #     time.sleep(RETRY_DELAY)
-# 
+#
 #     bridge = MacRosBridge("b1").start()
 #     bridge = MacRosBridge("b2").start()
 #     bridge = MacRosBridge("b3").start()

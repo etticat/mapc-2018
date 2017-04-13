@@ -1,0 +1,9 @@
+<launch>
+    <arg name="agent_name" default="agentA1" />
+
+    <node pkg="mac_ros_bridge" type="dummy_agent.py"
+        name="agent_node_$(arg agent_name)" output="screen"
+        >
+            <param name="agent_name" value="$(arg agent_name)" />
+    </node>
+</launch>

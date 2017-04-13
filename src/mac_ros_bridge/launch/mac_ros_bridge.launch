@@ -1,5 +1,5 @@
 <launch>
-    <arg name="agent_name" default="a1"/>
+    <arg name="agent_name" default="agentA1"/>
     <arg name="server_ip" default="localhost"/>
 
     <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
