@@ -65,15 +65,15 @@ add_message_files(
   Workshop.msg
   Entity.msg
   Resource.msg
+  SimStart.msg
+  SimEnd.msg
+  Bye.msg
 )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  SimStart.srv
-  SimEnd.srv
-  Bye.srv
-)
+#add_service_files(
+#  FILES
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
