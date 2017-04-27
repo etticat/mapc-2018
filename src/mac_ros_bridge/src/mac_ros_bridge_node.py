@@ -7,11 +7,12 @@ import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource
+    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
 
 import socket
 import threading
 import time
+import errno
 
 import xml.etree.cElementTree as eT
 
@@ -25,7 +26,7 @@ SEPARATOR = b'\0'
 
 class MacRosBridge (threading.Thread):
 
-    SOCKET_TIMEOUT = 2
+    SOCKET_TIMEOUT = 2 # general socket timeout
 
     def __init__(self, name=None):
         """
@@ -59,6 +60,9 @@ class MacRosBridge (threading.Thread):
         self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJob, queue_size=10, latch=True)
         self._pub_mission = rospy.Publisher('/mission_job', Job, queue_size=10, latch=True)
         self._pub_resource = rospy.Publisher('/resource', Resource, queue_size=10, latch=True)
+        self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=10, latch=True)
+        self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=10, latch=True)
+        self._pub_bye= rospy.Publisher('~bye', Bye, queue_size=10, latch=True)
 
         self._agent_topic_prefix = "agent_node_" + self.agent_name + "/"
 
@@ -120,37 +124,101 @@ class MacRosBridge (threading.Thread):
         typ = message.get('type')
 
         if typ == 'request-action':
-
-            timestamp = long(message.get('timestamp'))
-            perception = message.find('percept')
-
-            eT.dump(perception) #TODO remove this
-
-            self.message_id = perception.get('id')
-            rospy.logdebug("request-action: perception id = %s", self.message_id)
-
-            # TODO add the other publishers
-            self._publish_request_action(timestamp=timestamp, perception=perception)
-            self._publish_agent(timestamp=timestamp, perception=perception)
-            self._publish_team(timestamp=timestamp, perception=perception)
-            self._publish_entity(timestamp=timestamp, perception=perception)
-            self._publish_facilities(timestamp=timestamp, perception=perception)
-            self._publish_jobs(timestamp=timestamp, perception=perception)
-            self._publish_resources(timestamp=timestamp, perception=perception)
-            #self.send(action_type="skip") # can be enabled for dummy answers
-
-            
+            self._request_action(message=message)
         elif typ == 'sim-start':
-            rospy.loginfo("sim-start: steps = %s", message.find('simulation').get('steps'))
+            self._sim_start(message=message)
         elif typ == 'auth-response':
             rospy.loginfo("auth-response: %s", message.find('auth-response').get('result'))
         elif typ == 'sim-end':
-            rospy.loginfo("ranking= %s", message.find('sim-result').get('ranking'))
-            rospy.loginfo("score= %s", message.find('sim-result').get('score'))
+            self._sim_end(message=message)
         elif typ == 'bye':
-            rospy.loginfo("Do something meaningful on system exit")
-            
-    def send_action(self, action_type, params={}):
+            self._bye(message=message)
+
+    def _request_action(self, message):
+        """
+        Handle request action message
+        :param message: xml message
+        """
+        timestamp = long(message.get('timestamp'))
+        perception = message.find('percept')
+
+        #eT.dump(perception)  # TODO remove this
+
+        self.message_id = perception.get('id')
+        rospy.logdebug("request-action: perception id = %s", self.message_id)
+
+        # TODO add the other publishers
+        self._publish_request_action(timestamp=timestamp, perception=perception)
+        self._publish_agent(timestamp=timestamp, perception=perception)
+        self._publish_team(timestamp=timestamp, perception=perception)
+        self._publish_entity(timestamp=timestamp, perception=perception)
+        self._publish_facilities(timestamp=timestamp, perception=perception)
+        self._publish_jobs(timestamp=timestamp, perception=perception)
+        self._publish_resources(timestamp=timestamp, perception=perception)
+        # self.send(action_type="skip") # can be enabled for dummy answers
+
+    def _sim_end(self, message):
+        """
+        Handle sim end message
+        :param message: xml message
+        """
+        ranking = message.find('sim-result').get('ranking')
+        score = message.find('sim-result').get('score')
+
+        rospy.loginfo("ranking= %s", ranking)
+        rospy.loginfo("score= %s", score)
+
+        eT.dump(message)
+
+        msg = SimEnd()
+        msg.ranking = ranking
+        msg.score = score
+        # TODO add more information here from message content
+        self._pub_sim_end.publish(msg)
+
+    def _sim_start(self, message):
+        """
+        Handle sim start message
+        :param message: xml message
+        """
+        #eT.dump(message)
+
+        timestamp = long(message.get('timestamp'))
+        simulation = message.find('simulation')
+        steps = int(simulation.get('steps'))
+        rospy.loginfo("sim-start: steps = %s", steps)
+
+        msg = SimStart()
+        msg.timestamp = timestamp
+        msg.simulation_id = simulation.get('id')
+        msg.steps = steps
+        msg.team = simulation.get('team')
+        msg.map = simulation.get('map')
+
+        xml_role = simulation.find('role')
+        role = Role()
+        role.speed = int(xml_role.get('speed'))
+        role.name = xml_role.get('name')
+        role.max_battery = int(xml_role.get('battery'))
+        role.max_load = int(xml_role.get('load'))
+        msg.role = role
+        #TODO add more information here from message content
+        #Not yet included are Products and items
+
+        self._pub_sim_start.publish(msg)
+
+    def _bye(self, message):
+        """
+        Handle bye message
+        :param message: xml message
+        """
+        rospy.loginfo("Do something meaningful on system exit")
+        eT.dump(message)
+        msg = Bye()
+        #TODO add more information here from message content
+        self._pub_bye.publish.publish(msg)
+
+    def _send_action(self, action_type, params={}):
         """
         send action reply
         :param action_type: action type that should be executed
@@ -173,7 +241,6 @@ class MacRosBridge (threading.Thread):
         while not self.connect():
             time.sleep(RETRY_DELAY)
         self.authenticate()
-
         self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         buffer = b''
         while (not rospy.is_shutdown()):
@@ -185,7 +252,7 @@ class MacRosBridge (threading.Thread):
                 buffer = b''
                 continue
             except socket.error as e:
-                if e.errno == errno.ECONNRESET: #TODO check "errno" this is neither defined nor imported
+                if e.errno == errno.ECONNRESET:
                     # connection closed by server
                     data = b''
                 else:
@@ -218,7 +285,7 @@ class MacRosBridge (threading.Thread):
         for key, value in msg.params:
             params[key] = value
 
-        self.send_action(action_type=msg.action_type, params=params)
+        self._send_action(action_type=msg.action_type, params=params)
 
     def _publish_request_action(self, timestamp, perception):
         """
