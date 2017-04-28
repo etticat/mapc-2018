@@ -9,6 +9,8 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, 
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
     Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
 
+from diagnostic_msgs.msg import KeyValue
+
 import socket
 import threading
 import time
@@ -64,9 +66,7 @@ class MacRosBridge (threading.Thread):
         self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=10, latch=True)
         self._pub_bye= rospy.Publisher('~bye', Bye, queue_size=10, latch=True)
 
-        self._agent_topic_prefix = "agent_node_" + self.agent_name + "/"
-
-        rospy.Subscriber(self._agent_topic_prefix + "generic_action", GenericAction, self.callback_generic_action)
+        rospy.Subscriber("~generic_action", GenericAction, self.callback_generic_action)
 
     def connect(self):
         """
@@ -282,8 +282,8 @@ class MacRosBridge (threading.Thread):
         rospy.logdebug("MacRosBridge::callback_generic_action %s", msg)
 
         params = {}
-        for key, value in msg.params:
-            params[key] = value
+        for key_value in msg.params:
+            params[key_value.key] = key_value.value
 
         self._send_action(action_type=msg.action_type, params=params)
 
@@ -403,6 +403,7 @@ class MacRosBridge (threading.Thread):
                 if restock: #TODO not always included in server message, potential bug
                     shop.restock = int(restock)
                 shop.items = self._get_items(elem=xml_item)
+                rospy.loginfo("_publish_facilities" + str(shop))
                 self._pub_shop.publish(shop)
 
         if self._pub_workshop.get_num_connections() > 0:

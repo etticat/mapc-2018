@@ -6,8 +6,6 @@ from mac_ros_bridge.msg import RequestAction, GenericAction
 class DummyAgent:
     def __init__(self):
         print "DummyAgent::init"
-        
-        self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
 
         rospy.init_node('agent_node', anonymous=True)
 
@@ -15,7 +13,7 @@ class DummyAgent:
 
         self._agent_topic_prefix = 'bridge_node_' + self.agent_name + '/'
         
-        self._pub_generic_action = rospy.Publisher('~generic_action', GenericAction, queue_size = 10)
+        self._pub_generic_action = rospy.Publisher(self._agent_topic_prefix + 'generic_action', GenericAction, queue_size = 10)
         
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self.callback)
 
