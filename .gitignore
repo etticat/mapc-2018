@@ -53,3 +53,6 @@ CATKIN_IGNORE
 
 #Pycharm
 .idea
+
+#massim
+massim-2017-*
