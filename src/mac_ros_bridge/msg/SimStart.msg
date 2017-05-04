@@ -6,3 +6,4 @@ string map
 Role role
 Product[] products
 Tool[] tools
+float32 proximity # TODO not yet available in XML?!

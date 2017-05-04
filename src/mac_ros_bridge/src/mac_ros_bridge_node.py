@@ -194,6 +194,8 @@ class MacRosBridge (threading.Thread):
         msg.steps = steps
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
+        #TODO not yet available in the msg
+        #msg.proximity = simulation.get('proximity')
 
         xml_role = simulation.find('role')
         role = Role()
@@ -403,7 +405,6 @@ class MacRosBridge (threading.Thread):
                 if restock: #TODO not always included in server message, potential bug
                     shop.restock = int(restock)
                 shop.items = self._get_items(elem=xml_item)
-                rospy.loginfo("_publish_facilities" + str(shop))
                 self._pub_shop.publish(shop)
 
         if self._pub_workshop.get_num_connections() > 0:
