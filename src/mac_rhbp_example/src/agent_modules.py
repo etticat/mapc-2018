@@ -118,17 +118,53 @@ class GotoFacilityBehaviour(BehaviourBase):
         return self._agent_name, 'exploring_' + self._facility_topic
 
     def start(self):
-        rospy.logdebug(self._agent_name + "::" + self._name + " enabled")
+        rospy.loginfo(self._agent_name + "::" + self._name + " enabled")
 
         self._selected_facility = self._select_facility()
 
-        self.__client.update(self.get_knowledge_base_tuple()+ ('*',), self.get_knowledge_base_tuple() + ('true',))
+        rospy.loginfo(self._agent_name + "::" + self._name + " selected facility: \n" + str(self._selected_facility))
+
+        # This is commented in order to avoid frequent starting and stopping cycles with new randomly selected destinations
+        self.__client.update(self.get_knowledge_base_tuple() + ('*',), self.get_knowledge_base_tuple() + ('true',))
+
+        self.do_step() #this is important to directly answer the request as in the start() base implementation
 
     def stop(self):
         self.__client.update(self.get_knowledge_base_tuple()+ ('*',), self.get_knowledge_base_tuple() + ('false',),)
 
     def do_step(self):
+
+        if not self._selected_facility:
+            self._selected_facility = self._select_facility()
+
         self.move()
+
+class FinishExplorationBehaviour(BehaviourBase):
+    '''
+    Behaviour that finishes an exploration cycle by setting a corresponding knowledge fact
+    '''
+
+    def __init__(self, agent_name, facility_topic,  **kwargs):
+        '''
+        Constructor
+        '''
+        super(FinishExplorationBehaviour, self) \
+            .__init__(requires_execution_steps=True, **kwargs)
+
+        self._agent_name = agent_name
+
+        self._facility_topic = facility_topic
+
+        self.__client = KnowledgeBaseClient()
+
+        self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction, queue_size=10)
+
+    def get_knowledge_base_tuple(self):
+        return self._agent_name, 'exploring_' + self._facility_topic
+
+    def do_step(self):
+        # exloration done
+        self.__client.update(self.get_knowledge_base_tuple() + ('*',), self.get_knowledge_base_tuple() + ('true',))
 
 
 class GenericActionBehaviour(BehaviourBase):
@@ -278,9 +314,14 @@ class ClosestFacilityDistanceSensor(ClosestFacilitySensor):
         closest_facility = super(ClosestFacilityDistanceSensor, self)._reduce_facility(facilities, ref_value)
 
         if closest_facility:
-            return euclidean_distance(ref_value.pos, closest_facility.pos)
+
+            distance = euclidean_distance(ref_value.pos, closest_facility.pos)
         else:
-            return sys.float_info.max
+            distance = sys.float_info.max
+
+        rospy.logdebug("Facility distance: %f", distance)
+
+        return distance
 
 
 class FurthestFacilitySensor(AbstractFacilitySensor):

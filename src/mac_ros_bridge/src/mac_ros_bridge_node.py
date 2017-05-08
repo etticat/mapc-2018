@@ -39,7 +39,7 @@ class MacRosBridge (threading.Thread):
 
         if name:
             node_name += name
-        rospy.init_node(node_name, anonymous=False, log_level=rospy.DEBUG)
+        rospy.init_node(node_name, anonymous=False, log_level=rospy.INFO)
 
         if not name:
             self._agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
@@ -526,8 +526,8 @@ class MacRosBridge (threading.Thread):
 
         if self._pub_resource.get_num_connections() > 0:
             for xml_item in perception.findall('resource'):
-                eT.dump(xml_item)
-                shop = Shop()
+                rospy.logdebug("Resource %s", eT.tostring(xml_item))
+                shop = Resource()
                 shop.timestamp = timestamp
                 shop.name = xml_item.get('name')
                 shop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
