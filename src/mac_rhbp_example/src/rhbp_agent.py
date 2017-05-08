@@ -87,10 +87,10 @@ class RhbpAgent:
             at_shop_cond = Condition(at_shop_sensor,
                                                  ThresholdActivator(thresholdValue=proximity,
                                                                     isMinimum=False))  # highest activation if the value is below threshold
-            self._finish_shop_exploration.set_activated(False) # Do not yet use due to conflicts and incomplete implementation
 
             self._finish_shop_exploration.addPrecondition(at_shop_cond)
 
+            self._finish_shop_exploration.set_activated(False)  # Do not yet use due to conflicts and incomplete implementation
 
             # find charging station and charge
 
