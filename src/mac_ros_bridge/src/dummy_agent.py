@@ -30,7 +30,7 @@ class DummyAgent:
         msg.action_type = action_str
         msg.params={}
 
-        rospy.loginfo("Published action %s", msg)
+        rospy.logdebug("Published action %s", msg)
 
         self._pub_generic_action.publish(msg)
 
@@ -40,7 +40,7 @@ class DummyAgent:
         :type msg: RequestAction
         :return:
         """
-        print "DummyAgent::callback", msg
+        rospy.logdebug("DummyAgent::callback %s", str(msg))
         self.publish_action(related_request=msg)
         
 if __name__ == '__main__':

@@ -41,5 +41,4 @@
     <include file="$(find mac_ros_bridge)/launch/dummy_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA6" />
     </include>
-
 </launch>

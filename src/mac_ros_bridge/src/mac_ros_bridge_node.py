@@ -9,8 +9,6 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, 
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
     Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
 
-from diagnostic_msgs.msg import KeyValue
-
 import socket
 import threading
 import time
@@ -18,34 +16,46 @@ import errno
 
 import xml.etree.cElementTree as eT
 
-ADDRESS = ('localhost', 12300)
-RETRY_DELAY = 1.0
-RECV_SIZE = 8192
-
-PASSWORD = "1"
-
-SEPARATOR = b'\0'
 
 class MacRosBridge (threading.Thread):
+    """
+    Proxy server that converts the communication with the Multi-Agent Programming Contest Server 2017
+    to ROS topics
+    """
 
     SOCKET_TIMEOUT = 2 # general socket timeout
+    RETRY_DELAY = 1.0
+    RECV_SIZE = 8192
+    SEPARATOR = b'\0'
 
     def __init__(self, name=None):
         """
-        :param name: agent name
+        :param name: agent name, leave empty to get name from roslaunch
         """
         threading.Thread.__init__(self)
         rospy.loginfo("MacRosBridge::init")
 
-        rospy.init_node('mac_ros_bridge_node', anonymous=True, log_level=rospy.DEBUG)
+        node_name = 'bridge_node_'
+
+        if name:
+            node_name += name
+        rospy.init_node(node_name, anonymous=False, log_level=rospy.DEBUG)
 
         if not name:
-            self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+            self._agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
         else:
-            self.agent_name = name
+            self._agent_name = name
+
+        server_ip = rospy.get_param('~server_ip', 'localhost')
+        server_port = rospy.get_param('~server_port', 12300)
+        self._server_address = (server_ip, server_port)
+
+        self._agent_pw = rospy.get_param('~password', '1')
+
+        rospy.loginfo("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name, self._agent_pw)
 
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-            <message type="auth-request"><auth-request username="test" password="test"/></message>''')
+            <message type="auth-request"><auth-request username="PLACEHOLDER" password="PLACEHOLDER"/></message>''')
         self.message_id = -1
 
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
@@ -74,18 +84,18 @@ class MacRosBridge (threading.Thread):
         :return: bool True for success
         """
         try:
-            rospy.loginfo("Connecting...%s", self.agent_name)
-            self.socket = socket.create_connection(ADDRESS, RETRY_DELAY)
+            rospy.loginfo("Connecting...%s", self._agent_name)
+            self.socket = socket.create_connection(self._server_address, MacRosBridge.RETRY_DELAY)
             self.socket.settimeout(None) # enable blocking mode until simulation starts
             return True
         except OSError as error:
-            rospy.logerr('Error connecting to {}: {}'.format(ADDRESS, error))
+            rospy.logerr('Error connecting to {}: {}'.format(self._server_address, error))
             return False
         except socket.timeout:
-            rospy.logerr('Error connecting to {}: {}'.format(ADDRESS, "timeout"))
+            rospy.logerr('Error connecting to {}: {}'.format(self._server_address, "timeout"))
             return False
         except socket.error as e:
-            rospy.logerr('Error connecting to {}: {}'.format(ADDRESS, e))
+            rospy.logerr('Error connecting to {}: {}'.format(self._server_address, e))
             return False
         
     def reconnect(self):
@@ -97,22 +107,22 @@ class MacRosBridge (threading.Thread):
             self.socket.close()
         except OSError:
             pass
-        time.sleep(RETRY_DELAY)
+        time.sleep(MacRosBridge.RETRY_DELAY)
         rospy.loginfo('Reconnecting...')
         self.socket = None
         while not self.connect():
-            time.sleep(RETRY_DELAY)
+            time.sleep(MacRosBridge.RETRY_DELAY)
         self.authenticate()
         
     def authenticate(self):
         """
         Autheticate on the contest server
         """
-        rospy.loginfo("Autheticate...%s", self.agent_name)
+        rospy.loginfo("Autheticate...%s", self._agent_name)
         auth_element = self.auth.find('auth-request')
-        auth_element.attrib['username'] = self.agent_name
-        auth_element.attrib['password'] = PASSWORD
-        self.socket.send(eT.tostring(self.auth) + SEPARATOR)
+        auth_element.attrib['username'] = self._agent_name
+        auth_element.attrib['password'] = self._agent_pw
+        self.socket.send(eT.tostring(self.auth) + MacRosBridge.SEPARATOR)
         
     def handle_message(self, xml):
         """
@@ -147,7 +157,7 @@ class MacRosBridge (threading.Thread):
         self.message_id = perception.get('id')
         rospy.logdebug("request-action: perception id = %s", self.message_id)
 
-        # TODO add the other publishers
+        # TODO add other publishers
         self._publish_request_action(timestamp=timestamp, perception=perception)
         self._publish_agent(timestamp=timestamp, perception=perception)
         self._publish_team(timestamp=timestamp, perception=perception)
@@ -233,7 +243,9 @@ class MacRosBridge (threading.Thread):
         for key, value in params.iteritems():
             p = eT.SubElement(action, 'p')
             p.text = value
-        self.socket.send(eT.tostring(response) + SEPARATOR)
+
+        rospy.logdebug("Action: " + eT.tostring(response))
+        self.socket.send(eT.tostring(response) + MacRosBridge.SEPARATOR)
 
     def run(self):
         """
@@ -241,13 +253,13 @@ class MacRosBridge (threading.Thread):
         """
         rospy.logdebug("MacRosBridge::run")
         while not self.connect():
-            time.sleep(RETRY_DELAY)
+            time.sleep(MacRosBridge.RETRY_DELAY)
         self.authenticate()
         self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         buffer = b''
         while (not rospy.is_shutdown()):
             try:
-                data = self.socket.recv(RECV_SIZE)
+                data = self.socket.recv(MacRosBridge.RECV_SIZE)
             except socket.timeout:
                 rospy.logerr("socket timeout")
                 self.reconnect()
@@ -269,11 +281,11 @@ class MacRosBridge (threading.Thread):
                 continue
             else:
                 buffer += data
-                index = buffer.find(SEPARATOR)
+                index = buffer.find(MacRosBridge.SEPARATOR)
                 while index != -1:
                     self.handle_message(buffer[0:index].decode())
                     buffer = buffer[index + 1:]
-                    index = buffer.find(SEPARATOR)
+                    index = buffer.find(MacRosBridge.SEPARATOR)
 
     def callback_generic_action(self, msg):
         """
@@ -301,7 +313,7 @@ class MacRosBridge (threading.Thread):
         msg.id = perception.get('id')
         msg.simulation_step = int(perception.find('simulation').get('step'))
         msg.deadline = long(perception.get('deadline'))
-        rospy.loginfo("Request action %s", msg)
+        rospy.logdebug("Request action %s", msg)
         self._pub_request_action.publish(msg)
 
     def _publish_agent(self, timestamp, perception):
@@ -531,47 +543,47 @@ if __name__ == '__main__':
     rospy.logdebug("mac_ros_bridge_node::main")
     try:
         bridge = MacRosBridge().start()
-#     bridge = MacRosBridge("a1").start()
-#     bridge = MacRosBridge("a2").start()
-#     bridge = MacRosBridge("a3").start()
-#     bridge = MacRosBridge("a4").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("a5").start()
-#     bridge = MacRosBridge("a6").start()
-#     bridge = MacRosBridge("a7").start()
-#     bridge = MacRosBridge("a8").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("a9").start()
-#     bridge = MacRosBridge("a10").start()
-#     bridge = MacRosBridge("a11").start()
-#     bridge = MacRosBridge("a12").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("a13").start()
-#     bridge = MacRosBridge("a14").start()
-#     bridge = MacRosBridge("a15").start()
-#     bridge = MacRosBridge("a16").start()
-#     time.sleep(RETRY_DELAY)
-#
-#     bridge = MacRosBridge("b1").start()
-#     bridge = MacRosBridge("b2").start()
-#     bridge = MacRosBridge("b3").start()
-#     bridge = MacRosBridge("b4").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("b5").start()
-#     bridge = MacRosBridge("b6").start()
-#     bridge = MacRosBridge("b7").start()
-#     bridge = MacRosBridge("b8").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("b9").start()
-#     bridge = MacRosBridge("b10").start()
-#     bridge = MacRosBridge("b11").start()
-#     bridge = MacRosBridge("b12").start()
-#     time.sleep(RETRY_DELAY)
-#     bridge = MacRosBridge("b13").start()
-#     bridge = MacRosBridge("b14").start()
-#     bridge = MacRosBridge("b15").start()
-#     bridge = MacRosBridge("b16").start()
-#     time.sleep(RETRY_DELAY)
+        # bridge = MacRosBridge("agentA1").start()
+        # bridge = MacRosBridge("agentA2").start()
+        # bridge = MacRosBridge("agentA3").start()
+        # bridge = MacRosBridge("agentA4").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentA5").start()
+        # bridge = MacRosBridge("agentA6").start()
+        # bridge = MacRosBridge("agentA7").start()
+        # bridge = MacRosBridge("agentA8").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentA9").start()
+        # bridge = MacRosBridge("agentA10").start()
+        # bridge = MacRosBridge("agentA11").start()
+        # bridge = MacRosBridge("agentA12").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentA13").start()
+        # bridge = MacRosBridge("agentA14").start()
+        # bridge = MacRosBridge("agentA15").start()
+        # bridge = MacRosBridge("agentA16").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        #
+        # bridge = MacRosBridge("agentB1").start()
+        # bridge = MacRosBridge("agentB2").start()
+        # bridge = MacRosBridge("agentB3").start()
+        # bridge = MacRosBridge("agentB4").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentB5").start()
+        # bridge = MacRosBridge("agentB6").start()
+        # bridge = MacRosBridge("agentB7").start()
+        # bridge = MacRosBridge("agentB8").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentB9").start()
+        # bridge = MacRosBridge("agentB10").start()
+        # bridge = MacRosBridge("agentB11").start()
+        # bridge = MacRosBridge("agentB12").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
+        # bridge = MacRosBridge("agentB13").start()
+        # bridge = MacRosBridge("agentB14").start()
+        # bridge = MacRosBridge("agentB15").start()
+        # bridge = MacRosBridge("agentB16").start()
+        # time.sleep(MacRosBridge.RETRY_DELAY)
         rospy.spin()
 
     except rospy.ROSInterruptException:
