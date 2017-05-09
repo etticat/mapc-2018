@@ -219,16 +219,16 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
                                                 initial_value=initial_value, create_log=create_log,
                                                 print_updates=print_updates)
 
+        self._facilities = {}
+        self._facility_attribute = facility_attribute
+
+        self._latest_ref_value = None
+
         ref_message_type = get_topic_type(ref_topic)
         if ref_message_type is not None:
             self._sub_ref = rospy.Subscriber(ref_topic, ref_message_type, self.subscription_callback_ref_topic)
         else:
             rospy.logerr("Could not determine message type of: " + topic)
-
-        self._facilities = {}
-        self._facility_attribute = facility_attribute
-
-        self._latest_ref_value = None
 
     def subscription_callback_ref_topic(self, msg):
         self._latest_ref_value = msg
