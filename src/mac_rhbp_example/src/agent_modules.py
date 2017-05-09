@@ -58,6 +58,15 @@ def euclidean_distance(pos1, pos2):
     """
     return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
 
+def get_knowledge_base_tuple_facility_exploration(agent_name, facility):
+    """
+    Simple function to create uniform knowledge tuples for facility exploration
+    :param agent_name: name of the considered agent
+    :param facility: facility name or topic that is explored
+    :return: generate tuple (agent_name, exploration_key)
+    """
+    return agent_name, 'exploring_' + facility
+
 
 class GotoFacilityBehaviour(BehaviourBase):
     '''
@@ -82,6 +91,8 @@ class GotoFacilityBehaviour(BehaviourBase):
         self.__client = KnowledgeBaseClient()
 
         self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction, queue_size=10)
+
+        self._exploration_knowledge = get_knowledge_base_tuple_facility_exploration(self._agent_name, self._facility_topic)
 
         facility_topic_type = get_topic_type(facility_topic)
 
@@ -114,23 +125,17 @@ class GotoFacilityBehaviour(BehaviourBase):
 
         return facility
 
-    def get_knowledge_base_tuple(self):
-        return self._agent_name, 'exploring_' + self._facility_topic
-
     def start(self):
         rospy.loginfo(self._agent_name + "::" + self._name + " enabled")
 
         self._selected_facility = self._select_facility()
 
-        rospy.loginfo(self._agent_name + "::" + self._name + " selected facility: \n" + str(self._selected_facility))
+        rospy.loginfo(self._agent_name + "::" + self._name + " selected facility: " + str(self._selected_facility.name))
 
-        # This is commented in order to avoid frequent starting and stopping cycles with new randomly selected destinations
-        self.__client.update(self.get_knowledge_base_tuple() + ('*',), self.get_knowledge_base_tuple() + ('true',))
+        # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
+        self.__client.update(self._exploration_knowledge + ('*',), self._exploration_knowledge + ('false',), )
 
         self.do_step() #this is important to directly answer the request as in the start() base implementation
-
-    def stop(self):
-        self.__client.update(self.get_knowledge_base_tuple()+ ('*',), self.get_knowledge_base_tuple() + ('false',),)
 
     def do_step(self):
 
@@ -155,16 +160,13 @@ class FinishExplorationBehaviour(BehaviourBase):
 
         self._facility_topic = facility_topic
 
+        self._exploration_knowledge = get_knowledge_base_tuple_facility_exploration(self._agent_name,
+                                                                                    self._facility_topic)
         self.__client = KnowledgeBaseClient()
-
-        self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction, queue_size=10)
-
-    def get_knowledge_base_tuple(self):
-        return self._agent_name, 'exploring_' + self._facility_topic
 
     def do_step(self):
         # exloration done
-        self.__client.update(self.get_knowledge_base_tuple() + ('*',), self.get_knowledge_base_tuple() + ('true',))
+        self.__client.update(self._exploration_knowledge + ('*',), self._exploration_knowledge + ('true',))
 
 
 class GenericActionBehaviour(BehaviourBase):
