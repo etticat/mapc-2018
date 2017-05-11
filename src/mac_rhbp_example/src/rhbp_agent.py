@@ -12,7 +12,7 @@ from behaviour_components.sensors import SimpleTopicSensor
 
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
-from agent_modules import GotoFacilityBehaviour, GenericActionBehaviour, ClosestFacilityDistanceSensor, \
+from agent_common.agent_modules import GotoFacilityBehaviour, GenericActionBehaviour, ClosestFacilityDistanceSensor, \
     get_bridge_topic_prefix, FinishExplorationBehaviour, get_knowledge_base_tuple_facility_exploration
 
 
