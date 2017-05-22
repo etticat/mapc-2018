@@ -362,6 +362,21 @@ class MacRosBridge (threading.Thread):
             items.append(item)
         return items
 
+    def _get_job_items(self, elem):
+        """
+        Extract required job items from an xml element
+        :param elem: xml Element
+        :return: list of Item
+        """
+        items = []
+
+        for xml_item in elem.findall('required'):
+            item = Item()
+            item.name = xml_item.get('name')
+            item.amount = int(xml_item.get('amount'))
+            items.append(item)
+        return items
+
 
     def _publish_team(self, timestamp, perception):
         """
@@ -466,16 +481,14 @@ class MacRosBridge (threading.Thread):
         job.id = elem.get('id')
         job.storage_name = elem.get('storage')
         job.reward = int(elem.get('reward'))
-        job.begin = int(elem.get('begin'))
+        job.start = int(elem.get('start'))
         job.end = int(elem.get('end'))
         fine = elem.get('fine')
         if fine:
             job.fine = int(fine)
-        job.items = self._get_items(elem=elem)
+        job.items = self._get_job_items(elem=elem)
 
-        return  job
-
-
+        return job
 
     def _publish_jobs(self, timestamp, perception):
         """
@@ -485,20 +498,26 @@ class MacRosBridge (threading.Thread):
         :type perception: eT  ElementTree
         """
 
+        if self._pub_posted_job.get_num_connections() > 0:
+            for xml_item in perception.findall('posted'):
+                job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+
+                self._pub_posted_job.publish(job)
+
         if self._pub_priced_job.get_num_connections() > 0:
-            for xml_item in perception.findall('pricedJob'):
+            for xml_item in perception.findall('job'):
                 job = self._get_common_job(elem=xml_item, timestamp=timestamp)
 
                 self._pub_priced_job.publish(job)
 
-        if self._pub_priced_job.get_num_connections() > 0:
+        if self._pub_mission.get_num_connections() > 0:
             for xml_item in perception.findall('mission'):
                 job = self._get_common_job(elem=xml_item, timestamp=timestamp)
 
                 self._pub_mission.publish(job)
 
         if self._pub_auction_job.get_num_connections() > 0:
-            for xml_item in perception.findall('auctionJob'):
+            for xml_item in perception.findall('auction'):
                 job = AuctionJob()
                 job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
 
@@ -506,13 +525,16 @@ class MacRosBridge (threading.Thread):
                 if lowest_bid:
                     job.lowest_bid= int(lowest_bid)
 
-                job.max_bid = int(xml_item.get('maxBid'))
+                # TODO not sure if this is used/available at all
+                max_bid = xml_item.get('maxBid')
+                if max_bid:
+                    job.max_bid = max_bid
 
                 auction_time = xml_item.get('auctionTime')
                 if auction_time:
                     job.auction_time = int(auction_time)
 
-                self._pub_priced_job.publish(job)
+                self._pub_auction_job.publish(job)
 
     def _publish_resources(self, timestamp, perception):
         """
@@ -521,22 +543,19 @@ class MacRosBridge (threading.Thread):
         :param perception: full perception object
         :type perception: eT  ElementTree
         """
-
-        #TODO
-
         if self._pub_resource.get_num_connections() > 0:
-            for xml_item in perception.findall('resource'):
+            for xml_item in perception.findall('resourceNode'):
                 rospy.logdebug("Resource %s", eT.tostring(xml_item))
-                shop = Resource()
-                shop.timestamp = timestamp
-                shop.name = xml_item.get('name')
-                shop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
-                restock = xml_item.get('restock')
-                if restock:  # TODO not always included in server message, potential bug
-                    shop.restock = int(restock)
-                shop.items = self._get_items(elem=xml_item)
-                self._pub_shop.publish(shop)
+                resource = Resource()
+                resource.timestamp = timestamp
+                resource.name = xml_item.get('name')
+                resource.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
 
+                item = Item()
+                item.name = xml_item.get('resource')
+                item.amount = 1 # TODO may use another number her
+                resource.items.append(item)
+                self._pub_resource.publish(resource)
 
 
 if __name__ == '__main__':

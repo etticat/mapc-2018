@@ -64,10 +64,10 @@ add_message_files(
   Tool.msg
   Workshop.msg
   Entity.msg
-  Resource.msg
   SimStart.msg
   SimEnd.msg
   Bye.msg
+  Resource.msg
 )
 
 ## Generate services in the 'srv' folder

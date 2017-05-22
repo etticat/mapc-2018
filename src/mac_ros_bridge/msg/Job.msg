@@ -5,4 +5,4 @@ uint32 start
 uint32 end
 uint32 fine
 uint32 reward
-Item items
+Item[] items
