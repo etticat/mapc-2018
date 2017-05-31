@@ -97,7 +97,7 @@ class MacRosBridge (threading.Thread):
         except socket.error as e:
             rospy.logerr('Error connecting to {}: {}'.format(self._server_address, e))
             return False
-        
+
     def reconnect(self):
         """
         Reconnect to contest server
@@ -113,7 +113,7 @@ class MacRosBridge (threading.Thread):
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
         self.authenticate()
-        
+
     def authenticate(self):
         """
         Autheticate on the contest server
@@ -123,7 +123,7 @@ class MacRosBridge (threading.Thread):
         auth_element.attrib['username'] = self._agent_name
         auth_element.attrib['password'] = self._agent_pw
         self.socket.send(eT.tostring(self.auth) + MacRosBridge.SEPARATOR)
-        
+
     def handle_message(self, xml):
         """
         Handle server messages
@@ -172,18 +172,18 @@ class MacRosBridge (threading.Thread):
         Handle sim end message
         :param message: xml message
         """
-        ranking = message.find('sim-result').get('ranking')
-        score = message.find('sim-result').get('score')
+        timestamp = long(message.get('timestamp'))
+        sim_result = message.find('sim-result')
+        ranking = int(sim_result.get('ranking'))
+        score = int(sim_result.get('score'))
 
-        rospy.loginfo("ranking= %s", ranking)
-        rospy.loginfo("score= %s", score)
-
-        eT.dump(message)
+        rospy.loginfo("ranking= %d", ranking)
+        rospy.loginfo("score= %d", score)
 
         msg = SimEnd()
         msg.ranking = ranking
         msg.score = score
-        # TODO add more information here from message content
+        msg.timestamp = timestamp
         self._pub_sim_end.publish(msg)
 
     def _sim_start(self, message):
@@ -501,23 +501,23 @@ class MacRosBridge (threading.Thread):
         if self._pub_posted_job.get_num_connections() > 0:
             for xml_item in perception.findall('posted'):
                 job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-
                 self._pub_posted_job.publish(job)
 
         if self._pub_priced_job.get_num_connections() > 0:
             for xml_item in perception.findall('job'):
                 job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-
                 self._pub_priced_job.publish(job)
 
         if self._pub_mission.get_num_connections() > 0:
             for xml_item in perception.findall('mission'):
                 job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-
                 self._pub_mission.publish(job)
 
         if self._pub_auction_job.get_num_connections() > 0:
             for xml_item in perception.findall('auction'):
+                rospy.loginfo("Auction")
+                eT.dump(xml_item)
+
                 job = AuctionJob()
                 job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
 
