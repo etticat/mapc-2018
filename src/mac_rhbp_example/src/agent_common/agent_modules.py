@@ -215,11 +215,10 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
         :param create_log: see :class:PassThroughTopicSensor
         :param print_updates: see :class:PassThroughTopicSensor
         """
+        self._facilities = {}
         super(AbstractFacilitySensor, self).__init__(name=name, topic=topic, message_type=message_type,
                                                 initial_value=initial_value, create_log=create_log,
                                                 print_updates=print_updates)
-
-        self._facilities = {}
         self._facility_attribute = facility_attribute
 
         self._latest_ref_value = None
@@ -309,9 +308,9 @@ class ClosestFacilityDistanceSensor(ClosestFacilitySensor):
     def _reduce_facility(self, facilities, ref_value):
         """
         Overwrite the method for returning the distance to the closest facility instead of the facility itself
-        :param facilities: 
-        :param ref_value: 
-        :return: 
+        :param facilities:
+        :param ref_value:
+        :return:
         """
         closest_facility = super(ClosestFacilityDistanceSensor, self)._reduce_facility(facilities, ref_value)
 
