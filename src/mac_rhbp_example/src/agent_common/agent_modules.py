@@ -5,6 +5,8 @@ import math
 import sys
 from abc import ABCMeta, abstractmethod
 
+from builtins import list
+
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.activators import MultiSensorCondition
 from behaviour_components.sensors import PassThroughTopicSensor
@@ -13,7 +15,7 @@ from utils.ros_helpers import get_topic_type
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import Shop, GenericAction, ChargingStation, Position
+from mac_ros_bridge.msg import Shop, GenericAction, ChargingStation, Position, Job
 
 def get_bridge_topic_prefix(agent_name):
     """
@@ -47,6 +49,17 @@ def action_goto(facility_name, publisher):
     action.params = [KeyValue("Facility", facility_name)]
     publisher.publish(action)
 
+def action_bidForJob(job_name, publisher):
+    """
+    Specific "bidForJob" action publishing helper function
+    :param job_name: name of the job we want to bid on
+    :param publisher: publisher to use
+    """
+    action = GenericAction()
+    action.action_type = "bidForJob"
+    action.params = [KeyValue("Job", job_name)]
+    publisher.publish(action)
+
 def euclidean_distance(pos1, pos2):
     """
     Calculate the euclidean distance between two positions
@@ -67,6 +80,15 @@ def get_knowledge_base_tuple_facility_exploration(agent_name, facility):
     """
     return agent_name, 'exploring_' + facility
 
+
+def get_knowledge_base_tuple_job_rating(agent_name, job):
+    """
+    Simple function to create uniform knowledge tuples for job_rating
+    :param agent_name: name of the considered agent
+    :param job: job name or topic that is explored
+    :return: generate tuple (agent_name, exploration_key)
+    """
+    return agent_name, 'exploring_' + job
 
 class GotoFacilityBehaviour(BehaviourBase):
     '''
@@ -392,3 +414,56 @@ class DistanceCondition(MultiSensorCondition):
     def _reduceSatisfaction(self):
         # just return the first one, since it will always be the same
         return self._sensorSatisfactions[self._sensors[0]]
+
+
+class RateJobBehaviour(BehaviourBase):
+    """
+    Behaviour that rates a job and decides if a job should be accepted or not
+    """
+
+    def __init__(self, agent_name, job_topic,  **kwargs):
+        '''
+        Constructor
+        '''
+        super(RateJobBehaviour, self) \
+            .__init__(requires_execution_steps=True, **kwargs)
+
+        self._agent_name = agent_name
+
+        self.job_topic = job_topic
+
+        self._jobs = {}
+
+        self._job_picked= None
+
+        self.__client = KnowledgeBaseClient()
+
+        self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction, queue_size=10)
+
+        self._exploration_knowledge = get_knowledge_base_tuple_job_rating(self._agent_name, self.job_topic)
+
+        job_topic_type = get_topic_type(job_topic)
+
+        if job_topic_type:
+            rospy.Subscriber(job_topic, job_topic_type, self._callback_jobs)
+        else:
+            rospy.logerr(self._agent_name + "::" +self._name + ": Failed to determine topic type of " + job_topic)
+
+        def _callback_jobs(self, msg):
+            # Stores all available jobs in a dict
+            self._jobs[msg.name] = msg
+
+        def check_for_jobs(self):
+            if self._job_picked:
+                rospy.loginfo(self._agent_name + "::" +self._name + " to "+ self._job_picked.name)
+                action_bidForJob(job_name=self._job_picked.name, publisher=self._pub_generic_action)
+            else:
+                rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
+                action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
+
+        def _pick_job(self):
+            """
+            Pick the job we want to execute. 
+            return: job
+            """
+            _, job = random.choice(list(self._jobs.items()))
