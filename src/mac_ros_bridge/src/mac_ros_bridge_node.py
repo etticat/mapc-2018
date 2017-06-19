@@ -63,6 +63,7 @@ class MacRosBridge (threading.Thread):
         self._pub_team = rospy.Publisher('/team', Team, queue_size=10, latch=True)
         self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
         self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
+        self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=True)
         self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
         self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
         self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
@@ -433,6 +434,22 @@ class MacRosBridge (threading.Thread):
                     shop.restock = int(restock)
                 shop.items = self._get_items(elem=xml_item)
                 self._pub_shop.publish(shop)
+
+
+        if self._pub_item.get_num_connections() > 0:
+            for xml_item in perception.iter('shop'):
+                for xml_item_child in xml_item.iter('item'):
+                    item = Item()
+                    amount = xml_item_child.get('amount')
+                    if amount:
+                        item.amount = int(amount)
+                    item.name = xml_item_child.get('name')
+                    price = xml_item_child.get('price')
+                    if price:
+                        item.price = int(price)
+                    #shop.items = self._get_items(elem=xml_item)
+                    self._pub_item.publish(item)
+
 
         if self._pub_workshop.get_num_connections() > 0:
             for xml_item in perception.findall('workshop'):

@@ -449,21 +449,21 @@ class RateJobBehaviour(BehaviourBase):
         else:
             rospy.logerr(self._agent_name + "::" +self._name + ": Failed to determine topic type of " + job_topic)
 
-        def _callback_jobs(self, msg):
-            # Stores all available jobs in a dict
-            self._jobs[msg.name] = msg
+    def _callback_jobs(self, msg):
+        # Stores all available jobs in a dict
+        self._jobs[msg.name] = msg
 
-        def check_for_jobs(self):
-            if self._job_picked:
-                rospy.loginfo(self._agent_name + "::" +self._name + " to "+ self._job_picked.name)
-                action_bidForJob(job_name=self._job_picked.name, publisher=self._pub_generic_action)
-            else:
-                rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
-                action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
+    def check_for_jobs(self):
+        if self._job_picked:
+            rospy.loginfo(self._agent_name + "::" +self._name + " to "+ self._job_picked.name)
+            action_bidForJob(job_name=self._job_picked.name, publisher=self._pub_generic_action)
+        else:
+            rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
+            action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
 
-        def _pick_job(self):
-            """
-            Pick the job we want to execute. 
-            return: job
-            """
-            _, job = random.choice(list(self._jobs.items()))
+    def _pick_job(self):
+        """
+        Pick the job we want to execute. 
+        return: job
+        """
+        _, job = random.choice(list(self._jobs.items()))
