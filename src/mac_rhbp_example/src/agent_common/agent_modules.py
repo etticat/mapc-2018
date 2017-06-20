@@ -237,11 +237,11 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
         :param create_log: see :class:PassThroughTopicSensor
         :param print_updates: see :class:PassThroughTopicSensor
         """
+        self._facilities = {}
         super(AbstractFacilitySensor, self).__init__(name=name, topic=topic, message_type=message_type,
                                                 initial_value=initial_value, create_log=create_log,
                                                 print_updates=print_updates)
 
-        self._facilities = {}
         self._facility_attribute = facility_attribute
 
         self._latest_ref_value = None

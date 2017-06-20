@@ -437,10 +437,12 @@ class MacRosBridge (threading.Thread):
 
 
         if self._pub_item.get_num_connections() > 0:
+            amount_items = []
             for xml_item in perception.iter('shop'):
                 for xml_item_child in xml_item.iter('item'):
                     item = Item()
                     amount = xml_item_child.get('amount')
+                    amount_items.append(int(xml_item_child.get('amount')))
                     if amount:
                         item.amount = int(amount)
                     item.name = xml_item_child.get('name')
@@ -448,7 +450,8 @@ class MacRosBridge (threading.Thread):
                     if price:
                         item.price = int(price)
                     #shop.items = self._get_items(elem=xml_item)
-                    self._pub_item.publish(item)
+                sum(amount_items)
+                self._pub_item.publish(item)
 
 
         if self._pub_workshop.get_num_connections() > 0:
