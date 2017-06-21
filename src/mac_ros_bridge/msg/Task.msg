@@ -1,0 +1,9 @@
+string agent
+string facility
+string action
+string destination
+string further_action
+string item
+uint32 amount
+uint32 steps
+uint32 rating

@@ -7,7 +7,7 @@ import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
+    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool
 
 import socket
 import threading
@@ -64,6 +64,7 @@ class MacRosBridge (threading.Thread):
         self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
         self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
         self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=True)
+        self._pub_tool = rospy.Publisher('/tool', Tool, queue_size=10, latch=True)
         self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
         self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
         self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
@@ -133,7 +134,7 @@ class MacRosBridge (threading.Thread):
         """
         message = eT.fromstring(xml)
         typ = message.get('type')
-
+        #print(xml)
         if typ == 'request-action':
             self._request_action(message=message)
         elif typ == 'sim-start':
@@ -205,8 +206,24 @@ class MacRosBridge (threading.Thread):
         msg.steps = steps
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
+        msg.tools = list(msg.tools)
         #TODO not yet available in the msg
         #msg.proximity = simulation.get('proximity')
+
+        items = simulation.findall('item')
+        for item in items:
+            # print item.get('name'), item.get('volume')
+            for tool_item in item:
+                print tool_item.tag
+                if tool_item.tag != "tool":
+                    print "\t tool:" + tool_item.get('amount'), tool_item.get('name')
+                    msg.tools = msg.tools.append(str(tool_item.get('amount')) + " " + str(tool_item.get('name')))
+                else:
+                    print tool_item.get('name')
+                    print(type(msg.team))
+                    print(type(msg.tools))
+                    print(msg.tools)
+                    msg.tools = msg.tools.append(str(tool_item.get('amount')) + " ")
 
         xml_role = simulation.find('role')
         role = Role()
@@ -216,7 +233,12 @@ class MacRosBridge (threading.Thread):
         role.max_load = int(xml_role.get('load'))
         msg.role = role
         #TODO add more information here from message content
-        #Not yet included are Products and items
+
+        for xml_item_info in simulation:
+            for xml_item_assemble_info in xml_item_info.iter('item'):
+                item_tools = Tool()
+                item_tools.name = xml_item_assemble_info.get('name')
+                self._pub_tool.publish(item_tools)
 
         self._pub_sim_start.publish(msg)
 
