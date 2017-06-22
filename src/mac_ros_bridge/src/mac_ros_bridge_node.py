@@ -7,7 +7,7 @@ import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool
+    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool, Product
 
 import socket
 import threading
@@ -206,24 +206,31 @@ class MacRosBridge (threading.Thread):
         msg.steps = steps
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
-        msg.tools = list(msg.tools)
+        #msg.tools = list(msg.tools)
         #TODO not yet available in the msg
         #msg.proximity = simulation.get('proximity')
-
+        products = []
         items = simulation.findall('item')
         for item in items:
-            # print item.get('name'), item.get('volume')
+            product = Product()
+            product.name = item.get('name')
+            product.volume = int(item.get('volume'))
+            items = []
+            tools = []
             for tool_item in item:
-                print tool_item.tag
                 if tool_item.tag != "tool":
-                    print "\t tool:" + tool_item.get('amount'), tool_item.get('name')
-                    msg.tools = msg.tools.append(str(tool_item.get('amount')) + " " + str(tool_item.get('name')))
+                    item = Item()
+                    item.name = tool_item.get('name')
+                    item.amount = int(tool_item.get('amount'))
+                    items.append(item)
                 else:
-                    print tool_item.get('name')
-                    print(type(msg.team))
-                    print(type(msg.tools))
-                    print(msg.tools)
-                    msg.tools = msg.tools.append(str(tool_item.get('amount')) + " ")
+                    tool = Tool()
+                    tool.name = tool_item.text
+                    tools.append(tool)
+            product.consumed_items = items
+            product.required_tools = tools
+            products.append(product)
+        msg.products = products
 
         xml_role = simulation.find('role')
         role = Role()
@@ -233,12 +240,6 @@ class MacRosBridge (threading.Thread):
         role.max_load = int(xml_role.get('load'))
         msg.role = role
         #TODO add more information here from message content
-
-        for xml_item_info in simulation:
-            for xml_item_assemble_info in xml_item_info.iter('item'):
-                item_tools = Tool()
-                item_tools.name = xml_item_assemble_info.get('name')
-                self._pub_tool.publish(item_tools)
 
         self._pub_sim_start.publish(msg)
 
