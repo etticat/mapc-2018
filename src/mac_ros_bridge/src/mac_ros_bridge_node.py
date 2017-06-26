@@ -7,7 +7,7 @@ import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
+    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool, Product
 
 import socket
 import threading
@@ -63,6 +63,8 @@ class MacRosBridge (threading.Thread):
         self._pub_team = rospy.Publisher('/team', Team, queue_size=10, latch=True)
         self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
         self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
+        self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=True)
+        self._pub_tool = rospy.Publisher('/tool', Tool, queue_size=10, latch=True)
         self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
         self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
         self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
@@ -132,7 +134,7 @@ class MacRosBridge (threading.Thread):
         """
         message = eT.fromstring(xml)
         typ = message.get('type')
-
+        #print(xml)
         if typ == 'request-action':
             self._request_action(message=message)
         elif typ == 'sim-start':
@@ -204,8 +206,31 @@ class MacRosBridge (threading.Thread):
         msg.steps = steps
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
+        #msg.tools = list(msg.tools)
         #TODO not yet available in the msg
         #msg.proximity = simulation.get('proximity')
+        products = []
+        items = simulation.findall('item')
+        for item in items:
+            product = Product()
+            product.name = item.get('name')
+            product.volume = int(item.get('volume'))
+            items = []
+            tools = []
+            for tool_item in item:
+                if tool_item.tag != "tool":
+                    item = Item()
+                    item.name = tool_item.get('name')
+                    item.amount = int(tool_item.get('amount'))
+                    items.append(item)
+                else:
+                    tool = Tool()
+                    tool.name = tool_item.text
+                    tools.append(tool)
+            product.consumed_items = items
+            product.required_tools = tools
+            products.append(product)
+        msg.products = products
 
         xml_role = simulation.find('role')
         role = Role()
@@ -215,7 +240,6 @@ class MacRosBridge (threading.Thread):
         role.max_load = int(xml_role.get('load'))
         msg.role = role
         #TODO add more information here from message content
-        #Not yet included are Products and items
 
         self._pub_sim_start.publish(msg)
 
@@ -433,6 +457,25 @@ class MacRosBridge (threading.Thread):
                     shop.restock = int(restock)
                 shop.items = self._get_items(elem=xml_item)
                 self._pub_shop.publish(shop)
+
+
+        if self._pub_item.get_num_connections() > 0:
+            amount_items = []
+            for xml_item in perception.iter('shop'):
+                for xml_item_child in xml_item.iter('item'):
+                    item = Item()
+                    amount = xml_item_child.get('amount')
+                    amount_items.append(int(xml_item_child.get('amount')))
+                    if amount:
+                        item.amount = int(amount)
+                    item.name = xml_item_child.get('name')
+                    price = xml_item_child.get('price')
+                    if price:
+                        item.price = int(price)
+                    #shop.items = self._get_items(elem=xml_item)
+                sum(amount_items)
+                self._pub_item.publish(item)
+
 
         if self._pub_workshop.get_num_connections() > 0:
             for xml_item in perception.findall('workshop'):
