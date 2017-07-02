@@ -46,7 +46,7 @@ class MacRosBridge (threading.Thread):
         else:
             self._agent_name = name
 
-        server_ip = rospy.get_param('~server_ip', 'localhost')
+        server_ip = rospy.get_param('~server_ip', 'localhost') #TODO Du Idiot !Change to localhost again !
         server_port = rospy.get_param('~server_port', 12300)
         self._server_address = (server_ip, server_port)
 
@@ -225,7 +225,7 @@ class MacRosBridge (threading.Thread):
                     items.append(item)
                 else:
                     tool = Tool()
-                    tool.name = tool_item.text
+                    tool.name = tool_item.get('name')
                     tools.append(tool)
             product.consumed_items = items
             product.required_tools = tools
