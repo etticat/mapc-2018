@@ -238,6 +238,12 @@ class MacRosBridge (threading.Thread):
         role.name = xml_role.get('name')
         role.max_battery = int(xml_role.get('battery'))
         role.max_load = int(xml_role.get('load'))
+        tools = []
+        for role_tool in xml_role.findall('tool'):
+            tool = Tool()
+            tool.name = role_tool.get('name')
+            tools.append(tool)
+        role.tools = tools
         msg.role = role
         #TODO add more information here from message content
 
