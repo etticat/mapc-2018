@@ -4,6 +4,9 @@ string action
 string destination
 string further_action
 string item
+string job_id
+string part_of
 uint32 amount
 uint32 steps
 uint32 rating
+string[] required_tools
