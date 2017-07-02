@@ -355,6 +355,9 @@ class MacRosBridge (threading.Thread):
             msg.charge = int(agent_self.get('charge'))
             msg.load = int(agent_self.get('load'))
             msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
+            for agent_self_action in agent_self.iter('action'):
+                msg.last_action = agent_self_action.get('result')
+                msg.last_action_result = agent_self_action.get('type')
             #msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
 
             #msg.items = self._get_items(elem=agent_self)
@@ -529,6 +532,8 @@ class MacRosBridge (threading.Thread):
                 storage.used_capacity = int(xml_item.get('usedCapacity'))
                 storage.items = self._get_items(elem=xml_item)
                 self._pub_storage.publish(storage)
+
+
 
     def _get_common_job(self, elem, timestamp):
         """
