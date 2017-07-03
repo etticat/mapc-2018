@@ -357,10 +357,27 @@ class MacRosBridge (threading.Thread):
             msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
             #msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
 
-            msg.items = self._get_items(elem=agent_self)
+            #msg.items = self._get_items(elem=agent_self)
+            msg.items = self._get_items_of_agent(elem=agent_self)
 
             self._pub_agent.publish(msg)
 
+    def _get_items_of_agent(self,elem):
+
+        """
+        Extract Items from an agent xml element
+        :param elem: agent xml Element
+        :return: list of Item
+        """
+        items = []
+
+        for xml_item in elem.findall('items'):
+            item = Item()
+            item.name = xml_item.get('name')
+            item.amount = int(xml_item.get('amount'))
+
+            items.append(item)
+        return items
     def _get_items(self, elem):
         """
         Extract Items from an xml element
