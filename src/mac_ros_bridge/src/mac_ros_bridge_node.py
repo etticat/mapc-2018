@@ -388,7 +388,9 @@ class MacRosBridge (threading.Thread):
         for xml_item in elem.findall('item'):
             item = Item()
             item.name = xml_item.get('name')
-            item.amount = int(xml_item.get('amount'))
+            amount = xml_item.get('amount')
+            if amount:
+                item.amount = int(amount)
             price = xml_item.get('price')
             if price: #this is not always available
                 item.price = int(price)
