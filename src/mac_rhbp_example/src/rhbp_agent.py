@@ -41,6 +41,10 @@ class RhbpAgent:
 
         rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
 
+        rospy.Subscriber(self._agent_topic_prefix +"generic_action", GenericAction, self._callback_generic_action)
+
+        self._received_action_response = False
+
     def _sim_start_callback(self, msg):
         """
         here we could also evaluate the msg in order to initialize depending on the role etc.
@@ -150,6 +154,14 @@ class RhbpAgent:
             # TODO more ideas
             # goal/sensor for number of visited facilities? (for this we could actually incorporate SO in order to exhibit patrolling using pheromones)
 
+    def _callback_generic_action(self, msg):
+        """
+        ROS callback for generic actions
+        :param msg: ros message
+        :type msg: GenericAction
+        """
+        self._received_action_response = True
+
     def _sim_end_callback(self, msg):
         """
         :param msg:  the message
@@ -172,10 +184,18 @@ class RhbpAgent:
         :type msg: RequestAction
         :return:
         """
+        start_time = rospy.get_rostime()
         rospy.logdebug("RhbpAgent::callback %s", msg)
 
-        self._manager.step()
-        # action send is finally triggered by a selected behaviour
+        self._received_action_response = False
+
+        # self._received_action_response is set to True if a generic action response was received (send by any behaviour)
+        while not self._received_action_response:
+            self._manager.step()
+            # action send is finally triggered by a selected behaviour
+
+        duration = rospy.get_rostime() - start_time
+        rospy.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
 
 if __name__ == '__main__':
