@@ -239,7 +239,6 @@ class MacRosBridge (threading.Thread):
         role.max_load = int(xml_role.get('load'))
         msg.role = role
         #TODO add more information here from message content
-        #Not yet included are Products and items
 
         self._pub_sim_start.publish(msg)
 
