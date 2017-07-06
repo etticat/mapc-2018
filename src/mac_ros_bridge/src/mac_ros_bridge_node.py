@@ -7,7 +7,7 @@ import rospy
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
     ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd
+    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool, Product
 
 import socket
 import threading
@@ -63,6 +63,8 @@ class MacRosBridge (threading.Thread):
         self._pub_team = rospy.Publisher('/team', Team, queue_size=10, latch=True)
         self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
         self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
+        self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=True)
+        self._pub_tool = rospy.Publisher('/tool', Tool, queue_size=10, latch=True)
         self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
         self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
         self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
@@ -206,6 +208,28 @@ class MacRosBridge (threading.Thread):
         msg.map = simulation.get('map')
         #TODO not yet available in the msg
         #msg.proximity = simulation.get('proximity')
+        products = []
+        items = simulation.findall('item')
+        for item in items:
+            product = Product()
+            product.name = item.get('name')
+            product.volume = int(item.get('volume'))
+            items = []
+            tools = []
+            for tool_item in item:
+                if tool_item.tag != "tool":
+                    item = Item()
+                    item.name = tool_item.get('name')
+                    item.amount = int(tool_item.get('amount'))
+                    items.append(item)
+                else:
+                    tool = Tool()
+                    tool.name = tool_item.get('name')
+                    tools.append(tool)
+            product.consumed_items = items
+            product.required_tools = tools
+            products.append(product)
+        msg.products = products
 
         xml_role = simulation.find('role')
         role = Role()
@@ -333,9 +357,26 @@ class MacRosBridge (threading.Thread):
             msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
             #msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
 
-            msg.items = self._get_items(elem=agent_self)
+            msg.items = self._get_items_of_agent(elem=agent_self)
 
             self._pub_agent.publish(msg)
+
+    def _get_items_of_agent(self,elem):
+
+        """
+        Extract Items from an agent xml element
+        :param elem: agent xml Element
+        :return: list of Item
+        """
+        items = []
+
+        for xml_item in elem.findall('items'):
+            item = Item()
+            item.name = xml_item.get('name')
+            item.amount = int(xml_item.get('amount'))
+
+            items.append(item)
+        return items
 
     def _get_items(self, elem):
         """
@@ -433,6 +474,25 @@ class MacRosBridge (threading.Thread):
                     shop.restock = int(restock)
                 shop.items = self._get_items(elem=xml_item)
                 self._pub_shop.publish(shop)
+
+	#TODO could be combined with the former loop
+        if self._pub_item.get_num_connections() > 0:
+            amount_items = []
+            for xml_item in perception.iter('shop'):
+                for xml_item_child in xml_item.iter('item'):
+                    item = Item()
+                    amount = xml_item_child.get('amount')
+                    amount_items.append(int(xml_item_child.get('amount')))
+                    if amount:
+                        item.amount = int(amount)
+                    item.name = xml_item_child.get('name')
+                    price = xml_item_child.get('price')
+                    if price:
+                        item.price = int(price)
+                    #shop.items = self._get_items(elem=xml_item)
+                sum(amount_items)
+                self._pub_item.publish(item)
+
 
         if self._pub_workshop.get_num_connections() > 0:
             for xml_item in perception.findall('workshop'):
