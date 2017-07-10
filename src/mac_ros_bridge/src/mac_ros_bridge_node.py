@@ -356,11 +356,11 @@ class MacRosBridge (threading.Thread):
             msg.load = int(agent_self.get('load'))
             msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
             for agent_self_action in agent_self.iter('action'):
-                msg.last_action = agent_self_action.get('result')
-                msg.last_action_result = agent_self_action.get('type')
+
+                msg.last_action = agent_self_action.get('type')
+                msg.last_action_result = agent_self_action.get('result')
             #msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
 
-            #msg.items = self._get_items(elem=agent_self)
             msg.items = self._get_items_of_agent(elem=agent_self)
 
             self._pub_agent.publish(msg)
@@ -381,6 +381,7 @@ class MacRosBridge (threading.Thread):
 
             items.append(item)
         return items
+
     def _get_items(self, elem):
         """
         Extract Items from an xml element
@@ -392,7 +393,9 @@ class MacRosBridge (threading.Thread):
         for xml_item in elem.findall('item'):
             item = Item()
             item.name = xml_item.get('name')
-            item.amount = int(xml_item.get('amount'))
+            amount = xml_item.get('amount')
+            if amount:
+                item.amount = int(amount)
             price = xml_item.get('price')
             if price: #this is not always available
                 item.price = int(price)
@@ -478,7 +481,7 @@ class MacRosBridge (threading.Thread):
                 shop.items = self._get_items(elem=xml_item)
                 self._pub_shop.publish(shop)
 
-
+	#TODO could be combined with the former loop
         if self._pub_item.get_num_connections() > 0:
             amount_items = []
             for xml_item in perception.iter('shop'):
