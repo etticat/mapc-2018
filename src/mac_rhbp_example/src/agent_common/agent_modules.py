@@ -3,7 +3,7 @@ import rospy
 import random
 import math
 import sys
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.activators import MultiSensorCondition
@@ -201,7 +201,6 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
     """
     A base class for all sensor implementations that are selecting a facility from a topic based on a reference topic (other facility or agent..)
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None, create_log=False, print_updates=False):
         """
