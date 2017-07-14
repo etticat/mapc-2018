@@ -166,7 +166,7 @@ class MacRosBridge (threading.Thread):
         self._publish_entity(timestamp=timestamp, perception=perception)
         self._publish_facilities(timestamp=timestamp, perception=perception)
         self._publish_jobs(timestamp=timestamp, perception=perception)
-        self._publish_resources(timestamp=timestamp, perception=perception)
+        #self._publish_resources(timestamp=timestamp, perception=perception)
         # self.send(action_type="skip") # can be enabled for dummy answers
 
     def _sim_end(self, message):
@@ -589,8 +589,8 @@ class MacRosBridge (threading.Thread):
 
         if self._pub_auction_job.get_num_connections() > 0:
             for xml_item in perception.findall('auction'):
-                rospy.loginfo("Auction")
-                eT.dump(xml_item)
+                #rospy.loginfo("Auction")
+                #eT.dump(xml_item)
 
                 job = AuctionJob()
                 job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
@@ -608,18 +608,18 @@ class MacRosBridge (threading.Thread):
                 if auction_time:
                     job.auction_time = int(auction_time)
 
-                self._pub_auction_job.publish(job)
-
-    def _publish_resources(self, timestamp, perception):
-        """
-        :param timestamp: message timestamp
-        :type timestamp: int
-        :param perception: full perception object
-        :type perception: eT  ElementTree
-        """
-        if self._pub_resource.get_num_connections() > 0:
-            for xml_item in perception.findall('resourceNode'):
-                rospy.logdebug("Resource %s", eT.tostring(xml_item))
+                    self._pub_auction_job.publish(job)
+    
+        def _publish_resources(self, timestamp, perception):
+            """
+            :param timestamp: message timestamp
+            :type timestamp: int
+            :param perception: full perception object
+            :type perception: eT  ElementTree
+            """
+            if self._pub_resource.get_num_connections() > 0:
+                for xml_item in perception.findall('resourceNode'):
+                    rospy.logdebug("Resource %s", eT.tostring(xml_item))
                 resource = Resource()
                 resource.timestamp = timestamp
                 resource.name = xml_item.get('name')
