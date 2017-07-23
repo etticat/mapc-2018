@@ -69,6 +69,7 @@ add_message_files(
   Bye.msg
   Resource.msg
   Task.msg
+  Status.msg
 )
 
 ## Generate services in the 'srv' folder
