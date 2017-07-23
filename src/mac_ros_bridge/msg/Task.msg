@@ -8,5 +8,6 @@ string job_id
 string part_of
 uint32 amount
 uint32 steps
+float32 task_id
 uint32 rating
 string[] required_tools
