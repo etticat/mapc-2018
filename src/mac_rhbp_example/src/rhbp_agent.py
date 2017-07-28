@@ -167,7 +167,7 @@ class RhbpAgent:
         :param msg:  the message
         :type msg: SimEnd
         """
-        rospy.loginfo("SimEnd:" + msg)
+        rospy.loginfo("SimEnd:" + str(msg))
         self._sim_started = False
 
     def _bye_callback(self, msg):
@@ -175,7 +175,7 @@ class RhbpAgent:
         :param msg:  the message
         :type msg: Bye
         """
-        rospy.loginfo("Bye:" + msg)
+        rospy.loginfo("Bye:" + str(msg))
 
     def _action_request_callback(self, msg):
         """
