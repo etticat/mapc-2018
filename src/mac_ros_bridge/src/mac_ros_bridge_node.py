@@ -237,6 +237,12 @@ class MacRosBridge (threading.Thread):
         role.name = xml_role.get('name')
         role.max_battery = int(xml_role.get('battery'))
         role.max_load = int(xml_role.get('load'))
+        tools = []
+        for role_tool in xml_role.findall('tool'):
+            tool = Tool()
+            tool.name = role_tool.get('name')
+            tools.append(tool)
+        role.tools = tools
         msg.role = role
         #TODO add more information here from message content
 
@@ -579,8 +585,8 @@ class MacRosBridge (threading.Thread):
 
         if self._pub_auction_job.get_num_connections() > 0:
             for xml_item in perception.findall('auction'):
-                rospy.loginfo("Auction")
-                eT.dump(xml_item)
+                #rospy.loginfo("Auction")
+                #eT.dump(xml_item)
 
                 job = AuctionJob()
                 job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
