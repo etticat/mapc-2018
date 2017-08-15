@@ -1,9 +1,10 @@
 <launch>
 
-    <arg name="agent_name"  default="agentA1"/>
-    <arg name="server_ip"   default="localhost"/>
-    <arg name="server_port" default="12300"/>
-    <arg name="password"    default="1"/>
+    <arg name="agent_name"          default="agentA1"/>
+    <arg name="server_ip"           default="localhost"/>
+    <arg name="server_port"         default="12300"/>
+    <arg name="password"            default="1"/>
+    <arg name="only_agent_specific" default="false"/>
 
     <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
         name="bridge_node_$(arg agent_name)" output="screen"
@@ -12,5 +13,6 @@
             <param name="server_ip"   type="str" value="$(arg server_ip)" />
             <param name="server_port" type="int" value="$(arg server_port)" />
             <param name="password"    type="str" value="$(arg password)" />
+            <param name="only_agent_specific"    type="bool" value="$(arg only_agent_specific)" />
     </node>
 </launch>

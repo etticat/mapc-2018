@@ -46,11 +46,14 @@ class MacRosBridge (threading.Thread):
         else:
             self._agent_name = name
 
-        server_ip = rospy.get_param('~server_ip', 'localhost') #TODO Du Idiot !Change to localhost again !
+        server_ip = rospy.get_param('~server_ip', 'localhost')
         server_port = rospy.get_param('~server_port', 12300)
         self._server_address = (server_ip, server_port)
 
         self._agent_pw = rospy.get_param('~password', '1')
+
+        # configure if also general information available for all agents should be handled
+        self._only_agent_specific = rospy.get_param('~only_agent_specific', False)
 
         rospy.loginfo("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name, self._agent_pw)
 
@@ -59,24 +62,26 @@ class MacRosBridge (threading.Thread):
         self.message_id = -1
 
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
-        self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 10, latch=True)
-        self._pub_team = rospy.Publisher('/team', Team, queue_size=10, latch=True)
-        self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=True)
-        self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=10, latch=True)
-        self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=True)
-        self._pub_tool = rospy.Publisher('/tool', Tool, queue_size=10, latch=True)
-        self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=True)
-        self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=True)
-        self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=True)
-        self._pub_workshop = rospy.Publisher('/workshop', Workshop, queue_size=10, latch=True)
-        self._pub_priced_job = rospy.Publisher('/priced_job', Job, queue_size=10, latch=True)
-        self._pub_posted_job = rospy.Publisher('/posted_job', Job, queue_size=10, latch=True)
-        self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJob, queue_size=10, latch=True)
-        self._pub_mission = rospy.Publisher('/mission_job', Job, queue_size=10, latch=True)
-        self._pub_resource = rospy.Publisher('/resource', Resource, queue_size=10, latch=True)
-        self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=10, latch=True)
-        self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=10, latch=True)
-        self._pub_bye= rospy.Publisher('~bye', Bye, queue_size=10, latch=True)
+        self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 1, latch=True)
+        self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
+        self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=True)
+        self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
+
+        if not self._only_agent_specific:
+            self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
+            self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=False)
+            self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=100, latch=False)
+            self._pub_item = rospy.Publisher('/item', Item, queue_size=10, latch=False)
+            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=False)
+            self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=False)
+            self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=False)
+            self._pub_workshop = rospy.Publisher('/workshop', Workshop, queue_size=10, latch=False)
+            self._pub_priced_job = rospy.Publisher('/priced_job', Job, queue_size=5, latch=True)
+            self._pub_posted_job = rospy.Publisher('/posted_job', Job, queue_size=5, latch=True)
+            self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJob, queue_size=5, latch=True)
+            self._pub_mission = rospy.Publisher('/mission_job', Job, queue_size=5, latch=True)
+            self._pub_resource = rospy.Publisher('/resource', Resource, queue_size=10, latch=True)
+
 
         rospy.Subscriber("~generic_action", GenericAction, self.callback_generic_action)
 
@@ -159,15 +164,18 @@ class MacRosBridge (threading.Thread):
         self.message_id = perception.get('id')
         rospy.logdebug("request-action: perception id = %s", self.message_id)
 
-        # TODO add other publishers
-        self._publish_request_action(timestamp=timestamp, perception=perception)
         self._publish_agent(timestamp=timestamp, perception=perception)
-        self._publish_team(timestamp=timestamp, perception=perception)
-        self._publish_entity(timestamp=timestamp, perception=perception)
-        self._publish_facilities(timestamp=timestamp, perception=perception)
-        self._publish_jobs(timestamp=timestamp, perception=perception)
-        #self._publish_resources(timestamp=timestamp, perception=perception)
+
+        if not self._only_agent_specific:
+            self._publish_team(timestamp=timestamp, perception=perception)
+            self._publish_entity(timestamp=timestamp, perception=perception) #TODO check if this is agent specific or not
+            self._publish_facilities(timestamp=timestamp, perception=perception)
+            self._publish_jobs(timestamp=timestamp, perception=perception)
+            self._publish_resources(timestamp=timestamp, perception=perception)
         # self.send(action_type="skip") # can be enabled for dummy answers
+
+        #first send all updates before requesting the action
+        self._publish_request_action(timestamp=timestamp, perception=perception)
 
     def _sim_end(self, message):
         """
@@ -610,16 +618,16 @@ class MacRosBridge (threading.Thread):
 
                     self._pub_auction_job.publish(job)
     
-        def _publish_resources(self, timestamp, perception):
-            """
-            :param timestamp: message timestamp
-            :type timestamp: int
-            :param perception: full perception object
-            :type perception: eT  ElementTree
-            """
-            if self._pub_resource.get_num_connections() > 0:
-                for xml_item in perception.findall('resourceNode'):
-                    rospy.logdebug("Resource %s", eT.tostring(xml_item))
+    def _publish_resources(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  ElementTree
+        """
+        if self._pub_resource.get_num_connections() > 0:
+            for xml_item in perception.findall('resourceNode'):
+                rospy.logdebug("Resource %s", eT.tostring(xml_item))
                 resource = Resource()
                 resource.timestamp = timestamp
                 resource.name = xml_item.get('name')
