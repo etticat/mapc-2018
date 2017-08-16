@@ -6,6 +6,25 @@ It uses the ROS Hybrid Behaviour Planner Framework (RHBP) on top of ROS (Robot O
 
 ## Setup and Install
 
+### Dependencies
+
+```
+# graphhopper require
+sudo apt install maven default-jdk
+
+# tub_contest requires
+sudo apt install python-pip python-pandas
+# rhbp requires ROS
+# Follow instructions for ROS Kinetic here: http://wiki.ros.org/kinetic/Installation/Ubuntu
+sudo apt install ros-desktop
+# and
+sudo apt install python-pip
+pip install lindypy
+
+```
+
+### Clone and build
+
 1. `git clone --recursive git@gitlab.tubit.tu-berlin.de:mac17/mac_workspace.git`
 2. `cd mac_workspace`
 3. `catkin_make`
