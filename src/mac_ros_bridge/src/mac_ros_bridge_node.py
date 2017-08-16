@@ -33,7 +33,7 @@ class MacRosBridge (threading.Thread):
         :param name: agent name, leave empty to get name from roslaunch
         """
         threading.Thread.__init__(self)
-        rospy.loginfo("MacRosBridge::init")
+        rospy.logdebug("MacRosBridge::init")
 
         node_name = 'bridge_node_'
 
@@ -55,7 +55,7 @@ class MacRosBridge (threading.Thread):
         # configure if also general information available for all agents should be handled
         self._only_agent_specific = rospy.get_param('~only_agent_specific', False)
 
-        rospy.loginfo("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name, self._agent_pw)
+        rospy.logdebug("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name, self._agent_pw)
 
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><auth-request username="PLACEHOLDER" password="PLACEHOLDER"/></message>''')
@@ -91,7 +91,7 @@ class MacRosBridge (threading.Thread):
         :return: bool True for success
         """
         try:
-            rospy.loginfo("Connecting...%s", self._agent_name)
+            rospy.logdebug("Connecting...%s", self._agent_name)
             self.socket = socket.create_connection(self._server_address, MacRosBridge.RETRY_DELAY)
             self.socket.settimeout(None) # enable blocking mode until simulation starts
             return True
@@ -115,7 +115,7 @@ class MacRosBridge (threading.Thread):
         except OSError:
             pass
         time.sleep(MacRosBridge.RETRY_DELAY)
-        rospy.loginfo('Reconnecting...')
+        rospy.loginfo('Reconnecting...%s', self._agent_name)
         self.socket = None
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
@@ -145,7 +145,7 @@ class MacRosBridge (threading.Thread):
         elif typ == 'sim-start':
             self._sim_start(message=message)
         elif typ == 'auth-response':
-            rospy.loginfo("auth-response: %s", message.find('auth-response').get('result'))
+            rospy.logdebug("auth-response: %s", message.find('auth-response').get('result'))
         elif typ == 'sim-end':
             self._sim_end(message=message)
         elif typ == 'bye':
@@ -187,8 +187,8 @@ class MacRosBridge (threading.Thread):
         ranking = int(sim_result.get('ranking'))
         score = int(sim_result.get('score'))
 
-        rospy.loginfo("ranking= %d", ranking)
-        rospy.loginfo("score= %d", score)
+        rospy.logdebug("ranking= %d", ranking)
+        rospy.logdebug("score= %d", score)
 
         msg = SimEnd()
         msg.ranking = ranking
@@ -206,7 +206,7 @@ class MacRosBridge (threading.Thread):
         timestamp = long(message.get('timestamp'))
         simulation = message.find('simulation')
         steps = int(simulation.get('steps'))
-        rospy.loginfo("sim-start: steps = %s", steps)
+        rospy.logdebug("sim-start: steps = %s", steps)
 
         msg = SimStart()
         msg.timestamp = timestamp
@@ -262,7 +262,6 @@ class MacRosBridge (threading.Thread):
         Handle bye message
         :param message: xml message
         """
-        rospy.loginfo("Do something meaningful on system exit")
         eT.dump(message)
         msg = Bye()
         #TODO add more information here from message content
