@@ -68,8 +68,6 @@ add_message_files(
   SimEnd.msg
   Bye.msg
   Resource.msg
-  Task.msg
-  Status.msg
 )
 
 ## Generate services in the 'srv' folder
