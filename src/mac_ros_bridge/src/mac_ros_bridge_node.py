@@ -263,7 +263,10 @@ class MacRosBridge (threading.Thread):
         :param message: xml message
         """
         msg = Bye()
+        timestamp = long(message.get('timestamp'))
+        msg.timestamp = timestamp
         self._pub_bye.publish(msg)
+        rospy.signal_shutdown('Shutting down {}  - Simulation server closed'.format(self._agent_name))
 
     def _send_action(self, action_type, params={}):
         """
