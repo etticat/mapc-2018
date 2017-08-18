@@ -262,10 +262,8 @@ class MacRosBridge (threading.Thread):
         Handle bye message
         :param message: xml message
         """
-        eT.dump(message)
         msg = Bye()
-        #TODO add more information here from message content
-        self._pub_bye.publish.publish(msg)
+        self._pub_bye.publish(msg)
 
     def _send_action(self, action_type, params={}):
         """
