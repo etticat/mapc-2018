@@ -123,9 +123,9 @@ class MacRosBridge (threading.Thread):
 
     def authenticate(self):
         """
-        Autheticate on the contest server
+        Authenticate on the contest server
         """
-        rospy.loginfo("Autheticate...%s", self._agent_name)
+        rospy.loginfo("Authenticate...%s", self._agent_name)
         auth_element = self.auth.find('auth-request')
         auth_element.attrib['username'] = self._agent_name
         auth_element.attrib['password'] = self._agent_pw
@@ -291,8 +291,8 @@ class MacRosBridge (threading.Thread):
         rospy.logdebug("MacRosBridge::run")
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
+#        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         self.authenticate()
-        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         buffer = b''
         while (not rospy.is_shutdown()):
             try:
