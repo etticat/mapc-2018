@@ -262,10 +262,11 @@ class MacRosBridge (threading.Thread):
         Handle bye message
         :param message: xml message
         """
-        eT.dump(message)
         msg = Bye()
-        #TODO add more information here from message content
-        self._pub_bye.publish.publish(msg)
+        timestamp = long(message.get('timestamp'))
+        msg.timestamp = timestamp
+        self._pub_bye.publish(msg)
+        rospy.signal_shutdown('Shutting down {}  - Simulation server closed'.format(self._agent_name))
 
     def _send_action(self, action_type, params={}):
         """
