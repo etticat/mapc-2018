@@ -23,7 +23,7 @@ class MacRosBridge (threading.Thread):
     to ROS topics
     """
 
-    l general socket timeout
+    SOCKET_TIMEOUT = 2 # general socket timeout
     RETRY_DELAY = 1.0
     RECV_SIZE = 8192
     SEPARATOR = b'\0'
@@ -293,7 +293,7 @@ class MacRosBridge (threading.Thread):
         rospy.logdebug("MacRosBridge::run")
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
-        #self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
+#        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         self.authenticate()
         buffer = b''
         while (not rospy.is_shutdown()):
