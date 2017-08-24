@@ -126,7 +126,7 @@ class MacRosBridge (threading.Thread):
         """
         Authenticate on the contest server
         """
-        rospy.loginfo("Authenticate...%s", self._agent_name)
+        rospy.logdebug("Authenticate...%s", self._agent_name)
         auth_element = self.auth.find('auth-request')
         auth_element.attrib['username'] = self._agent_name
         auth_element.attrib['password'] = self._agent_pw
@@ -146,7 +146,7 @@ class MacRosBridge (threading.Thread):
         elif typ == 'sim-start':
             self._sim_start(message=message)
         elif typ == 'auth-response':
-            rospy.logdebug("auth-response: %s", message.find('auth-response').get('result'))
+            rospy.loginfo("%s: Authentication: %s", self._agent_name, message.find('auth-response').get('result'))
         elif typ == 'sim-end':
             self._sim_end(message=message)
         elif typ == 'bye':
