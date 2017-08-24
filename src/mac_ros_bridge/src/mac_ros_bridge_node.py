@@ -64,7 +64,7 @@ class MacRosBridge (threading.Thread):
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
         self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 1, latch=True)
         self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
-        self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=True)
+        self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=False)
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
 
         if not self._only_agent_specific:
