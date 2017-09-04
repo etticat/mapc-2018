@@ -352,6 +352,114 @@ class MacRosBridge (threading.Thread):
         msg.id = perception.get('id')
         msg.simulation_step = int(perception.find('simulation').get('step'))
         msg.deadline = long(perception.get('deadline'))
+
+        priced_jobs=[]
+        for xml_item in perception.findall('job'):
+            job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+            priced_jobs.append(job)
+        msg.priced_jobs=priced_jobs
+
+        mission_jobs=[]
+        for xml_item in perception.findall('mission'):
+            job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+            mission_jobs.append(job)
+        msg.mission_jobs=mission_jobs
+        auction_jobs = []
+
+        """
+        for xml_item in perception.findall('auction'):
+            #rospy.loginfo("Auction")
+            #eT.dump(xml_item)
+            job = AuctionJob()
+            job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+            lowest_bid = xml_item.get('lowestBid')
+            if lowest_bid:
+                job.lowest_bid= int(lowest_bid)
+
+            # TODO not sure if this is used/available at all
+            max_bid = xml_item.get('maxBid')
+            if max_bid:
+                job.max_bid = max_bid
+            auction_time = xml_item.get('auctionTime')
+            if auction_time:
+                job.auction_time = int(auction_time)
+
+                auction_jobs.append(job)
+        msg.auction_jobs=auction_jobs
+        """
+        agent_self = perception.find('self')
+
+        agent = Agent()
+        agent.timestamp = timestamp
+        agent.charge = int(agent_self.get('charge'))
+        agent.load = int(agent_self.get('load'))
+        agent.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
+        for agent_self_action in agent_self.iter('action'):
+            agent.last_action = agent_self_action.get('type')
+            agent.last_action_result = agent_self_action.get('result')
+        # msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
+
+        agent.items = self._get_items_of_agent(elem=agent_self)
+        msg.agent=agent
+
+        """
+        team = perception.find('team')
+
+        msg_team = Team()
+        msg_team.money = int(team.get('money'))
+        msg_team.timestamp = timestamp
+        msg.team=msg_team
+        """
+        shops=[]
+        for xml_item in perception.findall('shop'):
+
+            shop = Shop()
+            shop.timestamp = timestamp
+            shop.name = xml_item.get('name')
+            shop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            restock = xml_item.get('restock')
+            if restock: #TODO not always included in server message, potential bug
+                shop.restock = int(restock)
+            shop.items = self._get_items(elem=xml_item)
+            shops.append(shop)
+        msg.shops=shops
+
+        workshops=[]
+        for xml_item in perception.findall('workshop'):
+            workshop = Workshop()
+            workshop.timestamp = timestamp
+            workshop.name = xml_item.get('name')
+            workshop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            workshops.append(workshop)
+        msg.workshops=workshops
+
+        storages=[]
+        for xml_item in perception.findall('storage'):
+            storage = Storage()
+            storage.timestamp = timestamp
+            storage.name = xml_item.get('name')
+            storage.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            storage.total_capacity = int(xml_item.get('totalCapacity'))
+            storage.used_capacity = int(xml_item.get('usedCapacity'))
+            storage.items = self._get_items(elem=xml_item)
+            storages.append(storage)
+        msg.storages=storages
+
+        resources=[]
+        for xml_item in perception.findall('resourceNode'):
+            rospy.logdebug("Resource %s", eT.tostring(xml_item))
+            resource = Resource()
+            resource.timestamp = timestamp
+            resource.name = xml_item.get('name')
+            resource.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+
+            item = Item()
+            item.name = xml_item.get('resource')
+            item.amount = 1  # TODO may use another number her
+            resource.items.append(item)
+            resources.append(resource)
+        msg.resources=resources
+
         rospy.logdebug("Request action %s", msg)
         self._pub_request_action.publish(msg)
 

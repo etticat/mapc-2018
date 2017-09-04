@@ -56,7 +56,6 @@ add_message_files(
   Position.msg
   Job.msg
   Product.msg
-  RequestAction.msg
   Role.msg
   Shop.msg
   Storage.msg
@@ -68,6 +67,7 @@ add_message_files(
   SimEnd.msg
   Bye.msg
   Resource.msg
+  RequestAction.msg
 )
 
 ## Generate services in the 'srv' folder
