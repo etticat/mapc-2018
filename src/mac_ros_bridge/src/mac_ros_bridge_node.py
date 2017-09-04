@@ -366,7 +366,6 @@ class MacRosBridge (threading.Thread):
         msg.mission_jobs=mission_jobs
         auction_jobs = []
 
-        """
         for xml_item in perception.findall('auction'):
             #rospy.loginfo("Auction")
             #eT.dump(xml_item)
@@ -386,7 +385,7 @@ class MacRosBridge (threading.Thread):
 
                 auction_jobs.append(job)
         msg.auction_jobs=auction_jobs
-        """
+
         agent_self = perception.find('self')
 
         agent = Agent()
@@ -402,14 +401,13 @@ class MacRosBridge (threading.Thread):
         agent.items = self._get_items_of_agent(elem=agent_self)
         msg.agent=agent
 
-        """
         team = perception.find('team')
 
         msg_team = Team()
         msg_team.money = int(team.get('money'))
         msg_team.timestamp = timestamp
         msg.team=msg_team
-        """
+
         shops=[]
         for xml_item in perception.findall('shop'):
 
@@ -541,9 +539,18 @@ class MacRosBridge (threading.Thread):
         items = []
 
         for xml_item in elem.findall('required'):
+
             item = Item()
             item.name = xml_item.get('name')
             item.amount = int(xml_item.get('amount'))
+            delivered = xml_item.get('delivered')
+            if delivered:  # this is not always available
+                item.delivered = int(delivered)
+            stored = xml_item.get('stored')
+            if stored:  # this is not always available
+                item.stored = int(stored)
+            if stored or delivered:
+                eT.dump(xml_item)
             items.append(item)
         return items
 

@@ -4,8 +4,11 @@ uint64 deadline
 string id
 Job[] mission_jobs
 Job[] priced_jobs
+AuctionJob[] auction_jobs
 Shop[] shops
 Workshop[] workshops
 Storage[] storages
 Resource[] resources
 Agent agent
+Team team
+

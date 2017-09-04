@@ -47,19 +47,19 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  Team.msg
   Agent.msg
-  AuctionJob.msg
   ChargingStation.msg
   Dump.msg
   GenericAction.msg
   Item.msg
   Position.msg
   Job.msg
+  AuctionJob.msg
   Product.msg
   Role.msg
   Shop.msg
   Storage.msg
-  Team.msg
   Tool.msg
   Workshop.msg
   Entity.msg
