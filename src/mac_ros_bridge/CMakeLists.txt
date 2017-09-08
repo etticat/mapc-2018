@@ -50,23 +50,32 @@ add_message_files(
   Team.msg
   Agent.msg
   ChargingStation.msg
+  ChargingStationMsg.msg
   Dump.msg
+  DumpMsg.msg
   GenericAction.msg
   Item.msg
   Position.msg
   Job.msg
+  JobMsg.msg
   AuctionJob.msg
+  AuctionJobMsg.msg
   Product.msg
   Role.msg
   Shop.msg
+  ShopMsg.msg
   Storage.msg
+  StorageMsg.msg
   Tool.msg
   Workshop.msg
+  WorkshopMsg.msg
   Entity.msg
+  EntityMsg.msg
   SimStart.msg
   SimEnd.msg
   Bye.msg
   Resource.msg
+  ResourceMsg.msg
   RequestAction.msg
 )
 

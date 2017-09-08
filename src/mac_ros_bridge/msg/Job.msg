@@ -1,4 +1,3 @@
-uint64 timestamp
 string id
 string storage_name
 uint32 start

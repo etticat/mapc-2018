@@ -5,9 +5,9 @@
 
 import rospy
 
-from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, \
-    ChargingStation, Dump, Item, Job, Shop, Storage,Team, \
-    Workshop, Position, Entity, Role, Resource, Bye, SimStart, SimEnd, Tool, Product
+from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
+    ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg,Team, \
+    Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, Tool, Product
 
 import socket
 import threading
@@ -69,18 +69,17 @@ class MacRosBridge (threading.Thread):
 
         if not self._only_agent_specific:
             self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
-            self._pub_entity = rospy.Publisher('/entity', Entity, queue_size=10, latch=False)
-            self._pub_shop = rospy.Publisher('/shop', Shop, queue_size=100, latch=False)
-            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStation, queue_size=10, latch=False)
-            self._pub_dump = rospy.Publisher('/dump', Dump, queue_size=10, latch=False)
-            self._pub_storage = rospy.Publisher('/storage', Storage, queue_size=10, latch=False)
-            self._pub_workshop = rospy.Publisher('/workshop', Workshop, queue_size=10, latch=False)
-            self._pub_priced_job = rospy.Publisher('/priced_job', Job, queue_size=5, latch=True)
-            self._pub_posted_job = rospy.Publisher('/posted_job', Job, queue_size=5, latch=True)
-            self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJob, queue_size=5, latch=True)
-            self._pub_mission = rospy.Publisher('/mission_job', Job, queue_size=5, latch=True)
-            self._pub_resource = rospy.Publisher('/resource', Resource, queue_size=10, latch=True)
-
+            self._pub_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=False)
+            self._pub_shop = rospy.Publisher('/shop', ShopMsg, queue_size=1, latch=False)
+            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=10, latch=False)
+            self._pub_dump = rospy.Publisher('/dump', DumpMsg, queue_size=1, latch=False)
+            self._pub_storage = rospy.Publisher('/storage', StorageMsg, queue_size=1, latch=False)
+            self._pub_workshop = rospy.Publisher('/workshop', WorkshopMsg, queue_size=1, latch=False)
+            self._pub_priced_job = rospy.Publisher('/priced_job', JobMsg, queue_size=1, latch=True)
+            self._pub_posted_job = rospy.Publisher('/posted_job', JobMsg, queue_size=1, latch=True)
+            self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJobMsg, queue_size=1, latch=True)
+            self._pub_mission = rospy.Publisher('/mission_job', JobMsg, queue_size=1, latch=True)
+            self._pub_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
 
         rospy.Subscriber("~generic_action", GenericAction, self.callback_generic_action)
 
@@ -137,25 +136,28 @@ class MacRosBridge (threading.Thread):
         :param xml: xml message
         :type xml: eT ElementTree
         """
-        message = eT.fromstring(xml)
-        typ = message.get('type')
-        #print(xml)
-        if typ == 'request-action':
-            self._request_action(message=message)
-        elif typ == 'sim-start':
-            self._sim_start(message=message)
-        elif typ == 'auth-response':
-            rospy.loginfo("%s: Authentication: %s", self._agent_name, message.find('auth-response').get('result'))
-        elif typ == 'sim-end':
-            self._sim_end(message=message)
-        elif typ == 'bye':
-            self._bye(message=message)
+        try:
+            message = eT.fromstring(xml)
+            typ = message.get('type')
+            if typ == 'request-action':
+                self._request_action(message=message)
+            elif typ == 'sim-start':
+                self._sim_start(message=message)
+            elif typ == 'auth-response':
+                rospy.loginfo("%s: Authentication: %s", self._agent_name, message.find('auth-response').get('result'))
+            elif typ == 'sim-end':
+                self._sim_end(message=message)
+            elif typ == 'bye':
+                self._bye(message=message)
+        except Exception as e:
+            rospy.logerr(e)
 
     def _request_action(self, message):
         """
         Handle request action message
         :param message: xml message
         """
+
         timestamp = long(message.get('timestamp'))
         perception = message.find('percept')
 
@@ -339,12 +341,22 @@ class MacRosBridge (threading.Thread):
 
         self._send_action(action_type=msg.action_type, params=params)
 
-    def _parse_resources(self, perception, timestamp):
+    def _parse_entities(self, perception):
+        entities = []
+        for xml_item in perception.findall('entity'):
+            entity = Entity()
+            entity.name = xml_item.get('name')
+            entity.team = xml_item.get('team')
+            entity.role = Role(name=xml_item.get('role'))
+            entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon'))),
+            entities.append(entity)
+        return entities
+
+    def _parse_resources(self, perception):
         resources = []
         for xml_item in perception.findall('resourceNode'):
             rospy.logdebug("Resource %s", eT.tostring(xml_item))
             resource = Resource()
-            resource.timestamp = timestamp
             resource.name = xml_item.get('name')
             resource.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
 
@@ -355,11 +367,10 @@ class MacRosBridge (threading.Thread):
             resources.append(resource)
         return resources
 
-    def _parse_storages(self, perception, timestamp):
+    def _parse_storages(self, perception):
         storages = []
         for xml_item in perception.findall('storage'):
             storage = Storage()
-            storage.timestamp = timestamp
             storage.name = xml_item.get('name')
             storage.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             storage.total_capacity = int(xml_item.get('totalCapacity'))
@@ -368,22 +379,19 @@ class MacRosBridge (threading.Thread):
             storages.append(storage)
         return storages
 
-    def _parse_workshops(self, perception, timestamp):
+    def _parse_workshops(self, perception):
         workshops = []
         for xml_item in perception.findall('workshop'):
             workshop = Workshop()
-            workshop.timestamp = timestamp
             workshop.name = xml_item.get('name')
             workshop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             workshops.append(workshop)
         return workshops
 
-    def _parse_shops(self, perception, timestamp):
+    def _parse_shops(self, perception):
         shops = []
         for xml_item in perception.findall('shop'):
-
             shop = Shop()
-            shop.timestamp = timestamp
             shop.name = xml_item.get('name')
             shop.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             restock = xml_item.get('restock')
@@ -400,19 +408,12 @@ class MacRosBridge (threading.Thread):
         msg_team.timestamp = timestamp
         return msg_team
 
-    def _parse_priced_jobs(self, perception, timestamp):
-        priced_jobs = []
-        for xml_item in perception.findall('job'):
-            job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-            priced_jobs.append(job)
-        return priced_jobs
-
-    def _parse_mission_jobs(self, perception, timestamp):
-        mission_jobs = []
-        for xml_item in perception.findall('mission'):
-            job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-            mission_jobs.append(job)
-        return mission_jobs
+    def _parse_jobs(self, perception, identifier):
+        jobs = []
+        for xml_item in perception.findall(identifier):
+            job = self._get_common_job(elem=xml_item)
+            jobs.append(job)
+        return jobs
 
     def _parse_agent(self, perception, timestamp):
         agent_self = perception.find('self')
@@ -481,7 +482,7 @@ class MacRosBridge (threading.Thread):
             item.stored = int(stored)
         return item
 
-    def _parse_auctions(self, perception, timestamp):
+    def _parse_auctions(self, perception):
         jobs = []
 
         for xml_item in perception.findall('auction'):
@@ -489,7 +490,7 @@ class MacRosBridge (threading.Thread):
             # eT.dump(xml_item)
 
             job = AuctionJob()
-            job.job = self._get_common_job(elem=xml_item, timestamp=timestamp)
+            job.job = self._get_common_job(elem=xml_item)
 
             lowest_bid = xml_item.get('lowestBid')
             if lowest_bid:
@@ -507,6 +508,24 @@ class MacRosBridge (threading.Thread):
 
         return jobs
 
+    def _parse_dumps(self, perception):
+        dumps = []
+        for xml_item in perception.findall('dump'):
+            dump = Dump()
+            dump.name = xml_item.get('name')
+            dump.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            dumps.append(dump)
+        return dumps
+
+    def _parse_charging_stations(self, perception):
+        charging_stations = []
+        for xml_item in perception.findall('chargingStation'):
+            cs = ChargingStation()
+            cs.name = xml_item.get('name')
+            cs.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
+            cs.rate = int(xml_item.get('rate'))
+        return charging_stations
+
     def _get_job_items(self, elem):
         """
         Extract required job items from an xml element
@@ -523,14 +542,13 @@ class MacRosBridge (threading.Thread):
             items.append(item)
         return items
 
-    def _get_common_job(self, elem, timestamp):
+    def _get_common_job(self, elem):
         """
         Extract common job from an xml element
         :param elem: xml Element
         :return: Job
         """
         job = Job()
-        job.timestamp = timestamp
         job.id = elem.get('id')
         job.storage_name = elem.get('storage')
         job.reward = int(elem.get('reward'))
@@ -556,24 +574,24 @@ class MacRosBridge (threading.Thread):
         msg.simulation_step = int(perception.find('simulation').get('step'))
         msg.deadline = long(perception.get('deadline'))
 
-        msg.priced_jobs = self._parse_priced_jobs(perception, timestamp)
+        msg.priced_jobs = self._parse_jobs(perception, identifier='job')
 
-        msg.mission_jobs = self._parse_mission_jobs(perception, timestamp)
+        msg.mission_jobs = self._parse_jobs(perception, identifier='mission')
 
-        msg.auction_jobs = self._parse_auctions(perception, timestamp)
+        msg.auction_jobs = self._parse_auctions(perception)
 
         msg.agent = self._parse_agent(perception, timestamp)
 
         msg_team = self._parse_team(perception, timestamp)
         msg.team=msg_team
 
-        msg.shops = self._parse_shops(perception, timestamp)
+        msg.shops = self._parse_shops(perception)
 
-        msg.workshops = self._parse_workshops(perception, timestamp)
+        msg.workshops = self._parse_workshops(perception)
 
-        msg.storages = self._parse_storages(perception, timestamp)
+        msg.storages = self._parse_storages(perception)
 
-        msg.resources =self._parse_resources(perception, timestamp)
+        msg.resources =self._parse_resources(perception)
 
         #rospy.logdebug("Request action %s", msg)
         self._pub_request_action.publish(msg)
@@ -587,7 +605,6 @@ class MacRosBridge (threading.Thread):
         """
         if self._pub_agent.get_num_connections() > 0:
             msg = self._parse_agent(perception, timestamp)
-
             self._pub_agent.publish(msg)
 
     def _publish_team(self, timestamp, perception):
@@ -609,17 +626,11 @@ class MacRosBridge (threading.Thread):
         :type perception: eT  ElementTree
         """
         if self._pub_entity.get_num_connections() > 0:
-
-            for xml_item in perception.findall('entity'):
-                entity = Entity()
-                entity.name = xml_item.get('name')
-                entity.team = xml_item.get('team')
-                entity.role = Role(name=xml_item.get('role'))
-                entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
-                entity.timestamp = timestamp
-
-            self._pub_entity.publish(entity)
-
+            entity_msg = EntityMsg()
+            entity_msg.entities = self._parse_entities(perception)
+            entity_msg.timestamp = timestamp
+            #print (entity_msg)
+            self._pub_entity.publish(entity_msg)
 
     def _publish_facilities(self, timestamp, perception):
         """
@@ -628,35 +639,35 @@ class MacRosBridge (threading.Thread):
         :param perception: full perception object
         :type perception: eT  ElementTree
         """
-
         if self._pub_shop.get_num_connections() > 0:
-            for shop in self._parse_shops(perception, timestamp):
-                self._pub_shop.publish(shop)
+            msg = ShopMsg()
+            msg.timestamp = timestamp
+            msg.facilities = self._parse_shops(perception)
+            self._pub_shop.publish(msg)
 
         if self._pub_workshop.get_num_connections() > 0:
-            for workshop in self._parse_workshops(perception, timestamp):
-                self._pub_workshop.publish(workshop)
+            msg = WorkshopMsg()
+            msg.timestamp = timestamp
+            msg.facilities = self._parse_workshops(perception)
+            self._pub_workshop.publish(msg)
 
         if self._pub_charging_station.get_num_connections() > 0:
-            for xml_item in perception.findall('chargingStation'):
-                cs = ChargingStation()
-                cs.timestamp = timestamp
-                cs.name = xml_item.get('name')
-                cs.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
-                cs.rate = int(xml_item.get('rate'))
-                self._pub_charging_station.publish(cs)
+            cs_msg = ChargingStationMsg()
+            cs_msg.timestamp = timestamp
+            cs_msg.facilities = self._parse_charging_stations(perception)
+            self._pub_charging_station.publish(cs_msg)
 
         if self._pub_dump.get_num_connections() > 0:
-            for xml_item in perception.findall('dump'):
-                dump = Dump()
-                dump.timestamp = timestamp
-                dump.name = xml_item.get('name')
-                dump.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
-                self._pub_dump.publish(dump)
+            dump_msg = DumpMsg()
+            dump_msg.facilities = self._parse_dumps(perception)
+            dump_msg.timestamp = timestamp
+            self._pub_dump.publish(dump_msg)
 
         if self._pub_storage.get_num_connections() > 0:
-            for storage in self._parse_storages(perception, timestamp):
-                self._pub_storage.publish(storage)
+            msg = StorageMsg()
+            msg.timestamp = timestamp
+            msg.facilities = self._parse_storages(perception)
+            self._pub_storage.publish(msg)
 
     def _publish_jobs(self, timestamp, perception):
         """
@@ -667,21 +678,28 @@ class MacRosBridge (threading.Thread):
         """
 
         if self._pub_posted_job.get_num_connections() > 0:
-            for xml_item in perception.findall('posted'):
-                job = self._get_common_job(elem=xml_item, timestamp=timestamp)
-                self._pub_posted_job.publish(job)
+            msg = JobMsg()
+            msg.timestamp = timestamp
+            msg.jobs = self._parse_jobs(perception, identifier='posted')
+            self._pub_posted_job.publish(msg)
 
         if self._pub_priced_job.get_num_connections() > 0:
-            for job in self._parse_priced_jobs(perception, timestamp):
-                self._pub_priced_job.publish(job)
+            msg = JobMsg()
+            msg.timestamp = timestamp
+            msg.jobs = self._parse_jobs(perception, identifier='job')
+            self._pub_priced_job.publish(msg)
 
         if self._pub_mission.get_num_connections() > 0:
-            for job in self._parse_mission_jobs(perception, timestamp):
-                self._pub_mission.publish(job)
+            msg = JobMsg()
+            msg.timestamp = timestamp
+            msg.jobs = self._parse_jobs(perception, identifier='mission')
+            self._pub_mission.publish(msg)
 
         if self._pub_auction_job.get_num_connections() > 0:
-            for job in self._parse_auctions(perception, timestamp):
-                self._pub_auction_job.publish(job)
+            msg = AuctionJobMsg()
+            msg.timestamp = timestamp
+            msg.jobs = self._parse_auctions(perception)
+            self._pub_auction_job.publish(msg)
 
     def _publish_resources(self, timestamp, perception):
         """
@@ -691,8 +709,10 @@ class MacRosBridge (threading.Thread):
         :type perception: eT  ElementTree
         """
         if self._pub_resource.get_num_connections() > 0:
-            for resource in self._parse_resources(perception, timestamp):
-                self._pub_resource.publish(resource)
+            msg = ResourceMsg()
+            msg.timestamp = timestamp
+            msg.resources = self._parse_resources(perception)
+            self._pub_resource.publish(msg)
 
 
 if __name__ == '__main__':
