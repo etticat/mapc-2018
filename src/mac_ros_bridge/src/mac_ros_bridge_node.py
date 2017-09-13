@@ -161,8 +161,6 @@ class MacRosBridge (threading.Thread):
         timestamp = long(message.get('timestamp'))
         perception = message.find('percept')
 
-        #eT.dump(perception)  # TODO remove this
-
         self.message_id = perception.get('id')
         rospy.logdebug("request-action: perception id = %s", self.message_id)
 
@@ -442,7 +440,6 @@ class MacRosBridge (threading.Thread):
             item = Item()
             item.name = xml_item.get('name')
             item.amount = int(xml_item.get('amount'))
-
             items.append(item)
         return items
 
@@ -456,7 +453,6 @@ class MacRosBridge (threading.Thread):
 
         for xml_item in elem.findall('item'):
             item = self._parse_item(xml_item)
-
             items.append(item)
         return items
 
@@ -524,6 +520,7 @@ class MacRosBridge (threading.Thread):
             cs.name = xml_item.get('name')
             cs.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             cs.rate = int(xml_item.get('rate'))
+            charging_stations.append(cs)
         return charging_stations
 
     def _get_job_items(self, elem):
@@ -537,8 +534,6 @@ class MacRosBridge (threading.Thread):
         for xml_item in elem.findall('required'):
 
             item = self._parse_item(xml_item)
-            if item.stored or item.delivered:
-                eT.dump(xml_item)
             items.append(item)
         return items
 
@@ -591,7 +586,7 @@ class MacRosBridge (threading.Thread):
 
         msg.storages = self._parse_storages(perception)
 
-        msg.resources =self._parse_resources(perception)
+        msg.resources = self._parse_resources(perception)
 
         #rospy.logdebug("Request action %s", msg)
         self._pub_request_action.publish(msg)
