@@ -215,8 +215,9 @@ class MacRosBridge (threading.Thread):
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
         #msg.tools = list(msg.tools)
-        #TODO not yet available in the msg
-        #msg.proximity = simulation.get('proximity')
+        msg.proximity = 1.0 / (10.0**int(simulation.get('proximity'))) #given proximity is converted to a more useful scale
+        msg.cell_size = int(simulation.get('cellSize')) / 1000.0 # convert from meter to kilometer
+
         products = []
         items = simulation.findall('item')
         for item in items:
