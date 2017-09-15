@@ -7,7 +7,7 @@ from behaviour_components.managers import Manager
 from behaviour_components.activators import BooleanActivator, Condition, ThresholdActivator, LinearActivator
 from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
-from behaviour_components.pddl import Effect
+from behaviour_components.condition_elements import Effect
 from behaviour_components.sensors import SimpleTopicSensor
 
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
@@ -83,8 +83,8 @@ class RhbpAgent:
                                                         isMinimum=False))  # highest activation if the value is below threshold
 
             # here we could easily add other facilities for exploration
-            self._shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], -1.0, sensorType=bool))
-            self._shop_exploration.add_effect(Effect(at_shop_cond.getFunctionNames()[0], -1.0, sensorType=float))
+            self._shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], -1.0, sensor_type=bool))
+            self._shop_exploration.add_effect(Effect(at_shop_cond.getFunctionNames()[0], -1.0, sensor_type=float))
 
             self._exploration_goal = GoalBase(name='exploration_goal', permanent=True, plannerPrefix=self._agent_name,
                                               # the negation here is not obviously clear, because the behaviour contributes to the exploration,
@@ -95,7 +95,7 @@ class RhbpAgent:
             self._finish_shop_exploration = FinishExplorationBehaviour(plannerPrefix=self._agent_name, \
                                                            agent_name=self._agent_name, name='finish_explore_shops', facility_topic='/shop')
 
-            self._finish_shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], 1.0, sensorType=bool))
+            self._finish_shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], 1.0, sensor_type=bool))
 
             self._finish_shop_exploration.addPrecondition(at_shop_cond) #only finish if we are at a charging station
             self._finish_shop_exploration.addPrecondition(Negation(shop_exploration_condition)) #only execute once if exploration is not yet True
@@ -132,19 +132,19 @@ class RhbpAgent:
                 Negation(battery_empty_cond))  # do not move if battery is almost empty to favour recharge
 
             self.find_charging_station.add_effect(Effect(at_charging_station_cond.getFunctionNames()[0], -1.0, # -1 for a reducing effect on the distance
-                                                              sensorType=float))
+                                                              sensor_type=float))
 
             self.charge = GenericActionBehaviour(plannerPrefix=self._agent_name, \
                                                  agent_name=self._agent_name, name='charge', action_type='charge')
             self.charge.addPrecondition(at_charging_station_cond)  # only charge if we are at a charging station
             self.charge.addPrecondition(require_charging_cond)  # only charge if necessary.
             self.charge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 2.0, # here we could also use the real charging effects
-                                               sensorType=float))
+                                               sensor_type=float))
 
             self.recharge = GenericActionBehaviour(plannerPrefix=self._agent_name, \
                                                  agent_name=self._agent_name, name='recharge', action_type='recharge')
             self.recharge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 1.0, # here we could also use the real charging effects
-                                               sensorType=float))
+                                               sensor_type=float))
 
             self.recharge.addPrecondition(battery_empty_cond)
 
