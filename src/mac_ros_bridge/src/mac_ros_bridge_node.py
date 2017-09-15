@@ -5,6 +5,8 @@
 
 import rospy
 
+import traceback
+
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
     ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg,Team, \
     Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, Tool, Product
@@ -61,7 +63,7 @@ class MacRosBridge (threading.Thread):
             <message type="auth-request"><auth-request username="PLACEHOLDER" password="PLACEHOLDER"/></message>''')
         self.message_id = -1
 
-        self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 10)
+        self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 1)
         self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 1, latch=True)
         self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
         self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=False)
@@ -69,12 +71,12 @@ class MacRosBridge (threading.Thread):
 
         if not self._only_agent_specific:
             self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
-            self._pub_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=False)
-            self._pub_shop = rospy.Publisher('/shop', ShopMsg, queue_size=1, latch=False)
-            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=10, latch=False)
-            self._pub_dump = rospy.Publisher('/dump', DumpMsg, queue_size=1, latch=False)
-            self._pub_storage = rospy.Publisher('/storage', StorageMsg, queue_size=1, latch=False)
-            self._pub_workshop = rospy.Publisher('/workshop', WorkshopMsg, queue_size=1, latch=False)
+            self._pub_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
+            self._pub_shop = rospy.Publisher('/shop', ShopMsg, queue_size=1, latch=True)
+            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=1, latch=True)
+            self._pub_dump = rospy.Publisher('/dump', DumpMsg, queue_size=1, latch=True)
+            self._pub_storage = rospy.Publisher('/storage', StorageMsg, queue_size=1, latch=True)
+            self._pub_workshop = rospy.Publisher('/workshop', WorkshopMsg, queue_size=1, latch=True)
             self._pub_priced_job = rospy.Publisher('/priced_job', JobMsg, queue_size=1, latch=True)
             self._pub_posted_job = rospy.Publisher('/posted_job', JobMsg, queue_size=1, latch=True)
             self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJobMsg, queue_size=1, latch=True)
@@ -150,7 +152,7 @@ class MacRosBridge (threading.Thread):
             elif typ == 'bye':
                 self._bye(message=message)
         except Exception as e:
-            rospy.logerr(e)
+            rospy.logerr(traceback.format_exc())
 
     def _request_action(self, message):
         """
@@ -347,7 +349,7 @@ class MacRosBridge (threading.Thread):
             entity.name = xml_item.get('name')
             entity.team = xml_item.get('team')
             entity.role = Role(name=xml_item.get('role'))
-            entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon'))),
+            entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             entities.append(entity)
         return entities
 
@@ -578,6 +580,8 @@ class MacRosBridge (threading.Thread):
 
         msg.agent = self._parse_agent(perception, timestamp)
 
+        msg.entities = self._parse_entities(perception)
+
         msg_team = self._parse_team(perception, timestamp)
         msg.team=msg_team
 
@@ -625,7 +629,6 @@ class MacRosBridge (threading.Thread):
             entity_msg = EntityMsg()
             entity_msg.entities = self._parse_entities(perception)
             entity_msg.timestamp = timestamp
-            #print (entity_msg)
             self._pub_entity.publish(entity_msg)
 
     def _publish_facilities(self, timestamp, perception):

@@ -9,6 +9,7 @@ Shop[] shops
 Workshop[] workshops
 Storage[] storages
 Resource[] resources
+Entity[] entities
 Agent agent
 Team team
 
