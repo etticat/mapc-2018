@@ -413,6 +413,7 @@ class MacRosBridge (threading.Thread):
         jobs = []
         for xml_item in perception.findall(identifier):
             job = self._get_common_job(elem=xml_item)
+            job.type = identifier
             jobs.append(job)
         return jobs
 
