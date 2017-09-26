@@ -52,9 +52,9 @@ class RhbpAgent:
         :type msg: SimStart
         """
         proximity = msg.proximity
-        agent_recharge_upper_bound = 500
-        agent_recharge_lower_bound = 350
-        agent_charge_critical = 100
+        agent_recharge_upper_bound = msg.role.max_battery
+        agent_recharge_lower_bound = msg.role.max_battery * 0.7
+        agent_charge_critical = msg.role.max_battery * 0.1
 
         if not self._sim_started:  # init only once here
 
@@ -66,7 +66,7 @@ class RhbpAgent:
 
             # exploring shops
 
-            self._shop_exploration = GotoFacilityBehaviour(plannerPrefix=self._agent_name, \
+            self._shop_exploration = GotoFacilityBehaviour(plannerPrefix=self._agent_name,
                                                            agent_name=self._agent_name, name='explore_shops',
                                                            facility_topic='/shop')
 
@@ -86,13 +86,10 @@ class RhbpAgent:
             self._shop_exploration.add_effect(Effect(at_shop_cond.getFunctionNames()[0], -1.0, sensor_type=float))
 
             self._exploration_goal = GoalBase(name='exploration_goal', permanent=True, plannerPrefix=self._agent_name,
-                                              # the negation here is not obviously clear, because the behaviour contributes to the exploration,
-                                              # but in order to fulfil the requirements of FinishExplorationBehaviour it is setting the exploration flag to false
-                                              # this is also corresponding to the negative effect above
-                                              conditions=[Negation(shop_exploration_condition)])
+                                              conditions=[shop_exploration_condition])
 
-            self._finish_shop_exploration = FinishExplorationBehaviour(plannerPrefix=self._agent_name, \
-                                                           agent_name=self._agent_name, name='finish_explore_shops', facility_topic='/shop')
+            self._finish_shop_exploration = FinishExplorationBehaviour(plannerPrefix=self._agent_name,
+                                    agent_name=self._agent_name, name='finish_explore_shops', facility_topic='/shop')
 
             self._finish_shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], 1.0, sensor_type=bool))
 
@@ -102,8 +99,8 @@ class RhbpAgent:
             # find charging station and charge
 
             charge_sensor = SimpleTopicSensor(topic=agent_topic, name="charge_sensor", message_attr='charge')
-            require_charging_cond = Condition(charge_sensor, LinearActivator(  zeroActivationValue=agent_recharge_upper_bound,
-                                                                               fullActivationValue=agent_recharge_lower_bound))  # highest activation already before battery empty
+            require_charging_cond = Condition(charge_sensor, LinearActivator(zeroActivationValue=agent_recharge_upper_bound,
+                                                                             fullActivationValue=agent_recharge_lower_bound))  # highest activation already before battery empty
 
             enough_battery_cond = Condition(charge_sensor, ThresholdActivator(thresholdValue=agent_charge_critical, isMinimum=True))
             self._shop_exploration.addPrecondition(enough_battery_cond) # only proceed exploring if we have enough battery
@@ -118,7 +115,7 @@ class RhbpAgent:
                                            ThresholdActivator(thresholdValue=agent_charge_critical, isMinimum=False))
 
             # find a charging station
-            self.find_charging_station = GotoFacilityBehaviour(plannerPrefix=self._agent_name, \
+            self.find_charging_station = GotoFacilityBehaviour(plannerPrefix=self._agent_name,
                                                                agent_name=self._agent_name,
                                                                name='explore_charging_stations',
                                                                facility_topic='/charging_station')
@@ -133,14 +130,14 @@ class RhbpAgent:
             self.find_charging_station.add_effect(Effect(at_charging_station_cond.getFunctionNames()[0], -1.0, # -1 for a reducing effect on the distance
                                                               sensor_type=float))
 
-            self.charge = GenericActionBehaviour(plannerPrefix=self._agent_name, \
+            self.charge = GenericActionBehaviour(plannerPrefix=self._agent_name,
                                                  agent_name=self._agent_name, name='charge', action_type='charge')
             self.charge.addPrecondition(at_charging_station_cond)  # only charge if we are at a charging station
             self.charge.addPrecondition(require_charging_cond)  # only charge if necessary.
             self.charge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 2.0, # here we could also use the real charging effects
                                                sensor_type=float))
 
-            self.recharge = GenericActionBehaviour(plannerPrefix=self._agent_name, \
+            self.recharge = GenericActionBehaviour(plannerPrefix=self._agent_name,
                                                  agent_name=self._agent_name, name='recharge', action_type='recharge')
             self.recharge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 1.0, # here we could also use the real charging effects
                                                sensor_type=float))
@@ -149,9 +146,6 @@ class RhbpAgent:
 
             self._charging_goal = GoalBase(name='charging_goal', permanent=True, plannerPrefix=self._agent_name,
                                            conditions=[Negation(require_charging_cond)])
-
-            # TODO more ideas
-            # goal/sensor for number of visited facilities? (for this we could actually incorporate SO in order to exhibit patrolling using pheromones)
 
     def _callback_generic_action(self, msg):
         """
@@ -184,7 +178,7 @@ class RhbpAgent:
         :return:
         """
         start_time = rospy.get_rostime()
-        rospy.logdebug("RhbpAgent::callback %s", msg)
+        rospy.logdebug("RhbpAgent::callback %s", str(msg))
 
         self._received_action_response = False
 

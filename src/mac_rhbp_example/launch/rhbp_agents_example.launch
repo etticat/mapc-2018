@@ -7,42 +7,40 @@
         <arg name="agent_name" value="agentA1" />
     </include>
 
-    <!--Uncomment following blocks to use more than one agent-->
-    
-    <!--<include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA2" />-->
-    <!--</include>-->
-    <!--<include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA2" />-->
-    <!--</include>-->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA2" />
+    </include>
+    <include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA2" />
+    </include>
 
-    <!--<include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA3" />-->
-    <!--</include>-->
-    <!--<include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA3" />-->
-    <!--</include>-->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA3" />
+    </include>
+    <include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA3" />
+    </include>
 
-    <!--<include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA4" />-->
-    <!--</include>-->
-    <!--<include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA4" />-->
-    <!--</include>-->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA4" />
+    </include>
+    <include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA4" />
+    </include>
 
-    <!--<include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA5" />-->
-    <!--</include>-->
-    <!--<include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA5" />-->
-    <!--</include>-->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA5" />
+    </include>
+    <include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA5" />
+    </include>
 
-    <!--<include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA6" />-->
-    <!--</include>-->
-    <!--<include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">-->
-        <!--<arg name="agent_name" value="agentA6" />-->
-    <!--</include>-->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA6" />
+    </include>
+    <include file="$(find mac_rhbp_example)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA6" />
+    </include>
 
     <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
     </include>
