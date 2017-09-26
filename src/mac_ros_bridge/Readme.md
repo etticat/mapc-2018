@@ -15,7 +15,7 @@ The following topics are available.
 
 ##Simulation:
 
-* `/bridge_node_AGENT_NAME/request_action` : Called before every simulation cycle. Trigger for the decision-making
+* `/bridge_node_AGENT_NAME/request_action` : Called before every simulation cycle. Trigger for the decision-making. Also includes perception.
 * `/bridge_node_AGENT_NAME/start`: Called when a simulation round is started, here you probably want to setup your agent.
 * `/bridge_node_AGENT_NAME/bye`: message when all matches have been run, just before the server closes all sockets
 * `/bridge_node_AGENT_NAME/end`: Message after each simulation
