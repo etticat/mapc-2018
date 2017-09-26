@@ -25,6 +25,7 @@ def get_bridge_topic_prefix(agent_name):
     """
     return '/bridge_node_' + agent_name + '/'
 
+
 def action_generic_simple(publisher, action_type, params=[]):
     """
     Generic helper function for publishing GenericAction msg
@@ -49,6 +50,7 @@ def action_goto(facility_name, publisher):
     action.params = [KeyValue("Facility", facility_name)]
     publisher.publish(action)
 
+
 def action_bidForJob(job_name, publisher):
     """
     Specific "bidForJob" action publishing helper function
@@ -59,6 +61,7 @@ def action_bidForJob(job_name, publisher):
     action.action_type = "bidForJob"
     action.params = [KeyValue("Job", job_name)]
     publisher.publish(action)
+
 
 def euclidean_distance(pos1, pos2):
     """
@@ -89,6 +92,7 @@ def get_knowledge_base_tuple_job_rating(agent_name, job):
     :return: generate tuple (agent_name, exploration_key)
     """
     return agent_name, 'exploring_' + job
+
 
 class GotoFacilityBehaviour(BehaviourBase):
     '''
@@ -124,8 +128,9 @@ class GotoFacilityBehaviour(BehaviourBase):
             rospy.logerr(self._agent_name + "::" +self._name + ": Failed to determine topic type of " + facility_topic)
 
     def _callback_facility(self, msg):
-        #Store all available facilities in a dict
-        self._facilities[msg.name] = msg
+        # Store all available facilities in a dict
+        for facility in msg.facilities:
+            self._facilities[facility.name] = facility
 
     def move(self):
 
@@ -165,6 +170,7 @@ class GotoFacilityBehaviour(BehaviourBase):
             self._selected_facility = self._select_facility()
 
         self.move()
+
 
 class FinishExplorationBehaviour(BehaviourBase):
     '''
@@ -238,9 +244,8 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
         """
         self._facilities = {}
         super(AbstractFacilitySensor, self).__init__(name=name, topic=topic, message_type=message_type,
-                                                initial_value=initial_value, create_log=create_log,
-                                                print_updates=print_updates)
-
+                                                     initial_value=initial_value, create_log=create_log,
+                                                     print_updates=print_updates)
         self._facility_attribute = facility_attribute
 
         self._latest_ref_value = None
@@ -255,7 +260,9 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
         self._latest_ref_value = msg
 
     def update(self, new_value):
-        self._facilities[new_value.name] = new_value
+
+        for facility in new_value.facilities:
+            self._facilities[facility.name] = facility
 
         super(AbstractFacilitySensor, self).update(newValue=new_value)
 
@@ -275,10 +282,14 @@ class AbstractFacilitySensor(PassThroughTopicSensor):
         This method has to be implemented in order to select a facility msg from all received messages based on the
         reference value
         :param facilities: dict with sensor msgs, key is the facility name
-        :param ref_value: the current regerence msg
+        :param ref_value: the current reference msg
         :return: the selected facility
         """
         raise NotImplementedError()
+
+    def __del__(self):
+        super(AbstractFacilitySensor, self).__del__()
+        self._sub_ref.unregister()
 
 
 class ClosestFacilitySensor(AbstractFacilitySensor):
@@ -288,10 +299,16 @@ class ClosestFacilitySensor(AbstractFacilitySensor):
 
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None,
                  create_log=False, print_updates=False):
-        super(ClosestFacilitySensor, self).__init__(name=name, topic=topic, ref_topic=ref_topic, message_type=message_type,
-                                                    facility_attribute=facility_attribute, initial_value=initial_value, create_log=create_log,
-                                                     print_updates=print_updates)
+        super(ClosestFacilitySensor, self).__init__(name=name, topic=topic, ref_topic=ref_topic,
+                                                    message_type=message_type,
+                                                    facility_attribute=facility_attribute, initial_value=initial_value,
+                                                    create_log=create_log,
+                                                    print_updates=print_updates)
         self._closest_facility = None
+
+    @property
+    def closest_facility(self):
+        return self._closest_facility
 
     def _reduce_facility(self, facilities, ref_value):
         """
@@ -323,9 +340,9 @@ class ClosestFacilityDistanceSensor(ClosestFacilitySensor):
 
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None,
                  create_log=False, print_updates=False):
-        super(ClosestFacilityDistanceSensor, self).__init__(name=name, topic=topic, ref_topic=ref_topic, message_type=message_type,
-                                                    facility_attribute=facility_attribute, initial_value=initial_value, create_log=create_log,
-                                                     print_updates=print_updates)
+        super(ClosestFacilityDistanceSensor, self).__init__(name=name, topic=topic, ref_topic=ref_topic,
+                message_type=message_type, facility_attribute=facility_attribute, initial_value=initial_value,
+                create_log=create_log, print_updates=print_updates)
 
     def _reduce_facility(self, facilities, ref_value):
         """

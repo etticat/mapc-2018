@@ -51,8 +51,7 @@ class RhbpAgent:
         :param msg:  the message
         :type msg: SimStart
         """
-        # TODO get proximity from msg?
-        proximity = 0.00001
+        proximity = msg.proximity
         agent_recharge_upper_bound = 500
         agent_recharge_lower_bound = 350
         agent_charge_critical = 100
