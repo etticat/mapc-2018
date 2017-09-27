@@ -1,7 +1,10 @@
 # Multi-Agent Programming Contest Workspace
 
-This is the main workspace for the TUB participation in the Multi-Agent Contest (MAPC) 2017.
+Technische Universität Berlin - DAI-Labor - http://www.dai-labor.de/
 
+Contest homepage: https://multiagentcontest.org/2017/
+
+This is the main workspace for the TUB participation in the Multi-Agent Contest (MAPC) 2017.
 It applies the ROS Hybrid Behaviour Planner Framework (RHBP) on top of the ROS (Robot Operating System) framework.
 
 ## Setup and Install
