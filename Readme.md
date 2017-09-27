@@ -34,7 +34,7 @@ pip install lindypy
 
 ## Execution and further Documentation
 
-Please refer to the [tub_contest package](src/tub_contest/Readme.md) for further instruction on how to launch our solution.
+Please refer to the [tub_contest package](https://gitlab.tubit.tu-berlin.de/mac17/contest-team/tub_contest) for further instruction on how to launch our solution.
 
 
 ## Packages and Workspace Structure
