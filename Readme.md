@@ -1,8 +1,8 @@
 # Multi-Agent Programming Contest Workspace
 
-This is the main workspace for the TUB participation in the Multi-Agent Contest 2017.
+This is the main workspace for the TUB participation in the Multi-Agent Contest (MAPC) 2017.
 
-It uses the ROS Hybrid Behaviour Planner Framework (RHBP) on top of ROS (Robot Operating System).
+It applies the ROS Hybrid Behaviour Planner Framework (RHBP) on top of the ROS (Robot Operating System) framework.
 
 ## Setup and Install
 
@@ -42,11 +42,10 @@ pip install lindypy
 
 Please refer to the [tub_contest package](https://gitlab.tubit.tu-berlin.de/mac17/contest-team/tub_contest) for further instruction on how to launch our solution.
 
-
 ## Packages and Workspace Structure
 
 * `script` useful scipts, you might want to add this directory to your PATH variable.
 * `src/rhbp` git submodule of the used RHBP framework.
 * `src/mac_ros_bridge` ROS package that includes a proxy ROS node that works as a bridge between the massim simulation server and ROS. It converts all simulation perception and creates all required topics from the configuration.
-* `src/mac_rhbp_example` example agent implementation using RHBP and ROS.
+* `src/mac_rhbp_example` example MAPC agent implementation using the mac_ros_bridge, RHBP and ROS.
 * `src/tu_contest` The agent implementations for the actual contest.
