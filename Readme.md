@@ -27,7 +27,7 @@ pip install lindypy
 * your workspace
     * mac_workspace
     * massim
-        * massim-2017-*.*
+        * massim-2017-\*.\*
 
 ### Clone and build
 
