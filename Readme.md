@@ -23,6 +23,12 @@ sudo apt install ros-kinetic-desktop python-pip
 pip install lindypy
 ```
 
+### Expected directory Structure
+* your workspace
+    * mac_workspace
+    * massim
+        * massim-2017-*.*
+
 ### Clone and build
 
 1. `git clone --recursive git@gitlab.tubit.tu-berlin.de:mac17/mac_workspace.git`
