@@ -1,6 +1,6 @@
 [submodule "src/rhbp"]
 	path = src/rhbp
-	url = https://github.com/DAInamite/rhbp.git
+	url = https://gitlab.tubit.tu-berlin.de/hrabia/rhbp.git
 	branch = master
 [submodule "third-party/graphhopper"]
 	path = third-party/graphhopper
