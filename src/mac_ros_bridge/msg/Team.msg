@@ -1,3 +1,3 @@
 uint64 timestamp
-int32 money
+int64 money
 #Maybe add jobs-taken and jobs-posted

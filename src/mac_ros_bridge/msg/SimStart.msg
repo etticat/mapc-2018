@@ -8,3 +8,9 @@ Product[] products
 Tool[] tools
 float32 proximity
 float32 cell_size
+float64 min_lat
+float64 max_lat
+float64 min_lon
+float64 max_lon
+float64 center_lat
+float64 center_lon

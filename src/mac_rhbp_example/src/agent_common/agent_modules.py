@@ -8,8 +8,8 @@ from abc import abstractmethod
 from builtins import list
 
 from behaviour_components.behaviours import BehaviourBase
-from behaviour_components.activators import MultiSensorCondition
-from behaviour_components.sensors import PassThroughTopicSensor
+from behaviour_components.conditions import MultiSensorCondition
+from behaviour_components.sensors import RawTopicSensor
 from utils.ros_helpers import get_topic_type
 
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
@@ -139,7 +139,7 @@ class GotoFacilityBehaviour(BehaviourBase):
             rospy.loginfo(self._agent_name + "::" +self._name + " to "+ self._selected_facility.name)
 
             action_goto(facility_name=self._selected_facility.name, publisher=self._pub_generic_action)
-        else: #backup action recharge agent
+        else: # backup action recharge agent
             rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
             action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
 
@@ -162,7 +162,7 @@ class GotoFacilityBehaviour(BehaviourBase):
         # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
         self.__client.update(self._exploration_knowledge + ('*',), self._exploration_knowledge + ('false',), )
 
-        self.do_step() #this is important to directly answer the request as in the start() base implementation
+        self.do_step() # this is important to directly answer the request as in the start() base implementation
 
     def do_step(self):
 
@@ -173,14 +173,14 @@ class GotoFacilityBehaviour(BehaviourBase):
 
 
 class FinishExplorationBehaviour(BehaviourBase):
-    '''
+    """
     Behaviour that finishes an exploration cycle by setting a corresponding knowledge fact
-    '''
+    """
 
     def __init__(self, agent_name, facility_topic,  **kwargs):
-        '''
+        """
         Constructor
-        '''
+        """
         super(FinishExplorationBehaviour, self) \
             .__init__(requires_execution_steps=True, **kwargs)
 
@@ -193,7 +193,7 @@ class FinishExplorationBehaviour(BehaviourBase):
         self.__client = KnowledgeBaseClient()
 
     def do_step(self):
-        # exloration done
+        # exploration done
         self.__client.update(self._exploration_knowledge + ('*',), self._exploration_knowledge + ('true',))
 
 
@@ -202,7 +202,7 @@ class GenericActionBehaviour(BehaviourBase):
     A simple behaviour for triggering generic MAC actions that just need a type and static parameters
     """
 
-    def __init__(self, name, agent_name, action_type, params =[], **kwargs):
+    def __init__(self, name, agent_name, action_type, params=[], **kwargs):
         """
         :param name: name of the behaviour
         :param agent_name: name of the agent for determining the correct topic prefix
@@ -225,22 +225,22 @@ class GenericActionBehaviour(BehaviourBase):
         action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self._params)
 
 
-class AbstractFacilitySensor(PassThroughTopicSensor):
+class AbstractFacilitySensor(RawTopicSensor):
     """
     A base class for all sensor implementations that are selecting a facility from a topic based on a reference topic (other facility or agent..)
     """
 
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None, create_log=False, print_updates=False):
         """
-        :param topic: see :class:PassThroughTopicSensor
+        :param topic: see :class:RawTopicSensor
         :param ref_topic: Reference topic that is used to select the considered facility
-        :param name: see :class:PassThroughTopicSensor
-        :param message_type: see :class:PassThroughTopicSensor
-        :param initial_value: see :class:PassThroughTopicSensor
+        :param name: see :class:RawTopicSensor
+        :param message_type: see :class:RawTopicSensor
+        :param initial_value: see :class:RawTopicSensor
         :param facility_attribute: An attribute that should be taken as the sensor value from the finally selected facility e.g. Position, Rate, ...
                 if None the raw/entire facitliy is passed
-        :param create_log: see :class:PassThroughTopicSensor
-        :param print_updates: see :class:PassThroughTopicSensor
+        :param create_log: see :class:RawTopicSensor
+        :param print_updates: see :class:RawTopicSensor
         """
         self._facilities = {}
         super(AbstractFacilitySensor, self).__init__(name=name, topic=topic, message_type=message_type,

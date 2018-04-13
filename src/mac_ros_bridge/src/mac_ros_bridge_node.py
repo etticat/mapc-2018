@@ -19,13 +19,13 @@ import errno
 import xml.etree.cElementTree as eT
 
 
-class MacRosBridge (threading.Thread):
+class MacRosBridge(threading.Thread):
     """
     Proxy server that converts the communication with the Multi-Agent Programming Contest Server 2017
     to ROS topics
     """
 
-    SOCKET_TIMEOUT = 2 # general socket timeout
+    SOCKET_TIMEOUT = 2  # general socket timeout
     RETRY_DELAY = 1.0
     RECV_SIZE = 8192
     SEPARATOR = b'\0'
@@ -44,7 +44,7 @@ class MacRosBridge (threading.Thread):
         rospy.init_node(node_name, anonymous=False, log_level=rospy.INFO)
 
         if not name:
-            self._agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
+            self._agent_name = rospy.get_param('~agent_name', 'agentA1')
         else:
             self._agent_name = name
 
@@ -57,14 +57,15 @@ class MacRosBridge (threading.Thread):
         # configure if also general information available for all agents should be handled
         self._only_agent_specific = rospy.get_param('~only_agent_specific', False)
 
-        rospy.logdebug("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name, self._agent_pw)
+        rospy.logdebug("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name,
+                       self._agent_pw)
 
         self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><auth-request username="PLACEHOLDER" password="PLACEHOLDER"/></message>''')
         self.message_id = -1
 
-        self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size = 1)
-        self._pub_agent = rospy.Publisher('~agent', Agent, queue_size = 1, latch=True)
+        self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size=1)
+        self._pub_agent = rospy.Publisher('~agent', Agent, queue_size=1, latch=True)
         self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
         self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=False)
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
@@ -73,7 +74,8 @@ class MacRosBridge (threading.Thread):
             self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
             self._pub_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
             self._pub_shop = rospy.Publisher('/shop', ShopMsg, queue_size=1, latch=True)
-            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=1, latch=True)
+            self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=1,
+                                                         latch=True)
             self._pub_dump = rospy.Publisher('/dump', DumpMsg, queue_size=1, latch=True)
             self._pub_storage = rospy.Publisher('/storage', StorageMsg, queue_size=1, latch=True)
             self._pub_workshop = rospy.Publisher('/workshop', WorkshopMsg, queue_size=1, latch=True)
@@ -170,13 +172,13 @@ class MacRosBridge (threading.Thread):
 
         if not self._only_agent_specific:
             self._publish_team(timestamp=timestamp, perception=perception)
-            self._publish_entity(timestamp=timestamp, perception=perception) #TODO check if this is agent specific or not
+            self._publish_entity(timestamp=timestamp, perception=perception) # TODO check if this is agent specific or not
             self._publish_facilities(timestamp=timestamp, perception=perception)
             self._publish_jobs(timestamp=timestamp, perception=perception)
             self._publish_resources(timestamp=timestamp, perception=perception)
         # self.send(action_type="skip") # can be enabled for dummy answers
 
-        #first send all updates before requesting the action
+        # first send all updates before requesting the action
         self._publish_request_action(timestamp=timestamp, perception=perception)
 
     def _sim_end(self, message):
@@ -219,6 +221,13 @@ class MacRosBridge (threading.Thread):
         #msg.tools = list(msg.tools)
         msg.proximity = 1.0 / (10.0**int(simulation.get('proximity'))) #given proximity is converted to a more useful scale
         msg.cell_size = int(simulation.get('cellSize')) / 1000.0 # convert from meter to kilometer
+
+        msg.min_lat = float(simulation.get('minLat'))
+        msg.max_lat = float(simulation.get('maxLat'))
+        msg.min_lon = float(simulation.get('minLon'))
+        msg.max_lon = float(simulation.get('maxLon'))
+        msg.center_lat = float(simulation.get('centerLat'))
+        msg.center_lon = float(simulation.get('centerLon'))
 
         products = []
         items = simulation.findall('item')
@@ -280,7 +289,7 @@ class MacRosBridge (threading.Thread):
         """
         response = eT.Element('message', type='action')
         action = eT.SubElement(response, 'action', id=self.message_id, type=action_type)
-        #add parameters, keys are not used in the moment but might be useful for debugging,type checks or future extensions
+        # add parameters, keys are not used in the moment but might be useful for debugging,type checks or future extensions
         for key, value in params.iteritems():
             p = eT.SubElement(action, 'p')
             p.text = value
@@ -295,7 +304,7 @@ class MacRosBridge (threading.Thread):
         rospy.logdebug("MacRosBridge::run")
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
-#        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
+        #        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         self.authenticate()
         buffer = b''
         while (not rospy.is_shutdown()):
@@ -405,7 +414,7 @@ class MacRosBridge (threading.Thread):
     def _parse_team(self, perception, timestamp):
         team = perception.find('team')
         msg_team = Team()
-        msg_team.money = int(team.get('money'))
+        msg_team.money = long(team.get('money'))
         msg_team.timestamp = timestamp
         return msg_team
 
@@ -431,7 +440,7 @@ class MacRosBridge (threading.Thread):
         msg.items = self._get_items_of_agent(elem=agent_self)
         return msg
 
-    def _get_items_of_agent(self,elem):
+    def _get_items_of_agent(self, elem):
 
         """
         Extract Items from an agent xml element
@@ -463,7 +472,7 @@ class MacRosBridge (threading.Thread):
     def _parse_item(self, xml_item):
         """
         parsing a single xml item element
-        :param xml_item: 
+        :param xml_item:
         :return: Item()
         """
         item = Item()
@@ -536,7 +545,6 @@ class MacRosBridge (threading.Thread):
         items = []
 
         for xml_item in elem.findall('required'):
-
             item = self._parse_item(xml_item)
             items.append(item)
         return items
@@ -584,7 +592,7 @@ class MacRosBridge (threading.Thread):
         msg.entities = self._parse_entities(perception)
 
         msg_team = self._parse_team(perception, timestamp)
-        msg.team=msg_team
+        msg.team = msg_team
 
         msg.shops = self._parse_shops(perception)
 

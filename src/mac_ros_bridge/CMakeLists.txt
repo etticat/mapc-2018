@@ -98,6 +98,16 @@ generate_messages(
   diagnostic_msgs
 )
 
+#find custom messages which depends on other custom messages.
+find_package(
+   message_generation
+)
+
+catkin_package(
+   CATKIN_DEPENDS
+   message_runtime
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################

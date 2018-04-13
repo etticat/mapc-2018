@@ -27,10 +27,20 @@ pip install lindypy
 ```
 
 ### Expected directory Structure
+
 * your workspace
     * mac_workspace
     * massim
         * massim-2017-\*.\*
+
+An alternative project structure working with massim sources has to look like below
+
+* your workspace
+    * mac_workspace
+    * massim
+        * massim (src root directory )
+            * server
+            * ...
 
 ### Clone and build
 
@@ -42,6 +52,17 @@ pip install lindypy
 6. If you want to use the RHBP rqt plugin you have to start rqt once with `rqt --force-discover`
 
 ## Execution and further Documentation
+
+### massim Server
+
+You can start the massim server with one of the following commands, depending on your workspace.
+
+Using binary massim distribution with
+`script/start_massim.sh`
+Or running directly from sources with `script/start_massim_src.sh`
+The second option requires that you have once executed `mvn install` in the massim sources root.
+
+### Team AI
 
 Please refer to the [tub_contest package](https://gitlab.tubit.tu-berlin.de/mac17/contest-team/tub_contest) for further instruction on how to launch our solution.
 
