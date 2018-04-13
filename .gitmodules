@@ -5,6 +5,3 @@
 [submodule "third-party/graphhopper"]
 	path = third-party/graphhopper
 	url = https://github.com/graphhopper/graphhopper.git
-[submodule "src/tub_contest"]
-	path = src/tub_contest
-	url = https://gitlab.tubit.tu-berlin.de/mac17/contest-team/tub_contest.git
