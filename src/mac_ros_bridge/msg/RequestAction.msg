@@ -10,6 +10,7 @@ Workshop[] workshops
 Storage[] storages
 Resource[] resources
 Entity[] entities
+Dump[] dumps
 Agent agent
 Team team
 

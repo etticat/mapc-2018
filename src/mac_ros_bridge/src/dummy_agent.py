@@ -3,17 +3,24 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction
 
+
 class DummyAgent:
+    """
+    This is a dummy agent class that always answers with a recharge action
+    """
+
     def __init__(self):
-        print "DummyAgent::init"
 
         rospy.init_node('agent_node', anonymous=True)
+
+        rospy.loginfo("DummyAgent::init")
 
         self.agent_name = rospy.get_param('~agent_name', 'UNKNOWN')
 
         self._agent_topic_prefix = 'bridge_node_' + self.agent_name + '/'
         
-        self._pub_generic_action = rospy.Publisher(self._agent_topic_prefix + 'generic_action', GenericAction, queue_size = 10)
+        self._pub_generic_action = rospy.Publisher(self._agent_topic_prefix + 'generic_action', GenericAction,
+                                                   queue_size=1)
         
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self.callback)
 
@@ -22,13 +29,13 @@ class DummyAgent:
         :param related_request: the request we are answering
         :type related_request: RequestAction
         """
-        action_str = "skip"
+        action_str = "recharge"
 
         msg = GenericAction()
-        msg.id=related_request.id
-        msg.target_deadline=related_request.deadline
+        msg.id = related_request.id
+        msg.target_deadline = related_request.deadline
         msg.action_type = action_str
-        msg.params={}
+        msg.params = {}
 
         rospy.logdebug("Published action %s", msg)
 
@@ -42,9 +49,9 @@ class DummyAgent:
         """
         rospy.logdebug("DummyAgent::callback %s", str(msg))
         self.publish_action(related_request=msg)
-        
+
+
 if __name__ == '__main__':
-    print "dummy_agent::main"
     try:
         dummy = DummyAgent()
         

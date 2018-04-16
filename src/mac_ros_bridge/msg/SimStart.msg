@@ -5,7 +5,8 @@ string team
 string map
 Role role
 Product[] products
-Tool[] tools
+Upgrade[] upgrades
+Well[] wells
 float32 proximity
 float32 cell_size
 float64 min_lat

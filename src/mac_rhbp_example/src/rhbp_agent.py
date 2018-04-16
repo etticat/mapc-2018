@@ -12,8 +12,12 @@ from behaviour_components.sensors import TopicSensor
 
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
-from agent_common.agent_modules import GotoFacilityBehaviour, GenericActionBehaviour, ClosestFacilityDistanceSensor, \
-    get_bridge_topic_prefix, FinishExplorationBehaviour, get_knowledge_base_tuple_facility_exploration
+from agent_common.behaviours import GotoFacilityBehaviour, GenericActionBehaviour, FinishExplorationBehaviour, \
+    get_knowledge_base_tuple_facility_exploration
+
+from agent_common.sensors import ClosestFacilityDistanceSensor
+
+from agent_common.agent_utils import get_bridge_topic_prefix
 
 
 class RhbpAgent:
@@ -26,7 +30,8 @@ class RhbpAgent:
 
         self._agent_topic_prefix = get_bridge_topic_prefix(agent_name=self._agent_name)
 
-        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1) # ensure also max_parallel_behaviours during debugging
+        # ensure also max_parallel_behaviours during debugging
+        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
 
         self._sim_started = False
 
@@ -39,7 +44,7 @@ class RhbpAgent:
 
         rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
 
-        rospy.Subscriber(self._agent_topic_prefix +"generic_action", GenericAction, self._callback_generic_action)
+        rospy.Subscriber(self._agent_topic_prefix + "generic_action", GenericAction, self._callback_generic_action)
 
         self._received_action_response = False
 
@@ -84,7 +89,6 @@ class RhbpAgent:
 
             self._shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], -1.0, sensor_type=bool))
             self._shop_exploration.add_effect(Effect(at_shop_cond.getFunctionNames()[0], -1.0, sensor_type=float))
-
 
             self._finish_shop_exploration = FinishExplorationBehaviour(plannerPrefix=self._agent_name,
                                     agent_name=self._agent_name, name='finish_explore_shops', facility_topic='/shop')

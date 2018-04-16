@@ -66,16 +66,18 @@ add_message_files(
   ShopMsg.msg
   Storage.msg
   StorageMsg.msg
-  Tool.msg
   Workshop.msg
   WorkshopMsg.msg
   Entity.msg
   EntityMsg.msg
+  Upgrade.msg
+  Well.msg
+  WellMsg.msg
+  Resource.msg
+  ResourceMsg.msg
   SimStart.msg
   SimEnd.msg
   Bye.msg
-  Resource.msg
-  ResourceMsg.msg
   RequestAction.msg
 )
 

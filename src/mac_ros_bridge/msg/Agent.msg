@@ -1,8 +1,12 @@
 uint64 timestamp
 Position pos
 uint32 charge
+uint32 charge_max
 uint32 load
-uint32 route_length
+uint32 load_max
+uint32 speed
+uint32 skill
+uint32 vision
 string last_action
 string last_action_result
 Item[] items

@@ -8,8 +8,10 @@ import rospy
 import traceback
 
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
-    ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg,Team, \
-    Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, Tool, Product
+    ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg, Team, \
+    Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, \
+    Product, Well, WellMsg, Upgrade
+
 
 import socket
 import threading
@@ -32,9 +34,9 @@ class MacRosBridge(threading.Thread):
 
     def __init__(self, name=None):
         """
-        :param name: agent name, leave empty to get name from roslaunch
+        :param name: agent name, leave empty to get name property from roslaunch
         """
-        threading.Thread.__init__(self)
+        super(MacRosBridge, self).__init__()
         rospy.logdebug("MacRosBridge::init")
 
         node_name = 'bridge_node_'
@@ -60,19 +62,26 @@ class MacRosBridge(threading.Thread):
         rospy.logdebug("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name,
                        self._agent_pw)
 
-        self.auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        self._auth = eT.fromstring('''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <message type="auth-request"><auth-request username="PLACEHOLDER" password="PLACEHOLDER"/></message>''')
         self.message_id = -1
+
+        # this is all perception that the agent is going to publish
 
         self._pub_request_action = rospy.Publisher('~request_action', RequestAction, queue_size=1)
         self._pub_agent = rospy.Publisher('~agent', Agent, queue_size=1, latch=True)
         self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
         self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=False)
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
+        self._pub_local_wells = rospy.Publisher('~well', WellMsg, queue_size=1, latch=True)
+        self._pub_local_entity = rospy.Publisher('~entity', EntityMsg, queue_size=1, latch=True)
+        self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
+        self._pub_global_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
+        self._pub_global_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
+        self._pub_local_resource = rospy.Publisher('~resource', ResourceMsg, queue_size=1, latch=True)
 
         if not self._only_agent_specific:
             self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
-            self._pub_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
             self._pub_shop = rospy.Publisher('/shop', ShopMsg, queue_size=1, latch=True)
             self._pub_charging_station = rospy.Publisher('/charging_station', ChargingStationMsg, queue_size=1,
                                                          latch=True)
@@ -80,11 +89,10 @@ class MacRosBridge(threading.Thread):
             self._pub_storage = rospy.Publisher('/storage', StorageMsg, queue_size=1, latch=True)
             self._pub_workshop = rospy.Publisher('/workshop', WorkshopMsg, queue_size=1, latch=True)
             self._pub_priced_job = rospy.Publisher('/priced_job', JobMsg, queue_size=1, latch=True)
-            self._pub_posted_job = rospy.Publisher('/posted_job', JobMsg, queue_size=1, latch=True)
             self._pub_auction_job = rospy.Publisher('/auction_job', AuctionJobMsg, queue_size=1, latch=True)
             self._pub_mission = rospy.Publisher('/mission_job', JobMsg, queue_size=1, latch=True)
-            self._pub_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
 
+        # this is the expected action reply
         rospy.Subscriber("~generic_action", GenericAction, self.callback_generic_action)
 
     def connect(self):
@@ -94,8 +102,8 @@ class MacRosBridge(threading.Thread):
         """
         try:
             rospy.logdebug("Connecting...%s", self._agent_name)
-            self.socket = socket.create_connection(self._server_address, MacRosBridge.RETRY_DELAY)
-            self.socket.settimeout(None) # enable blocking mode until simulation starts
+            self._socket = socket.create_connection(self._server_address, MacRosBridge.RETRY_DELAY)
+            self._socket.settimeout(None) # enable blocking mode until simulation starts
             return True
         except OSError as error:
             rospy.logerr('OSError connecting to {}: {}'.format(self._server_address, error))
@@ -113,13 +121,13 @@ class MacRosBridge(threading.Thread):
         Reconnect to contest server
         """
         try:
-            self.socket.shutdown(socket.SHUT_RDWR)
-            self.socket.close()
+            self._socket.shutdown(socket.SHUT_RDWR)
+            self._socket.close()
         except OSError:
             pass
         time.sleep(MacRosBridge.RETRY_DELAY)
         rospy.loginfo('Reconnecting...%s', self._agent_name)
-        self.socket = None
+        self._socket = None
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
         self.authenticate()
@@ -129,10 +137,10 @@ class MacRosBridge(threading.Thread):
         Authenticate on the contest server
         """
         rospy.logdebug("Authenticate...%s", self._agent_name)
-        auth_element = self.auth.find('auth-request')
+        auth_element = self._auth.find('auth-request')
         auth_element.attrib['username'] = self._agent_name
         auth_element.attrib['password'] = self._agent_pw
-        self.socket.send(eT.tostring(self.auth) + MacRosBridge.SEPARATOR)
+        self._socket.send(eT.tostring(self._auth) + MacRosBridge.SEPARATOR)
 
     def handle_message(self, xml):
         """
@@ -169,14 +177,15 @@ class MacRosBridge(threading.Thread):
         rospy.logdebug("request-action: perception id = %s", self.message_id)
 
         self._publish_agent(timestamp=timestamp, perception=perception)
+        self._publish_entity(timestamp=timestamp, perception=perception)
+        self._publish_well(timestamp=timestamp, perception=perception)
 
         if not self._only_agent_specific:
             self._publish_team(timestamp=timestamp, perception=perception)
-            self._publish_entity(timestamp=timestamp, perception=perception) # TODO check if this is agent specific or not
             self._publish_facilities(timestamp=timestamp, perception=perception)
             self._publish_jobs(timestamp=timestamp, perception=perception)
             self._publish_resources(timestamp=timestamp, perception=perception)
-        # self.send(action_type="skip") # can be enabled for dummy answers
+        # self.send(action_type="recharge") # can be enabled for dummy answers
 
         # first send all updates before requesting the action
         self._publish_request_action(timestamp=timestamp, perception=perception)
@@ -218,9 +227,8 @@ class MacRosBridge(threading.Thread):
         msg.steps = steps
         msg.team = simulation.get('team')
         msg.map = simulation.get('map')
-        #msg.tools = list(msg.tools)
-        msg.proximity = 1.0 / (10.0**int(simulation.get('proximity'))) #given proximity is converted to a more useful scale
-        msg.cell_size = int(simulation.get('cellSize')) / 1000.0 # convert from meter to kilometer
+        msg.proximity = 1.0 / (10.0 ** int(simulation.get('proximity')))  # given proximity is converted to a more useful scale
+        msg.cell_size = int(simulation.get('cellSize')) / 1000.0  # convert from meter to kilometer
 
         msg.min_lat = float(simulation.get('minLat'))
         msg.max_lat = float(simulation.get('maxLat'))
@@ -229,43 +237,13 @@ class MacRosBridge(threading.Thread):
         msg.center_lat = float(simulation.get('centerLat'))
         msg.center_lon = float(simulation.get('centerLon'))
 
-        products = []
-        items = simulation.findall('item')
-        for item in items:
-            product = Product()
-            product.name = item.get('name')
-            product.volume = int(item.get('volume'))
-            items = []
-            tools = []
-            for tool_item in item:
-                if tool_item.tag != "tool":
-                    item = Item()
-                    item.name = tool_item.get('name')
-                    item.amount = int(tool_item.get('amount'))
-                    items.append(item)
-                else:
-                    tool = Tool()
-                    tool.name = tool_item.get('name')
-                    tools.append(tool)
-            product.consumed_items = items
-            product.required_tools = tools
-            products.append(product)
-        msg.products = products
+        msg.products = self._parse_products(simulation)
 
-        xml_role = simulation.find('role')
-        role = Role()
-        role.speed = int(xml_role.get('speed'))
-        role.name = xml_role.get('name')
-        role.max_battery = int(xml_role.get('battery'))
-        role.max_load = int(xml_role.get('load'))
-        tools = []
-        for role_tool in xml_role.findall('tool'):
-            tool = Tool()
-            tool.name = role_tool.get('name')
-            tools.append(tool)
-        role.tools = tools
-        msg.role = role
-        #TODO add more information here from message content
+        msg.upgrades = self._parse_upgrades(simulation)
+
+        msg.wells = self._parse_wells(simulation)
+
+        msg.role = self._parse_role(simulation)
 
         self._pub_sim_start.publish(msg)
 
@@ -295,7 +273,7 @@ class MacRosBridge(threading.Thread):
             p.text = value
 
         rospy.logdebug("Action: " + eT.tostring(response))
-        self.socket.send(eT.tostring(response) + MacRosBridge.SEPARATOR)
+        self._socket.send(eT.tostring(response) + MacRosBridge.SEPARATOR)
 
     def run(self):
         """
@@ -304,12 +282,12 @@ class MacRosBridge(threading.Thread):
         rospy.logdebug("MacRosBridge::run")
         while not self.connect():
             time.sleep(MacRosBridge.RETRY_DELAY)
-        #        self.socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
+        #        self._socket.settimeout(MacRosBridge.SOCKET_TIMEOUT)
         self.authenticate()
         buffer = b''
         while (not rospy.is_shutdown()):
             try:
-                data = self.socket.recv(MacRosBridge.RECV_SIZE)
+                data = self._socket.recv(MacRosBridge.RECV_SIZE)
             except socket.timeout:
                 rospy.logerr("socket timeout")
                 self.reconnect()
@@ -351,13 +329,74 @@ class MacRosBridge(threading.Thread):
 
         self._send_action(action_type=msg.action_type, params=params)
 
+    def _parse_products(self, simulation):
+        products = []
+        items = simulation.findall('item')
+        for item in items:
+            product = Product()
+            product.name = item.get('name')
+            product.volume = int(item.get('volume'))
+            items = []
+            roles = []
+            for role_item_elm in item:
+                if role_item_elm.tag == "item":
+                    item = Item()
+                    item.name = role_item_elm.get('name')
+                    amount = role_item_elm.get('amount')
+                    if amount:
+                        item.amount = int(amount)
+                    else:
+                        item.amount = 1
+                    items.append(item)
+                elif role_item_elm.tag == "role":
+                    roles.append(role_item_elm.get('name'))
+                else:
+                    rospy.logerr("Unknown item product '%s' ! %s", role_item_elm.tag, traceback.format_exc())
+            product.consumed_items = items
+            product.required_roles = roles
+            products.append(product)
+        return products
+
+    def _parse_upgrades(self, simulation):
+        upgrades = []
+        upgrades_xml = simulation.findall('upgrade')
+        for elem in upgrades_xml:
+            upgrade = Upgrade()
+            upgrade.cost = int(elem.get('cost'))
+            upgrade.name = elem.get('name')
+            upgrade.step = int(elem.get('step'))
+            upgrades.append(upgrade)
+        return upgrades
+
+    def _parse_role(self, simulation):
+
+        xml_role = simulation.find('role')
+
+        # eT.dump(xml_role)
+
+        role = Role()
+        role.name = xml_role.get('name')
+        role.base_speed = int(xml_role.get('baseSpeed'))
+        role.max_speed = int(xml_role.get('maxSpeed'))
+        role.base_battery = int(xml_role.get('baseBattery'))
+        role.max_battery = int(xml_role.get('maxBattery'))
+        role.base_load = int(xml_role.get('baseLoad'))
+        role.max_load = int(xml_role.get('maxLoad'))
+        role.base_vision = int(xml_role.get('baseVision'))
+        role.max_vision = int(xml_role.get('maxVision'))
+        role.base_skill = int(xml_role.get('baseSkill'))
+        role.max_skill = int(xml_role.get('maxSkill'))
+        # role.roads = str(xml_role.get('roads')) # TODO not yet sent by the server
+
+        return role
+
     def _parse_entities(self, perception):
         entities = []
         for xml_item in perception.findall('entity'):
             entity = Entity()
             entity.name = xml_item.get('name')
             entity.team = xml_item.get('team')
-            entity.role = Role(name=xml_item.get('role'))
+            entity.role = xml_item.get('role')
             entity.pos = Position(float(xml_item.get('lat')), float(xml_item.get('lon')))
             entities.append(entity)
         return entities
@@ -372,7 +411,7 @@ class MacRosBridge(threading.Thread):
 
             item = Item()
             item.name = xml_item.get('resource')
-            item.amount = 1  # TODO may use another number here
+            item.amount = 1  # We can always only get one item per time
             resource.items.append(item)
             resources.append(resource)
         return resources
@@ -398,6 +437,26 @@ class MacRosBridge(threading.Thread):
             workshops.append(workshop)
         return workshops
 
+    def _parse_wells(self, perception):
+        wells = []
+        for xml_item in perception.findall('well'):
+            well = Well()
+            well.name = xml_item.get('name')
+            lat = xml_item.get('lat')
+            lon = xml_item.get('lon')
+            if lat and lon:
+                well.pos = Position(float(lat), float(lon))
+            cost = xml_item.get('cost')
+            if cost:
+                well.cost = int(cost)
+            initial_integrity = xml_item.get('initialIntegrity')
+            if initial_integrity:
+                well.initial_integrity = int(initial_integrity)
+            well.efficiency = int(xml_item.get('efficiency'))
+            well.integrity = int(xml_item.get('integrity'))
+            wells.append(well)
+        return wells
+
     def _parse_shops(self, perception):
         shops = []
         for xml_item in perception.findall('shop'):
@@ -414,7 +473,8 @@ class MacRosBridge(threading.Thread):
     def _parse_team(self, perception, timestamp):
         team = perception.find('team')
         msg_team = Team()
-        msg_team.money = long(team.get('money'))
+        msg_team.massium = long(team.get('massium'))
+        msg_team.score = long(team.get('score'))
         msg_team.timestamp = timestamp
         return msg_team
 
@@ -431,12 +491,16 @@ class MacRosBridge(threading.Thread):
         msg = Agent()
         msg.timestamp = timestamp
         msg.charge = int(agent_self.get('charge'))
+        msg.charge_max = int(agent_self.get('chargeMax'))
         msg.load = int(agent_self.get('load'))
+        msg.load_max = int(agent_self.get('loadMax'))
+        msg.skill = int(agent_self.get('skill'))
+        msg.speed = int(agent_self.get('speed'))
+        msg.vision = int(agent_self.get('vision'))
         msg.pos = Position(float(agent_self.get('lat')), float(agent_self.get('lon')))
         for agent_self_action in agent_self.iter('action'):
             msg.last_action = agent_self_action.get('type')
             msg.last_action_result = agent_self_action.get('result')
-        # msg.route_length = int(agent_self.get('routeLength')) TODO might not be available anymore
         msg.items = self._get_items_of_agent(elem=agent_self)
         return msg
 
@@ -495,8 +559,6 @@ class MacRosBridge(threading.Thread):
         jobs = []
 
         for xml_item in perception.findall('auction'):
-            # rospy.loginfo("Auction")
-            # eT.dump(xml_item)
 
             job = AuctionJob()
             job.job = self._get_common_job(elem=xml_item)
@@ -591,8 +653,7 @@ class MacRosBridge(threading.Thread):
 
         msg.entities = self._parse_entities(perception)
 
-        msg_team = self._parse_team(perception, timestamp)
-        msg.team = msg_team
+        msg.team = self._parse_team(perception, timestamp)
 
         msg.shops = self._parse_shops(perception)
 
@@ -601,6 +662,8 @@ class MacRosBridge(threading.Thread):
         msg.storages = self._parse_storages(perception)
 
         msg.resources = self._parse_resources(perception)
+
+        msg.dumps = self._parse_dumps(perception)
 
         #rospy.logdebug("Request action %s", msg)
         self._pub_request_action.publish(msg)
@@ -627,6 +690,28 @@ class MacRosBridge(threading.Thread):
             msg = self._parse_team(perception, timestamp)
             self._pub_team.publish(msg)
 
+    def _publish_well(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  ElementTree
+        """
+        has_local_subscribers = self._pub_local_wells.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
+
+        if has_local_subscribers or has_global_subscribers:
+            well_msg = WellMsg()
+            well_msg.facilities = self._parse_wells(perception)
+            well_msg.timestamp = timestamp
+
+        if has_local_subscribers:
+            self._pub_local_wells.publish(well_msg)
+
+        # publish only on the global topic if we have information
+        if has_global_subscribers and len(well_msg.facilities) > 0:
+            self._pub_global_wells.publish(well_msg)
+
     def _publish_entity(self, timestamp, perception):
         """
         :param timestamp: message timestamp
@@ -634,11 +719,43 @@ class MacRosBridge(threading.Thread):
         :param perception: full perception object
         :type perception: eT  ElementTree
         """
-        if self._pub_entity.get_num_connections() > 0:
+        has_local_subscribers = self._pub_local_entity.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_entity.get_num_connections() > 0
+
+        if has_local_subscribers or has_global_subscribers:
             entity_msg = EntityMsg()
             entity_msg.entities = self._parse_entities(perception)
             entity_msg.timestamp = timestamp
-            self._pub_entity.publish(entity_msg)
+
+        if has_local_subscribers:
+            self._pub_local_entity.publish(entity_msg)
+
+        # publish only on the global topic if we have information
+        if has_global_subscribers and len(entity_msg.entities) > 0:
+            self._pub_global_entity.publish(entity_msg)
+
+    def _publish_resources(self, timestamp, perception):
+        """
+        :param timestamp: message timestamp
+        :type timestamp: int
+        :param perception: full perception object
+        :type perception: eT  ElementTree
+        """
+
+        has_local_subscribers = self._pub_local_resource.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_resource.get_num_connections() > 0
+
+        if has_local_subscribers or has_global_subscribers:
+            msg = ResourceMsg()
+            msg.timestamp = timestamp
+            msg.facilities = self._parse_resources(perception)
+
+        if has_local_subscribers:
+            self._pub_local_resource.publish(msg)
+
+        # publish only on the global topic if we have information
+        if has_global_subscribers and len(msg.facilities) > 0:
+            self._pub_global_resource.publish(msg)
 
     def _publish_facilities(self, timestamp, perception):
         """
@@ -685,12 +802,6 @@ class MacRosBridge(threading.Thread):
         :type perception: eT  ElementTree
         """
 
-        if self._pub_posted_job.get_num_connections() > 0:
-            msg = JobMsg()
-            msg.timestamp = timestamp
-            msg.jobs = self._parse_jobs(perception, identifier='posted')
-            self._pub_posted_job.publish(msg)
-
         if self._pub_priced_job.get_num_connections() > 0:
             msg = JobMsg()
             msg.timestamp = timestamp
@@ -708,19 +819,6 @@ class MacRosBridge(threading.Thread):
             msg.timestamp = timestamp
             msg.jobs = self._parse_auctions(perception)
             self._pub_auction_job.publish(msg)
-
-    def _publish_resources(self, timestamp, perception):
-        """
-        :param timestamp: message timestamp
-        :type timestamp: int
-        :param perception: full perception object
-        :type perception: eT  ElementTree
-        """
-        if self._pub_resource.get_num_connections() > 0:
-            msg = ResourceMsg()
-            msg.timestamp = timestamp
-            msg.resources = self._parse_resources(perception)
-            self._pub_resource.publish(msg)
 
 
 if __name__ == '__main__':

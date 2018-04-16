@@ -1,4 +1,4 @@
 string name
 string team
-Role role
+string role
 Position pos
