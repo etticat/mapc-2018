@@ -1,0 +1,12 @@
+<launch>
+
+    <arg name="initial_port" default="8989" />
+
+    <!--Infrastructure Nodes-->
+    <node pkg="mac_utils" type="graphhopper.py" name ="graphhopper_node" output="screen">
+        <!--List the preloaded maps separated by comma in start_maps-->
+        <param name="start_maps" value="paris,london,hannover" />
+        <param name="initial_port" value="$(arg initial_port)" />
+    </node>
+
+</launch>

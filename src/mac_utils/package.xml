@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>mac_utils</name>
+  <version>0.0.1</version>
+  <description>Some useful utility modules for the MAPC 2018</description>
+
+  <maintainer email="christopher-eyk.hrabia@dai-labor.de">Christopher-Eyk Hrabia</maintainer>
+
+  <license>LGPLv3</license>
+
+  <author email="christopher-eyk.hrabia@dai-labor.de">Christopher-Eyk Hrabia</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>mac_ros_bridge</build_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>mac_ros_bridge</run_depend>
+
+</package>
