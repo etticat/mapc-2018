@@ -2,9 +2,9 @@
 
 Technische Universität Berlin - DAI-Labor - http://www.dai-labor.de/
 
-Contest homepage: https://multiagentcontest.org/2017/
+Contest homepage: https://multiagentcontest.org/2018/
 
-This is the main workspace for the TUB participation in the Multi-Agent Contest (MAPC) 2017.
+This is the main workspace for the TUB participation in the Multi-Agent Contest (MAPC) 2018.
 It applies the ROS Hybrid Behaviour Planner Framework (RHBP) on top of the ROS (Robot Operating System) framework.
 
 ## Setup and Install
@@ -27,10 +27,20 @@ sudo apt install ros-kinetic-desktop python-pip pip install lindypy
 
 ### Expected directory Structure
 
+You can get the MAPC simulation server from `https://github.com/agentcontest/massim/releases` as a release version for
+
+following Option 1) or using the sources (`git clone https://github.com/agentcontest/massim.git massim18`) for Option 2)
+
+***Option 1)***
+
 * your workspace
     * mapc_workspace
     * massim
-        * massim-2017-\*.\*
+        * massim-2018-\*.\*
+           * server
+           * ...
+
+***Option 2)***
 
 An alternative project structure working with massim sources has to look like below
 
@@ -47,7 +57,7 @@ An alternative project structure working with massim sources has to look like be
 2. `cd mac_workspace`
 3. `catkin_make`
 4. Download the latest MASSIM release https://github.com/agentcontest/massim/releases
-5. Adjust the script "script/script/start_massim.sh" to use the correct release.
+5. Adjust the script "script/script/start_massim.sh" to use the correct release if necessary.
 6. If you want to use the RHBP rqt plugin you have to start rqt once with `rqt --force-discover`
 
 ## Execution and further Documentation
