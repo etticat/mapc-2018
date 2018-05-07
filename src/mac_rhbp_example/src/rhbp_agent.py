@@ -87,13 +87,13 @@ class RhbpAgent:
                                      ThresholdActivator(thresholdValue=proximity,
                                                         isMinimum=False))  # highest activation if the value is below threshold
 
-            self._shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], -1.0, sensor_type=bool))
-            self._shop_exploration.add_effect(Effect(at_shop_cond.getFunctionNames()[0], -1.0, sensor_type=float))
+            self._shop_exploration.add_effect(Effect(shop_exploration_sensor.name, -1.0, sensor_type=bool))
+            self._shop_exploration.add_effect(Effect(at_shop_sensor.name, -1.0, sensor_type=float))
 
             self._finish_shop_exploration = FinishExplorationBehaviour(plannerPrefix=self._agent_name,
                                     agent_name=self._agent_name, name='finish_explore_shops', facility_topic='/shop')
 
-            self._finish_shop_exploration.add_effect(Effect(shop_exploration_condition.getFunctionNames()[0], 1.0, sensor_type=bool))
+            self._finish_shop_exploration.add_effect(Effect(shop_exploration_sensor.name, 1.0, sensor_type=bool))
 
             self._finish_shop_exploration.add_precondition(at_shop_cond) #only finish if we are at a charging station
             self._finish_shop_exploration.add_precondition(Negation(shop_exploration_condition)) #only execute once if exploration is not yet True
@@ -133,19 +133,19 @@ class RhbpAgent:
             self.find_charging_station.add_precondition(
                 Negation(battery_empty_cond))  # do not move if battery is almost empty to favour recharge
 
-            self.find_charging_station.add_effect(Effect(at_charging_station_cond.getFunctionNames()[0], -1.0, # -1 for a reducing effect on the distance
+            self.find_charging_station.add_effect(Effect(at_charging_station_sensor.name, -1.0, # -1 for a reducing effect on the distance
                                                               sensor_type=float))
 
             self.charge = GenericActionBehaviour(plannerPrefix=self._agent_name,
                                                  agent_name=self._agent_name, name='charge', action_type='charge')
             self.charge.add_precondition(at_charging_station_cond)  # only charge if we are at a charging station
             self.charge.add_precondition(require_charging_cond)  # only charge if necessary.
-            self.charge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 2.0, # here we could also use the real charging effects
+            self.charge.add_effect(Effect(charge_sensor.name, 2.0, # here we could also use the real charging effects
                                                sensor_type=float))
 
             self.recharge = GenericActionBehaviour(plannerPrefix=self._agent_name,
                                                  agent_name=self._agent_name, name='recharge', action_type='recharge')
-            self.recharge.add_effect(Effect(require_charging_cond.getFunctionNames()[0], 1.0, # here we could also use the real charging effects
+            self.recharge.add_effect(Effect(charge_sensor.name, 1.0, # here we could also use the real charging effects
                                                sensor_type=float))
 
             self.recharge.add_precondition(battery_empty_cond)

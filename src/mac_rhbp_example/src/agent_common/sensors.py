@@ -4,7 +4,6 @@ import rospy
 import sys
 from abc import abstractmethod
 
-from behaviour_components.conditions import MultiSensorCondition
 from behaviour_components.sensors import RawTopicSensor, AggregationSensor
 from utils.ros_helpers import get_topic_type
 
