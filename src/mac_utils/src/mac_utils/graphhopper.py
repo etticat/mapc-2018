@@ -58,7 +58,7 @@ class PathPlanner(object):
                   'points_encoded=false&point={},{}&point={},{}'.format(self.graphhopper_port,
                                                                         a.lat, a.long, b.lat, b.long)
         try:
-            connection = urllib2.urlopen(request, timeout = PathPlanner.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
+            connection = urllib2.urlopen(request, timeout=PathPlanner.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
             response = connection.read().decode()
             parsed = json.loads(response)
             connection.close()
