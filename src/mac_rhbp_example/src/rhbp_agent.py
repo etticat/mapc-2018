@@ -57,9 +57,10 @@ class RhbpAgent:
         recharge_lower_bound_percentage = 0.7
         recharge_critical_bound_percentage = 0.1
 
-        agent_recharge_upper_bound = msg.role.max_battery
-        agent_recharge_lower_bound = msg.role.max_battery * recharge_lower_bound_percentage
-        agent_charge_critical = msg.role.max_battery * recharge_critical_bound_percentage
+        agent_recharge_upper_bound = msg.role.base_battery  # TODO this would have to be updated on upgrades from the
+                                                            # agent message
+        agent_recharge_lower_bound = agent_recharge_upper_bound * recharge_lower_bound_percentage
+        agent_charge_critical = agent_recharge_upper_bound * recharge_critical_bound_percentage
 
         if not self._sim_started:  # init only once here
 
@@ -193,7 +194,7 @@ class RhbpAgent:
             # action send is finally triggered by a selected behaviour
 
         duration = rospy.get_rostime() - start_time
-        rospy.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
+        rospy.logdebug("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
 
 if __name__ == '__main__':
