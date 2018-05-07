@@ -35,7 +35,7 @@ data/osm/*.osm.pbf
  
 ## statistics
 
-Requires `sudo apt install python-pandas`
+Requires `sudo apt install python-pandas python-urllib3`
 
 A python module that simplifies the collection of statistics in a discrete simulation environment
 such as the MAPC. 

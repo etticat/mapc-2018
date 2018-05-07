@@ -15,10 +15,10 @@ Graphhopper requires
 ```
 sudo apt install maven default-jdk
 ```
-tub_contest requires
+mapc_utils requires
 
 ```
-sudo apt install python-pip python-pandas
+sudo apt install python-pip python-pandas python-urllib3
 ```
 RHBP requires ROS. Follow instructions for ROS Kinetic here: http://wiki.ros.org/kinetic/Installation/Ubuntu
 ```
