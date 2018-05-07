@@ -14,6 +14,16 @@ def get_bridge_topic_prefix(agent_name):
     return '/bridge_node_' + agent_name + '/'
 
 
+def get_knowledge_base_tuple_facility_exploration(agent_name, facility):
+    """
+    Simple function to create uniform knowledge tuples for facility exploration
+    :param agent_name: name of the considered agent
+    :param facility: facility name or topic that is explored
+    :return: generate tuple (agent_name, exploration_key)
+    """
+    return agent_name, 'exploring_' + facility
+
+
 def euclidean_distance(pos1, pos2):
     """
     Calculate the euclidean distance between two positions

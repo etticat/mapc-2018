@@ -12,12 +12,11 @@ from behaviour_components.sensors import TopicSensor
 
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
-from agent_common.behaviours import GotoFacilityBehaviour, GenericActionBehaviour, FinishExplorationBehaviour, \
-    get_knowledge_base_tuple_facility_exploration
+from agent_common.behaviours import GotoFacilityBehaviour, GenericActionBehaviour, FinishExplorationBehaviour
 
 from agent_common.sensors import ClosestFacilityDistanceSensor
 
-from agent_common.agent_utils import get_bridge_topic_prefix
+from agent_common.agent_utils import get_bridge_topic_prefix, get_knowledge_base_tuple_facility_exploration
 
 
 class RhbpAgent:

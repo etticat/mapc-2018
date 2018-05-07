@@ -1,6 +1,6 @@
 # mac_rhbp_example
 
-This is a very basic example that shows how RHBP can be used within the Multiagent Programming Contest Scenario of 2017.
+This is a very basic example that shows how RHBP can be used within the Multiagent Programming Contest Scenario of 2018.
 
 The implemented agents are traveling to randomly selected shops. 
 If the battery level is getting to low the agents will also recharge at a randomly selected charging station.

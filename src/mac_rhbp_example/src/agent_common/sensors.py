@@ -12,7 +12,8 @@ from agent_common.agent_utils import euclidean_distance
 
 class AbstractFacilitySensor(RawTopicSensor):
     """
-    A base class for all sensor implementations that are selecting a facility from a topic based on a reference topic (other facility or agent..)
+    A base class for all sensor implementations that are selecting a facility from a topic based on a reference topic
+    (other facility or agent..)
     """
 
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None,
@@ -57,10 +58,11 @@ class AbstractFacilitySensor(RawTopicSensor):
         reduced_facility_value = self._reduce_facility(facilities=self._facilities, ref_value=self._latest_ref_value)
 
         if self._facility_attribute:
-            self._value = getattr(reduced_facility_value, self._facility_attribute)
+            self._latestValue = getattr(reduced_facility_value, self._facility_attribute)
         else:
-            self._value = reduced_facility_value
-        return self._value
+            self._latestValue = reduced_facility_value
+
+        return super(AbstractFacilitySensor, self).sync()
 
     @abstractmethod
     def _reduce_facility(self, facilities, ref_value):
@@ -127,8 +129,8 @@ class ClosestFacilityDistanceSensor(ClosestFacilitySensor):
     def __init__(self, topic, ref_topic, name=None, message_type=None, initial_value=None, facility_attribute=None,
                  create_log=False, print_updates=False):
         super(ClosestFacilityDistanceSensor, self).__init__(name=name, topic=topic, ref_topic=ref_topic,
-                message_type=message_type, facility_attribute=facility_attribute, initial_value=initial_value,
-                create_log=create_log, print_updates=print_updates)
+              message_type=message_type, facility_attribute=facility_attribute, initial_value=initial_value,
+              create_log=create_log, print_updates=print_updates)
 
     def _reduce_facility(self, facilities, ref_value):
         """
@@ -182,8 +184,8 @@ class FurthestFacilitySensor(AbstractFacilitySensor):
 
 class DistanceSensor(AggregationSensor):
     """
-       Distance Sensor for two TopicsSensors containing a "pos" (type Position) attribute
-       for instance for comparing agent or facility positions
+    Distance Sensor for two TopicsSensors containing a "pos" (type Position) attribute
+    for instance for comparing agent or facility positions
     """
 
     def __init__(self, name, position_sensors, optional=False, initial_value=None):

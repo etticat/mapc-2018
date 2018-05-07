@@ -13,7 +13,7 @@ from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
-from agent_common.agent_utils import get_bridge_topic_prefix
+from agent_common.agent_utils import get_bridge_topic_prefix, get_knowledge_base_tuple_facility_exploration
 
 
 def action_generic_simple(publisher, action_type, params=[]):
@@ -51,26 +51,6 @@ def action_bid_for_job(job_name, publisher):
     action.action_type = "bidForJob"
     action.params = [KeyValue("Job", job_name)]
     publisher.publish(action)
-
-
-def get_knowledge_base_tuple_facility_exploration(agent_name, facility):
-    """
-    Simple function to create uniform knowledge tuples for facility exploration
-    :param agent_name: name of the considered agent
-    :param facility: facility name or topic that is explored
-    :return: generate tuple (agent_name, exploration_key)
-    """
-    return agent_name, 'exploring_' + facility
-
-
-def get_knowledge_base_tuple_job_rating(agent_name, job):
-    """
-    Simple function to create uniform knowledge tuples for job_rating
-    :param agent_name: name of the considered agent
-    :param job: job name or topic that is explored
-    :return: generate tuple (agent_name, exploration_key)
-    """
-    return agent_name, 'exploring_' + job
 
 
 class GotoFacilityBehaviour(BehaviourBase):
