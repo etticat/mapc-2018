@@ -53,7 +53,7 @@ An alternative project structure working with massim sources has to look like be
 
 ### Clone and build
 
-1. `git clone --recursive git@gitlab.tubit.tu-berlin.de:mac17/mac_workspace.git`
+1. `git clone --recursive git@gitlab.tubit.tu-berlin.de:asp_b_ss18/mapc_workspace.git`
 2. `cd mac_workspace`
 3. `catkin_make`
 4. Download the latest MASSIM release https://github.com/agentcontest/massim/releases
