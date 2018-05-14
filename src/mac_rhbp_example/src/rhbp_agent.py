@@ -20,6 +20,10 @@ from agent_common.agent_utils import get_bridge_topic_prefix, get_knowledge_base
 
 
 class RhbpAgent:
+    """
+    Main class of an agent, taking care of the main interaction with the mac_ros_bridge
+    """
+
     def __init__(self):
         rospy.logdebug("RhbpAgent::init")
 

@@ -5,6 +5,10 @@ This is a very basic example that shows how RHBP can be used within the Multiage
 The implemented agents are traveling to randomly selected shops. 
 If the battery level is getting to low the agents will also recharge at a randomly selected charging station.
 
+## Behaviour Model
+
+![alt text](doc/mac_rhbp_example.png)
+
 ## Execution
 
 The example can be executed with `roslaunch mac_rhbp_example rhbp_agents_example.launch`
