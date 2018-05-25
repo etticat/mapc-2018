@@ -8,8 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   std_msgs
+  diagnostic_msgs
+  mac_ros_bridge
 )
-
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -44,10 +45,10 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-#add_message_files(
-#  FILES
-#)
-
+add_message_files(
+  FILES
+  Task.msg
+)
 ## Generate services in the 'srv' folder
 #add_service_files(
 #  FILES
@@ -64,6 +65,8 @@ catkin_python_setup()
 generate_messages(
   DEPENDENCIES
   std_msgs
+  diagnostic_msgs
+  mac_ros_bridge
 )
 
 ###################################

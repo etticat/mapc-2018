@@ -1,4 +1,4 @@
-from __future__ import division # force floating point division when using plain /
+from __future__ import division
 
 import math
 
@@ -13,16 +13,13 @@ def get_bridge_topic_prefix(agent_name):
     """
     return '/bridge_node_' + agent_name + '/'
 
-
-def get_knowledge_base_tuple_facility_exploration(agent_name, facility):
+def get_bridge_topic_agent(agent_name):
     """
-    Simple function to create uniform knowledge tuples for facility exploration
-    :param agent_name: name of the considered agent
-    :param facility: facility name or topic that is explored
-    :return: generate tuple (agent_name, exploration_key)
+    Determine the topic prefix for all topics of the bridge node corresponding to the agent
+    :param agent_name: current agents name
+    :return: prefix just before the topic name of the bridge
     """
-    return agent_name, 'exploring_' + facility
-
+    return get_bridge_topic_prefix(agent_name)+ 'agent'
 
 def euclidean_distance(pos1, pos2):
     """
