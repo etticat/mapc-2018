@@ -11,6 +11,7 @@ from behaviour_graphs.battery import BatteryChargingBehaviourGraph
 
 from behaviour_graphs.exploration import ExplorationBehaviourGraph
 from agent_knowledge.facilities import FacilityKnowledgebase
+from job_planner import JobPlanner
 
 
 class RhbpAgent:
@@ -33,6 +34,10 @@ class RhbpAgent:
         self._sim_started = False
         self._initialized = False
 
+        # TODO move this into a seperate agent ?
+        if self._agent_name == "agentA1":
+            self._job_planner = JobPlanner(self._agent_name)
+
         # subscribe to MAC bridge core simulation topics
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
@@ -52,6 +57,10 @@ class RhbpAgent:
         :param msg:  the message
         :type msg: SimStart
         """
+
+        # TODO: This is only temporary. Need to figure out why I cant subscribe directly from the compoent
+        if(self._job_planner):
+            self._job_planner._sim_start_callback(msg)
 
         if not self._sim_started:  # init only once here
 
@@ -105,6 +114,11 @@ class RhbpAgent:
         :type msg: RequestAction
         :return:
         """
+
+        # TODO move this into a seperate agent ?
+        if self._agent_name == "agentA1":
+            self._job_planner._action_request_callback(msg)
+
         start_time = rospy.get_rostime()
         rospy.logdebug("RhbpAgent::callback %s", str(msg))
 
