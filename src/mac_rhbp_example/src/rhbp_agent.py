@@ -38,7 +38,7 @@ class RhbpAgent:
 
         # TODO move this into a seperate agent ?
         if self._agent_name == "agentA1":
-            self._job_planner = JobPlanner(self._agent_name)
+            self._job_planner = JobPlanner()
 
         # subscribe to MAC bridge core simulation topics
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
@@ -74,9 +74,6 @@ class RhbpAgent:
                 self.init_behaviour_network(msg)
 
             self._initialized = True
-
-
-
 
     def init_behaviour_network(self, msg):
 

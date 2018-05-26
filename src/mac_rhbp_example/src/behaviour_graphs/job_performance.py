@@ -1,5 +1,6 @@
 from mac_ros_bridge.msg import Position
 
+from agent_knowledge.facilities import FacilityKnowledgebase
 from agent_knowledge.tasks import TaskKnowledge
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -13,6 +14,7 @@ class JobPerformanceGraph:
 
     def __init__(self, agent):
 
+        #Sensor that checks if agent has at least one assigned task
         has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
             pattern=TaskKnowledge.get_tuple_task_creation(
@@ -74,7 +76,11 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
             name="go_to_storage",
             graph_name="storage",
             **kwargs)
+        self._selected_facility = None
+        self.taskKnowledge = TaskKnowledge()
+        self.facility_knowledge = FacilityKnowledgebase()
 
     def _select_pos(self):
-        # TODO: Select proper location. For now go somewhere random
-        return Position(long=2.32883, lat= 48.88682)
+        task = self.taskKnowledge.get_task(agent_name=self._agent_name, status="assigned")
+        facility = self.facility_knowledge.storages[task.destination]
+        return facility.pos

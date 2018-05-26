@@ -3,7 +3,7 @@
 import rospy
 
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
-from mac_ros_bridge.msg import Resource, RequestAction, ResourceMsg
+from mac_ros_bridge.msg import Resource, RequestAction, ResourceMsg, StorageMsg
 
 
 class FacilityKnowledgebase():
@@ -12,8 +12,10 @@ class FacilityKnowledgebase():
         kb_name = "knowledgeBaseNode"
         self.__kb_client = KnowledgeBaseClient(
             knowledge_base_name = kb_name)
+        self.storages = {}
 
         self._pub_global_resource = rospy.Publisher('/resource_cache', ResourceMsg, queue_size=1, latch=True)
+        rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
 
     @staticmethod
     def get_resource_tuple_all():
@@ -56,3 +58,14 @@ class FacilityKnowledgebase():
         # Save all resource nodes in immediate parimeter
         for resource in msg.resources:
             self.add_new_resource(resource)
+
+    def storage_callback(self, storageMsg):
+        """
+
+        :param storageMsg:
+        :type storageMsg: StorageMsg
+        :return:
+        """
+
+        for storage in storageMsg.facilities:
+            self.storages[storage.name] = storage

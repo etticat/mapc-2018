@@ -10,7 +10,7 @@ from agent_common.agent_utils import AgentUtils
 
 class TaskKnowledge():
 
-    def __init__(self, agent_name):
+    def __init__(self):
         self.__kb_client = KnowledgeBaseClient(
             knowledge_base_name = "knowledgeBaseNode")
 
@@ -56,11 +56,11 @@ class TaskKnowledge():
         task_tuples = self.__kb_client.all(tuple)
 
         if len(task_tuples) > 0:
-            rospy.loginfo("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
+            rospy.logerr("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
             return
         else:
-            rospy.loginfo("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
-            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="open")
+            rospy.logerr("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
+            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="agentA1", status="assigned")
             ret_value = self.__kb_client.push(new)
 
     def assign_task(self, task, agent_name):
@@ -76,3 +76,21 @@ class TaskKnowledge():
 
         ret_value = self.__kb_client.update(search, new, push_without_existing = True)
         return ret_value
+
+    def get_task(self, agent_name, status="*", job_id="*", destination="*", task_id="*"):
+        tuple = TaskKnowledge.get_tuple_task_creation(
+            job_id=job_id,
+            task_id=task_id,
+            destination=destination,
+            agent=agent_name,
+            status=status)
+        task_tuple = self.__kb_client.peek(tuple)
+
+        task = Task(
+            job_id=task_tuple[1],
+            id=task_tuple[2],
+            destination=task_tuple[3],
+            agent=task_tuple[4],
+            status=task_tuple[5])
+
+        return task

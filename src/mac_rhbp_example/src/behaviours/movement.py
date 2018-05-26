@@ -8,7 +8,7 @@ import abc
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
-from mac_ros_bridge.msg import GenericAction
+from mac_ros_bridge.msg import GenericAction, Position
 
 from agent_common.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledge
@@ -51,6 +51,18 @@ class GotoLocationBehaviour(BehaviourBase):
             KeyValue("latitude", str(lat)),
             KeyValue("longitude", str(long))]
         publisher.publish(action)
+    @staticmethod
+    def action_goto_facility(facility, publisher):
+        """
+        Specific "goto" action publishing helper function
+        :param facility_name: name of the facility we want to go to
+        :param publisher: publisher to use
+        """
+        action = GenericAction()
+        action.action_type = Action.GO_TO
+        action.params = [
+            KeyValue("Facility", facility)]
+        publisher.publish(action)
 
     @staticmethod
     def action_continue(publisher):
@@ -77,7 +89,10 @@ class GotoLocationBehaviour(BehaviourBase):
         if self._selected_pos: # in case we did not find/know a facility
 
             rospy.loginfo(self._agent_name + "::" +self._name + " to "+ str(self._selected_pos))
-            GotoLocationBehaviour.action_goto_location(lat=self._selected_pos.lat, long=self._selected_pos.long, publisher=self._pub_generic_action)
+            if isinstance(self._selected_pos, Position):
+                GotoLocationBehaviour.action_goto_location(lat=self._selected_pos.lat, long=self._selected_pos.long, publisher=self._pub_generic_action)
+            else:
+                GotoLocationBehaviour.action_goto_facility(facility=self._selected_pos, publisher=self._pub_generic_action)
         else: # backup action recharge agent
             rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
             GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')

@@ -4,20 +4,18 @@ import rospy
 from mac_rhbp_example.msg import Task
 from mac_ros_bridge.msg import RequestAction, Job
 
-from sets import Set
-
 from agent_knowledge.tasks import TaskKnowledge
 
 
 class JobPlanner:
 
     # TODO: Auction jobs
-    def __init__(self, agent_name):
+    def __init__(self):
         self.current_step = 0
         self.all_jobs = [] # Temp variable for testing
         self.all_tasks = [] # Temp variable for testing
 
-        self._task_knowledge = TaskKnowledge(agent_name=agent_name)
+        self._task_knowledge = TaskKnowledge()
 
         #rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
         # For now passing it from agent
