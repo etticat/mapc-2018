@@ -22,14 +22,12 @@ class GotoLocationBehaviour(BehaviourBase):
     Behaviour that explores the environment by going to a randomly selected facility
     """
 
-    def __init__(self, agent_name, facility_topic, **kwargs):
+    def __init__(self, agent_name, **kwargs):
 
         super(GotoLocationBehaviour, self) \
             .__init__(requires_execution_steps=True, **kwargs)
 
         self._agent_name = agent_name
-
-        self._facility_topic = facility_topic
 
         self._movement_knowledge = MovementKnowledge(self._agent_name, self._name)
 

@@ -5,11 +5,11 @@ from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 
 from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.movement import GotoFacilityBehaviour
+from behaviours.movement import GotoLocationBehaviour
 from utils.ros_helpers import get_topic_type
 
 
-class ExplorationBehaviour(GotoFacilityBehaviour):
+class ExplorationBehaviour(GotoLocationBehaviour):
 
     def __init__(self, agent):
         super(ExplorationBehaviour, self) \

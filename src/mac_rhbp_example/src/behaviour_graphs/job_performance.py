@@ -2,7 +2,8 @@ from mac_ros_bridge.msg import Position
 
 from agent_knowledge.tasks import TaskKnowledge
 from behaviour_components.activators import BooleanActivator
-from behaviour_components.conditions import Condition
+from behaviour_components.condition_elements import Effect
+from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
 from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
@@ -10,7 +11,7 @@ from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
 class JobPerformanceGraph:
 
-    def __init__(self, agent_name):
+    def __init__(self, agent):
 
         has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
@@ -18,7 +19,7 @@ class JobPerformanceGraph:
                 job_id="*",
                 task_id="*",
                 destination="*",
-                agent=agent_name,
+                agent=agent._agent_name,
                 status="assigned"))
 
         self.has_tasks__assigned_condition= Condition(
@@ -36,18 +37,28 @@ class JobPerformanceGraph:
         self.go_to_resource_node_behaviour = None
 
         # go to destination
-        # self.go_to_destination_behaviour = GoToStorageBehaviour(agent_name=agent_name)
+        self.go_to_destination_behaviour = GoToStorageBehaviour(
+            plannerPrefix=agent._agent_name,
+            agent=agent)
+        self.go_to_destination_behaviour.add_precondition(
+            precondition=self.has_tasks__assigned_condition)
+
+        self.go_to_destination_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=has_tasks_assigned_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool))
 
         # TODO: assemble finished products
         self.assemble_product_behaviour = None
 
 
-        # Exploration goal
+        # Goal is to finish all tasks
         self._job_performance_goal = GoalBase(
             name='job_performance',
             permanent=True,
-            plannerPrefix=agent_name,
-            conditions=[self.has_tasks__assigned_condition])
+            plannerPrefix=agent._agent_name,
+            conditions=[Negation(self.has_tasks__assigned_condition)])
 
     def add_precondition(self, precondition):
         """ TODO: add precondition to all behaviours of this graph """
@@ -55,6 +66,14 @@ class JobPerformanceGraph:
 
 
 class GoToStorageBehaviour(GotoLocationBehaviour):
+
+    def __init__(self, agent,plannerPrefix,  **kwargs):
+        super(GoToStorageBehaviour, self).__init__(
+            agent._agent_name,
+            plannerPrefix=plannerPrefix,
+            name="go_to_storage",
+            graph_name="storage",
+            **kwargs)
 
     def _select_pos(self):
         # TODO: Select proper location. For now go somewhere random

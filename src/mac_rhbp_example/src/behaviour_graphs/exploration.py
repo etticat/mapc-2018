@@ -79,3 +79,6 @@ class ExplorationBehaviourGraph:
             permanent=True,
             plannerPrefix=agent._agent_name,
             conditions=[shop_exploration_condition])
+
+    def add_precondition(self, condition):
+        self._shop_exploration.add_precondition(condition)

@@ -3,6 +3,7 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye
 
+from behaviour_components.conditions import Negation
 from behaviour_components.managers import Manager
 
 
@@ -11,6 +12,7 @@ from behaviour_graphs.battery import BatteryChargingBehaviourGraph
 
 from behaviour_graphs.exploration import ExplorationBehaviourGraph
 from agent_knowledge.facilities import FacilityKnowledgebase
+from behaviour_graphs.job_performance import JobPerformanceGraph
 from job_planner import JobPlanner
 
 
@@ -77,12 +79,26 @@ class RhbpAgent:
 
 
     def init_behaviour_network(self, msg):
+
+        ###### Battery graph
+        batteryBehaviourGraph = BatteryChargingBehaviourGraph(self, msg)
+        enough_battery_cond = batteryBehaviourGraph.get_enough_battery_cond()
+
+        ###### Job Performance graph
+        self._job_performance_graph = JobPerformanceGraph(self)
+        self._job_performance_graph.add_precondition(
+            precondition=enough_battery_cond)
+
+        ###### Exploration graph
         self._shop_exploration_graph = ExplorationBehaviourGraph(self, msg)
 
-        batteryBehaviourGraph = BatteryChargingBehaviourGraph(self, msg)
-
         # Only do shop exploration when enough battery left
-        self._shop_exploration_graph._shop_exploration.add_precondition(batteryBehaviourGraph.get_enough_battery_cond())  # only proceed exploring if we have enough battery
+        self._shop_exploration_graph.add_precondition(
+            condition=enough_battery_cond)
+
+        #only explore if we don't have a task assigned
+        self._shop_exploration_graph.add_precondition(
+            condition=Negation(self._job_performance_graph.has_tasks__assigned_condition))
 
     def _callback_generic_action(self, msg):
         """

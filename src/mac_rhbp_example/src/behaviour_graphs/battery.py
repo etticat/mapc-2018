@@ -118,6 +118,9 @@ class BatteryChargingBehaviourGraph():
         # Only recharge if battery is empty
         recharge.add_precondition(battery_empty_cond)
 
+        # Only recharge if we are not at a charging station. If we are, just charge normally
+        recharge.add_precondition(Negation(at_charging_station_cond))
+
         # The goal is to always have charge
         self._charging_goal = GoalBase(
             name='charging_goal',

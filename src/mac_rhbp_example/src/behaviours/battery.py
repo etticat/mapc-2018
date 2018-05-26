@@ -2,18 +2,17 @@ import rospy
 
 from agent_common.agent_utils import AgentUtils
 from behaviours.generic_action import GenericActionBehaviour, Action
-from behaviours.movement import GotoFacilityBehaviour
+from behaviours.movement import GotoLocationBehaviour
 from utils.ros_helpers import get_topic_type
 
 
-class GoToChargingstationBehaviour(GotoFacilityBehaviour):
+class GoToChargingstationBehaviour(GotoLocationBehaviour):
 
     def __init__(self, agent,plannerPrefix,  **kwargs):
         topic = '/charging_station'
         self.agent = agent
         super(GoToChargingstationBehaviour,self).__init__(
             agent._agent_name,
-            topic,
             plannerPrefix=plannerPrefix,
             name="go_to_charging_behaviour",
             graph_name="charging",
