@@ -10,11 +10,10 @@ from diagnostic_msgs.msg import KeyValue
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import GenericAction
 
-from agent_common.agent_utils import get_bridge_topic_prefix
-from agent_knowledge.movement import MovementKnowledge, \
-    get_knowledge_base_tuple_facility_exploration
+from agent_common.agent_utils import AgentUtils
+from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import action_generic, action_generic_simple, Action
+from behaviours.generic_action import GenericActionBehaviour, Action
 
 
 def action_goto_location(lat,long, publisher):
@@ -70,10 +69,10 @@ class GotoFacilityBehaviour(BehaviourBase):
 
         self.__client = KnowledgeBaseClient()
 
-        self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
+        self._pub_generic_action = rospy.Publisher(AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
                                                    , queue_size=10)
 
-        self._exploration_knowledge = get_knowledge_base_tuple_facility_exploration(self._agent_name,
+        self._exploration_knowledge = MovementKnowledge.get_knowledge_base_tuple_facility_exploration(self._agent_name,
                                                                                     self._facility_topic)
 
 
@@ -85,7 +84,7 @@ class GotoFacilityBehaviour(BehaviourBase):
             action_goto_location(lat=self._selected_pos.lat, long=self._selected_pos.long, publisher=self._pub_generic_action)
         else: # backup action recharge agent
             rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
-            action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
+            GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
 
     @abc.abstractmethod
     def _select_pos(self):

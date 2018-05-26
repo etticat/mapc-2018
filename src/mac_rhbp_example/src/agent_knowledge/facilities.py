@@ -6,15 +6,6 @@ from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import Resource, RequestAction, ResourceMsg
 
 
-def get_resource_tuple_all():
-    return ('resource', '*', '*', '*')
-
-def get_resource_tuple_item(item_name):
-    return ('resource', '*', '*', item_name)
-
-def get_resource_tupele_lat_long_item(lat, long, item, amount):
-    return ('resource', str(lat), str(long), item)
-
 class FacilityKnowledgebase():
 
     def __init__(self):
@@ -24,6 +15,17 @@ class FacilityKnowledgebase():
 
         self._pub_global_resource = rospy.Publisher('/resource_cache', ResourceMsg, queue_size=1, latch=True)
 
+    @staticmethod
+    def get_resource_tuple_all():
+        return ('resource', '*', '*', '*')
+
+    @staticmethod
+    def get_resource_tuple_item(item_name):
+        return ('resource', '*', '*', item_name)
+
+    @staticmethod
+    def get_resource_tupele_lat_long_item(lat, long, item, amount):
+        return ('resource', str(lat), str(long), item)
 
     def add_new_resource(self, resource):
         """
@@ -33,7 +35,7 @@ class FacilityKnowledgebase():
         :return:
         """
         for item in resource.items:
-            new = get_resource_tupele_lat_long_item(resource.pos.lat, resource.pos.long, item.name, item.amount)
+            new = FacilityKnowledgebase.get_resource_tupele_lat_long_item(resource.pos.lat, resource.pos.long, item.name, item.amount)
 
             try:
                 ret_value = self.__kb_client.update(

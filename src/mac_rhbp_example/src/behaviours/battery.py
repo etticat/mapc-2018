@@ -1,6 +1,6 @@
 import rospy
 
-from agent_common.agent_utils import euclidean_distance
+from agent_common.agent_utils import AgentUtils
 from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoFacilityBehaviour
 from utils.ros_helpers import get_topic_type
@@ -40,7 +40,7 @@ class GoToChargingstationBehaviour(GotoFacilityBehaviour):
         min_distance = 9999
 
         for _, facility in self._facilities.items():
-            distance = euclidean_distance(self.agent.agent_info.pos, facility.pos)
+            distance = AgentUtils.euclidean_distance(self.agent.agent_info.pos, facility.pos)
             if distance < min_distance:
                 min_distance = distance
                 closest_facility = facility

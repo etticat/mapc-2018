@@ -3,7 +3,7 @@ from __future__ import division
 import rospy
 from mac_ros_bridge.msg import GenericAction
 
-from agent_common.agent_utils import get_bridge_topic_prefix
+from agent_common.agent_utils import AgentUtils
 from behaviour_components.behaviours import BehaviourBase
 
 
@@ -53,39 +53,43 @@ class GenericActionBehaviour(BehaviourBase):
 
         self._action_type = action_type
         self._params = params
-        self._pub_generic_action = rospy.Publisher(get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
-                                                   , queue_size=10)
+        self._pub_generic_action = rospy.Publisher(
+            name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
+            data_class=GenericAction,
+            queue_size=10)
 
 
     def do_step(self):
         rospy.logdebug(self._agent_name + "::" + self._name + " executing: " + self._action_type)
-        action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self._params)
+        GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self._params)
 
 
-def action_generic(publisher, action_type, params=[]):
-    """
-    Generic helper function for publishing GenericAction msg
-    :param publisher: publisher to use
-    :param action_type: the type of the action msg
-    :param params: optional parameter for the msg
-    """
-    action = GenericAction()
-    action.action_type = action_type
-    action.params = params
+    @staticmethod
+    def action_generic(publisher, action_type, params=[]):
+        """
+        Generic helper function for publishing GenericAction msg
+        :param publisher: publisher to use
+        :param action_type: the type of the action msg
+        :param params: optional parameter for the msg
+        """
+        action = GenericAction()
+        action.action_type = action_type
+        action.params = params
 
-    rospy.logdebug("Published action %s", action)
+        rospy.logdebug("Published action %s", action)
 
-    publisher.publish(action)
+        publisher.publish(action)
 
 
-def action_generic_simple(publisher, action_type, params=[]):
-    """
-    Generic helper function for publishing GenericAction msg
-    :param publisher: publisher to use
-    :param action_type: the type of the action msg
-    :param params: optional parameter for the msg
-    """
-    action = GenericAction()
-    action.action_type = action_type
-    action.params = params
-    publisher.publish(action)
+    @staticmethod
+    def action_generic_simple(publisher, action_type, params=[]):
+        """
+        Generic helper function for publishing GenericAction msg
+        :param publisher: publisher to use
+        :param action_type: the type of the action msg
+        :param params: optional parameter for the msg
+        """
+        action = GenericAction()
+        action.action_type = action_type
+        action.params = params
+        publisher.publish(action)

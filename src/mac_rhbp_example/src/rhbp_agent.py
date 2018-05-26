@@ -6,7 +6,7 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, B
 from behaviour_components.managers import Manager
 
 
-from agent_common.agent_utils import get_bridge_topic_prefix
+from agent_common.agent_utils import AgentUtils
 from behaviour_graphs.battery import BatteryChargingBehaviourGraph
 
 from behaviour_graphs.exploration import ExplorationBehaviourGraph
@@ -25,7 +25,7 @@ class RhbpAgent:
 
         self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
 
-        self._agent_topic_prefix = get_bridge_topic_prefix(agent_name=self._agent_name)
+        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
         self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)

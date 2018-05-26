@@ -3,7 +3,7 @@ import random
 import rospy
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 
-from agent_knowledge.movement import get_knowledge_base_tuple_facility_exploration, MovementKnowledge
+from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.movement import GotoFacilityBehaviour
 from utils.ros_helpers import get_topic_type
@@ -66,7 +66,7 @@ class FinishExplorationBehaviour(BehaviourBase):
 
         self._facility_topic = facility_topic
 
-        self._exploration_knowledge = get_knowledge_base_tuple_facility_exploration(self._agent_name,
+        self._exploration_knowledge = MovementKnowledge.get_knowledge_base_tuple_facility_exploration(self._agent_name,
                                                                                     self._facility_topic)
 
         self._movement_knowledge = MovementKnowledge(self._agent_name, graph_name)

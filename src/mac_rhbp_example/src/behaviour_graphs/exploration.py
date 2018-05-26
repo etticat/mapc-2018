@@ -1,4 +1,4 @@
-from agent_knowledge.movement import get_movement_tuple
+from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
@@ -18,7 +18,7 @@ class ExplorationBehaviourGraph:
         # knowledge base flag to track if we are in exploration stage or not
         shop_exploration_sensor = KnowledgeSensor(
             name='shop_exploration',
-            pattern=get_movement_tuple(
+            pattern=MovementKnowledge.get_movement_tuple(
                 agent_name=agent._agent_name,
                 behaviour=self._shop_exploration._name,
                 active=False))
