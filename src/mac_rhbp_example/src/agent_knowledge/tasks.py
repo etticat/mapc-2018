@@ -56,11 +56,11 @@ class TaskKnowledge():
         task_tuples = self.__kb_client.all(tuple)
 
         if len(task_tuples) > 0:
-            rospy.logerr("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
+            rospy.loginfo("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
             return
         else:
-            rospy.logerr("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
-            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="agentA1", status="assigned")
+            rospy.loginfo("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
+            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none")
             ret_value = self.__kb_client.push(new)
 
     def assign_task(self, task, agent_name):
