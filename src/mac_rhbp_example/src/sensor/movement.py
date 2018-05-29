@@ -15,7 +15,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
     def __init__(self, agent_name, behaviour_name, name):
 
-        pattern = MovementKnowledge.get_movement_tuple(agent_name=agent_name, behaviour=behaviour_name, active="True")
+        pattern = MovementKnowledge.get_movement_tuple(agent_name=agent_name, behaviour=behaviour_name, active=True)
 
         super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name)
 
@@ -48,5 +48,9 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
+
+        if self.name == "at_shop":
+            rospy.logerr("//////")
+            rospy.logerr(res)
 
         return res

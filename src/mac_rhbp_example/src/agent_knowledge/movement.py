@@ -33,5 +33,7 @@ class MovementKnowledge():
         search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=True)
         new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False)
 
+        rospy.logerr("stopping ...")
+
         ret_value = self.__kb_client.update(search, new, push_without_existing = False)
         return ret_value

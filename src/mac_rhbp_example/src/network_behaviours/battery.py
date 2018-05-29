@@ -10,7 +10,7 @@ from sensor.movement import DestinationDistanceSensor
 
 class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
-    def __init__(self, agent, msg, name, recharge_lower_bound_percentage=0.7, recharge_critical_bound_percentage=0.1,
+    def __init__(self, agent, msg, name, recharge_lower_bound_percentage=0.7, recharge_critical_bound_percentage=0.2,
                  **kwargs):
 
         # find a charging station

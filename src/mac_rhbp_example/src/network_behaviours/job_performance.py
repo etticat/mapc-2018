@@ -46,8 +46,7 @@ class JobPerformanceNetwork(NetworkBehaviour):
         self.go_to_destination_behaviour = GoToStorageBehaviour(
             plannerPrefix=agent._agent_name,
             agent=agent)
-        self.go_to_destination_behaviour.add_precondition(
-            precondition=self.has_tasks__assigned_condition)
+
 
         self.go_to_destination_behaviour.add_effect(
             effect=Effect(
