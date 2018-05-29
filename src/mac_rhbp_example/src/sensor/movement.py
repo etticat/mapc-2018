@@ -49,8 +49,4 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
-        if self.name == "at_shop":
-            rospy.logerr("//////")
-            rospy.logerr(res)
-
         return res

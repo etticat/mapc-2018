@@ -10,25 +10,20 @@ from agent_common.agent_utils import AgentUtils
 
 class TaskKnowledge():
 
-    def __init__(self):
+    def __init__(self, agent_name):
         self.__kb_client = KnowledgeBaseClient(
             knowledge_base_name = "knowledgeBaseNode")
 
         self.products = {}
 
-        # TODO: When I call this method, the whole program crashes without error
-        # rospy.Subscriber(
-        #     AgentUtils.get_bridge_topic_agent(agent_name=agent_name),
-        #     SimStart,
-        #     self._callback_sim_start)
-
-    @staticmethod
-    def get_tuple_task(job_id, task_id):
-        return 'task', job_id, task_id
+        rospy.Subscriber(
+            AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start",
+            SimStart,
+            self._callback_sim_start)
     
     @staticmethod
-    def get_tuple_task_creation(job_id, task_id, destination, agent, status):
-        return 'task', job_id, task_id, destination, agent, status
+    def get_tuple_task_creation(job_id="*", task_id="*", destination="*", agent="*", status="*", item="*"):
+        return 'task', job_id, task_id, destination, agent, status, item
 
     def _callback_sim_start(self, msg):
         """
@@ -52,7 +47,9 @@ class TaskKnowledge():
             task_id=task.id,
             destination="*",
             agent="*",
-            status="*")
+            status="*",
+            item=task.item
+        )
         task_tuples = self.__kb_client.all(tuple)
 
         if len(task_tuples) > 0:
@@ -60,7 +57,7 @@ class TaskKnowledge():
             return
         else:
             rospy.loginfo("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
-            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none")
+            new = TaskKnowledge.get_tuple_task_creation(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none", item=task.item)
             ret_value = self.__kb_client.push(new)
 
     def assign_task(self, task, agent_name):

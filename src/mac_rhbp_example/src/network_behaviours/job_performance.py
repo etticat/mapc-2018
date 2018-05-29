@@ -9,6 +9,7 @@ from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
+from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActivator
 
 
 class JobPerformanceNetwork(NetworkBehaviour):
@@ -33,19 +34,37 @@ class JobPerformanceNetwork(NetworkBehaviour):
             activator=BooleanActivator(
                 desiredValue=True))
 
-        # TODO: Check if we hold all the ingredients neccessary to perform all tasks
-        self.has_all_ingredients_sensor = None
+        self.has_all_ingredients_sensor = IngredientSensor(
+            name="has_all_ingredients_sensor",
+           agent_name=agent._agent_name)
 
-        # TODO: Check if we hold all finished products
-        self.has_all_ingredients_sensor = None
+        self.has_all_finished_products_sensor = FinishedProductSensor(
+            name="has_all_finished_products_sensor",
+            agent_name=agent._agent_name)
 
-        # TODO: If we need further ingredients
-        self.go_to_resource_node_behaviour = None
+        self.has_all_ingerdients = Condition(
+            sensor=self.has_all_ingredients_sensor,
+            activator=AmountInListActivator(
+                amount=0
+            ))
+
+        self.has_all_products_condition= Condition(
+            sensor=self.has_all_finished_products_sensor,
+            activator=AmountInListActivator(
+                amount=0
+            ))
 
         # go to destination
         self.go_to_destination_behaviour = GoToStorageBehaviour(
             plannerPrefix=agent._agent_name,
             agent=agent)
+
+        self.go_to_destination_behaviour.add_precondition(
+            precondition=self.has_all_products_condition
+        )
+        self.go_to_destination_behaviour.add_precondition(
+            precondition=self.has_all_ingerdients
+        )
 
 
         self.go_to_destination_behaviour.add_effect(
@@ -54,9 +73,15 @@ class JobPerformanceNetwork(NetworkBehaviour):
                 indicator=-1.0,
                 sensor_type=bool))
 
-        # TODO: assemble finished products
-        self.assemble_product_behaviour = None
+        # TODO: If we need further ingredients
+        self.go_to_resource_node_behaviour = None
 
+        # TODO: gather ingredietns
+        self.gather_ingredients_behaviour = None
+
+        # TODO: assemble finished products
+        # TODO: Request help from others
+        self.assemble_product_behaviour = None
 
         # Goal is to finish all tasks
         self._job_performance_goal = GoalBase(
@@ -76,7 +101,7 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
             graph_name="storage",
             **kwargs)
         self._selected_facility = None
-        self.taskKnowledge = TaskKnowledge()
+        self.taskKnowledge = TaskKnowledge(agent._agent_name)
         self.facility_knowledge = FacilityKnowledgebase()
 
     def _select_pos(self):

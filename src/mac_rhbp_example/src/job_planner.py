@@ -10,12 +10,12 @@ from agent_knowledge.tasks import TaskKnowledge
 class JobPlanner:
 
     # TODO: Auction jobs
-    def __init__(self):
+    def __init__(self, agent_name):
         self.current_step = 0
         self.all_jobs = [] # Temp variable for testing
         self.all_tasks = [] # Temp variable for testing
 
-        self._task_knowledge = TaskKnowledge()
+        self._task_knowledge = TaskKnowledge(agent_name)
 
         #rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
         # For now passing it from agent
