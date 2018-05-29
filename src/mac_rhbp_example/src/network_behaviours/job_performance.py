@@ -6,15 +6,19 @@ from behaviour_components.activators import BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
+from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
 
-class JobPerformanceGraph:
+class JobPerformanceNetwork(NetworkBehaviour):
 
-    def __init__(self, agent):
+    def __init__(self, agent, name, **kwargs):
 
-        #Sensor that checks if agent has at least one assigned task
+        super(JobPerformanceNetwork, self).__init__(name, **kwargs)
+
+
+        # Sensor that checks if agent has at least one assigned task
         has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
             pattern=TaskKnowledge.get_tuple_task_creation(
@@ -61,10 +65,6 @@ class JobPerformanceGraph:
             permanent=True,
             plannerPrefix=agent._agent_name,
             conditions=[Negation(self.has_tasks__assigned_condition)])
-
-    def add_precondition(self, precondition):
-        """ TODO: add precondition to all behaviours of this graph """
-        pass
 
 
 class GoToStorageBehaviour(GotoLocationBehaviour):

@@ -11,18 +11,15 @@ from utils.ros_helpers import get_topic_type
 
 class ExplorationBehaviour(GotoLocationBehaviour):
 
-    def __init__(self, agent):
+    def __init__(self, agent_name, **kwargs):
         super(ExplorationBehaviour, self) \
-            .__init__(plannerPrefix=agent._agent_name,
-                  agent_name=agent._agent_name,
-                  name='explore_shops',
-                  facility_topic='/shop')
+            .__init__(
+            agent_name=agent_name, **kwargs)
 
 
 
         facility_topic = '/shop'
 
-        agent_topic = agent._agent_topic_prefix + "agent"
 
         facility_topic_type = get_topic_type(facility_topic)
 
@@ -66,16 +63,12 @@ class FinishExplorationBehaviour(BehaviourBase):
 
         self._facility_topic = facility_topic
 
-        self._exploration_knowledge = MovementKnowledge.get_knowledge_base_tuple_facility_exploration(self._agent_name,
-                                                                                    self._facility_topic)
-
         self._movement_knowledge = MovementKnowledge(self._agent_name, graph_name)
 
         self.__client = KnowledgeBaseClient()
 
     def do_step(self):
         # exploration done
-        self.__client.update(self._exploration_knowledge + ('*',), self._exploration_knowledge + ('true',))
         self._movement_knowledge.stop_movement()
 
 

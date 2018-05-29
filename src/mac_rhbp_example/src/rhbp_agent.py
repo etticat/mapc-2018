@@ -3,16 +3,21 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye
 
-from behaviour_components.conditions import Negation
+from behaviour_components.activators import ThresholdActivator
+from behaviour_components.condition_elements import Effect
+from behaviour_components.conditions import Negation, Condition
+from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 
 
 from agent_common.agent_utils import AgentUtils
-from behaviour_graphs.battery import BatteryChargingBehaviourGraph
+from behaviour_components.network_behavior import NetworkBehaviour
+from network_behaviours.battery import BatteryChargingNetworkBehaviour
+from network_behaviours.build_well import BuildWellNetworkBehaviour
 
-from behaviour_graphs.exploration import ExplorationBehaviourGraph
+from network_behaviours.exploration import ExplorationBehaviourNetwork
 from agent_knowledge.facilities import FacilityKnowledgebase
-from behaviour_graphs.job_performance import JobPerformanceGraph
+from network_behaviours.job_performance import JobPerformanceNetwork
 from job_planner import JobPlanner
 
 
@@ -77,25 +82,81 @@ class RhbpAgent:
 
     def init_behaviour_network(self, msg):
 
-        ###### Battery graph
-        batteryBehaviourGraph = BatteryChargingBehaviourGraph(self, msg)
-        enough_battery_cond = batteryBehaviourGraph.get_enough_battery_cond()
+        ######################## Battery Network Behaviour ########################
+        batteryBehaviourGraph = BatteryChargingNetworkBehaviour(
+            name=self._agent_name + '/BatteryNetwork',
+            plannerPrefix=self._agent_name,
+            agent=self,
+            msg=msg,
+            max_parallel_behaviours=1)
 
-        ###### Job Performance graph
-        self._job_performance_graph = JobPerformanceGraph(self)
-        self._job_performance_graph.add_precondition(
-            precondition=enough_battery_cond)
+        # CONDITION: Vehicle has enough charge to function
+        self.enough_battery_cond = Condition(
+            sensor=batteryBehaviourGraph.charge_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=batteryBehaviourGraph.agent_charge_critical,
+                isMinimum=True))
 
-        ###### Exploration graph
-        self._shop_exploration_graph = ExplorationBehaviourGraph(self, msg)
+        batteryBehaviourGraph.add_effects_and_goals([(
+            batteryBehaviourGraph.charge_sensor,
+            Effect(sensor_name=batteryBehaviourGraph.charge_sensor.name, indicator=1.0, sensor_type=float))])
+
+        ######################## Job Network Behaviour ########################
+        # self._job_performance_graph = JobPerformanceNetwork(
+        #     name=self._agent_name + '/JobPerformanceNetwork',
+        #     plannerPrefix=self._agent_name,
+        #     agent=self)
+        # self._job_performance_graph.add_precondition(
+        #     precondition=enough_battery_cond)
+
+        ######################## Exploration Network Behaviour ########################
+        self._shop_exploration_graph = ExplorationBehaviourNetwork(
+            name=self._agent_name + '/ExplorationNetwork',
+            plannerPrefix=self._agent_name,
+            agent=self,
+            msg=msg,
+            max_parallel_behaviours=1)
+
+        self._shop_exploration_graph.add_effects_and_goals([(
+            self._shop_exploration_graph.map_discovery_progress_sensor,
+            Effect(
+                sensor_name=self._shop_exploration_graph.map_discovery_progress_sensor.name,
+                indicator=1.0,
+                sensor_type=bool))])
 
         # Only do shop exploration when enough battery left
         self._shop_exploration_graph.add_precondition(
-            condition=enough_battery_cond)
+            precondition=self.enough_battery_cond)
 
         #only explore if we don't have a task assigned
-        self._shop_exploration_graph.add_precondition(
-            condition=Negation(self._job_performance_graph.has_tasks__assigned_condition))
+        # self._shop_exploration_graph.add_precondition(
+        #     condition=Negation(self._job_performance_graph.has_tasks__assigned_condition))
+
+        # self._build_wells_network_behaviour = BuildWellNetworkBehaviour(
+        #     name=self._agent_name + '/BuildWellsNetwork',
+        #     plannerPrefix=self._agent_name,
+        #     agent=self,
+        #     msg=msg,
+        #     max_parallel_behaviours=1)
+        #
+        # # Performing jobs produces money
+        # self._shop_exploration_graph.add_effect(
+        #     effect=Effect(
+        #         sensor_name=self._build_wells_network_behaviour.money_sensor,
+        #         indicator=1.0,
+        #         sensor_type=bool))
+
+        # The overall goal is to gain score (For now to have wells)
+        # TODO: Goal should be high well number. Will be changed once wells are implemented
+        self._job_performance_goal = GoalBase(
+            name='score_goal',
+            permanent=True,
+            plannerPrefix=self._agent_name,
+            conditions=[self._shop_exploration_graph.map_discovered_everything_condition])
+
+
+
+        rospy.logerr("behaviour initialized")
 
     def _callback_generic_action(self, msg):
         """

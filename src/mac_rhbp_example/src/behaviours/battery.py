@@ -9,7 +9,6 @@ from utils.ros_helpers import get_topic_type
 class GoToChargingstationBehaviour(GotoLocationBehaviour):
 
     def __init__(self, agent,plannerPrefix,  **kwargs):
-        topic = '/charging_station'
         self.agent = agent
         super(GoToChargingstationBehaviour,self).__init__(
             agent._agent_name,
@@ -18,6 +17,7 @@ class GoToChargingstationBehaviour(GotoLocationBehaviour):
             graph_name="charging",
             **kwargs)
 
+        topic = '/charging_station'
         facility_topic_type = get_topic_type(topic)
 
         self._facilities = {}

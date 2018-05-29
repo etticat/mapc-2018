@@ -114,7 +114,7 @@ class GotoLocationBehaviour(BehaviourBase):
         if self._selected_pos:
             self._movement_knowledge.start_movement(self._selected_pos)
 
-        self.do_step() # this is important to directly answer the request as in the start() base implementation
+        super(GotoLocationBehaviour, self).start()
 
     def stop(self):
 
@@ -128,6 +128,6 @@ class GotoLocationBehaviour(BehaviourBase):
             self._selected_pos = self._select_pos()
 
             if self._selected_pos:
-                self._movement_knowledge.start_movement(self._selected_pos.lat)
+                self._movement_knowledge.start_movement(self._selected_pos)
 
         self.move()
