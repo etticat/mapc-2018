@@ -84,10 +84,10 @@ class IngredientSensor(FinishedProductSensor):
             item = products_needs[item_name]
             for required_ingredient in item.consumed_items:
 
-                stock = items_in_stock.get(item_name, 0)
+                stock = items_in_stock.get(required_ingredient.name, 0)
 
                 if(required_ingredient.amount <= stock):
-                    items_in_stock[item_name] -= required_ingredient.amount
+                    items_in_stock[required_ingredient.name] -= required_ingredient.amount
                 else:
                     still_needed_items = required_ingredient.amount - items_in_stock.get(item_name, 0)
                     items_in_stock[item_name] = 0

@@ -3,7 +3,7 @@
 import rospy
 
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
-from mac_ros_bridge.msg import Resource, RequestAction, ResourceMsg, StorageMsg
+from mac_ros_bridge.msg import Resource, RequestAction, ResourceMsg, StorageMsg, Position
 
 
 class FacilityKnowledgebase():
@@ -26,7 +26,7 @@ class FacilityKnowledgebase():
         return ('resource', '*', '*', item_name)
 
     @staticmethod
-    def get_resource_tupele_lat_long_item(lat, long, item, amount):
+    def get_resource_tupele_lat_long_item(lat="*", long="*", item="*"):
         return ('resource', str(lat), str(long), item)
 
     def add_new_resource(self, resource):
@@ -37,7 +37,7 @@ class FacilityKnowledgebase():
         :return:
         """
         for item in resource.items:
-            new = FacilityKnowledgebase.get_resource_tupele_lat_long_item(resource.pos.lat, resource.pos.long, item.name, item.amount)
+            new = FacilityKnowledgebase.get_resource_tupele_lat_long_item(resource.pos.lat, resource.pos.long, item.name)
 
             try:
                 ret_value = self.__kb_client.update(
@@ -46,6 +46,16 @@ class FacilityKnowledgebase():
             except Exception as e:
                 rospy.logerr("add_new_task failed:\n%s", e)
                 rospy.logerr("Retrying.")
+
+    def get_resource_map(self):
+        all = FacilityKnowledgebase.get_resource_tupele_lat_long_item()
+        res = {}
+        list = self.__kb_client.all(all)
+        for resource in list:
+            res[resource[3]] = Position(lat=resource[1],long=resource[2])
+            # TODO: Could be multople resources that offer the item
+
+        return res
 
     def save_facilities(self, msg):
         """

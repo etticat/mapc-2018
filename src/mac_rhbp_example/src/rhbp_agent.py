@@ -103,15 +103,27 @@ class RhbpAgent:
             batteryBehaviourNetwork.charge_sensor,
             Effect(sensor_name=batteryBehaviourNetwork.charge_sensor.name, indicator=1.0, sensor_type=float))])
 
+
         ######################## Job Network Behaviour ########################
         self._job_performance_network = JobPerformanceNetwork(
             name=self._agent_name + '/JobPerformanceNetwork',
             plannerPrefix=self._agent_name,
+            msg=msg,
             agent=self)
         self._job_performance_network.add_precondition(
             precondition=self.enough_battery_cond)
         self._job_performance_network.add_precondition(
             precondition=self._job_performance_network.has_tasks__assigned_condition)
+
+        self._job_performance_network.add_effects_and_goals([(
+            self._job_performance_network.has_tasks_assigned_sensor,
+            Effect(
+                sensor_name=self._job_performance_network.has_tasks_assigned_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool
+                   )
+
+        )])
 
         ######################## Exploration Network Behaviour ########################
         self._shop_exploration_network = ExplorationBehaviourNetwork(
@@ -135,6 +147,8 @@ class RhbpAgent:
         # Only explore when there is not task assigned
         self._shop_exploration_network.add_precondition(
             precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
+
+
 
 
 
@@ -162,7 +176,7 @@ class RhbpAgent:
             name='score_goal',
             permanent=True,
             plannerPrefix=self._agent_name,
-            conditions=[self._shop_exploration_network.map_discovered_everything_condition])
+            conditions=[Negation(self._job_performance_network.has_tasks__assigned_condition)])
 
 
 
