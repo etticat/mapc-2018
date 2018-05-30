@@ -14,7 +14,6 @@ class GoToChargingstationBehaviour(GotoLocationBehaviour):
             agent._agent_name,
             plannerPrefix=plannerPrefix,
             name="go_to_charging_behaviour",
-            graph_name="charging",
             **kwargs)
 
         topic = '/charging_station'
@@ -45,6 +44,10 @@ class GoToChargingstationBehaviour(GotoLocationBehaviour):
                 closest_facility = facility
 
         return closest_facility.pos
+
+    def stop(self):
+        super(GoToChargingstationBehaviour, self).stop()
+
 
 class RechargeBehaviour(GenericActionBehaviour):
     """

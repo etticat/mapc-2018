@@ -125,3 +125,8 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
             permanent=True,
             plannerPrefix=self.get_manager_prefix(),
             conditions=[Negation(require_charging_cond)])
+
+    def stop(self):
+
+        super(BatteryChargingNetworkBehaviour, self).stop()
+        self.go_to_charging_station_behaviour._movement_knowledge.stop_movement()

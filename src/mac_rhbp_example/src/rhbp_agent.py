@@ -44,8 +44,8 @@ class RhbpAgent:
         self._job_planner = None
 
         # TODO move this into a seperate agent ?
-        if self._agent_name == "agentA1":
-            self._job_planner = JobPlanner(self._agent_name)
+        # if self._agent_name == "agentA1":
+        #     self._job_planner = JobPlanner(self._agent_name)
 
         # subscribe to MAC bridge core simulation topics
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
@@ -214,7 +214,7 @@ class RhbpAgent:
         """
 
         # TODO move this into a seperate agent ?
-        if self._agent_name == "agentA1":
+        if self._job_planner:
             self._job_planner._action_request_callback(msg)
 
         start_time = rospy.get_rostime()

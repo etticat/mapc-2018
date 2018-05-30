@@ -3,9 +3,6 @@
     <!-- Enable custom logger configuration-->
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mac_rhbp_example)/launch/python_logging.conf"/>
 
-    <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
-    </include>
-
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA1" />
     </include>

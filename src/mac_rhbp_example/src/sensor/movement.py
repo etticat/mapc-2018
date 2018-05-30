@@ -21,6 +21,8 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
         self._latest_ref_value = None
 
+        self._movement_knowledge = MovementKnowledge(agent_name=agent_name, behaviour_name=behaviour_name)
+
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self.subscription_callback_ref_topic)
 
     def subscription_callback_ref_topic(self, msg):
@@ -36,6 +38,10 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         # If we don't have a destination we handle it as if we are far away
         res = 1
 
+        # TODO: The cache seems to give old values
+        # TODO: For now we just try to reload it every time and see if it works better
+        facts = self._movement_knowledge.get_current_fact()
+
         if len(facts) > 0 and self._latest_ref_value != None:
             fact_tuple = facts.pop()  # only getting the first fact
 
@@ -49,4 +55,6 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
+        if self.name == "at_shop":
+            rospy.logerr(res)
         return res

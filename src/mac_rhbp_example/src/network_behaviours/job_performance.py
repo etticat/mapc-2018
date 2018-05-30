@@ -1,7 +1,6 @@
 import rospy
 from mac_ros_bridge.msg import Position
 
-from agent_behaviours.generic_action_behaviour import GenericActionBehaviour, Action
 from agent_knowledge.facilities import FacilityKnowledgebase
 from agent_knowledge.movement import MovementKnowledge
 from agent_knowledge.tasks import TaskKnowledge
@@ -10,6 +9,7 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
+from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActivator
@@ -72,12 +72,6 @@ class JobPerformanceNetwork(NetworkBehaviour):
             precondition=self.has_all_ingerdients
         )
 
-
-        self.go_to_destination_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.has_tasks_assigned_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool))
 
         self.go_to_resource_node_behaviour = GoToResourceBehaviour(
             agent=agent,

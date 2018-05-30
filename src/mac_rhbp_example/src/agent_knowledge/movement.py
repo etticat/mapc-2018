@@ -30,10 +30,23 @@ class MovementKnowledge():
         ret_value = self.__kb_client.update(search, new, push_without_existing = True)
 
     def stop_movement(self):
-        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=True)
-        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False)
+        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
+        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False, lat="none", long="none")
 
-        rospy.logerr("stopping ...")
+        rospy.logerr("stopping ..." )
+        all_values = self.__kb_client.all(MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name ))
+        for v in all_values:
+            rospy.logerr(str(v))
+
+        rospy.logerr(str(search))
+        rospy.logerr(str(new))
 
         ret_value = self.__kb_client.update(search, new, push_without_existing = False)
         return ret_value
+
+    def get_current_fact(self):
+
+        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
+        facts = self.__kb_client.all(search)
+
+        return facts
