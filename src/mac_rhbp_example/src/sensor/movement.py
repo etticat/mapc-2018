@@ -15,7 +15,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
     def __init__(self, agent_name, behaviour_name, name):
 
-        pattern = MovementKnowledge.get_movement_tuple(agent_name=agent_name, behaviour=behaviour_name, active=True)
+        pattern = MovementKnowledge.get_movement_tuple(agent_name=agent_name, behaviour=behaviour_name)
 
         super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name)
 
@@ -38,10 +38,6 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         # If we don't have a destination we handle it as if we are far away
         res = 1
 
-        # TODO: The cache seems to give old values
-        # TODO: For now we just try to reload it every time and see if it works better
-        facts = self._movement_knowledge.get_current_fact()
-
         if len(facts) > 0 and self._latest_ref_value != None:
             fact_tuple = facts.pop()  # only getting the first fact
 
@@ -55,6 +51,4 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
-        if self.name == "at_shop":
-            rospy.logerr(res)
         return res

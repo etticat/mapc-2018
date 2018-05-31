@@ -19,27 +19,30 @@ class MovementKnowledge():
         return 'go_to_facility', agent_name, goal, str(active)
 
     @staticmethod
-    def get_movement_tuple(agent_name, behaviour="*", active="*", lat="*", long="*"):
-        return ('moving', agent_name, behaviour, str(active), str(lat), str(long))
+    def get_movement_tuple(agent_name, behaviour="*", active="*", lat="*", long="*", destination="*"):
+        return ('moving', behaviour, agent_name, str(active), str(lat), str(long), str(destination))
+
+    INDEX_MOVEMENT_BEHAVIOUR = 1
+    INDEX_MOVEMENT_AGENT_NAME = 2
+    INDEX_MOVEMENT_ACTIVE = 3
+    INDEX_MOVEMENT_LAT = 4
+    INDEX_MOVEMENT_LONG = 5
+    INDEX_MOVEMENT_DESTINATION = 6
 
 
-    def start_movement(self, destination):
+    def start_movement(self, destinationPos, destination):
         search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
-        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=True, lat=destination.lat, long=destination.long)
+        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
 
+        rospy.logerr("MovementKnowledge:: Moving to %s ", destination)
         ret_value = self.__kb_client.update(search, new, push_without_existing = True)
 
     def stop_movement(self):
         search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
-        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False, lat="none", long="none")
+        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False, lat="none", long="none", destination="none")
 
-        rospy.logerr("stopping ..." )
-        all_values = self.__kb_client.all(MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name ))
-        for v in all_values:
-            rospy.logerr(str(v))
 
-        rospy.logerr(str(search))
-        rospy.logerr(str(new))
+        rospy.logerr("MovementKnowledge:: Stopping movement")
 
         ret_value = self.__kb_client.update(search, new, push_without_existing = False)
         return ret_value
@@ -49,4 +52,7 @@ class MovementKnowledge():
         search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
         facts = self.__kb_client.all(search)
 
-        return facts
+        if len(facts) > 0:
+            return facts[0]
+        else:
+            return None

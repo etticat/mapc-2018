@@ -31,7 +31,7 @@ class RhbpAgent:
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
-        self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
+        self._agent_name = rospy.get_param('~agent_name', "agentA27")  # default for debugging 'agentA1'
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
@@ -44,8 +44,8 @@ class RhbpAgent:
         self._job_planner = None
 
         # TODO move this into a seperate agent ?
-        # if self._agent_name == "agentA1":
-        #     self._job_planner = JobPlanner(self._agent_name)
+        if self._agent_name == "agentA27":
+            self._job_planner = JobPlanner(self._agent_name)
 
         # subscribe to MAC bridge core simulation topics
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
@@ -109,21 +109,26 @@ class RhbpAgent:
             name=self._agent_name + '/JobPerformanceNetwork',
             plannerPrefix=self._agent_name,
             msg=msg,
-            agent=self)
+            agent=self,
+            max_parallel_behaviours=1)
         self._job_performance_network.add_precondition(
             precondition=self.enough_battery_cond)
         self._job_performance_network.add_precondition(
             precondition=self._job_performance_network.has_tasks__assigned_condition)
 
-        self._job_performance_network.add_effects_and_goals([(
-            self._job_performance_network.has_tasks_assigned_sensor,
-            Effect(
-                sensor_name=self._job_performance_network.has_tasks_assigned_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool
-                   )
-
-        )])
+        # TODO: Do I need these #33-1
+        # Everything seems to work well without it. With it I run into errors
+        # undeclared predicate has_task used in domain definition
+        # [ERROR] [1527777061.931515]: PLANNER ERROR: Planner exited with failure.. Generating PDDL log files for step 11
+        # self._job_performance_network.add_effects_and_goals([(
+        #     self._job_performance_network.has_tasks_assigned_sensor,
+        #     Effect(
+        #         sensor_name=self._job_performance_network.has_tasks_assigned_sensor.name,
+        #         indicator=-1.0,
+        #         sensor_type=bool
+        #            )
+        #
+        # )])
 
         ######################## Exploration Network Behaviour ########################
         self._shop_exploration_network = ExplorationBehaviourNetwork(
@@ -172,11 +177,14 @@ class RhbpAgent:
 
         # The overall goal is to gain score (For now to have wells)
         # TODO: Goal should be high well number. Will be changed once wells are implemented
-        self._job_performance_goal = GoalBase(
-            name='score_goal',
-            permanent=True,
-            plannerPrefix=self._agent_name,
-            conditions=[Negation(self._job_performance_network.has_tasks__assigned_condition)])
+
+        # TODO: Do I need these #33-1
+        # Seems to work without. With them I get errors but it continues to run normally
+        # self._job_performance_goal = GoalBase(
+        #     name='score_goal',
+        #     permanent=True,
+        #     plannerPrefix=self._agent_name,
+        #     conditions=[Negation(self._job_performance_network.has_tasks__assigned_condition)])
 
 
 

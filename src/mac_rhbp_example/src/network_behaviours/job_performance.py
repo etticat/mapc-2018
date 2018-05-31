@@ -1,6 +1,7 @@
 import rospy
 from mac_ros_bridge.msg import Position
 
+from agent_common.job_utils import JobUtils
 from agent_knowledge.facilities import FacilityKnowledgebase
 from agent_knowledge.movement import MovementKnowledge
 from agent_knowledge.tasks import TaskKnowledge
@@ -115,33 +116,47 @@ class JobPerformanceNetwork(NetworkBehaviour):
         # TODO: Request help from others
         self.assemble_product_behaviour = None
 
+
+        # TODO: Do I need these #33-1
+        # Seems to work without. With them I get errors but it continues to run normally
         # Goal is to finish all tasks
-        self._job_performance_goal = GoalBase(
-            name='job_performance',
-            permanent=True,
-            plannerPrefix=agent._agent_name,
-            conditions=[Negation(self.has_tasks__assigned_condition)])
+        # self._job_performance_goal = GoalBase(
+        #     name='job_performance',
+        #     permanent=True,
+        #     plannerPrefix=agent._agent_name,
+        #     conditions=[Negation(self.has_tasks__assigned_condition)])
 
 
 
 
 class GoToResourceBehaviour(GotoLocationBehaviour):
-    def __init__(self, agent,plannerPrefix, ingredientSensor, **kwargs):
+    def __init__(self, agent,plannerPrefix, **kwargs):
         super(GoToResourceBehaviour, self).__init__(
             agent._agent_name,
             plannerPrefix=plannerPrefix,
             name="go_to_resource",
             **kwargs)
         self._selected_facility = None
-        self.ingredientSensor = ingredientSensor # TODO remove this and just extract the needed code
         self.taskKnowledge = TaskKnowledge(agent._agent_name)
         self.facility_knowledge = FacilityKnowledgebase()
 
     def _select_pos(self):
-        ingredientItem = self.ingredientSensor.get_still_needed_items()[0]
-        facilityPos = self.facility_knowledge.get_resource_map()[list(ingredientItem.keys())[0]]
+        neededIngredients = self.taskKnowledge.get_required_ingredients(self._agent_name)
+        if len(neededIngredients) > 0:
+            # TODO: Select the next ingredient to gather somehow smarter. Like going to the closest one
+            for neededIngredient in neededIngredients:
+                facilityPos = self.facility_knowledge.get_resources(neededIngredient)
+                if len(facilityPos)>0:
+                    # TODO: Select this smarter. Maybe the closest one
+                    self._selected_destination = neededIngredient
+                    return facilityPos[0]
 
-        return facilityPos
+        else:
+            rospy.logerr("%s:: Trying to go to resource but there is no ingredient left to gather.", self.name)
+
+        rospy.logerr("%s:: Can't find resource node for any required ingredient. %s", self.name, str(neededIngredients))
+        self._selected_destination = "none"
+        return None
 
 class GoToStorageBehaviour(GotoLocationBehaviour):
 
@@ -157,9 +172,12 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
         self.facility_knowledge = FacilityKnowledgebase()
 
     def _select_pos(self):
-        task = self.taskKnowledge.get_task(agent_name=self._agent_name, status="assigned")
-        facility = self.facility_knowledge.storages[task.destination]
-        return facility.pos
+        task = self.taskKnowledge.get_tasks(agent_name=self._agent_name, status="assigned")
+        # Goint to any destination
+        # TODO: Check this. The goal is to only take tasks with the same destination, so this should be fine.
+        # Maybe this can be done more elegant
+        if len(task) > 0:
+            return self.facility_knowledge.storages[task.destination].pos
 
 
 class GatherBehaviour(GenericActionBehaviour):
@@ -179,7 +197,16 @@ class GatherBehaviour(GenericActionBehaviour):
                       action_type = Action.GATHER,
                       **kwargs)
         self._movement_knowledge = MovementKnowledge(behaviour_name="go_to_resource", agent_name=agent_name)
+        self._task_knowledge = TaskKnowledge(agent_name=agent_name)
 
-    def stop(self):
-        self._movement_knowledge.stop_movement()
-        super(GatherBehaviour, self).stop()
+    def do_step(self):
+
+        required_ingredients = self._task_knowledge.get_required_ingredients(self._agent_name)
+        fact = self._movement_knowledge.get_current_fact()
+
+        # If we don't need item anymore stop gathering
+        # TODO: This could be moved to a seperate sensor
+        if fact[MovementKnowledge.INDEX_MOVEMENT_DESTINATION] not in required_ingredients:
+            self._movement_knowledge.stop_movement()
+
+        super(GatherBehaviour, self).do_step()

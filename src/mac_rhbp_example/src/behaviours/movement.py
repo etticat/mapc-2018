@@ -33,6 +33,8 @@ class GotoLocationBehaviour(BehaviourBase):
 
         self._selected_pos = None
 
+        self._selected_destination = "none"
+
         self.__client = KnowledgeBaseClient()
 
         self._pub_generic_action = rospy.Publisher(AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
@@ -112,7 +114,7 @@ class GotoLocationBehaviour(BehaviourBase):
         # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
 
         if self._selected_pos:
-            self._movement_knowledge.start_movement(self._selected_pos)
+            self._movement_knowledge.start_movement(self._selected_pos, self._selected_destination)
 
         super(GotoLocationBehaviour, self).start()
 
@@ -128,6 +130,6 @@ class GotoLocationBehaviour(BehaviourBase):
             self._selected_pos = self._select_pos()
 
             if self._selected_pos:
-                self._movement_knowledge.start_movement(self._selected_pos)
+                self._movement_knowledge.start_movement(self._selected_pos, self._selected_destination)
 
         self.move()

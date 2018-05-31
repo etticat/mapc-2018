@@ -47,14 +47,12 @@ class FacilityKnowledgebase():
                 rospy.logerr("add_new_task failed:\n%s", e)
                 rospy.logerr("Retrying.")
 
-    def get_resource_map(self):
-        all = FacilityKnowledgebase.get_resource_tupele_lat_long_item()
-        res = {}
+    def get_resources(self, item):
+        all = FacilityKnowledgebase.get_resource_tupele_lat_long_item(item=item)
+        res = []
         list = self.__kb_client.all(all)
         for resource in list:
-            res[resource[3]] = Position(lat=resource[1],long=resource[2])
-            # TODO: Could be multople resources that offer the item
-
+            res.append(Position(lat=resource[1],long=resource[2]))
         return res
 
     def save_facilities(self, msg):

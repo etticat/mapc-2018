@@ -78,9 +78,11 @@ class ExplorationBehaviourNetwork(NetworkBehaviour):
             precondition=Negation(at_shop_cond)
         )
 
+        # TODO: Do I need these #33-1
+        # Seems to work without. With them I get errors but it continues to run normally
         # Exploration goal
-        self._exploration_goal = GoalBase(
-            name='exploration_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[self.map_discovered_everything_condition])
+        # self._exploration_goal = GoalBase(
+        #     name='exploration_goal',
+        #     permanent=True,
+        #     plannerPrefix=self.get_manager_prefix(),
+        #     conditions=[self.map_discovered_everything_condition])

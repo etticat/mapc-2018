@@ -119,12 +119,14 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
         self.add_precondition(require_charging_cond)
 
+        # TODO: Do I need these #33-1
+        # Seems to work without. With them I get errors but it continues to run normally
         # The goal is to always have charge
-        self._charging_goal = GoalBase(
-            name='charging_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(require_charging_cond)])
+        # self._charging_goal = GoalBase(
+        #     name='charging_goal',
+        #     permanent=True,
+        #     plannerPrefix=self.get_manager_prefix(),
+        #     conditions=[Negation(require_charging_cond)])
 
     def stop(self):
 
