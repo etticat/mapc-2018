@@ -4,7 +4,8 @@ from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import TopicSensor
-from behaviours.battery import GoToChargingstationBehaviour, ChargeBehaviour, RechargeBehaviour
+from behaviours.battery import ChargeBehaviour, RechargeBehaviour
+from behaviours.movement import GoToFacilityBehaviour
 from sensor.movement import DestinationDistanceSensor
 
 
@@ -26,8 +27,11 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         self.agent_charge_critical = agent_recharge_upper_bound * recharge_critical_bound_percentage
 
 
-        self.go_to_charging_station_behaviour = GoToChargingstationBehaviour(
+        self.go_to_charging_station_behaviour = GoToFacilityBehaviour(
             plannerPrefix=self.get_manager_prefix(),
+            name="go_to_charging_behaviour",
+            topic="/charging_station",
+            agent_name=agent._agent_name,
             agent=agent)
 
         # Sensor that checks if vehicles is charged at the moment

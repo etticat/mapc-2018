@@ -61,7 +61,7 @@ class GenericActionBehaviour(BehaviourBase):
 
     def do_step(self):
         rospy.logdebug(self._agent_name + "::" + self._name + " executing: " + self._action_type)
-        GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self._params)
+        GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self.generate_params())
 
 
     @staticmethod
@@ -93,3 +93,6 @@ class GenericActionBehaviour(BehaviourBase):
         action.action_type = action_type
         action.params = params
         publisher.publish(action)
+
+    def generate_params(self):
+        return self._params

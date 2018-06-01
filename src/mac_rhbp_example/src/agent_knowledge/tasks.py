@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+import copy
+
 from __builtin__ import xrange
 
 import rospy
@@ -10,6 +12,7 @@ from agent_common.agent_utils import AgentUtils
 
 
 class TaskKnowledge():
+
 
     def __init__(self, agent_name):
         self.__kb_client = KnowledgeBaseClient(
@@ -43,6 +46,15 @@ class TaskKnowledge():
     @staticmethod
     def get_tuple_task_creation(job_id="*", task_id="*", destination="*", agent="*", status="*", item="*"):
         return 'task', job_id, task_id, destination, agent, status, item
+
+
+    INDEX_JOB_ID = 1
+    INDEX_TASK_ID = 2
+    INDEX_DESTINATION = 3
+    INDEX_AGENT_NAME = 4
+    INDEX_STATUS = 5
+    INDEX_ITEM = 6
+
 
     def _callback_sim_start(self, msg):
         """
@@ -129,13 +141,13 @@ class TaskKnowledge():
             agent_name=agent_name,
             status="assigned")
 
-        items_in_stock = self._items_in_stock
+        items_in_stock = copy.copy(self._items_in_stock)
 
         still_required_finished_products = []
 
         for product in all_required_finished_products:
             if (items_in_stock.get(product.item, 0) > 0): # we already have the item
-                items_in_stock -= 1
+                items_in_stock[product.item] -= 1
             else: # we still need the item
                 still_required_finished_products.append(product.item)
 
@@ -146,7 +158,7 @@ class TaskKnowledge():
             agent_name=agent_name,
             status="assigned")
 
-        items_in_stock = self._items_in_stock
+        items_in_stock = copy.copy(self._items_in_stock)
 
         still_needed_ingredients = []
 
@@ -154,7 +166,7 @@ class TaskKnowledge():
             task = all_tasks.pop()
 
             if (items_in_stock.get(task.item, 0) > 0):  # we already have the item
-                items_in_stock -= 1
+                items_in_stock[task.item] -= 1
             else:
                 ingredients = list(self.products[task.item].consumed_items)
                 while len(ingredients) > 0:

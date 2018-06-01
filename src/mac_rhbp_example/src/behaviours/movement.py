@@ -14,6 +14,7 @@ from agent_common.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
+from utils.ros_helpers import get_topic_type
 
 
 
@@ -133,3 +134,43 @@ class GotoLocationBehaviour(BehaviourBase):
                 self._movement_knowledge.start_movement(self._selected_pos, self._selected_destination)
 
         self.move()
+
+class GoToFacilityBehaviour(GotoLocationBehaviour):
+
+    def __init__(self, agent, plannerPrefix, topic,  **kwargs):
+        self.agent = agent
+        super(GoToFacilityBehaviour, self).__init__(
+            plannerPrefix=plannerPrefix,
+            **kwargs)
+
+        facility_topic_type = get_topic_type(topic)
+
+        self._facilities = {}
+        rospy.Subscriber(topic , facility_topic_type, self._callback_facility)
+
+
+    def _callback_facility(self, msg):
+        # Store all available facilities in a dict
+        for facility in msg.facilities:
+            self._facilities[facility.name] = facility
+
+    def _select_pos(self):
+        """
+        Determine the facility we want to go to, using euclidean distance
+        TODO: Use graphhopper for non drone vehicles
+        :return: facility
+        """
+        closest_facility = None
+        min_distance = 9999
+
+        for _, facility in self._facilities.items():
+            # TODO: get the agent position from topic instead of passing through the instance
+            distance = AgentUtils.euclidean_distance(self.agent.agent_info.pos, facility.pos)
+            if distance < min_distance:
+                min_distance = distance
+                closest_facility = facility
+
+        return closest_facility.pos
+
+    def stop(self):
+        super(GoToFacilityBehaviour, self).stop()

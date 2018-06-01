@@ -45,12 +45,16 @@ class ProductSensor(Sensor):
 
 class FinishedProductSensor(ProductSensor):
     def get_still_needed_products(self):
-        return self._task_knowledge.get_required_finished_products(self._agent_name)
+        products = self._task_knowledge.get_required_finished_products(self._agent_name)
+        rospy.loginfo("FinishedProductSensor:: Need following finished products:  %s", str(products))
+        return products
 
 class IngredientSensor(FinishedProductSensor):
 
     def get_still_needed_products(self):
-        return self._task_knowledge.get_required_ingredients(self._agent_name)
+        ingredients = self._task_knowledge.get_required_ingredients(self._agent_name)
+        rospy.loginfo("FinishedProductSensor:: Need following ingredients:  %s", str(ingredients))
+        return ingredients
 
 
 class AmountInListActivator(BooleanActivator):

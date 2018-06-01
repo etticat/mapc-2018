@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye
+from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
@@ -12,6 +12,7 @@ from behaviour_components.managers import Manager
 
 from agent_common.agent_utils import AgentUtils
 from behaviour_components.network_behavior import NetworkBehaviour
+from network_behaviours.assist import AssistBehaviourNetwork
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
 
@@ -26,13 +27,17 @@ class RhbpAgent:
     Main class of an agent, taking care of the main interaction with the mac_ros_bridge
     """
 
-    def __init__(self):
+    def __init__(self, agent_name):
         self.facilityKnowledgebase = FacilityKnowledgebase()
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
-        self._agent_name = rospy.get_param('~agent_name', "agentA27")  # default for debugging 'agentA1'
+        if agent_name != None:
+            self._agent_name = agent_name
+        else:
+            self._agent_name = rospy.get_param('~agent_name', "agentA27")  # default for debugging 'agentA1'
 
+        rospy.logerr("RhbpAgent:: Starting %s", self._agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
@@ -116,6 +121,21 @@ class RhbpAgent:
         self._job_performance_network.add_precondition(
             precondition=self._job_performance_network.has_tasks__assigned_condition)
 
+        ######################## Assist Network Behaviour ########################
+        self._assist_task_network = AssistBehaviourNetwork(
+            agent_name=self._agent_name,
+            name=self._agent_name + '/AssistNetwork',
+            plannerPrefix=self._agent_name,
+            msg = msg,
+            max_parallel_behaviours=1
+        )
+        # Only assist when something is assigned
+        self._assist_task_network.add_precondition(
+            precondition=self._assist_task_network.assist_assigned_condition)
+
+        # Only perform tasks when there is no assist required
+        self._job_performance_network.add_precondition(
+            precondition=Negation(self._assist_task_network.assist_assigned_condition))
         # TODO: Do I need these #33-1
         # Everything seems to work well without it. With it I run into errors
         # undeclared predicate has_task used in domain definition
@@ -247,8 +267,14 @@ class RhbpAgent:
 
 
 if __name__ == '__main__':
+
+    agent_name = None
+
+    if len(sys.argv) == 3 and sys.argv[1] == "--agent-name":
+        agent_name = sys.argv[2]
+
     try:
-        rhbp_agent = RhbpAgent()
+        rhbp_agent = RhbpAgent(agent_name)
 
         rospy.spin()
 
