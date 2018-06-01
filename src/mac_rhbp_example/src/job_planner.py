@@ -2,37 +2,40 @@ from __builtin__ import xrange
 
 import rospy
 from mac_rhbp_example.msg import Task
-from mac_ros_bridge.msg import RequestAction, Job
+from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
+from agent_common.agent_utils import AgentUtils
 from agent_knowledge.tasks import TaskKnowledge
 
 
-class JobPlanner:
+class JobPlanner(object):
 
-    # TODO: Auction jobs
     def __init__(self, agent_name):
-        self.current_step = 0
-        self.all_jobs = [] # Temp variable for testing
-        self.all_tasks = [] # Temp variable for testing
+
+        rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
+
+        self.all_jobs = []
+        self.all_tasks = []
 
         self._task_knowledge = TaskKnowledge(agent_name)
 
-        #rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
-        # For now passing it from agent
+        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
+
+        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
+        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
 
 
     def _action_request_callback(self, requestAction):
         """
         here we just trigger the decision-making and plannig
-        :param msg: the message
+        :param msg: The request for action message
         :type msg: RequestAction
         :return:
         """
-
+        # get all jobs from request
         all_jobs_new = self.extract_jobs(requestAction)
 
         for job in all_jobs_new:
-
             # if job has not been seen before -> process it
             if job not in self.all_jobs:
                 rospy.loginfo("JobPlanner:: processing new job %s", job.id)
@@ -47,6 +50,12 @@ class JobPlanner:
         rospy.loginfo("JobPlanner:: Jobs processed")
 
     def extract_jobs(self, msg):
+        """
+        Extracts all jobs from the RequestAction into a list
+        :param msg: The request for action message
+        :type msg: RequestAction
+        :return:
+        """
 
         extracted_jobs = []
 
@@ -60,17 +69,12 @@ class JobPlanner:
         return extracted_jobs
 
 
-    def discard_old_jobs(self, deleted_jobs):
-        deleted_job_ids = [job.id for job in deleted_jobs]
-
-        self.all_tasks = [task for task in self.all_tasks if task.job_id not in deleted_job_ids]
-
-
     def extract_tasks_from_job(self, job):
         """
-        :param job : the job to decompose
-        :type job  : Job
-        :return:Task
+        Divides the job in small tasks that can be performed together by multiple agents
+        :param      job         : the job to decompose
+        :type       job         : Job
+        :return:    Task[]
         """
         tasks = []
         id = 0
@@ -89,3 +93,18 @@ class JobPlanner:
 
     def _sim_start_callback(self, msg):
         self._task_knowledge._callback_sim_start(msg)
+
+
+
+if __name__ == '__main__':
+
+    try:
+
+        # Just take a random agent. doesn't really matter
+        job_planner = JobPlanner(
+            agent_name="agentA1")
+
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        rospy.logerr("program interrupted before completion")

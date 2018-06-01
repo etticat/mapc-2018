@@ -3,23 +3,16 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
+from agent_common.agent_utils import AgentUtils
+from agent_knowledge.facilities import FacilityKnowledgebase
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
-from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
-
-
-from agent_common.agent_utils import AgentUtils
-from behaviour_components.network_behavior import NetworkBehaviour
 from network_behaviours.assist import AssistBehaviourNetwork
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
-from network_behaviours.build_well import BuildWellNetworkBehaviour
-
 from network_behaviours.exploration import ExplorationBehaviourNetwork
-from agent_knowledge.facilities import FacilityKnowledgebase
 from network_behaviours.job_performance import JobPerformanceNetwork
-from job_planner import JobPlanner
 
 
 class RhbpAgent:
@@ -28,14 +21,20 @@ class RhbpAgent:
     """
 
     def __init__(self, agent_name):
+        """
+
+        :param agent_name:
+        :type agent_name:  str
+        """
         self.facilityKnowledgebase = FacilityKnowledgebase()
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
+        # Take the name from the constructor parameter in case it was started from a development environment
         if agent_name != None:
             self._agent_name = agent_name
         else:
-            self._agent_name = rospy.get_param('~agent_name', "agentA27")  # default for debugging 'agentA1'
+            self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
 
         rospy.logerr("RhbpAgent:: Starting %s", self._agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
@@ -45,12 +44,6 @@ class RhbpAgent:
 
         self._sim_started = False
         self._initialized = False
-
-        self._job_planner = None
-
-        # TODO move this into a seperate agent ?
-        if self._agent_name == "agentA27":
-            self._job_planner = JobPlanner(self._agent_name)
 
         # subscribe to MAC bridge core simulation topics
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
@@ -71,10 +64,6 @@ class RhbpAgent:
         :param msg:  the message
         :type msg: SimStart
         """
-
-        # TODO: This is only temporary. Need to figure out why I cant subscribe directly from the compoent
-        if(self._job_planner):
-            self._job_planner._sim_start_callback(msg)
 
         if not self._sim_started:  # init only once here
 
@@ -240,10 +229,6 @@ class RhbpAgent:
         :type msg: RequestAction
         :return:
         """
-
-        # TODO move this into a seperate agent ?
-        if self._job_planner:
-            self._job_planner._action_request_callback(msg)
 
         start_time = rospy.get_rostime()
         rospy.logdebug("RhbpAgent::callback %s", str(msg))
