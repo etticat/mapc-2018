@@ -19,6 +19,8 @@ class TaskKnowledge():
             knowledge_base_name = "knowledgeBaseNode")
 
         self.products = {}
+        self.base_ingredients = {}
+        self.finished_products = {}
 
         rospy.Subscriber(
             AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start",
@@ -65,6 +67,10 @@ class TaskKnowledge():
         """
         for product in msg.products:
             self.products[product.name] = product
+            if len(product.consumed_items) > 0:
+                self.finished_products[product.name] = product
+            else:
+                self.base_ingredients[product.name] = product
 
 
     def save_task(self, task):

@@ -36,7 +36,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         """
 
         # If we don't have a destination we handle it as if we are far away
-        res = 1
+        res = 999
 
         if len(facts) > 0 and self._latest_ref_value != None:
             fact_tuple = facts.pop()  # only getting the first fact
@@ -51,4 +51,6 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
+        # if self.name == "resource_destination_sensor_hoarding":
+        #     rospy.logerr("---%s", str(res))
         return res

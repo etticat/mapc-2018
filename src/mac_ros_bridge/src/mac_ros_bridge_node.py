@@ -412,7 +412,7 @@ class MacRosBridge(threading.Thread):
             item = Item()
             item.name = xml_item.get('resource')
             item.amount = 1  # We can always only get one item per time
-            resource.items.append(item)
+            resource.item = item
             resources.append(resource)
         return resources
 

@@ -12,6 +12,7 @@ from behaviour_components.managers import Manager
 from network_behaviours.assist import AssistBehaviourNetwork
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationBehaviourNetwork
+from network_behaviours.hoarding import HoardingNetwork
 from network_behaviours.job_performance import JobPerformanceNetwork
 
 
@@ -110,6 +111,22 @@ class RhbpAgent:
         self._job_performance_network.add_precondition(
             precondition=self._job_performance_network.has_tasks__assigned_condition)
 
+        ######################## Hoarding Network Behaviour ########################
+        self._hoarding_network = HoardingNetwork(
+            name=self._agent_name + '/HoardingNetwork',
+            plannerPrefix=self._agent_name,
+            msg=msg,
+            agent=self,
+            max_parallel_behaviours=1)
+
+        self._hoarding_network.add_precondition(
+            precondition=self.enough_battery_cond)
+
+        self._hoarding_network.add_precondition(
+            precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
+
+
+
         ######################## Assist Network Behaviour ########################
         self._assist_task_network = AssistBehaviourNetwork(
             agent_name=self._agent_name,
@@ -122,9 +139,13 @@ class RhbpAgent:
         self._assist_task_network.add_precondition(
             precondition=self._assist_task_network.assist_assigned_condition)
 
-        # Only perform tasks when there is no assist required
+        # Only perform tasks or hoard when there is no assist required
         self._job_performance_network.add_precondition(
             precondition=Negation(self._assist_task_network.assist_assigned_condition))
+
+        self._hoarding_network.add_precondition(
+            precondition=Negation(self._assist_task_network.assist_assigned_condition))
+
         # TODO: Do I need these #33-1
         # Everything seems to work well without it. With it I run into errors
         # undeclared predicate has_task used in domain definition
@@ -148,12 +169,12 @@ class RhbpAgent:
             max_parallel_behaviours=1)
 
 
-        self._shop_exploration_network.add_effects_and_goals([(
-            self._shop_exploration_network.map_discovery_progress_sensor,
-            Effect(
-                sensor_name=self._shop_exploration_network.map_discovery_progress_sensor.name,
-                indicator=1.0,
-                sensor_type=bool))])
+        # self._shop_exploration_network.add_effects_and_goals([(
+        #     self._shop_exploration_network.resource_discovery_progress_sensor,
+        #     Effect(
+        #         sensor_name=self._shop_exploration_network.resource_discovery_progress_sensor.name,
+        #         indicator=1.0,
+        #         sensor_type=bool))])
 
         # Only do shop exploration when enough battery left
         self._shop_exploration_network.add_precondition(
@@ -161,6 +182,10 @@ class RhbpAgent:
         # Only explore when there is not task assigned
         self._shop_exploration_network.add_precondition(
             precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
+
+
+        self._hoarding_network.add_precondition(
+            precondition=self._shop_exploration_network.all_resources_discovered_condition)
 
 
 
