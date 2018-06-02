@@ -10,7 +10,7 @@ from diagnostic_msgs.msg import KeyValue
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import GenericAction, Position
 
-from agent_common.agent_utils import AgentUtils
+from common_utils.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
@@ -30,7 +30,7 @@ class GotoLocationBehaviour(BehaviourBase):
 
         self._agent_name = agent_name
 
-        self._movement_knowledge = MovementKnowledge(self._agent_name, self._name)
+        self._movement_knowledge = MovementKnowledge()
 
         self._selected_pos = None
 
@@ -115,7 +115,7 @@ class GotoLocationBehaviour(BehaviourBase):
         # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
 
         if self._selected_pos:
-            self._movement_knowledge.start_movement(self._selected_pos, self._selected_destination)
+            self._movement_knowledge.start_movement(self._agent_name, self._name, self._selected_pos, self._selected_destination)
 
         super(GotoLocationBehaviour, self).start()
 
@@ -131,7 +131,7 @@ class GotoLocationBehaviour(BehaviourBase):
             self._selected_pos = self._select_pos()
 
             if self._selected_pos:
-                self._movement_knowledge.start_movement(self._selected_pos, self._selected_destination)
+                self._movement_knowledge.start_movement(self._agent_name, self._name, self._selected_pos, self._selected_destination)
 
         self.move()
 

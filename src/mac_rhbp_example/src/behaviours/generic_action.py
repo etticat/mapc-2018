@@ -3,11 +3,11 @@ from __future__ import division
 import rospy
 from mac_ros_bridge.msg import GenericAction
 
-from agent_common.agent_utils import AgentUtils
+from common_utils.agent_utils import AgentUtils
 from behaviour_components.behaviours import BehaviourBase
 
 
-class Action():
+class Action(object):
     GO_TO = "goto"
     RECEIVE = "receive"
     GIVE = "give"

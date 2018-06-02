@@ -2,10 +2,8 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
-from agent_common.agent_utils import AgentUtils
+from common_utils.agent_utils import AgentUtils
 from agent_knowledge.assist import AssistKnowledgebase
-from agent_knowledge.facilities import FacilityKnowledgebase
-from agent_knowledge.movement import MovementKnowledge
 from agent_knowledge.tasks import TaskKnowledge
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.behaviours import BehaviourBase
@@ -26,7 +24,7 @@ class GoToAssistSpotBehaviour(GotoLocationBehaviour):
         self._assist_knowledge = AssistKnowledgebase()
 
     def _select_pos(self):
-        assistTask = self._assist_knowledge.get_assist_fact(self._agent_name)
+        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
 
         if assistTask == None:
             return None
@@ -57,7 +55,7 @@ class AssistBehaviour(BehaviourBase):
         self._pub_generic_action.publish(action)
 
     def do_step(self):
-        assistTask = self._assist_knowledge.get_assist_fact(self._agent_name)
+        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
         if assistTask != None:
             self.action_assist_assemble(assistTask.agent_name)
             rospy.logerr("AssistBehaviour(%s):: assisting %s", self._agent_name, assistTask.agent_name)
@@ -80,7 +78,7 @@ class AssistBehaviourNetwork(NetworkBehaviour):
 
         self.assist_assigned_sensor = KnowledgeSensor(
             name='assist_assigned_sensor',
-            pattern=AssistKnowledgebase.get_tuple_assist(
+            pattern=AssistKnowledgebase.generate_tuple(
                 assisting_agent=agent_name,
                 active=True))
 

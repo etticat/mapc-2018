@@ -3,8 +3,8 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
-from agent_common.agent_utils import AgentUtils
-from agent_knowledge.facilities import FacilityKnowledgebase
+from agent_knowledge.resource import ResourceKnowledgebase
+from common_utils.agent_utils import AgentUtils
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
@@ -27,7 +27,7 @@ class RhbpAgent:
         :param agent_name:
         :type agent_name:  str
         """
-        self.facilityKnowledgebase = FacilityKnowledgebase()
+        self.facilityKnowledgebase = ResourceKnowledgebase()
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
@@ -260,7 +260,8 @@ class RhbpAgent:
 
         self.agent_info = msg.agent
 
-        self.facilityKnowledgebase.save_facilities(msg)
+        for resource in msg.resources:
+            self.facilityKnowledgebase.add_new_resource(resource)
 
         self._received_action_response = False
 

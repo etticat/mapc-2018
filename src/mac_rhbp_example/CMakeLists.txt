@@ -49,6 +49,7 @@ add_message_files(
   FILES
   Task.msg
   AssistTask.msg
+  Movement.msg
 )
 ## Generate services in the 'srv' folder
 #add_service_files(

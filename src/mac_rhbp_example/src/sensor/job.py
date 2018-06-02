@@ -8,11 +8,12 @@ from abc import abstractmethod
 import rospy
 from mac_ros_bridge.msg import Position, Agent
 
-from agent_common.agent_utils import AgentUtils
+from common_utils.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledge
 from agent_knowledge.tasks import TaskKnowledge
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.sensors import Sensor
+from common_utils.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor, KnowledgeFactSensor
 from knowledge_base.update_handler import KnowledgeBaseFactCache
 
@@ -21,7 +22,7 @@ class ProductSensor(Sensor):
 
     def __init__(self, agent_name, **kwargs):
 
-        self._task_knowledge =  TaskKnowledge(agent_name=agent_name)
+        self._product_provider =  ProductProvider(agent_name)
 
         self._agent_name = agent_name
 
@@ -45,14 +46,14 @@ class ProductSensor(Sensor):
 
 class FinishedProductSensor(ProductSensor):
     def get_still_needed_products(self):
-        products = self._task_knowledge.get_required_finished_products(self._agent_name)
+        products = self._product_provider.get_required_finished_products(self._agent_name)
         rospy.loginfo("FinishedProductSensor:: Need following finished products:  %s", str(products))
         return products
 
 class IngredientSensor(FinishedProductSensor):
 
     def get_still_needed_products(self):
-        ingredients = self._task_knowledge.get_required_ingredients(self._agent_name)
+        ingredients = self._product_provider.get_required_ingredients(self._agent_name)
         rospy.loginfo("FinishedProductSensor:: Need following ingredients:  %s", str(ingredients))
         return ingredients
 

@@ -1,26 +1,13 @@
 #!/usr/bin/env python2
 
 import rospy
-from knowledge_base.knowledge_base_client import KnowledgeBaseClient
-from roswtf.roslaunchwtf import static_roslaunch_errors
+from mac_rhbp_example.msg import Movement
+from mac_ros_bridge.msg import Position
+
+from agent_knowledge.base_knowledge import BaseKnowledgebase
 
 
-class MovementKnowledge():
-
-    def __init__(self, agent_name="*", behaviour_name="*"):
-        self.__kb_client = KnowledgeBaseClient(
-            knowledge_base_name = "knowledgeBaseNode")
-
-        self.agent_name = agent_name
-        self.behaviour_name = behaviour_name
-
-    @staticmethod
-    def get_knowledge_base_tuple_facility_movement(agent_name, goal,active="*"):
-        return 'go_to_facility', agent_name, goal, str(active)
-
-    @staticmethod
-    def get_movement_tuple(agent_name, behaviour="*", active="*", lat="*", long="*", destination="*"):
-        return ('moving', behaviour, agent_name, str(active), str(lat), str(long), str(destination))
+class MovementKnowledge(BaseKnowledgebase):
 
     INDEX_MOVEMENT_BEHAVIOUR = 1
     INDEX_MOVEMENT_AGENT_NAME = 2
@@ -29,30 +16,94 @@ class MovementKnowledge():
     INDEX_MOVEMENT_LONG = 5
     INDEX_MOVEMENT_DESTINATION = 6
 
+    @staticmethod
+    def generate_tuple(agent_name, behaviour="*", active="*", lat="*", long="*", destination="*"):
+        return ('moving', behaviour, agent_name, str(active), str(lat), str(long), str(destination))
 
-    def start_movement(self, destinationPos, destination):
-        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
-        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
+    @staticmethod
+    def generate_movement_from_fact(fact):
+        """
+        Generates a Movement object from a Knowledgebase fact
+        :param fact: The fact
+        :type fact: list
+        :return: Movement
+        """
 
-        rospy.logerr("MovementKnowledge:: Moving to %s ", destination)
-        ret_value = self.__kb_client.update(search, new, push_without_existing = True)
+        movement = Movement(
+            behaviour = fact[MovementKnowledge.INDEX_MOVEMENT_BEHAVIOUR],
+            agent_name = fact[MovementKnowledge.INDEX_MOVEMENT_AGENT_NAME],
+            pos = Position(
+                lat=fact[MovementKnowledge.INDEX_MOVEMENT_LAT],
+                long=fact[MovementKnowledge.INDEX_MOVEMENT_LONG]
+            ),
+            destination = fact[MovementKnowledge.INDEX_MOVEMENT_DESTINATION],
+            active = bool(fact[MovementKnowledge.INDEX_MOVEMENT_ACTIVE]),
+        )
+        return movement
+    @staticmethod
+    def generate_fact_from_movement(movement):
+        """
+        Generates a Knowledgebase fact from a Movement object
+        :param movement: The movement object
+        :type movement: Movement
+        :return:
+        """
 
-    def stop_movement(self):
-        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
-        new = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name, active=False, lat="none", long="none", destination="none")
+        return MovementKnowledge.generate_tuple(
+            agent_name=movement.agent_name,
+            behaviour=movement.behaviour,
+            active=movement.active,
+            lat=movement.pos.lat,
+            long=movement.pos.long,
+            destination=movement.destination
+        )
 
 
-        rospy.logerr("MovementKnowledge:: Stopping movement")
 
-        ret_value = self.__kb_client.update(search, new, push_without_existing = False)
+    def start_movement(self, agent_name, behaviour_name, destinationPos, destination):
+        """
+        Starts movement to a new destination.
+        :param agent_name:
+        :param behaviour_name:
+        :param destinationPos:
+        :param destination:
+        :return:
+        """
+        search = MovementKnowledge.generate_tuple(agent_name, behaviour_name)
+        new = MovementKnowledge.generate_tuple(agent_name, behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
+
+        rospy.logerr("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
+        ret_value = self._kb_client.update(search, new, push_without_existing = True)
+
+    def stop_movement(self, agent_name, behaviour_name):
+        """
+        Stops the movement of acertain behaviour
+        :param agent_name:
+        :param behaviour_name:
+        :return:
+        """
+        search = MovementKnowledge.generate_tuple(agent_name, behaviour_name)
+        new = MovementKnowledge.generate_tuple(agent_name, behaviour_name, active=False, lat="none", long="none", destination="none")
+
+        rospy.logerr("MovementKnowledge(%s:%s):: Stopping movement", agent_name, behaviour_name)
+
+        ret_value = self._kb_client.update(search, new, push_without_existing = False)
         return ret_value
 
-    def get_current_fact(self):
+    def get_movement(self, agent_name, behaviour_name):
+        """
+        Returns the current active movement of a behaviour
+        :param agent_name:
+        :param behaviour_name:
+        :return: Movement
+        """
 
-        search = MovementKnowledge.get_movement_tuple(self.agent_name, self.behaviour_name)
-        facts = self.__kb_client.all(search)
+        search = MovementKnowledge.generate_tuple(
+            agent_name=agent_name,
+            behaviour=behaviour_name)
+        fact = self._kb_client.peek(search)
 
-        if len(facts) > 0:
-            return facts[0]
+        if fact != None:
+            return MovementKnowledge.generate_movement_from_fact(fact)
         else:
             return None

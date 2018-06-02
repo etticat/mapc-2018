@@ -1,3 +1,4 @@
+from agent_knowledge.movement import MovementKnowledge
 from behaviour_components.activators import ThresholdActivator, LinearActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -18,6 +19,8 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         super(BatteryChargingNetworkBehaviour, self).__init__(
             name=name, **kwargs)
 
+        self._movement_knowledge = MovementKnowledge()
+        self._agent_name = agent._agent_name
         agent_topic = agent._agent_topic_prefix + "agent"
         proximity = msg.proximity
 
@@ -135,4 +138,4 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
     def stop(self):
 
         super(BatteryChargingNetworkBehaviour, self).stop()
-        self.go_to_charging_station_behaviour._movement_knowledge.stop_movement()
+        self._movement_knowledge.stop_movement(self._agent_name, self.go_to_charging_station_behaviour.name)

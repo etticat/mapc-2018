@@ -52,7 +52,7 @@ class FinishExplorationBehaviour(BehaviourBase):
     Behaviour that finishes an exploration cycle by setting a corresponding knowledge fact
     """
 
-    def __init__(self, agent_name, facility_topic, graph_name,  **kwargs):
+    def __init__(self, agent_name, facility_topic, movement_behaviour_name, **kwargs):
         """
         Constructor
         """
@@ -63,12 +63,14 @@ class FinishExplorationBehaviour(BehaviourBase):
 
         self._facility_topic = facility_topic
 
-        self._movement_knowledge = MovementKnowledge(self._agent_name, graph_name)
+        self._movement_knowledge = MovementKnowledge()
+
+        self.movement_behaviour_name = movement_behaviour_name
 
         self.__client = KnowledgeBaseClient()
 
     def do_step(self):
         # exploration done
-        self._movement_knowledge.stop_movement()
+        self._movement_knowledge.stop_movement(self._agent_name, self.movement_behaviour_name)
 
 

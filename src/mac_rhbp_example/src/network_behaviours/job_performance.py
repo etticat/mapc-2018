@@ -110,7 +110,8 @@ class JobPerformanceNetwork(NetworkBehaviour):
         self.gather_ingredients_behaviour = GatherBehaviour(
             name="gather_behaviour",
             agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix())
+            plannerPrefix=self.get_manager_prefix(),
+            behaviour_name=self.go_to_resource_node_behaviour.name)
 
         self.gather_ingredients_behaviour.add_precondition(
             precondition=self.at_resource_node_condition)
@@ -171,7 +172,7 @@ class JobPerformanceNetwork(NetworkBehaviour):
         # Sensor that checks if agent has at least one assigned task
         self.has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
-            pattern=TaskKnowledge.get_tuple_task_creation(
+            pattern=TaskKnowledge.generate_tuple(
                 job_id="*",
                 task_id="*",
                 destination="*",
