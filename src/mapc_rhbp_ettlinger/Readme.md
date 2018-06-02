@@ -1,4 +1,4 @@
-# mac_rhbp_example
+# mapc_rhbp_ettlinger
 
 This is a very basic example that shows how RHBP can be used within the Multiagent Programming Contest Scenario of 2018.
 
@@ -7,11 +7,11 @@ If the battery level is getting to low the agents will also recharge at a random
 
 ## Behaviour Model
 
-![alt text](doc/mac_rhbp_example.png)
+![alt text](doc/mapc_rhbp_ettlinger.png)
 
 ## Execution
 
-The example can be executed with `roslaunch mac_rhbp_example rhbp_agents_example.launch`
+The example can be executed with `roslaunch mapc_rhbp_ettlinger rhbp_agents_example.launch`
 The configuration in above launch file is made for a 6 agent scenario of default team A executed on localhost.
 
 ## Exercise

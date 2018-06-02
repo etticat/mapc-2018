@@ -1,19 +1,4 @@
 
-
-class GoToAssistSpotBehaviour(GotoLocationBehaviour):
-
-    def __init__(self, agent_name, **kwargs):
-        super(GoToAssistSpotBehaviour, self).__init__(agent_name=agent_name, **kwargs)
-        self._assist_knowledge = AssistKnowledgebase()
-
-    def _select_pos(self):
-        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
-
-        if assistTask == None:
-            return None
-        else:
-            return assistTask.pos
-
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
@@ -31,6 +16,22 @@ from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
+
+
+
+class GoToAssistSpotBehaviour(GotoLocationBehaviour):
+
+    def __init__(self, agent_name, **kwargs):
+        super(GoToAssistSpotBehaviour, self).__init__(agent_name=agent_name, **kwargs)
+        self._assist_knowledge = AssistKnowledgebase()
+
+    def _select_pos(self):
+        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
+
+        if assistTask == None:
+            return None
+        else:
+            return assistTask.pos
 
 
 class AssistBehaviour(BehaviourBase):

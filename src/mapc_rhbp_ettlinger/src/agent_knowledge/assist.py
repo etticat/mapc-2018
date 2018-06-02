@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_rhbp_example.msg import AssistTask
+from mapc_rhbp_ettlinger.msg import AssistTask
 from mac_ros_bridge.msg import Position
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase

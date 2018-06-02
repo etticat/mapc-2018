@@ -1,7 +1,7 @@
 <launch>
     <arg name="agent_name" default="a1" />
 
-    <node pkg="mac_rhbp_example" type="rhbp_agent.py"
+    <node pkg="mapc_rhbp_ettlinger" type="rhbp_agent.py"
         name="rhbp_agent_$(arg agent_name)" output="screen"
         >
             <param name="agent_name" value="$(arg agent_name)" />

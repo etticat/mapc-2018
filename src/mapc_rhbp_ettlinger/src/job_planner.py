@@ -1,7 +1,7 @@
 from __builtin__ import xrange
 
 import rospy
-from mac_rhbp_example.msg import Task
+from mapc_rhbp_ettlinger.msg import Task
 from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
 from common_utils.agent_utils import AgentUtils
