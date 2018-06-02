@@ -5,15 +5,15 @@ from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
 from agent_knowledge.assist import AssistKnowledgebase
-from agent_knowledge.movement import MovementKnowledge
+from agent_knowledge.movement import MovementKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import TaskKnowledge
+from agent_knowledge.tasks import TaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoLocationBehaviour, GoToFacilityBehaviour
 from common_utils.agent_utils import AgentUtils
-from common_utils.facility_provider import FacilityProvider
-from common_utils.product_provider import ProductProvider
+from provider.facility_provider import FacilityProvider
+from provider.product_provider import ProductProvider
 
 
 class GoToResourceBehaviour(GotoLocationBehaviour):
@@ -23,7 +23,7 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
             plannerPrefix=plannerPrefix,
             **kwargs)
         self._selected_facility = None
-        self.taskKnowledge = TaskKnowledge()
+        self.taskKnowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent._agent_name)
         self.facility_knowledge = ResourceKnowledgebase()
 
@@ -50,11 +50,11 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
 
     def __init__(self, agent, plannerPrefix, **kwargs):
         super(GoToStorageBehaviour, self).__init__(
-            agent._agent_name,
+            agent_name=agent._agent_name,
             plannerPrefix=plannerPrefix,
             **kwargs)
         self._selected_facility = None
-        self.taskKnowledge = TaskKnowledge()
+        self.taskKnowledge = TaskKnowledgebase()
         self.facility_provider = FacilityProvider()
 
     def start(self):
@@ -77,8 +77,8 @@ class GatherBehaviour(GenericActionBehaviour):
                       agent_name=agent_name,
                       action_type=Action.GATHER,
                       **kwargs)
-        self._movement_knowledge = MovementKnowledge()
-        self._task_knowledge = TaskKnowledge()
+        self._movement_knowledge = MovementKnowledgebase()
+        self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self.movement_behaviour_name = behaviour_name
         self.agent_name = agent_name
@@ -106,7 +106,7 @@ class AssembleProductBehaviour(BehaviourBase):
             requires_execution_steps=True,
             **kwargs)
         self._agent_name = agent_name
-        self._task_knowledge = TaskKnowledge()
+        self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._assist_knowledge = AssistKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
@@ -146,7 +146,7 @@ class GoToWorkshopBehaviour(GoToFacilityBehaviour):
         super(GoToWorkshopBehaviour, self).__init__(
             **kwargs)
         self._selected_facility = None
-        self._task_knowledge = TaskKnowledge()
+        self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(self.agent._agent_name)
         self.assist_knowledge = AssistKnowledgebase()
 
@@ -175,7 +175,7 @@ class DeliverJobBehaviour(BehaviourBase):
             requires_execution_steps=True,
             **kwargs)
         self._agent_name = agent_name
-        self._task_knowledge = TaskKnowledge()
+        self._task_knowledge = TaskKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -206,7 +206,7 @@ class GoToResourceForHoardingBehaviour(GotoLocationBehaviour):
             plannerPrefix=plannerPrefix,
             **kwargs)
         self._selected_facility = None
-        self._task_knowledge = TaskKnowledge()
+        self._task_knowledge = TaskKnowledgebase()
         self._resource_knowledge = ResourceKnowledgebase()
 
     def _select_pos(self):

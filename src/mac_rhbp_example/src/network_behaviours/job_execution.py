@@ -1,6 +1,6 @@
 import rospy
 
-from agent_knowledge.tasks import TaskKnowledge
+from agent_knowledge.tasks import TaskKnowledgebase
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -12,13 +12,13 @@ from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActi
 from sensor.movement import DestinationDistanceSensor
 
 
-class JobPerformanceNetwork(NetworkBehaviour):
+class JobExecutionNetworkBehaviour(NetworkBehaviour):
 
     def __init__(self, agent, name, msg, **kwargs):
 
         proximity = msg.proximity
 
-        super(JobPerformanceNetwork, self).__init__(name, **kwargs)
+        super(JobExecutionNetworkBehaviour, self).__init__(name, **kwargs)
 
         self.init_task_sensor(agent)
         self.init_ingredient_sensor(agent)
@@ -104,7 +104,6 @@ class JobPerformanceNetwork(NetworkBehaviour):
                 sensor_type=bool
             )
         )
-        rospy.logerr("44")
 
     def init_gather_behaviour(self, agent):
         self.gather_ingredients_behaviour = GatherBehaviour(
@@ -172,7 +171,7 @@ class JobPerformanceNetwork(NetworkBehaviour):
         # Sensor that checks if agent has at least one assigned task
         self.has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
-            pattern=TaskKnowledge.generate_tuple(
+            pattern=TaskKnowledgebase.generate_tuple(
                 job_id="*",
                 task_id="*",
                 destination="*",

@@ -9,11 +9,11 @@ from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
 from behaviour_components.managers import Manager
-from network_behaviours.assist import AssistBehaviourNetwork
+from network_behaviours.assist import AssistNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
-from network_behaviours.exploration import ExplorationBehaviourNetwork
-from network_behaviours.hoarding import HoardingNetwork
-from network_behaviours.job_performance import JobPerformanceNetwork
+from network_behaviours.exploration import ExplorationNetworkBehaviour
+from network_behaviours.hoarding import HoardingNetworkBehaviour
+from network_behaviours.job_execution import JobExecutionNetworkBehaviour
 
 
 class RhbpAgent:
@@ -100,7 +100,7 @@ class RhbpAgent:
 
 
         ######################## Job Network Behaviour ########################
-        self._job_performance_network = JobPerformanceNetwork(
+        self._job_performance_network = JobExecutionNetworkBehaviour(
             name=self._agent_name + '/JobPerformanceNetwork',
             plannerPrefix=self._agent_name,
             msg=msg,
@@ -112,7 +112,7 @@ class RhbpAgent:
             precondition=self._job_performance_network.has_tasks__assigned_condition)
 
         ######################## Hoarding Network Behaviour ########################
-        self._hoarding_network = HoardingNetwork(
+        self._hoarding_network = HoardingNetworkBehaviour(
             name=self._agent_name + '/HoardingNetwork',
             plannerPrefix=self._agent_name,
             msg=msg,
@@ -128,7 +128,7 @@ class RhbpAgent:
 
 
         ######################## Assist Network Behaviour ########################
-        self._assist_task_network = AssistBehaviourNetwork(
+        self._assist_task_network = AssistNetworkBehaviour(
             agent_name=self._agent_name,
             name=self._agent_name + '/AssistNetwork',
             plannerPrefix=self._agent_name,
@@ -161,7 +161,7 @@ class RhbpAgent:
         # )])
 
         ######################## Exploration Network Behaviour ########################
-        self._shop_exploration_network = ExplorationBehaviourNetwork(
+        self._shop_exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/ExplorationNetwork',
             plannerPrefix=self._agent_name,
             agent=self,

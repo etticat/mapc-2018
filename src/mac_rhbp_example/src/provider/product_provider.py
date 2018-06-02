@@ -5,7 +5,7 @@ import rospy
 from __builtin__ import xrange
 from mac_ros_bridge.msg import SimStart, Agent
 
-from agent_knowledge.tasks import TaskKnowledge
+from agent_knowledge.tasks import TaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
 
 
@@ -25,7 +25,7 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
-        self.task_knowledge = TaskKnowledge()
+        self.task_knowledge = TaskKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 

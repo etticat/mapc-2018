@@ -1,7 +1,7 @@
 from mac_ros_bridge.msg import Position
 
 from agent_knowledge.facilities import FacilityKnowledgebase
-from agent_knowledge.tasks import TaskKnowledge
+from agent_knowledge.tasks import TaskKnowledgebase
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation

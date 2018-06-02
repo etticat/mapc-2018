@@ -6,16 +6,10 @@ from __future__ import division  # force floating point division when using plai
 from abc import abstractmethod
 
 import rospy
-from mac_ros_bridge.msg import Position, Agent
 
-from common_utils.agent_utils import AgentUtils
-from agent_knowledge.movement import MovementKnowledge
-from agent_knowledge.tasks import TaskKnowledge
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.sensors import Sensor
-from common_utils.product_provider import ProductProvider
-from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor, KnowledgeFactSensor
-from knowledge_base.update_handler import KnowledgeBaseFactCache
+from provider.product_provider import ProductProvider
 
 
 class ProductSensor(Sensor):

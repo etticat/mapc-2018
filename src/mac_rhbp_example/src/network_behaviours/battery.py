@@ -1,4 +1,4 @@
-from agent_knowledge.movement import MovementKnowledge
+from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, LinearActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -19,7 +19,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         super(BatteryChargingNetworkBehaviour, self).__init__(
             name=name, **kwargs)
 
-        self._movement_knowledge = MovementKnowledge()
+        self._movement_knowledge = MovementKnowledgebase()
         self._agent_name = agent._agent_name
         agent_topic = agent._agent_topic_prefix + "agent"
         proximity = msg.proximity

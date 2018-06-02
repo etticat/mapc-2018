@@ -7,7 +7,7 @@ from mac_ros_bridge.msg import Position
 from agent_knowledge.base_knowledge import BaseKnowledgebase
 
 
-class MovementKnowledge(BaseKnowledgebase):
+class MovementKnowledgebase(BaseKnowledgebase):
 
     INDEX_MOVEMENT_BEHAVIOUR = 1
     INDEX_MOVEMENT_AGENT_NAME = 2
@@ -30,14 +30,14 @@ class MovementKnowledge(BaseKnowledgebase):
         """
 
         movement = Movement(
-            behaviour = fact[MovementKnowledge.INDEX_MOVEMENT_BEHAVIOUR],
-            agent_name = fact[MovementKnowledge.INDEX_MOVEMENT_AGENT_NAME],
+            behaviour = fact[MovementKnowledgebase.INDEX_MOVEMENT_BEHAVIOUR],
+            agent_name = fact[MovementKnowledgebase.INDEX_MOVEMENT_AGENT_NAME],
             pos = Position(
-                lat=fact[MovementKnowledge.INDEX_MOVEMENT_LAT],
-                long=fact[MovementKnowledge.INDEX_MOVEMENT_LONG]
+                lat=fact[MovementKnowledgebase.INDEX_MOVEMENT_LAT],
+                long=fact[MovementKnowledgebase.INDEX_MOVEMENT_LONG]
             ),
-            destination = fact[MovementKnowledge.INDEX_MOVEMENT_DESTINATION],
-            active = bool(fact[MovementKnowledge.INDEX_MOVEMENT_ACTIVE]),
+            destination = fact[MovementKnowledgebase.INDEX_MOVEMENT_DESTINATION],
+            active = bool(fact[MovementKnowledgebase.INDEX_MOVEMENT_ACTIVE]),
         )
         return movement
     @staticmethod
@@ -49,7 +49,7 @@ class MovementKnowledge(BaseKnowledgebase):
         :return:
         """
 
-        return MovementKnowledge.generate_tuple(
+        return MovementKnowledgebase.generate_tuple(
             agent_name=movement.agent_name,
             behaviour=movement.behaviour,
             active=movement.active,
@@ -69,8 +69,8 @@ class MovementKnowledge(BaseKnowledgebase):
         :param destination:
         :return:
         """
-        search = MovementKnowledge.generate_tuple(agent_name, behaviour_name)
-        new = MovementKnowledge.generate_tuple(agent_name, behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
+        search = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name)
+        new = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
 
         rospy.logerr("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
         ret_value = self._kb_client.update(search, new, push_without_existing = True)
@@ -82,8 +82,8 @@ class MovementKnowledge(BaseKnowledgebase):
         :param behaviour_name:
         :return:
         """
-        search = MovementKnowledge.generate_tuple(agent_name, behaviour_name)
-        new = MovementKnowledge.generate_tuple(agent_name, behaviour_name, active=False, lat="none", long="none", destination="none")
+        search = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name)
+        new = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name, active=False, lat="none", long="none", destination="none")
 
         rospy.logerr("MovementKnowledge(%s:%s):: Stopping movement", agent_name, behaviour_name)
 
@@ -98,12 +98,12 @@ class MovementKnowledge(BaseKnowledgebase):
         :return: Movement
         """
 
-        search = MovementKnowledge.generate_tuple(
+        search = MovementKnowledgebase.generate_tuple(
             agent_name=agent_name,
             behaviour=behaviour_name)
         fact = self._kb_client.peek(search)
 
         if fact != None:
-            return MovementKnowledge.generate_movement_from_fact(fact)
+            return MovementKnowledgebase.generate_movement_from_fact(fact)
         else:
             return None

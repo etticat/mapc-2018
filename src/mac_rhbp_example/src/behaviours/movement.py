@@ -11,7 +11,7 @@ from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import GenericAction, Position
 
 from common_utils.agent_utils import AgentUtils
-from agent_knowledge.movement import MovementKnowledge
+from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from utils.ros_helpers import get_topic_type
@@ -30,7 +30,7 @@ class GotoLocationBehaviour(BehaviourBase):
 
         self._agent_name = agent_name
 
-        self._movement_knowledge = MovementKnowledge()
+        self._movement_knowledge = MovementKnowledgebase()
 
         self._selected_pos = None
 

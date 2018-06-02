@@ -7,7 +7,7 @@ import rospy
 from mac_ros_bridge.msg import Position, Agent
 
 from common_utils.agent_utils import AgentUtils
-from agent_knowledge.movement import MovementKnowledge
+from agent_knowledge.movement import MovementKnowledgebase
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
 
 
@@ -15,13 +15,13 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
     def __init__(self, agent_name, behaviour_name, name):
 
-        pattern = MovementKnowledge.generate_tuple(agent_name=agent_name, behaviour=behaviour_name)
+        pattern = MovementKnowledgebase.generate_tuple(agent_name=agent_name, behaviour=behaviour_name)
 
         super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name)
 
         self._latest_ref_value = None
 
-        self._movement_knowledge = MovementKnowledge()
+        self._movement_knowledge = MovementKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self.subscription_callback_ref_topic)
 

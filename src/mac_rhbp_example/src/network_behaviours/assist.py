@@ -2,9 +2,10 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
+from behaviours.assist import GoToAssistSpotBehaviour, AssistBehaviour
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.assist import AssistKnowledgebase
-from agent_knowledge.tasks import TaskKnowledge
+from agent_knowledge.tasks import TaskKnowledgebase
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
@@ -17,57 +18,13 @@ from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActi
 from sensor.movement import DestinationDistanceSensor
 
 
-class GoToAssistSpotBehaviour(GotoLocationBehaviour):
-
-    def __init__(self, agent_name, **kwargs):
-        super(GoToAssistSpotBehaviour, self).__init__(agent_name=agent_name, **kwargs)
-        self._assist_knowledge = AssistKnowledgebase()
-
-    def _select_pos(self):
-        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
-
-        if assistTask == None:
-            return None
-        else:
-            return assistTask.pos
-
-
-class AssistBehaviour(BehaviourBase):
-
-    def __init__(self, agent_name, **kwargs):
-        super(AssistBehaviour, self) \
-            .__init__(
-            requires_execution_steps=True,
-            **kwargs)
-        self._agent_name = agent_name
-        self._assist_knowledge = AssistKnowledgebase()
-        self._pub_generic_action = rospy.Publisher(
-            name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
-            data_class=GenericAction,
-            queue_size=10)
-
-    def action_assist_assemble(self, agent):
-        action = GenericAction()
-        action.action_type = Action.ASSIST_ASSEMBLE
-        action.params = [
-            KeyValue("Agent", str(agent))]
-
-        self._pub_generic_action.publish(action)
-
-    def do_step(self):
-        assistTask = self._assist_knowledge.get_assist_task(self._agent_name)
-        if assistTask != None:
-            self.action_assist_assemble(assistTask.agent_name)
-            rospy.logerr("AssistBehaviour(%s):: assisting %s", self._agent_name, assistTask.agent_name)
-
-
-class AssistBehaviourNetwork(NetworkBehaviour):
+class AssistNetworkBehaviour(NetworkBehaviour):
 
     def __init__(self, agent_name, name, msg, **kwargs):
 
         proximity = msg.proximity
 
-        super(AssistBehaviourNetwork, self).__init__(name, **kwargs)
+        super(AssistNetworkBehaviour, self).__init__(name, **kwargs)
 
 
         self.go_to_assist_spot_behaviour = GoToAssistSpotBehaviour(
