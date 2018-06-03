@@ -32,7 +32,7 @@ class HoardingNetworkBehaviour(NetworkBehaviour):
             name='fill_up_stock',
             permanent=True,
             plannerPrefix=self.get_manager_prefix(),
-            conditions=self.has_all_finished_products_condition)
+            conditions=[self.has_all_finished_products_condition])
 
     def init_gather_behaviour(self, agent):
         ############### Gathering ##########################

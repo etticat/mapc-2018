@@ -17,7 +17,17 @@ from provider.product_provider import ProductProvider
 
 
 class GoToResourceBehaviour(GotoLocationBehaviour):
+    """
+    Behaviour that allows agents to move to a resource behaviour, so they can gather items for hoarding or performing jobs
+    """
     def __init__(self, agent, plannerPrefix, product_provider_method, **kwargs):
+        """
+
+        :param agent:
+        :param plannerPrefix:
+        :param product_provider_method: This function provides the items that the agent currently needs. TODO: Maybe use a more elegant design pattern for this
+        :param kwargs:
+        """
         super(GoToResourceBehaviour, self).__init__(
             agent._agent_name,
             plannerPrefix=plannerPrefix,
@@ -48,7 +58,9 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
 
 
 class GoToStorageBehaviour(GotoLocationBehaviour):
-
+    """
+    Behaviour, that allows going to the Storage location to finish a job
+    """
     def __init__(self, agent, plannerPrefix, **kwargs):
         super(GoToStorageBehaviour, self).__init__(
             agent_name=agent._agent_name,
@@ -63,15 +75,15 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
 
     def _select_pos(self):
         task = self.taskKnowledge.get_tasks(agent_name=self._agent_name, status="assigned")
-        # Goint to any destination
-        # TODO: Check this. The goal is to only take tasks with the same destination, so this should be fine.
-        # Maybe this can be done more elegant
+        # TODO Maybe this can be done more elegant
         if len(task) > 0:
             return self.facility_provider.get_storage_by_name(task[0].destination).pos
 
 
 class GatherBehaviour(GenericActionBehaviour):
-
+    """
+    The behaviour allows gathering items for further assembly at a resource node
+    """
     def __init__(self, name, agent_name, behaviour_name, product_provider_method, **kwargs):
         super(GatherBehaviour, self) \
             .__init__(name=name,
@@ -93,7 +105,7 @@ class GatherBehaviour(GenericActionBehaviour):
         )
 
         # If we don't need item anymore stop gathering
-        # TODO: This could be moved to a seperate sensor
+        # TODO: This could be moved to a seperate sensor/behaviour?
         resource = self._resource_knowledgebase.get_resource_by_name(movement.destination)
         if resource != None and resource.item.name not in required_ingredients:
             self._movement_knowledge.stop_movement(self.agent_name, self.movement_behaviour_name)
@@ -102,7 +114,9 @@ class GatherBehaviour(GenericActionBehaviour):
 
 
 class AssembleProductBehaviour(BehaviourBase):
-
+    """
+    Behaviour for the assembly of a product
+    """
     def __init__(self, agent_name, product_providermethod, **kwargs):
         super(AssembleProductBehaviour, self) \
             .__init__(

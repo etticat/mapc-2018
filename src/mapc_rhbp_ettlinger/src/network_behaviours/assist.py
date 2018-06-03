@@ -2,7 +2,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
-from behaviours.assist import GoToAssistSpotBehaviour, AssistBehaviour
+from behaviours.assist import GoToAssistLocationBehaviour, AssistBehaviour
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.assist import AssistKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
@@ -25,10 +25,9 @@ class AssistNetworkBehaviour(NetworkBehaviour):
 
         super(AssistNetworkBehaviour, self).__init__(name, **kwargs)
 
-
-        self.go_to_assist_spot_behaviour = GoToAssistSpotBehaviour(
-            agent_name = agent_name,
-            name="go_to_assist_spot_behaviour",
+        self.go_to_assist_location_behaviour = GoToAssistLocationBehaviour(
+            agent_name=agent_name,
+            name="go_to_assist_location_behaviour",
             plannerPrefix=self.get_manager_prefix()
         )
 
@@ -38,14 +37,14 @@ class AssistNetworkBehaviour(NetworkBehaviour):
                 assisting_agent=agent_name,
                 active=True))
 
-        self.at_assist_spot_sensor = DestinationDistanceSensor(
+        self.at_assist_location_sensor = DestinationDistanceSensor(
             name = "at_assist_spot_sensor",
             agent_name=agent_name,
-            behaviour_name=self.go_to_assist_spot_behaviour.name
+            behaviour_name=self.go_to_assist_location_behaviour.name
         )
 
         self.at_assist_spot_condition = Condition(
-            sensor=self.at_assist_spot_sensor,
+            sensor=self.at_assist_location_sensor,
             activator=ThresholdActivator(
                 thresholdValue=proximity,
                 isMinimum=False))  # highest activation if the value is below threshold
@@ -55,7 +54,7 @@ class AssistNetworkBehaviour(NetworkBehaviour):
             activator=BooleanActivator(
                 desiredValue=True))
 
-        self.go_to_assist_spot_behaviour.add_precondition(
+        self.go_to_assist_location_behaviour.add_precondition(
             precondition=Negation(self.at_assist_spot_condition)
         )
 

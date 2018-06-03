@@ -10,27 +10,22 @@ from utils.ros_helpers import get_topic_type
 
 
 class ExplorationBehaviour(GotoLocationBehaviour):
-
+    """
+    Behaviour to explore the map
+    Currently this only moves to random shops.
+    TODO This should explore the map more intelligently
+    """
     def __init__(self, agent_name, **kwargs):
         super(ExplorationBehaviour, self) \
             .__init__(
             agent_name=agent_name, **kwargs)
 
-
-
         facility_topic = '/shop'
-
 
         facility_topic_type = get_topic_type(facility_topic)
 
         self._facilities = {}
         rospy.Subscriber(facility_topic, facility_topic_type, self._callback_facility)
-
-
-    def _callback_facility(self, msg):
-        # Store all available facilities in a dict
-        for facility in msg.facilities:
-            self._facilities[facility.name] = facility
 
 
     def _select_pos(self):
@@ -49,7 +44,8 @@ class ExplorationBehaviour(GotoLocationBehaviour):
 
 class FinishExplorationBehaviour(BehaviourBase):
     """
-    Behaviour that finishes an exploration cycle by setting a corresponding knowledge fact
+    Behaviour that finishes an exploration cycle by marking the movememnt knowledge fact as done.
+    This ensures that the other Behaviour looks for a new place to explore
     """
 
     def __init__(self, agent_name, facility_topic, movement_behaviour_name, **kwargs):
