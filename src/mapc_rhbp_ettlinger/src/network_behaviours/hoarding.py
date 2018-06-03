@@ -4,6 +4,7 @@ from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToResourceForHoardingBehaviour, GatherForHoardingBehaviour
+from sensor.agent import StockStorageAvailableSensor
 from sensor.movement import DestinationDistanceSensor
 
 

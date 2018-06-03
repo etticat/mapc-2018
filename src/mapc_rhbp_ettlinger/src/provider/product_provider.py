@@ -13,6 +13,7 @@ class ProductProvider(object):
 
 
     def __init__(self, agent_name):
+        # TODO: Make this a singleton. (And all other providers and knowledgebases. this should keep the load a little bit lower
 
         self.products = {}
         self.base_ingredients = {}
@@ -38,10 +39,23 @@ class ProductProvider(object):
         :type msg: Agent
         :return:
         """
-        self._items_in_stock  = {}
+        items_in_stock_new  = {}
+
+        for item in self.products.keys():
+            items_in_stock_new[item] = 0
 
         for item in msg.items:
-            self._items_in_stock[item.name] = self._items_in_stock.get(item.name, 0) + item.amount
+            items_in_stock_new[item.name] = items_in_stock_new.get(item.name, 0) + item.amount
+
+
+        if items_in_stock_new != self._items_in_stock:
+            for index in items_in_stock_new.keys():
+                rospy.logerr("%s: %s", str(index), str(items_in_stock_new[index]))
+            # TODO: Save to db
+            self._items_in_stock = items_in_stock_new
+        else:
+            rospy.logerr("nothing new")
+
 
     def _callback_sim_start(self, msg):
         """
