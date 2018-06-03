@@ -30,8 +30,8 @@ class ResourceKnowledgebase(BaseKnowledgebase):
         r = Resource(
             name=fact[ResourceKnowledgebase.INDEX_RESOURCE_NAME],
             pos=Position(
-                lat=fact[ResourceKnowledgebase.INDEX_RESOURCE_LAT],
-                long=fact[ResourceKnowledgebase.INDEX_RESOURCE_LONG]),
+                lat=float(fact[ResourceKnowledgebase.INDEX_RESOURCE_LAT]),
+                long=float(fact[ResourceKnowledgebase.INDEX_RESOURCE_LONG])),
             item=Item(
                 name=fact[ResourceKnowledgebase.INDEX_RESOURCE_ITEM]))
         return r
@@ -74,6 +74,22 @@ class ResourceKnowledgebase(BaseKnowledgebase):
         for resource in tuple_list:
             r = self.generate_resource_from_fact(resource)
             res.append(r)
+        return res
+
+    def get_resources_for_items(self, items):
+        """
+        Returns all discovered resources for a given item
+        :param item: The item
+        :type item: str
+        :return: Resource[]
+        """
+        all = ResourceKnowledgebase.get_resource_tuple()
+        res = []
+        tuple_list = self._kb_client.all(all)
+        for resource in tuple_list:
+            r = self.generate_resource_from_fact(resource)
+            if r.item.name in items:
+                res.append(r)
         return res
 
 

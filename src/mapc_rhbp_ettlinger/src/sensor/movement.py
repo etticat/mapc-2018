@@ -46,7 +46,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
                 destination_pos = Position(lat=float(fact_tuple[4]), long=float(fact_tuple[5]))
                 agent_position = self._latest_ref_value.pos
 
-                res = AgentUtils.euclidean_distance(destination_pos, agent_position)
+                res = AgentUtils.calculate_distance(destination_pos, agent_position)
 
             except Exception:
                 rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))

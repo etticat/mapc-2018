@@ -25,8 +25,9 @@ class AgentUtils:
         return AgentUtils.get_bridge_topic_prefix(agent_name)+ 'agent'
 
     @staticmethod
-    def euclidean_distance(pos1, pos2):
+    def calculate_distance(pos1, pos2):
         """
+        TODO: Calculate distance on rode not only euclidean
         Calculate the euclidean distance between two positions
         :param pos1: position 1
         :type pos1: Position
@@ -35,3 +36,16 @@ class AgentUtils:
         :return: euclidean distance
         """
         return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
+
+    @staticmethod
+    def calculate_closest_facility(pos, facilities):
+        minDistance = 999999
+        closest_facility = None
+        for facility in facilities: 
+            distance = AgentUtils.calculate_distance(pos, facility.pos)
+            if distance < minDistance:
+                minDistance = distance
+                closest_facility = facility
+        return closest_facility
+        
+        

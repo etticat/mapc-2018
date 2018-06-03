@@ -14,9 +14,9 @@ from provider.product_provider import ProductProvider
 
 class ProductSensor(Sensor):
 
-    def __init__(self, agent_name, **kwargs):
+    def __init__(self, agent_name, product_provider_method, **kwargs):
 
-        self._product_provider =  ProductProvider(agent_name)
+        self._product_provider_method =  product_provider_method
 
         self._agent_name = agent_name
 
@@ -31,25 +31,10 @@ class ProductSensor(Sensor):
 
         super(ProductSensor, self).sync()
 
-    @abstractmethod
     def get_still_needed_products(self):
-        """
-        :return: list
-        """
-        pass
-
-class FinishedProductSensor(ProductSensor):
-    def get_still_needed_products(self):
-        products = self._product_provider.get_required_finished_products(self._agent_name)
-        rospy.loginfo("FinishedProductSensor:: Need following finished products:  %s", str(products))
+        products = self._product_provider_method()
+        rospy.loginfo("%s:: Need following products:  %s",self._name, str(products))
         return products
-
-class IngredientSensor(FinishedProductSensor):
-
-    def get_still_needed_products(self):
-        ingredients = self._product_provider.get_required_ingredients(self._agent_name)
-        rospy.loginfo("FinishedProductSensor:: Need following ingredients:  %s", str(ingredients))
-        return ingredients
 
 
 class AmountInListActivator(BooleanActivator):
@@ -64,7 +49,7 @@ class AmountInListActivator(BooleanActivator):
         self.amount = amount
 
     def computeActivation(self, value_list):
-        if len(value_list) <= self.amount:
+        if self.has_enough(value_list):
             return self._maxActivation
         else:
             return self._minActivation
@@ -73,8 +58,13 @@ class AmountInListActivator(BooleanActivator):
         return 1.0
 
     def getSensorWish(self, value_list):
-        if len(value_list) <= self.amount:
+        has_enough = self.has_enough(value_list)
+        if has_enough:
             return 0.0
         else:
             return 1.0
+
+    def has_enough(self, value_list):
+        amount = len(value_list) <= self.amount
+        return amount
 

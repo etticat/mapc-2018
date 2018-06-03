@@ -3,10 +3,13 @@ import copy
 
 import rospy
 from __builtin__ import xrange
-from mac_ros_bridge.msg import SimStart, Agent
+from mac_ros_bridge.msg import SimStart, Agent, Product
+from mapc_rhbp_ettlinger.msg import StockItem
 
+from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 
 
 class ProductProvider(object):
@@ -19,14 +22,20 @@ class ProductProvider(object):
         self.base_ingredients = {}
         self.finished_products = {}
         self._items_in_stock = {}
-        self._assembled_items = {}
+        self._item_goal = {}
+
+        self._agent_name = agent_name
+
+        self.load_max = 0
+        self.load = 0
 
         rospy.Subscriber(
             AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start",
             SimStart,
             self._callback_sim_start)
 
-        self.task_knowledge = TaskKnowledgebase()
+        self._task_knowledgebase = TaskKnowledgebase()
+        self._stock_item_knowledgebase = StockItemKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
@@ -49,13 +58,21 @@ class ProductProvider(object):
 
 
         if items_in_stock_new != self._items_in_stock:
-            for index in items_in_stock_new.keys():
-                rospy.logerr("%s: %s", str(index), str(items_in_stock_new[index]))
-            # TODO: Save to db
+            # for index in items_in_stock_new.keys():
+            #     rospy.logerr("%s: %s", str(index), str(items_in_stock_new[index]))
             self._items_in_stock = items_in_stock_new
-        else:
-            rospy.logerr("nothing new")
+            self.save_stock_and_goals()
 
+
+
+        self.load_max = msg.load_max
+        self.load = msg.load
+
+
+        # Show all ingredient volumes of all products
+        # for i in self.products.keys():
+        #     rospy.logerr("ProductProvider:: %s volume: %s total volume: %s", i, self.calculate_total_volume({i:1}), self.calculate_total_volume(self.get_ingredients_of_product(i)))
+        rospy.logerr("ProductProvider:: Required ingredients: %s", str(self.calculate_desired_ingredient_stock()))
 
     def _callback_sim_start(self, msg):
         """
@@ -71,9 +88,10 @@ class ProductProvider(object):
             else:
                 self.base_ingredients[product.name] = product
 
-    def get_required_finished_products(self, agent_name):
-        all_required_finished_products = self.task_knowledge.get_tasks(
-            agent_name=agent_name,
+
+    def get_required_finished_products_for_tasks(self):
+        all_required_finished_products = self._task_knowledgebase.get_tasks(
+            agent_name=self._agent_name,
             status="assigned")
 
         items_in_stock = copy.copy(self._items_in_stock)
@@ -88,9 +106,9 @@ class ProductProvider(object):
 
         return still_required_finished_products
 
-    def get_required_ingredients(self, agent_name):
-        all_tasks = self.task_knowledge.get_tasks(
-            agent_name=agent_name,
+    def get_required_ingredients_for_tasks(self):
+        all_tasks = self._task_knowledgebase.get_tasks(
+            agent_name=self._agent_name,
             status="assigned")
 
         items_in_stock = copy.copy(self._items_in_stock)
@@ -119,7 +137,125 @@ class ProductProvider(object):
         return still_needed_ingredients
 
     def get_product_by_name(self, product):
+        """
+
+        :param product:
+        :return: Product
+        """
         return self.products[product]
 
     def get_base_ingredients(self):
         return self.base_ingredients
+
+    def save_stock_and_goals(self):
+        for index in self._items_in_stock.keys():
+            self._stock_item_knowledgebase.update_stock(StockItem(
+                agent=self._agent_name,
+                item=index,
+                amount=self._items_in_stock[index],
+                goal= self._item_goal.get(index, 0)
+            ))
+
+    def start_hoarding(self, item_to_focus):
+
+        load_free = self.load_max - self.load
+
+        items_to_carry = load_free / self.get_product_by_name(item_to_focus).volume
+
+        self._item_goal[item_to_focus] = items_to_carry
+
+        self.save_stock_and_goals()
+
+    def get_required_ingredients_for_hoarding(self):
+        """
+        Returns all ingredients that an agent needs to gather to meet its goal
+        :return: list
+        """
+        res = []
+
+        for index in self.base_ingredients:
+            needed_amount = self._item_goal.get(index,0) - self._items_in_stock.get(index, 0)
+
+            if needed_amount > 0:
+               res.append(index)
+
+        return res
+
+    def get_required_finished_products_for_hoarding(self):
+        """
+        Returns all finished products, that an agent needs to assemble to meet its goal
+        :return: list
+        """
+        res = []
+
+        for index in self.finished_products:
+            needed_amount = self._item_goal.get(index, 0) - self._items_in_stock.get(index, 0)
+
+            if needed_amount > 0:
+                res.append(index)
+
+        return res
+
+    def calculate_total_volume(self, product_dict):
+        """
+        Calculates the total volume that a dict of products will use
+        :param product_dict:
+        :return:
+        """
+
+        v = 0
+
+        for product in product_dict.keys():
+            product_by_name = self.get_product_by_name(product)
+            v += product_by_name.volume * product_dict[product]
+
+        return v
+
+    def calculate_desired_finished_product_stock(self):
+        # TODO: Take into account how much each each product is worth (how much it usually pays)
+        # TODO: Take into account how much effort it is to make (moving, gathering, assembling)...
+
+        res = {}
+
+        for product in self.finished_products.keys():
+            res[product] = 1
+
+        return res
+
+    def total_items_in_stock(self):
+        return self._stock_item_knowledgebase.get_total_stock()
+
+    def get_ingredients_of_product(self, product_name, amount = 1):
+        product = self.products[product_name]
+
+        if len(product.consumed_items) == 0:
+            return {product_name:amount}
+        else:
+            res = {}
+            for ingredient in product.consumed_items:
+                res = CalcUtil.dict_sum(res, self.get_ingredients_of_product(ingredient.name, ingredient.amount * amount))
+            return res
+
+    def calculate_desired_ingredient_stock(self):
+        desired_finished_product_stock = self.calculate_desired_finished_product_stock()
+        all_items = self.total_items_in_stock()
+
+        ingredients = {}
+
+        keys = desired_finished_product_stock.keys()
+        for finished_product in keys:
+            items_taken_from_inventory = min(desired_finished_product_stock[finished_product], all_items[finished_product])
+            all_items[finished_product] -= items_taken_from_inventory
+            desired_finished_product_stock[finished_product] -= items_taken_from_inventory
+
+
+            ingredients = CalcUtil.dict_sum(self.get_ingredients_of_product(finished_product, desired_finished_product_stock[finished_product]), ingredients)
+
+        # TODO: Take into account products that are assembled from already assembled products
+
+        keys = ingredients.keys()
+        for ingredient in keys:
+            items_taken_from_inventory = min(ingredients[ingredient], all_items[ingredient])
+            ingredients[ingredient] -= items_taken_from_inventory
+
+        return ingredients

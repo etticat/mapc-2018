@@ -165,7 +165,7 @@ class GoToFacilityBehaviour(GotoLocationBehaviour):
 
         for _, facility in self._facilities.items():
             # TODO: get the agent position from topic instead of passing through the instance
-            distance = AgentUtils.euclidean_distance(self.agent.agent_info.pos, facility.pos)
+            distance = AgentUtils.calculate_distance(self.agent.agent_info.pos, facility.pos)
             if distance < min_distance:
                 min_distance = distance
                 closest_facility = facility

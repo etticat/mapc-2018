@@ -31,7 +31,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
         discovered_ingredients = total_ingredients - len(base_ingredients)
 
         res = float(discovered_ingredients) / total_ingredients
-        rospy.logerr("Discovery progress: %s", str(res))
+        rospy.loginfo("%s:: Discovery progress: %s",self.name, str(res))
 
         self.update(res)
         super(ResourceDiscoveryProgressSensor, self).sync()

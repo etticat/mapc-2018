@@ -7,7 +7,7 @@ from agent_knowledge.resource import ResourceKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation, Condition
+from behaviour_components.conditions import Negation, Condition, Disjunction
 from behaviour_components.managers import Manager
 from network_behaviours.assist import AssistNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
@@ -167,7 +167,6 @@ class RhbpAgent:
             agent=self,
             msg=msg,
             max_parallel_behaviours=1)
-
 
         # self._shop_exploration_network.add_effects_and_goals([(
         #     self._shop_exploration_network.resource_discovery_progress_sensor,

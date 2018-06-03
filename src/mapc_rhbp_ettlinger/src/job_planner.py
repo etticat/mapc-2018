@@ -17,7 +17,7 @@ class JobPlanner(object):
         self.all_jobs = []
         self.all_tasks = []
 
-        self._task_knowledge = TaskKnowledgebase(agent_name)
+        self._task_knowledge = TaskKnowledgebase()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 

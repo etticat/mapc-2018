@@ -7,8 +7,9 @@ from behaviour_components.conditions import Condition, Negation
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToStorageBehaviour, AssembleProductBehaviour, GatherBehaviour, GoToResourceBehaviour, \
     GoToWorkshopBehaviour, DeliverJobBehaviour
+from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActivator
+from sensor.job import AmountInListActivator, ProductSensor
 from sensor.movement import DestinationDistanceSensor
 
 
@@ -19,6 +20,9 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         proximity = msg.proximity
 
         super(JobExecutionNetworkBehaviour, self).__init__(name, **kwargs)
+
+        self._product_provider = ProductProvider(
+            agent_name=agent._agent_name)
 
         self.init_task_sensor(agent)
         self.init_ingredient_sensor(agent)
@@ -87,7 +91,8 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.assemble_product_behaviour = AssembleProductBehaviour(
             name="assemble_product_behaviour",
             agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix()
+            plannerPrefix=self.get_manager_prefix(),
+            product_providermethod=self._product_provider.get_required_finished_products_for_tasks
         )
         self.assemble_product_behaviour.add_precondition(
             precondition=self.has_all_ingredients_condition)
@@ -110,7 +115,10 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             name="gather_behaviour",
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            behaviour_name=self.go_to_resource_node_behaviour.name)
+            behaviour_name=self.go_to_resource_node_behaviour.name,
+            product_provider_method=self._product_provider.get_required_ingredients_for_tasks
+
+        )
 
         self.gather_ingredients_behaviour.add_precondition(
             precondition=self.at_resource_node_condition)
@@ -125,7 +133,9 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.go_to_resource_node_behaviour = GoToResourceBehaviour(
             agent=agent,
             name="go_to_resource_for_job",
-            plannerPrefix=self.get_manager_prefix())
+            plannerPrefix=self.get_manager_prefix(),
+            product_provider_method=self._product_provider.get_required_ingredients_for_tasks
+        )
 
         self.go_to_resource_node_behaviour.add_precondition(
             precondition=Negation(self.has_all_ingredients_condition)
@@ -148,9 +158,11 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
 
 
     def init_finished_product_sensor(self, agent):
-        self.has_all_finished_products_sensor = FinishedProductSensor(
+        self.has_all_finished_products_sensor = ProductSensor(
             name="has_all_finished_products_sensor",
-            agent_name=agent._agent_name)
+            agent_name=agent._agent_name,
+            product_provider_method=self._product_provider.get_required_finished_products_for_tasks
+        )
         self.has_all_products_condition = Condition(
             sensor=self.has_all_finished_products_sensor,
             activator=AmountInListActivator(
@@ -158,9 +170,10 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             ))
 
     def init_ingredient_sensor(self, agent):
-        self.has_all_ingredients_sensor = IngredientSensor(
+        self.has_all_ingredients_sensor = ProductSensor(
             name="has_all_ingredients_sensor",
-            agent_name=agent._agent_name)
+            agent_name=agent._agent_name,
+            product_provider_method=self._product_provider.get_required_ingredients_for_tasks)
         self.has_all_ingredients_condition = Condition(
             sensor=self.has_all_ingredients_sensor,
             activator=AmountInListActivator(
@@ -189,7 +202,8 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             plannerPrefix=self.get_manager_prefix(),
             agent=agent,
             agent_name=agent._agent_name,
-            topic="/workshop"
+            topic="/workshop",
+            product_providermethod = self._product_provider.get_required_finished_products_for_tasks
         )
 
         self.go_to_workshop_behaviour.add_precondition(

@@ -14,7 +14,6 @@ from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoLocationBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.job import IngredientSensor, FinishedProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
 
 
