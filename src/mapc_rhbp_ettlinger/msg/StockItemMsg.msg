@@ -1,0 +1,1 @@
+mapc_rhbp_ettlinger/StockItem[]     stock_items

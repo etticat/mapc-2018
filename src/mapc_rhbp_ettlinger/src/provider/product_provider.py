@@ -4,7 +4,7 @@ import copy
 import rospy
 from __builtin__ import xrange
 from mac_ros_bridge.msg import SimStart, Agent, Product
-from mapc_rhbp_ettlinger.msg import StockItem
+from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
@@ -22,11 +22,13 @@ class ProductProvider(object):
         self.base_ingredients = {}
         self.finished_products = {}
         self._items_in_stock = {}
-        self._item_goal = {}
+        self._gather_goal = {}
+        self._assemble_goal = {}
 
         self._agent_name = agent_name
 
         self.load_max = 0
+        self.load_free = 0
         self.load = 0
 
         rospy.Subscriber(
@@ -34,11 +36,32 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
+        rospy.Subscriber(
+            AgentUtils.get_internal_prefix(agent_name=agent_name) + "stock_goal",
+            StockItemMsg,
+            self._callback_stock_goal)
+        self._pub_stock_msg = rospy.Publisher(
+            AgentUtils.get_internal_prefix(agent_name=agent_name) + "stock_goal",
+            StockItemMsg
+            , queue_size=10)
+
         self._task_knowledgebase = TaskKnowledgebase()
         self._stock_item_knowledgebase = StockItemKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
+    def _callback_stock_goal(self, stockMsg):
+        """
+
+        :param stockMsg:
+        :type stockMsg: StockItemMsg
+        :return:
+        """
+        for stock_item in stockMsg.stock_items:
+            if stock_item.item in self.base_ingredients.keys():
+                self._gather_goal[stock_item.item] = stock_item.goal
+            elif stock_item.item in self.finished_products.keys():
+                self._assemble_goal[stock_item.item] = stock_item.goal
 
 
     def _callback_agent(self, msg):
@@ -67,6 +90,7 @@ class ProductProvider(object):
 
         self.load_max = msg.load_max
         self.load = msg.load
+        self.load_free = msg.load_max - msg.load
 
 
         # Show all ingredient volumes of all products
@@ -147,24 +171,39 @@ class ProductProvider(object):
     def get_base_ingredients(self):
         return self.base_ingredients
 
-    def save_stock_and_goals(self):
+    def save_stock_and_goals(self, publish_goals=False):
+        msg = StockItemMsg()
         for index in self._items_in_stock.keys():
-            self._stock_item_knowledgebase.update_stock(StockItem(
-                agent=self._agent_name,
-                item=index,
-                amount=self._items_in_stock[index],
-                goal= self._item_goal.get(index, 0)
-            ))
+            item = StockItem(agent=self._agent_name, item=index, amount=self._items_in_stock[index],
+                             goal=self._gather_goal.get(index, 0) + self._assemble_goal.get(index, 0))
+            self._stock_item_knowledgebase.update_stock(item)
+            msg.stock_items.append(item)
 
-    def start_hoarding(self, item_to_focus):
+        if publish_goals:
+            self._pub_stock_msg.publish(msg)
+
+    def start_gathering(self, item_to_focus):
 
         load_free = self.load_max - self.load
 
         items_to_carry = load_free / self.get_product_by_name(item_to_focus).volume
 
-        self._item_goal[item_to_focus] = items_to_carry
+        self._gather_goal = {
+            item_to_focus: items_to_carry + self._items_in_stock.get(item_to_focus, 0)
+        }
 
-        self.save_stock_and_goals()
+        self.save_stock_and_goals(publish_goals=True)
+    def start_assembly(self, items_to_assemble):
+        self._assemble_goal = items_to_assemble
+        self.save_stock_and_goals(publish_goals=True)
+
+    def stop_gathering(self):
+        self._gather_goal = {}
+        self.save_stock_and_goals(publish_goals=True)
+
+    def stop_assembly(self):
+        self._assemble_goal = {}
+        self.save_stock_and_goals(publish_goals=True)
 
     def get_required_ingredients_for_hoarding(self):
         """
@@ -174,11 +213,12 @@ class ProductProvider(object):
         res = []
 
         for index in self.base_ingredients:
-            needed_amount = self._item_goal.get(index,0) - self._items_in_stock.get(index, 0)
+            needed_amount = self._gather_goal.get(index, 0) - self._items_in_stock.get(index, 0)
 
             if needed_amount > 0:
                res.append(index)
 
+        rospy.loginfo("All ingredients to gather: %s", str(res) )
         return res
 
     def get_required_finished_products_for_hoarding(self):
@@ -189,7 +229,7 @@ class ProductProvider(object):
         res = []
 
         for index in self.finished_products:
-            needed_amount = self._item_goal.get(index, 0) - self._items_in_stock.get(index, 0)
+            needed_amount = self._assemble_goal.get(index, 0) - self._items_in_stock.get(index, 0)
 
             if needed_amount > 0:
                 res.append(index)

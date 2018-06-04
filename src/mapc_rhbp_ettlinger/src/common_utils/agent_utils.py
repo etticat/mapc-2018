@@ -47,5 +47,9 @@ class AgentUtils:
                 minDistance = distance
                 closest_facility = facility
         return closest_facility
+
+    @classmethod
+    def get_internal_prefix(cls, agent_name):
+        return '/internal_' + agent_name + '/'
         
         

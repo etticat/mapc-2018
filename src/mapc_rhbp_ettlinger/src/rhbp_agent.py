@@ -9,10 +9,11 @@ from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition, Disjunction
 from behaviour_components.managers import Manager
+from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.assist import AssistNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
-from network_behaviours.hoarding import HoardingNetworkBehaviour
+from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.job_execution import JobExecutionNetworkBehaviour
 
 
@@ -102,30 +103,58 @@ class RhbpAgent:
 
 
         ######################## Job Network Behaviour ########################
-        self._job_performance_network = JobExecutionNetworkBehaviour(
-            name=self._agent_name + '/JobPerformanceNetwork',
+        # self._job_performance_network = JobExecutionNetworkBehaviour(
+        #     name=self._agent_name + '/JobPerformanceNetwork',
+        #     plannerPrefix=self._agent_name,
+        #     msg=msg,
+        #     agent=self,
+        #     max_parallel_behaviours=1)
+        # self._job_performance_network.add_precondition(
+        #     precondition=self.enough_battery_cond)
+
+        # Is done implicitly already through goal
+        # self._job_performance_network.add_precondition(
+        #     precondition=self._job_performance_network.has_tasks__assigned_condition)
+
+        ######################## Gathering Network Behaviour ########################
+        self._gathering_network = GatheringNetworkBehaviour(
+            name=self._agent_name + '/GatheringNetwork',
             plannerPrefix=self._agent_name,
             msg=msg,
             agent=self,
             max_parallel_behaviours=1)
-        self._job_performance_network.add_precondition(
-            precondition=self.enough_battery_cond)
-        self._job_performance_network.add_precondition(
-            precondition=self._job_performance_network.has_tasks__assigned_condition)
 
-        ######################## Hoarding Network Behaviour ########################
-        self._hoarding_network = HoardingNetworkBehaviour(
-            name=self._agent_name + '/HoardingNetwork',
+        self._gathering_network.add_precondition(
+            precondition=self.enough_battery_cond)
+        self._gathering_network.add_precondition(
+            precondition=self._gathering_network.next_item_fits_in_storage_condition
+        )
+
+        ######################## Assembly Network Behaviour ########################
+        self._assembly_network = AssembleNetworkBehaviour(
+            name=self._agent_name + '/AssembleNetwork',
             plannerPrefix=self._agent_name,
             msg=msg,
             agent=self,
             max_parallel_behaviours=1)
 
-        self._hoarding_network.add_precondition(
+        self._assembly_network.add_precondition(
             precondition=self.enough_battery_cond)
+        self._assembly_network.add_precondition(
+            precondition=Disjunction(
+                # Start it when the storage is full
+                Negation(self._gathering_network.next_item_fits_in_storage_condition),
+                # But keep it active until all products are assembled
+                Negation(self._assembly_network.has_all_finished_products_condition)
+            )
+        )
+        # Only gather when there is nothing to be assembled
+        self._gathering_network.add_precondition(
+            precondition=Negation(self._assembly_network.has_all_finished_products_condition)
+        )
 
-        self._hoarding_network.add_precondition(
-            precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
+        # self._gathering_network.add_precondition(
+        #     precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
 
 
 
@@ -139,14 +168,17 @@ class RhbpAgent:
         )
         # Only assist when something is assigned
         # TODO: This should not be required. as the network should not be executed anyway when the goal is fulfilled.
-        # self._assist_task_network.add_precondition(
-        #     precondition=self._assist_task_network.assist_assigned_condition)
-
+        self._assist_task_network.add_precondition(
+            precondition=self._assist_task_network.assist_assigned_condition)
+        #
         # Only perform tasks or hoard when there is no assist required
-        self._job_performance_network.add_precondition(
+        # self._job_performance_network.add_precondition(
+        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
+
+        self._gathering_network.add_precondition(
             precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
-        self._hoarding_network.add_precondition(
+        self._assembly_network.add_precondition(
             precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
         # TODO: Do I need these #33-1
@@ -164,7 +196,7 @@ class RhbpAgent:
         # )])
 
         ######################## Exploration Network Behaviour ########################
-        self._shop_exploration_network = ExplorationNetworkBehaviour(
+        self._exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/ExplorationNetwork',
             plannerPrefix=self._agent_name,
             agent=self,
@@ -179,15 +211,19 @@ class RhbpAgent:
         #         sensor_type=bool))])
 
         # Only do shop exploration when enough battery left
-        self._shop_exploration_network.add_precondition(
+        self._exploration_network.add_precondition(
             precondition=self.enough_battery_cond)
         # Only explore when there is not task assigned
-        self._shop_exploration_network.add_precondition(
-            precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
+        # self._shop_exploration_network.add_precondition(
+        #     precondition=Negation(self._job_performance_network.has_tasks__assigned_condition))
 
 
-        self._hoarding_network.add_precondition(
-            precondition=self._shop_exploration_network.all_resources_discovered_condition)
+        self._gathering_network.add_precondition(
+            precondition=self._exploration_network.all_resources_discovered_condition)
+
+        self._exploration_network.add_precondition(
+            precondition=Negation(self._exploration_network.all_resources_discovered_condition)
+        )
 
 
 

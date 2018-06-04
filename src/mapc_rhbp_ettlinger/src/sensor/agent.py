@@ -37,12 +37,17 @@ class StorageAvailableForItemSensor(Sensor):
         :return:
         """
 
-        movement = self._movement_knowledgebase.get_movement(self._agent_name, self._behaviour_name)
-        resource = self._resource_knowledgebase.get_resource_by_name(movement.destination)
-        if resource != None:
-            product = self._product_provider.get_product_by_name(resource.item)
-            volume_of_next_gathered_item = product.volume
-            item = msg.load_max - msg.load - volume_of_next_gathered_item
-            self.update(item)
-        else:
-            return  0
+        stock = self._product_provider.calculate_desired_ingredient_stock()
+        load_free = msg.load_max - msg.load
+
+        load_after_gathering_final = -1
+
+        for item in stock.keys():
+            if stock[item] > 0:
+                product = self._product_provider.get_product_by_name(item)
+                load_after_gathering = load_free - product.volume
+                if load_after_gathering >=0:
+                    load_after_gathering_final = load_after_gathering
+
+        rospy.loginfo("StorageAvailableForItemSensor::load_after_gathering_final: %s", str(load_after_gathering_final))
+        self.update(load_after_gathering_final)

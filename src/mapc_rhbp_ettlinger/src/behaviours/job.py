@@ -117,7 +117,7 @@ class AssembleProductBehaviour(BehaviourBase):
     """
     Behaviour for the assembly of a product
     """
-    def __init__(self, agent_name, product_providermethod, **kwargs):
+    def __init__(self, agent_name, product_provider_method, **kwargs):
         super(AssembleProductBehaviour, self) \
             .__init__(
             requires_execution_steps=True,
@@ -126,7 +126,7 @@ class AssembleProductBehaviour(BehaviourBase):
         self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._assist_knowledge = AssistKnowledgebase()
-        self._product_providermethod = product_providermethod
+        self._product_providermethod = product_provider_method
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -148,8 +148,8 @@ class AssembleProductBehaviour(BehaviourBase):
     def do_step(self):
         products = self._product_providermethod()
         if len(products) > 0:
-            rospy.loginfo("AssembleProductBehaviour:: assembling %s", products[0])
             self.action_assemble(products[0])
+        rospy.logerr("AssembleProductBehaviour:: assembling %s", str(products)  )
 
     def stop(self):
         # Once assembly is done, free all agents from assignemt task
@@ -160,11 +160,11 @@ class AssembleProductBehaviour(BehaviourBase):
 
 class GoToWorkshopBehaviour(GoToFacilityBehaviour):
 
-    def __init__(self, product_providermethod, **kwargs):
+    def __init__(self, product_provider_method, **kwargs):
         super(GoToWorkshopBehaviour, self).__init__(
             **kwargs)
         self._selected_facility = None
-        self._product_providermethod = product_providermethod
+        self._product_provider_method = product_provider_method
         self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(self.agent._agent_name)
         self.assist_knowledge = AssistKnowledgebase()
@@ -178,7 +178,7 @@ class GoToWorkshopBehaviour(GoToFacilityBehaviour):
 
     def request_assist(self):
         # TODO: This should be done in own behaviour ideally
-        finished_products = self._product_providermethod()
+        finished_products = self._product_provider_method()
         for product in finished_products:
             # TODO: Do this recursive so we can make items that are needed to build other items
             for role in self._product_provider.get_product_by_name(product).required_roles:
