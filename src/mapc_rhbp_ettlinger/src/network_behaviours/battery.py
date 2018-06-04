@@ -126,6 +126,14 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         # Only recharge if battery is empty
         self._recharge_behaviour.add_precondition(self._battery_empty_cond)
 
+        # CONDITION: Vehicle has enough charge to function
+        self._enough_battery_cond = Condition(
+            sensor=self._charge_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=self.agent_charge_critical,
+                isMinimum=True))
+
+
         self._charging_goal = GoalBase(
             name='charging_goal',
             permanent=True,

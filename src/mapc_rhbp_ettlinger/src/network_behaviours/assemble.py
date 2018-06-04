@@ -103,7 +103,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         )
     def init_product_sensor(self, agent):
         self.remaining_finished_products_sensor = ProductSensor(
-            name="has_all_ingredients_for_hoarding_sensor",
+            name="remaining_finished_products_sensor",
             agent_name=agent._agent_name,
             product_provider_method=self._product_provider.get_required_finished_products_for_hoarding)
 
@@ -161,8 +161,8 @@ class ChooseFinishedProductsBehaviour(BehaviourBase):
         # - put everything into a seperate file (or multiple)
 
         self._product_provider.start_assembly({
-            "item5":3,
-            "item6":1,
+            "item5":0,
+            "item6":0,
             "item7":0,
-            "item8":1
+            "item8":0
         })

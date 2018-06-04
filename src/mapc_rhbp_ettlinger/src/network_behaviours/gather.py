@@ -6,6 +6,7 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
+from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
 from provider.product_provider import ProductProvider
 from sensor.agent import StorageAvailableForItemSensor
@@ -80,7 +81,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         ################ Going to resource #########################
         self.go_to_resource_node_behaviour = GoToResourceBehaviour(
             agent=agent,
-            name="go_to_resource_for_hoarding",
+            name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix(),
             product_provider_method=self._product_provider.get_required_ingredients_for_hoarding
         )
@@ -112,7 +113,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         )
     def init_product_sensor(self, agent):
         self.has_all_ingredients_sensor = ProductSensor(
-            name="has_all_ingredients_for_hoarding_sensor",
+            name="has_all_ingredients_sensor",
             agent_name=agent._agent_name,
             product_provider_method=self._product_provider.get_required_ingredients_for_hoarding)
         self.has_all_ingredients_condition = Condition(
@@ -150,31 +151,3 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             )
         )
 
-
-class ChooseIngredientBehaviour(BehaviourBase):
-
-    def __init__(self, agent_name, **kwargs):
-        super(ChooseIngredientBehaviour, self).__init__(**kwargs)
-        self._product_provider = ProductProvider(agent_name=agent_name)
-
-    def do_step(self):
-        stock = self._product_provider.calculate_desired_ingredient_stock()
-        item_to_focus = None
-        items_needed = 0
-
-        # Selecting the item that we need the most of
-        # At least 1 of these itesm needs to fit into the stock
-        # TODO: This could be done more elaborately. i.e.: negotiating with other agents.
-        for item in stock.keys():
-            if stock[item] > items_needed:
-                product = self._product_provider.get_product_by_name(item)
-                load_after_gathering = self._product_provider.load_free - product.volume
-                if load_after_gathering >= 0:
-                    items_needed = stock[item]
-                    item_to_focus = item
-
-        if item_to_focus != None:
-            self._product_provider.start_gathering(item_to_focus)
-            rospy.logerr("ChooseIngredientBehaviour:: Chosing item %s", item_to_focus)
-        else:
-            rospy.logerr("ChooseIngredientBehaviour:: Trying to choose item, but none fit in stock")

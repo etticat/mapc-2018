@@ -28,28 +28,24 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.init_task_sensor(agent)
         self.init_finished_product_sensor(agent)
 
-        self.init_go_to_destinatino_behaviour(agent, proximity)
+        self.init_go_to_destination_behaviour(agent, proximity)
         self.init_deliver_job_behaviour(agent)
 
 
+        # QQQ: What is this error, when i uncomment this goal?
+        # ---------------> "undeclared predicate has_task used in domain definition"
+        # self._job_performance_goal = GoalBase(
+        #     name='job_performance',
+        #     permanent=True,
+        #     plannerPrefix=agent._agent_name,
+        #     conditions=[Negation(self.has_tasks_assigned_condition)])
 
-
-        self._job_performance_goal = GoalBase(
-            name='job_performance',
-            permanent=True,
-            plannerPrefix=agent._agent_name,
-            conditions=[Negation(self.has_tasks__assigned_condition)])
-
-    def init_go_to_destinatino_behaviour(self, agent, proximity):
+    def init_go_to_destination_behaviour(self, agent, proximity):
         # go to destination
         self.go_to_destination_behaviour = GoToStorageBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name="go_to_storage",
             agent=agent)
-
-        self.go_to_destination_behaviour.add_precondition(
-            precondition=self.has_all_ingredients_condition
-        )
 
         self.storage_destination_sensor = DestinationDistanceSensor(
             name='storage_destination_sensor',
@@ -102,7 +98,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
                 destination="*",
                 agent=agent._agent_name,
                 status="assigned"))
-        self.has_tasks__assigned_condition = Condition(
+        self.has_tasks_assigned_condition = Condition(
             sensor=self.has_tasks_assigned_sensor,
             activator=BooleanActivator(
                 desiredValue=True))
@@ -119,6 +115,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.deliver_job_bahviour.add_precondition(
             precondition=self.at_storage_condition
         )
+
         self.deliver_job_bahviour.add_effect(
             effect=Effect(
                 sensor_name=self.has_tasks_assigned_sensor.name,

@@ -72,3 +72,25 @@ class StockItemKnowledgebase(BaseKnowledgebase):
             stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
             res[stockItem.item] = res.get(stockItem.item,0) + max(stockItem.amount, stockItem.goal)
         return res
+
+    def get_total_stock_and_goals(self):
+        all = self.generate_tuple()
+        res = {}
+
+        facts = self._kb_client.all(all)
+
+        for fact in facts:
+            stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
+
+            if stockItem.item not in res.keys():
+                res[stockItem.item] = {
+                    "stock": 0,
+                    "goal": 0
+                }
+
+
+
+            res[stockItem.item]["stock"] += stockItem.amount
+            res[stockItem.item]["goal"] += stockItem.goal
+
+        return res

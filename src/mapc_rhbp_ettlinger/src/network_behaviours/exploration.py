@@ -1,6 +1,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.exploration import ExplorationBehaviour, FinishExplorationBehaviour
 from sensor.exploration import ResourceDiscoveryProgressSensor
@@ -74,8 +75,8 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # TODO: Do I need these #33-1
         # Seems to work without. With them I get errors but it continues to run normally
         # Exploration goal
-        # self._exploration_goal = GoalBase(
-        #     name='exploration_goal',
-        #     permanent=True,
-        #     plannerPrefix=self.get_manager_prefix(),
-        #     conditions=[self.map_discovered_everything_condition])
+        self.exploration_goal = GoalBase(
+            name='exploration_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[self.all_resources_discovered_condition])
