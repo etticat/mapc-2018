@@ -2,6 +2,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
+from behaviour_components.goals import GoalBase
 from behaviours.assist import GoToAssistLocationBehaviour, AssistBehaviour
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.assist import AssistKnowledgebase
@@ -38,12 +39,12 @@ class AssistNetworkBehaviour(NetworkBehaviour):
                 active=True))
 
         self.at_assist_location_sensor = DestinationDistanceSensor(
-            name = "at_assist_spot_sensor",
+            name = "at_assist_location_sensor",
             agent_name=agent_name,
             behaviour_name=self.go_to_assist_location_behaviour.name
         )
 
-        self.at_assist_spot_condition = Condition(
+        self.at_assist_location_condition = Condition(
             sensor=self.at_assist_location_sensor,
             activator=ThresholdActivator(
                 thresholdValue=proximity,
@@ -55,7 +56,7 @@ class AssistNetworkBehaviour(NetworkBehaviour):
                 desiredValue=True))
 
         self.go_to_assist_location_behaviour.add_precondition(
-            precondition=Negation(self.at_assist_spot_condition)
+            precondition=Negation(self.at_assist_location_condition)
         )
 
         self.assist_behaviour = AssistBehaviour(
@@ -65,7 +66,7 @@ class AssistNetworkBehaviour(NetworkBehaviour):
         )
 
         self.assist_behaviour.add_precondition(
-            precondition=self.at_assist_spot_condition
+            precondition=self.at_assist_location_condition
         )
 
         self.assist_behaviour.add_effect(
@@ -84,3 +85,9 @@ class AssistNetworkBehaviour(NetworkBehaviour):
                 sensor_type=bool
             )
         )
+
+        self._assist_goal = GoalBase(
+            name='assist_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self.assist_assigned_condition)])

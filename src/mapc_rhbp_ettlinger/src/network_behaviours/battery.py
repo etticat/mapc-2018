@@ -30,112 +30,109 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         self.agent_charge_critical = agent_recharge_upper_bound * recharge_critical_bound_percentage
 
 
-        self.go_to_charging_station_behaviour = GoToFacilityBehaviour(
+        # Behaviour to go to the closest Charging station
+        self._go_to_charging_station_behaviour = GoToFacilityBehaviour(
             plannerPrefix=self.get_manager_prefix(),
-            name="go_to_charging_behaviour",
+            name="go_to_charging_station_behaviour",
             topic="/charging_station",
             agent_name=agent._agent_name,
             agent=agent)
 
         # Sensor that checks if vehicles is charged at the moment
-        self.charge_sensor = TopicSensor(
+        self._charge_sensor = TopicSensor(
             topic=agent_topic,
             name="charge_sensor",
             message_attr='charge')
 
         # charging required condition: When closer to lower bound -> higher activation
-        require_charging_cond = Condition(
-            sensor=self.charge_sensor,
+        self._require_charging_cond = Condition(
+            sensor=self._charge_sensor,
             activator=LinearActivator(
             zeroActivationValue=agent_recharge_upper_bound,
             fullActivationValue=agent_recharge_lower_bound))  # highest activation already before battery empty
 
         # Sensor to check distance to charging station
-        at_charging_station_sensor = DestinationDistanceSensor(
+        self._charging_station_distance_sensor = DestinationDistanceSensor(
             name='at_charging_station',
             agent_name=agent._agent_name,
-            behaviour_name=self.go_to_charging_station_behaviour._name)
+            behaviour_name=self._go_to_charging_station_behaviour._name)
 
 
         # Condition to check if we are at a charging station
-        at_charging_station_activator = ThresholdActivator(thresholdValue=proximity, isMinimum=False)
-
-        at_charging_station_cond = Condition(
-            sensor=at_charging_station_sensor,
-            activator=at_charging_station_activator)  # highest activation if the value is below threshold
+        self._at_charging_station_cond = Condition(
+            sensor=self._charging_station_distance_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=proximity,
+                isMinimum=False))
 
         # battery is completely empty
-        battery_empty_activator = ThresholdActivator(thresholdValue=0, isMinimum=False)
-        battery_empty_cond = Condition(
-            sensor=self.charge_sensor,
-            activator=battery_empty_activator)
+        self._battery_empty_cond = Condition(
+            sensor=self._charge_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=0,
+                isMinimum=False))
 
         # only look for charging stations if charging is required
-        self.go_to_charging_station_behaviour.add_precondition(
-            require_charging_cond)
+        self._go_to_charging_station_behaviour.add_precondition(
+            self._require_charging_cond)
 
         # do not look for charging station if we are already at one
-        self.go_to_charging_station_behaviour.add_precondition(
+        self._go_to_charging_station_behaviour.add_precondition(
             Negation(
-                at_charging_station_cond))
+                self._at_charging_station_cond))
 
         # do not try to find charging station when battery is completely empty
-        self.go_to_charging_station_behaviour.add_precondition(
+        self._go_to_charging_station_behaviour.add_precondition(
             Negation(
-                battery_empty_cond))
+                self._battery_empty_cond))
 
         # looking for a charging station has an effect (transitively) of being at a charging station
-        self.go_to_charging_station_behaviour.add_effect(
+        self._go_to_charging_station_behaviour.add_effect(
             Effect(
-                sensor_name=at_charging_station_sensor.name,
+                sensor_name=self._charging_station_distance_sensor.name,
                 indicator=-1.0,  # -1 for a reducing effect on the distance
                 sensor_type=float))
 
         # Charge (normally)
-        charge = ChargeBehaviour(
+        self._charge_behaviour = ChargeBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             agent_name=agent._agent_name,
-            name='charge',)
+            name='charge_behaviour',)
 
-        # only charge when at charging station
-        charge.add_precondition(at_charging_station_cond)
+        # only charge_behaviour when at charging station
+        self._charge_behaviour.add_precondition(self._at_charging_station_cond)
 
-        # only charge if required
-        charge.add_precondition(require_charging_cond)
+        # only charge_behaviour if required
+        self._charge_behaviour.add_precondition(self._require_charging_cond)
 
         #charging has an effect on charging_sensor
-        charge.add_effect(Effect(
-            sensor_name=self.charge_sensor.name,
+        self._charge_behaviour.add_effect(Effect(
+            sensor_name=self._charge_sensor.name,
             indicator=2.0,  # here we could also use the real charging effects
             sensor_type=float))
 
         # Recharge (through solar)
-        recharge = RechargeBehaviour(
+        self._recharge_behaviour = RechargeBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             agent_name=agent._agent_name,
-            name='recharge')
+            name='recharge_behaviour')
 
-        # Recharging has effect on charge sensor
-        recharge.add_effect(Effect(
-            sensor_name=self.charge_sensor.name,
+        # Recharging has effect on charge_behaviour sensor
+        self._recharge_behaviour.add_effect(Effect(
+            sensor_name=self._charge_sensor.name,
             indicator=1.0,  # here we could also use the real charging effects
             sensor_type=float))
 
         # Only recharge if battery is empty
-        recharge.add_precondition(battery_empty_cond)
+        self._recharge_behaviour.add_precondition(self._battery_empty_cond)
 
-        self.add_precondition(require_charging_cond)
-
-        # TODO: Do I need these #33-1
-        # Seems to work without. With them I get errors but it continues to run normally
-        # The goal is to always have charge
-        # self._charging_goal = GoalBase(
-        #     name='charging_goal',
-        #     permanent=True,
-        #     plannerPrefix=self.get_manager_prefix(),
-        #     conditions=[Negation(require_charging_cond)])
+        self._charging_goal = GoalBase(
+            name='charging_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self._require_charging_cond)])
 
     def stop(self):
 
         super(BatteryChargingNetworkBehaviour, self).stop()
-        self._movement_knowledge.stop_movement(self._agent_name, self.go_to_charging_station_behaviour.name)
+        self._movement_knowledge.stop_movement(self._agent_name, self._go_to_charging_station_behaviour.name)

@@ -72,7 +72,7 @@ class ProductProvider(object):
         # Show all ingredient volumes of all products
         # for i in self.products.keys():
         #     rospy.logerr("ProductProvider:: %s volume: %s total volume: %s", i, self.calculate_total_volume({i:1}), self.calculate_total_volume(self.get_ingredients_of_product(i)))
-        rospy.logerr("ProductProvider:: Required ingredients: %s", str(self.calculate_desired_ingredient_stock()))
+        rospy.loginfo("ProductProvider:: Required ingredients: %s", str(self.calculate_desired_ingredient_stock()))
 
     def _callback_sim_start(self, msg):
         """

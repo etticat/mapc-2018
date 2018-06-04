@@ -80,8 +80,8 @@ class RhbpAgent:
     def init_behaviour_network(self, msg):
 
         ######################## Battery Network Behaviour ########################
-        batteryBehaviourNetwork = BatteryChargingNetworkBehaviour(
-            name=self._agent_name + '/BatteryNetwork',
+        self._battery_charging_network_behaviour = BatteryChargingNetworkBehaviour(
+            name=self._agent_name + '/BatteryChargingNetwork',
             plannerPrefix=self._agent_name,
             agent=self,
             msg=msg,
@@ -89,14 +89,16 @@ class RhbpAgent:
 
         # CONDITION: Vehicle has enough charge to function
         self.enough_battery_cond = Condition(
-            sensor=batteryBehaviourNetwork.charge_sensor,
+            sensor=self._battery_charging_network_behaviour._charge_sensor,
             activator=ThresholdActivator(
-                thresholdValue=batteryBehaviourNetwork.agent_charge_critical,
+                thresholdValue=self._battery_charging_network_behaviour.agent_charge_critical,
                 isMinimum=True))
 
-        batteryBehaviourNetwork.add_effects_and_goals([(
-            batteryBehaviourNetwork.charge_sensor,
-            Effect(sensor_name=batteryBehaviourNetwork.charge_sensor.name, indicator=1.0, sensor_type=float))])
+        self._battery_charging_network_behaviour.add_effects_and_goals([(
+            self._battery_charging_network_behaviour._charge_sensor,
+            Effect(sensor_name=self._battery_charging_network_behaviour._charge_sensor.name, indicator=1.0, sensor_type=float))])
+
+        self._battery_charging_network_behaviour.add_precondition(self._battery_charging_network_behaviour._require_charging_cond)
 
 
         ######################## Job Network Behaviour ########################
@@ -136,8 +138,9 @@ class RhbpAgent:
             max_parallel_behaviours=1
         )
         # Only assist when something is assigned
-        self._assist_task_network.add_precondition(
-            precondition=self._assist_task_network.assist_assigned_condition)
+        # TODO: This should not be required. as the network should not be executed anyway when the goal is fulfilled.
+        # self._assist_task_network.add_precondition(
+        #     precondition=self._assist_task_network.assist_assigned_condition)
 
         # Only perform tasks or hoard when there is no assist required
         self._job_performance_network.add_precondition(
