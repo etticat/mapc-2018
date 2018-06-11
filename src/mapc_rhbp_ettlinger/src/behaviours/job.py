@@ -214,5 +214,7 @@ class DeliverJobBehaviour(BehaviourBase):
         if len(tasks) > 0:
             rospy.loginfo("DeliverJobBehaviour:: delivering for job %s", tasks[0].job_id)
             self.action_deliver_job(tasks[0].job_id)
+            # TODO: Check what happens when the delivery fails ->
+            # TODO: Pass an acnowledgement object into the mac ros bridge. Once it finishes/fails it notifies the application
 
 

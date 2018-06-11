@@ -5,18 +5,19 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, B
 
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
-from common_utils.agent_utils import AgentUtils
-from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation, Condition, Disjunction
+from behaviour_components.conditions import Negation, Disjunction
+from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
+from common_utils.agent_utils import AgentUtils
+from coordination.assemble_contractor import AssembleContractor
+from coordination.assemble_manager import AssembleManager
 from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.assist import AssistNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.job_execution import JobExecutionNetworkBehaviour
-from provider.product_provider import ProductProvider
 
 
 class RhbpAgent:
@@ -61,6 +62,12 @@ class RhbpAgent:
         rospy.Subscriber(self._agent_topic_prefix + "generic_action", GenericAction, self._callback_generic_action)
 
         self._received_action_response = False
+
+
+        assemble_manager = AssembleManager(agent_name="agentA1")
+        assemble_contractor = AssembleContractor(agent_name="agentA1")
+
+        assemble_manager.request_assist("agentA1")
 
     def _sim_start_callback(self, msg):
         """
@@ -176,21 +183,6 @@ class RhbpAgent:
         self._job_performance_network.add_precondition(
             precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
-        # TODO: Do I need these? QQQ
-        # Everything seems to work well without it. With it I run into errors
-        # undeclared predicate has_task used in domain definition
-        # [ERROR] [1527777061.931515]: PLANNER ERROR: Planner exited with failure.. Generating PDDL log files for step 11
-        # self._job_performance_network.add_effects_and_goals([(
-        #     self._job_performance_network.has_tasks_assigned_sensor,
-        #     Effect(
-        #         sensor_name=self._job_performance_network.has_tasks_assigned_sensor.name,
-        #         indicator=-1.0,
-        #         sensor_type=bool
-        #            )
-        #
-        # )])
-
-        
         ######################## Gathering Network Behaviour ########################
 
         # Only gather when there is enough battery left
@@ -274,11 +266,11 @@ class RhbpAgent:
 
         # TODO: Do I need these #33-1
         # Seems to work without. With them I get errors but it continues to run normally
-        # self._job_performance_goal = GoalBase(
-        #     name='score_goal',
-        #     permanent=True,
-        #     plannerPrefix=self._agent_name,
-        #     conditions=[Negation(self._job_performance_network.has_tasks__assigned_condition)])
+        self._job_performance_goal = GoalBase(
+            name='score_goal',
+            permanent=True,
+            plannerPrefix=self._agent_name,
+            conditions=[Negation(self._job_performance_network.has_tasks_assigned_condition)])
 
         rospy.logerr("behaviour connections initialized")
     def _callback_generic_action(self, msg):

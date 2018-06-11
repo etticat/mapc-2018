@@ -51,5 +51,9 @@ class AgentUtils:
     @classmethod
     def get_internal_prefix(cls, agent_name):
         return '/internal_' + agent_name + '/'
+
+    @classmethod
+    def get_assemble_prefix(cls):
+        return '/assemble/'
         
         

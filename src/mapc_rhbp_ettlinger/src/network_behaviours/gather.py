@@ -31,11 +31,11 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self.init_gather_behaviour(agent)
 
         # The goal is to have a full storage (so we can use it to assemble)
-        # self.fill_stock_up_goal = GoalBase(
-        #     name='fill_up_stock',
-        #     permanent=True,
-        #     plannerPrefix=self.get_manager_prefix(),
-        #     conditions=[Negation(self.next_item_fits_in_storage_condition)])
+        self.fill_stock_up_goal = GoalBase(
+            name='fill_up_stock',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self.next_item_fits_in_storage_condition)])
 
     def init_gather_behaviour(self, agent):
         ############### Gathering ##########################

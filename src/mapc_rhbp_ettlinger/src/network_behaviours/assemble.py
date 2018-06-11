@@ -34,7 +34,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         #     name='fill_up_stock',
         #     permanent=True,
         #     plannerPrefix=self.get_manager_prefix(),
-        #     conditions=[Negation(self.next_item_fits_in_storage_condition)])
+        #     conditions=[Negation(self.)])
 
     def init_assembly_behaviour(self, agent):
         ############### Assembling ##########################
