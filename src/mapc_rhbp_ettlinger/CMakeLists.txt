@@ -52,7 +52,7 @@ add_message_files(
   AssembleRequest.msg
   AssembleAssignment.msg
   AssembleAcknowledgement.msg
-  AssistTask.msg
+  AssembleTask.msg
   StockItem.msg
   StockItemMsg.msg
   Movement.msg

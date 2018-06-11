@@ -3,7 +3,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
-from agent_knowledge.assist import AssistKnowledgebase
+from agent_knowledge.assemble_task import AssembleKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import Action
 from behaviours.movement import GotoLocationBehaviour
@@ -16,7 +16,7 @@ class GoToAssistLocationBehaviour(GotoLocationBehaviour):
     """
     def __init__(self, agent_name, **kwargs):
         super(GoToAssistLocationBehaviour, self).__init__(agent_name=agent_name, **kwargs)
-        self._assist_knowledge = AssistKnowledgebase()
+        self._assist_knowledge = AssembleKnowledgebase()
 
     def _select_pos(self):
         # TODO: We assume there is always just 1 assist task. Need to check this after refactoring
@@ -38,7 +38,7 @@ class AssistBehaviour(BehaviourBase):
             requires_execution_steps=True,
             **kwargs)
         self._agent_name = agent_name
-        self._assist_knowledge = AssistKnowledgebase()
+        self._assist_knowledge = AssembleKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,

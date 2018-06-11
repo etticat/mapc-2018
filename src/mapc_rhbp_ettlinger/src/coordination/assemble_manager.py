@@ -1,15 +1,18 @@
 import time
 
 import rospy
-from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement
+from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement, \
+    AssembleTask
 
+from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from coordination.product_info import ProductValueInfo
 
 import utils.rhbp_logging
 from provider.product_provider import ProductProvider
 
-rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_manager')
+ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_manager')
 
 class AssembleManager(object):
 
@@ -23,6 +26,7 @@ class AssembleManager(object):
 
         self._product_value_info = ProductValueInfo()
         self._product_provider = ProductProvider(agent_name=self._agent_name)
+        self._assemble_knowledgebase = AssembleKnowledgebase()
 
         self.id = time.time() %512
 
@@ -53,7 +57,7 @@ class AssembleManager(object):
         self._pub_assemble_request.publish(request)
 
         sleep_time = request.deadline - time.time()
-        rhbplog.loginfo("AssembleManager(%s):: sleeping for %s", self._agent_name, str(sleep_time))
+        ettilog.loginfo("AssembleManager(%s):: sleeping for %s", self._agent_name, str(sleep_time))
         time.sleep(sleep_time)
         self.process_bids()
 
@@ -64,9 +68,9 @@ class AssembleManager(object):
         return id_
 
     def _callback_bid(self, bid):
-        rhbplog.loginfo("AssembleManager(%s): Received bid from %s", self._agent_name, bid.agent_name)
+        ettilog.loginfo("AssembleManager(%s): Received bid from %s", self._agent_name, bid.agent_name)
         if bid.id != self.generate_assemble_id():
-            rhbplog.loginfo("wrong id")
+            ettilog.loginfo("wrong id")
             return
         self.bids.append(bid)
 
@@ -82,21 +86,36 @@ class AssembleManager(object):
         max_bid = 0
         combination = []
 
-        rhbplog.loginfo("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
+        ettilog.loginfo("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
 
         # for bid in self.bids:
 
         self.accepted_bids, finished_products = self._product_value_info.choose_best_bid_combination(self.bids, self.items)
+
+        if len(finished_products.keys()) == 0:
+            ettilog.logerr("No useful bid found")
+            return
         rejected_bids = []
 
         for bid in self.bids:
             if bid not in self.accepted_bids:
                 rejected_bids.append(bid)
 
-        rhbplog.logerr("AssembleManager(%s): Assembling %s", self._agent_name, str(finished_products))
 
-        rhbplog.loginfo("AssembleManager(%s): Accepting %s bid(s)", self._agent_name, str(len(self.accepted_bids)))
-        rhbplog.loginfo("AssembleManager(%s): Rejecting %s bid(s)", self._agent_name, str(len(rejected_bids)))
+        ettilog.logerr("AssembleManager(%s): Assembling %s with %s", self._agent_name, str(finished_products), str([bid.agent_name for bid in self.accepted_bids]))
+
+        ettilog.loginfo("AssembleManager(%s): Accepting %s bid(s)", self._agent_name, str(len(self.accepted_bids)))
+        ettilog.loginfo("AssembleManager(%s): Rejecting %s bid(s)", self._agent_name, str(len(rejected_bids)))
+
+        accepted = self._assemble_knowledgebase.save_assemble(AssembleTask(
+            id=self.generate_assemble_id(),
+            agent_name=self._agent_name,
+            pos=Position(0, 0),
+            tasks="assemble",
+            active=True
+        ))
+
+        assert accepted == True #TODO: The manager should not have gotten a task in the meantime
 
         deadline = time.time() + AssembleManager.DEADLINE_ACKNOLEDGEMENT
 
@@ -107,7 +126,7 @@ class AssembleManager(object):
                 bid = bid
             )
 
-            rhbplog.loginfo("AssembleManager(%s): Publishing assignment for %s (%s)", self._agent_name, bid.agent_name, str(assignment.assigned))
+            ettilog.loginfo("AssembleManager(%s): Publishing assignment for %s (%s)", self._agent_name, bid.agent_name, str(assignment.assigned))
             self._pub_assemble_assignment.publish(assignment)
 
         time.sleep(deadline - time.time())
@@ -124,23 +143,30 @@ class AssembleManager(object):
         """
 
     def _callback_acknowledgement(self, acknowledgement):
-        rhbplog.loginfo("AssembleManager(%s): Received Acknowledgement from %s", self._agent_name, acknowledgement.bid.agent_name)
+        ettilog.loginfo("AssembleManager(%s): Received Acknowledgement from %s", self._agent_name, acknowledgement.bid.agent_name)
         if acknowledgement.bid.id != self.generate_assemble_id():
-            rhbplog.loginfo("wrong id")
+            ettilog.loginfo("wrong id")
+            return
+        if acknowledgement.acknowledged == False:
+            ettilog.logerr("Contractor rejected acknowledgement")
             return
         self.acknowledgements.append(acknowledgement)
 
     def _process_bid_acknoledgements(self):
-        rhbplog.logerr("AssembleManager(%s): Processing Acknoledgements. Received %d/%d", self._agent_name, len(self.acknowledgements), len(self.accepted_bids))
+        ettilog.logerr("AssembleManager(%s): Processing Acknoledgements. Received %d/%d from %s", self._agent_name, len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.bid.agent_name for acknowledgement in self.acknowledgements]))
 
         if len(self.acknowledgements) == len(self.accepted_bids):
-            rhbplog.loginfo("AssembleManager(%s): coordination successful. work can start", self._agent_name)
+            ettilog.loginfo("AssembleManager(%s): coordination successful. work can start", self._agent_name)
         else:
-            rhbplog.loginfo("AssembleManager(%s): coordination unsuccessful. cancelling...", self._agent_name)
+            ettilog.loginfo("AssembleManager(%s): coordination unsuccessful. cancelling...", self._agent_name)
+
+            self._assemble_knowledgebase.cancel_assemble_requests(self.generate_assemble_id())
             for bid in self.bids:
                     assignment = AssembleAssignment(
                         assigned = False,
                         deadline=0,
-                        bid = bid
+                        bid = bid,
                     )
                     self._pub_assemble_assignment.publish(assignment)
+
+        rospy.signal_shutdown("end of test")

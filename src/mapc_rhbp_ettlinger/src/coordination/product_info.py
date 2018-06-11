@@ -17,26 +17,33 @@ class ProductValueInfo(object):
 
         self._product_provider = ProductProvider(agent_name="agentA1")
 
-        self.product_worth = {
+
+    def get_product_worth(self, product):
+        # TODO: Temporarily
+        # This will be replaced with something that learns
+        product_worth = {
             "item0": 21.1214,
             "item1": 17.1214,
             "item3": 28.1214,
             "item4": 19.1214,
         }
-        self.goal_stock = {
+        return product_worth[product]
+
+
+    def get_goal_stock(self):
+        # TODO: Temporarily
+        # This will be replaced with something that learns
+
+        goal_stock = {
             "item5": 9,
             "item6": 4,
             "item7": 3,
-            "item8": 14,
+            "item8": 8,
             "item9": 2,
             "item10": 5,
         }
 
-
-
-    def get_product_worth(self, product):
-        return self.product_worth[product]
-
+        return goal_stock
 
     def update_product_worth(self, job):
         # TODO: Use jobs to check item worth
@@ -45,8 +52,9 @@ class ProductValueInfo(object):
 
     def choose_best_bid_combination(self, bids, manager_items):
 
-        best_combination = None
+        best_combination = []
         best_value = 0
+        best_finished_products = {}
 
         # Go through all combinations
         for L in range(1, len(bids) + 1):
@@ -81,7 +89,6 @@ class ProductValueInfo(object):
         #                     max_bid = current_bid
         # self.assign_bids(bids, combination)
         # TODO: Calculate best possible combination
-        # TODO: for now accept all from agent 2,3,5, reject 4
 
         return (best_combination, best_finished_products)
 
@@ -108,7 +115,7 @@ class ProductValueInfo(object):
         item_dict = copy.copy(item_dict)
         combination = {}
 
-        for item, count in reversed(sorted(self.goal_stock.items(), key=operator.itemgetter(1))):
+        for item, count in reversed(sorted(self.get_goal_stock().items(), key=operator.itemgetter(1))):
             ingredients = self._product_provider.get_ingredients_of_product(item)
 
             item_count = CalcUtil.dict_max_diff(ingredients, item_dict)
@@ -126,6 +133,6 @@ class ProductValueInfo(object):
         value = 0
 
         for item, count in combination.iteritems():
-            value += self.goal_stock.get(item, 0) * count
+            value += self.get_goal_stock().get(item, 0) * count
 
         return value

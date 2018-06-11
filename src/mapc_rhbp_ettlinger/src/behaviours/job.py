@@ -4,7 +4,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction
 
-from agent_knowledge.assist import AssistKnowledgebase
+from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.movement import MovementKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
@@ -125,7 +125,7 @@ class AssembleProductBehaviour(BehaviourBase):
         self._agent_name = agent_name
         self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self._assist_knowledge = AssistKnowledgebase()
+        self._assist_knowledge = AssembleKnowledgebase()
         self._product_providermethod = product_provider_method
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
@@ -167,7 +167,7 @@ class GoToWorkshopBehaviour(GoToFacilityBehaviour):
         self._product_provider_method = product_provider_method
         self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(self.agent._agent_name)
-        self.assist_knowledge = AssistKnowledgebase()
+        self.assist_knowledge = AssembleKnowledgebase()
 
     def do_step(self):
 

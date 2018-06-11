@@ -5,7 +5,7 @@ from mac_ros_bridge.msg import GenericAction
 from behaviour_components.goals import GoalBase
 from behaviours.assist import GoToAssistLocationBehaviour, AssistBehaviour
 from common_utils.agent_utils import AgentUtils
-from agent_knowledge.assist import AssistKnowledgebase
+from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.behaviours import BehaviourBase
@@ -34,7 +34,7 @@ class AssistNetworkBehaviour(NetworkBehaviour):
 
         self.assist_assigned_sensor = KnowledgeSensor(
             name='assist_assigned_sensor',
-            pattern=AssistKnowledgebase.generate_tuple(
+            pattern=AssembleKnowledgebase.generate_tuple(
                 assisting_agent=agent_name,
                 active=True))
 
