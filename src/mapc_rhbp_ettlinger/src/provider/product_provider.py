@@ -3,7 +3,7 @@ import copy
 
 import rospy
 from __builtin__ import xrange
-from mac_ros_bridge.msg import SimStart, Agent, Product
+from mac_ros_bridge.msg import SimStart, Agent, Product, Item
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
 from agent_knowledge.item import StockItemKnowledgebase
@@ -258,7 +258,7 @@ class ProductProvider(object):
         res = {}
 
         for product in self.finished_products.keys():
-            res[product] = 1
+            res[product] = 3
 
         return res
 
@@ -275,6 +275,10 @@ class ProductProvider(object):
             for ingredient in product.consumed_items:
                 res = CalcUtil.dict_sum(res, self.get_ingredients_of_product(ingredient.name, ingredient.amount * amount))
             return res
+
+    def get_roles_of_product(self, product_name):
+        product = self.products[product_name]
+        return product.required_roles
 
     def calculate_desired_ingredient_stock(self):
         desired_finished_product_stock = self.calculate_desired_finished_product_stock()
@@ -299,3 +303,14 @@ class ProductProvider(object):
             ingredients[ingredient] -= items_taken_from_inventory
 
         return ingredients
+
+    def get_items(self):
+        res = []
+        for item, amount in self._items_in_stock.iteritems():
+            if amount > 0:
+                res.append(Item(
+                    name=item,
+                    amount=amount
+                ))
+
+        return res

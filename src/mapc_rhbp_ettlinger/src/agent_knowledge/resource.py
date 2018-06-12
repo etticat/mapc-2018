@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-
+import rospy
 from mac_ros_bridge.msg import Resource, Position, Item
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase

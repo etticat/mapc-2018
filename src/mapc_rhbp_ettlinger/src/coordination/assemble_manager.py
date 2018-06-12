@@ -19,13 +19,19 @@ class AssembleManager(object):
     DEADLINE_BIDS = 0.5
     DEADLINE_ACKNOLEDGEMENT = 0.5
 
-    def __init__(self, agent_name):
+    def __init__(self, agent_name, role, product_provider = None):
 
-        self.items = []
         self._agent_name = agent_name
+        self._role = role
+        self.busy = False
+        self.workshop_position = None
 
         self._product_value_info = ProductValueInfo()
-        self._product_provider = ProductProvider(agent_name=self._agent_name)
+        if product_provider == None:
+            self._product_provider = ProductProvider(agent_name=self._agent_name)
+        else:
+            # TODO: This is only for testing
+            self._product_provider = product_provider
         self._assemble_knowledgebase = AssembleKnowledgebase()
 
         self.id = time.time() %512
@@ -47,6 +53,7 @@ class AssembleManager(object):
         The first step of the protocol
         :return:
         """
+        ettilog.logerr("AssembleManager(%s):: requesting assist", self._agent_name)
         request = AssembleRequest(
             deadline=time.time() + AssembleManager.DEADLINE_BIDS,
             destination = workshop,
@@ -54,6 +61,8 @@ class AssembleManager(object):
             id = self.generate_assemble_id(new_id=True)
         )
         self.bids = []
+        self.busy = True
+        self.workshop_position = workshop
         self._pub_assemble_request.publish(request)
 
         sleep_time = request.deadline - time.time()
@@ -83,18 +92,16 @@ class AssembleManager(object):
         :type bids: dict[]
         :return:
         """
-        max_bid = 0
-        combination = []
 
-        ettilog.loginfo("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
+        ettilog.logerr("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
 
-        # for bid in self.bids:
-
-        self.accepted_bids, finished_products = self._product_value_info.choose_best_bid_combination(self.bids, self.items)
+        self.accepted_bids, finished_products = self._product_value_info.choose_best_bid_combination(self.bids, self._product_provider.get_items(), self._role)
 
         if len(finished_products.keys()) == 0:
-            ettilog.logerr("No useful bid found")
+            ettilog.logerr("No useful bid combination found")
+            self.busy = False
             return
+
         rejected_bids = []
 
         for bid in self.bids:
@@ -107,15 +114,24 @@ class AssembleManager(object):
         ettilog.loginfo("AssembleManager(%s): Accepting %s bid(s)", self._agent_name, str(len(self.accepted_bids)))
         ettilog.loginfo("AssembleManager(%s): Rejecting %s bid(s)", self._agent_name, str(len(rejected_bids)))
 
+        products_to_assemble = []
+        products_to_assemble_others = []
+        # Distributing tasks: TODO: currently manager builds everything. in future others may build
+        for item, count in finished_products.iteritems():
+            for i in range(count):
+                products_to_assemble.append("assemble:" + item)
+                products_to_assemble_others.append("assist:" + self._agent_name)
+
+
         accepted = self._assemble_knowledgebase.save_assemble(AssembleTask(
             id=self.generate_assemble_id(),
             agent_name=self._agent_name,
-            pos=Position(0, 0),
-            tasks="assemble",
+            pos=self.workshop_position,
+            tasks=",".join(products_to_assemble),
             active=True
         ))
 
-        assert accepted == True #TODO: The manager should not have gotten a task in the meantime
+        assert accepted == True # The manager should not have gotten a task in the meantime
 
         deadline = time.time() + AssembleManager.DEADLINE_ACKNOLEDGEMENT
 
@@ -123,7 +139,8 @@ class AssembleManager(object):
             assignment = AssembleAssignment(
                 assigned = (bid in self.accepted_bids),
                 deadline=deadline,
-                bid = bid
+                bid = bid,
+                tasks = ",".join(products_to_assemble_others)
             )
 
             ettilog.loginfo("AssembleManager(%s): Publishing assignment for %s (%s)", self._agent_name, bid.agent_name, str(assignment.assigned))
@@ -169,4 +186,5 @@ class AssembleManager(object):
                     )
                     self._pub_assemble_assignment.publish(assignment)
 
-        rospy.signal_shutdown("end of test")
+        # rospy.signal_shutdown("end of test")
+        self.busy = False

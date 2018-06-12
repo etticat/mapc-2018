@@ -1,13 +1,17 @@
 import rospy
+from mac_ros_bridge.msg import Position
 
-from behaviour_components.activators import ThresholdActivator
+from agent_knowledge.assemble_task import AssembleKnowledgebase
+from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
+from coordination.assemble_manager import AssembleManager
 from provider.product_provider import ProductProvider
+from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorageAvailableForItemSensor
 from sensor.job import ProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
@@ -25,8 +29,8 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
         self.init_product_sensor(agent)
 
-        self.init_choose_finished_products_behaviour(agent, proximity)
-        self.init_go_to_resource_behaviour(agent, proximity)
+        self.init_choose_finished_products_behaviour(agent, msg.role)
+        self.init_go_to_workshop_behaviour(agent, proximity)
         self.init_assembly_behaviour(agent)
 
         # The goal is to have a full storage (so we can use it to assemble)
@@ -42,8 +46,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             name="assemble_product_behaviour",
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            behaviour_name=self.go_to_workshop_behaviour._name,
-            product_provider_method=self._product_provider.get_required_finished_products_for_hoarding
+            behaviour_name=self.go_to_workshop_behaviour._name
         )
         # Only assemble if we are at the intended resource node
         self.assemble_product_behaviour.add_precondition(
@@ -51,28 +54,27 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
         # only assemble if we have chosen an item to assemble
         self.assemble_product_behaviour.add_precondition(
-            precondition=Negation(self.has_all_finished_products_condition)
+            precondition=self.has_assemble_task_assigned_cond
         )
 
         # TODO: Add a proper effect
         self.assemble_product_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.remaining_finished_products_sensor.name,
+                sensor_name=self.assemble_organized_sensor.name,
                 indicator=-1.0,
                 sensor_type=float
 
             )
         )
 
-    def init_go_to_resource_behaviour(self, agent, proximity):
+    def init_go_to_workshop_behaviour(self, agent, proximity):
         ################ Going to Workshop #########################
         self.go_to_workshop_behaviour = GoToWorkshopBehaviour(
             agent=agent,
             agent_name=agent._agent_name,
             name="go_to_workshop",
             plannerPrefix=self.get_manager_prefix(),
-            topic="/workshop",
-            product_provider_method=self._product_provider.get_required_finished_products_for_hoarding
+            # TODO: Remove this method and use the data from the contract net
 
         )
         self.workshop_destination_sensor = DestinationDistanceSensor(
@@ -89,8 +91,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(self.at_workshop_condition))
         # only go to resource node if we have chosen an item to gather
         self.go_to_workshop_behaviour.add_precondition(
-            precondition=Negation(self.has_all_finished_products_condition)
-        )
+            precondition=self.has_assemble_task_assigned_cond)
 
         # Going to resource has the effect of decreasing the distance to go there
         self.go_to_workshop_behaviour.add_effect(
@@ -102,15 +103,16 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             )
         )
     def init_product_sensor(self, agent):
-        self.remaining_finished_products_sensor = ProductSensor(
-            name="remaining_finished_products_sensor",
-            agent_name=agent._agent_name,
-            product_provider_method=self._product_provider.get_required_finished_products_for_hoarding)
+        self.assemble_organized_sensor = KnowledgeSensor(
+            name="assemble_organized_sensor",
+            pattern=AssembleKnowledgebase.generate_tuple(
+                agent_name=agent._agent_name,
+                active=True))
 
-        self.has_all_finished_products_condition = Condition(
-            sensor=self.remaining_finished_products_sensor,
-            activator=AmountInListActivator(
-                amount=0
+        self.has_assemble_task_assigned_cond = Condition(
+            sensor=self.assemble_organized_sensor,
+            activator=BooleanActivator(
+                desiredValue=True
             ))
 
     def stop(self):
@@ -121,48 +123,43 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         self._product_provider.stop_assembly()
         super(AssembleNetworkBehaviour, self).stop()
 
-    def init_choose_finished_products_behaviour(self, agent, proximity):
-        self.choose_finished_products_behaviour = ChooseFinishedProductsBehaviour(
+    def init_choose_finished_products_behaviour(self, agent, role):
+        self.choose_finished_products_behaviour = CoordinateAssemblyBehaviour(
             name="choose_finished_products_behaviour",
             agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix()
+            plannerPrefix=self.get_manager_prefix(),
+            role=role.name
         )
 
         # only chose an item if we currently don't have a goal
         self.choose_finished_products_behaviour.add_precondition(
-            precondition=self.has_all_finished_products_condition
+            precondition=Negation(self.has_assemble_task_assigned_cond)
         )
 
         # Chosing an ingredient has the effect, that we have more ingredients to gather
         self.choose_finished_products_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.remaining_finished_products_sensor.name,
+                sensor_name=self.assemble_organized_sensor.name,
                 indicator=1.0,
                 sensor_type=bool
             )
         )
 
 
-class ChooseFinishedProductsBehaviour(BehaviourBase):
+class CoordinateAssemblyBehaviour(BehaviourBase):
 
-    def __init__(self, agent_name, **kwargs):
-        super(ChooseFinishedProductsBehaviour, self).__init__(**kwargs)
+    def __init__(self, agent_name, role, **kwargs):
+        super(CoordinateAssemblyBehaviour, self).__init__(requires_execution_steps=True, **kwargs)
 
-        self._product_provider = ProductProvider(agent_name=agent_name)
+        self._assemble_manager = AssembleManager(agent_name=agent_name, role=role)
 
     def do_step(self):
         # TODO: Make this super elaborate
-        # - Check what products we currently have few of
         # - Check which products usually result in most money
-        # - Check which ingredients other agents currently hold, how far they are way, ... (maybe negotiate with them) and invite those
         # - Decide who is the assembler (who gets the item)
         # - ...
-        # - Look into protocols that help with this task
-        # - put everything into a seperate file (or multiple)
 
-        self._product_provider.start_assembly({
-            "item5":0,
-            "item6":0,
-            "item7":0,
-            "item8":0
-        })
+        if self._assemble_manager.busy == False:
+            self._assemble_manager.request_assist(Position(lat=48.82456, long=2.31017))
+        else:
+            rospy.logerr("%s: manager busy", self._name)

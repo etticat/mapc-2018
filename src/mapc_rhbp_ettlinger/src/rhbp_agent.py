@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
+from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
 
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
@@ -13,7 +13,6 @@ from common_utils.agent_utils import AgentUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.assemble_manager import AssembleManager
 from network_behaviours.assemble import AssembleNetworkBehaviour
-from network_behaviours.assist import AssistNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
@@ -31,8 +30,7 @@ class RhbpAgent:
         :param agent_name:
         :type agent_name:  str
         """
-        self.facilityKnowledgebase = ResourceKnowledgebase()
-
+        self._resource_knowledgebase = ResourceKnowledgebase()
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
         # Take the name from the constructor parameter in case it was started from a development environment
@@ -64,10 +62,6 @@ class RhbpAgent:
         self._received_action_response = False
 
 
-        assemble_manager = AssembleManager(agent_name="agentA1")
-        assemble_contractor = AssembleContractor(agent_name="agentA1")
-
-        assemble_manager.request_assist("agentA1")
 
     def _sim_start_callback(self, msg):
         """
@@ -80,6 +74,10 @@ class RhbpAgent:
 
             self._sim_started = True
             rospy.loginfo(self._agent_name + " startet")
+
+            self.assemble_contractor = AssembleContractor(
+                agent_name=self._agent_name,
+                role=msg.role.name)
 
             # init only once, even when run restarts
             if not self._initialized:
@@ -124,12 +122,12 @@ class RhbpAgent:
             max_parallel_behaviours=1)
 
         ######################## Assist Network Behaviour ########################
-        self._assist_task_network = AssistNetworkBehaviour(
-            agent_name=self._agent_name,
-            name=self._agent_name + '/AssistNetwork',
-            plannerPrefix=self._agent_name,
-            msg = msg,
-            max_parallel_behaviours=1)
+        # self._assist_task_network = AssistNetworkBehaviour(
+        #     agent_name=self._agent_name,
+        #     name=self._agent_name + '/AssistNetwork',
+        #     plannerPrefix=self._agent_name,
+        #     msg = msg,
+        #     max_parallel_behaviours=1)
 
         ######################## Exploration Network Behaviour ########################
         self._exploration_network = ExplorationNetworkBehaviour(
@@ -156,12 +154,12 @@ class RhbpAgent:
 
         # Battery network has the effect of charging the battery
         # TODO: QQQ Is this needed?
-        self._battery_charging_network_behaviour.add_effects_and_goals([(
-            self._battery_charging_network_behaviour._charge_sensor,
-            Effect(
-                sensor_name=self._battery_charging_network_behaviour._charge_sensor.name,
-                indicator=1.0,
-                sensor_type=float))])
+        # self._battery_charging_network_behaviour.add_effects_and_goals([(
+        #     self._battery_charging_network_behaviour._charge_sensor,
+        #     Effect(
+        #         sensor_name=self._battery_charging_network_behaviour._charge_sensor.name,
+        #         indicator=1.0,
+        #         sensor_type=float))])
         
 
         # Only charge if charge is required
@@ -180,8 +178,8 @@ class RhbpAgent:
             precondition=self._job_performance_network.has_tasks_assigned_condition)
 
         # Only perform tasks when there is no assist required
-        self._job_performance_network.add_precondition(
-            precondition=Negation(self._assist_task_network.assist_assigned_condition))
+        # self._job_performance_network.add_precondition(
+        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
         ######################## Gathering Network Behaviour ########################
 
@@ -198,7 +196,7 @@ class RhbpAgent:
         )
         # Only gather when there is nothing to be assembled
         self._gathering_network.add_precondition(
-            precondition=self._assembly_network.has_all_finished_products_condition)
+            precondition=Negation(self._assembly_network.has_assemble_task_assigned_cond))
 
         # Only gather if there is no task assigned
         # TODO: We might want to allow this in the case where the agent does not have all items for the task
@@ -208,8 +206,8 @@ class RhbpAgent:
             precondition=Negation(self._job_performance_network.has_tasks_assigned_condition))
 
         # Only perform gather when there is no assist required
-        self._gathering_network.add_precondition(
-            precondition=Negation(self._assist_task_network.assist_assigned_condition))
+        # self._gathering_network.add_precondition(
+        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
         # Only gather if all resources are discovered
         self._gathering_network.add_precondition(
@@ -226,19 +224,19 @@ class RhbpAgent:
             precondition=Disjunction(
                 # Start it when the storage is full
                 Negation(self._gathering_network.next_item_fits_in_storage_condition),
-                # But keep it active until all products are assembled
-                Negation(self._assembly_network.has_all_finished_products_condition)
+                # But also keep this network active when task is assigned
+                self._assembly_network.has_assemble_task_assigned_cond
             )
         )
 
         # Only assist when an assist_task is assigned
         # TODO: QQQ This should not be required. as the network should not be executed anyway when the goal is fulfilled.
-        self._assist_task_network.add_precondition(
-            precondition=self._assist_task_network.assist_assigned_condition)
+        # self._assist_task_network.add_precondition(
+        #     precondition=self._assist_task_network.assist_assigned_condition)
 
         # Only assemble, when there is no assist required
-        self._assembly_network.add_precondition(
-            precondition=Negation(self._assist_task_network.assist_assigned_condition))
+        # self._assembly_network.add_precondition(
+        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
 
 
 
@@ -266,11 +264,11 @@ class RhbpAgent:
 
         # TODO: Do I need these #33-1
         # Seems to work without. With them I get errors but it continues to run normally
-        self._job_performance_goal = GoalBase(
-            name='score_goal',
-            permanent=True,
-            plannerPrefix=self._agent_name,
-            conditions=[Negation(self._job_performance_network.has_tasks_assigned_condition)])
+        # self._job_performance_goal = GoalBase(
+        #     name='score_goal',
+        #     permanent=True,
+        #     plannerPrefix=self._agent_name,
+        #     conditions=[Negation(self._job_performance_network.has_tasks_assigned_condition)])
 
         rospy.logerr("behaviour connections initialized")
     def _callback_generic_action(self, msg):
@@ -279,6 +277,7 @@ class RhbpAgent:
         :param msg: ros message
         :type msg: GenericAction
         """
+        # rospy.logerr("action response %s", str(msg))
         self._received_action_response = True
 
     def _sim_end_callback(self, msg):
@@ -305,35 +304,37 @@ class RhbpAgent:
         """
 
         start_time = rospy.get_rostime()
-        rospy.logdebug("RhbpAgent::callback %s", str(msg))
+        # rospy.logerr("-------------------------------------- Step %d (action_request) --------------------------------------", msg.simulation_step)
 
         self.agent_info = msg.agent
 
         for resource in msg.resources:
-            self.facilityKnowledgebase.add_new_resource(resource)
+            self._resource_knowledgebase.add_new_resource(resource)
 
         self._received_action_response = False
 
-        # for i in range(len(self._gathering_network._preconditions)):
-        #     rospy.logerr("precondition (%s): %s",self._gathering_network._preconditions[i]._name, str(self._gathering_network._get_satisfactions()[i]))
+        # for i in range(len(self._assembly_network._preconditions)):
+        #     rospy.logerr("precondition (%s): %s",self._assembly_network._preconditions[i]._name, str(self._assembly_network._get_satisfactions()[i]))
         #
         # rospy.logerr("------")
 
         stock_item_knowledgebase = StockItemKnowledgebase()
         all = stock_item_knowledgebase.get_total_stock_and_goals()
 
-        for item in all.keys():
-            rospy.logerr("%s: %s/%s",item, str(all[item]["stock"]), str(all[item]["goal"]))
+        # for item in all.keys():
+        #     rospy.logerr("%s: %s/%s",item, str(all[item]["stock"]), str(all[item]["goal"]))
 
         start_time = rospy.get_rostime()
+        steps = 0
         # wait for generic action response (send by any behaviour)
         while not self._received_action_response:
+            steps += 1
             self._manager.step() # selected behaviours eventually trigger action
             # Recharge if decision-making-time > 3.9 seconds
             if (rospy.get_rostime() - start_time).to_sec() > 3.9:
-                rospy.logerr(
-                    "%s: Decision-making duration exceeded 3.9 seconds. Recharging.",
-                    self._agent_name)
+                rospy.loginfo(
+                    "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
+                    self._agent_name, steps)
                 #
                 # pub_generic_action = rospy.Publisher(
                 #     self._agent_topic_prefix + 'generic_action',
@@ -343,7 +344,7 @@ class RhbpAgent:
                 break
 
         duration = rospy.get_rostime() - start_time
-        rospy.logerr("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
+        rospy.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
 
 

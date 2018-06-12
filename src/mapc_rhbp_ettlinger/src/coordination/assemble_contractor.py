@@ -10,20 +10,28 @@ from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 
 import utils.rhbp_logging
+from provider.product_provider import ProductProvider
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
 
 class AssembleContractor:
 
 
-    def __init__(self, agent_name):
+    def __init__(self, agent_name, role, product_provider=None):
 
-        self.agent_name = agent_name
+        self._agent_name = agent_name
+        self.role = role
         self.current_task = None
-        self.items = []
         self._assemble_knowledgebase = AssembleKnowledgebase()
 
-        self.busy = self._assemble_knowledgebase.get_assemble_task(self.agent_name) != None
+
+        if product_provider == None:
+            self._product_provider = ProductProvider(agent_name=self._agent_name)
+        else:
+            # TODO: This is only for testing
+            self._product_provider = product_provider
+
+        self.busy = self._assemble_knowledgebase.get_assemble_task(self._agent_name) != None
 
         prefix = AgentUtils.get_assemble_prefix()
 
@@ -34,11 +42,14 @@ class AssembleContractor:
 
 
     def _callback_request(self, request):
-        if self.current_task == None:
+        """
+
+        :param request:
+        :type request: AssembleRequest
+        :return:
+        """
+        if self.current_task == None and self.busy == False and self._agent_name != request.agent_name:
             self.send_bid(request)
-
-
-
 
     def send_bid(self, request):
 
@@ -49,11 +60,13 @@ class AssembleContractor:
         bid = AssembleBid(
             id=request.id,
             bid = random.randint(0,7),
-            agent_name = self.agent_name,
-            items = self.items # TODO: Read from db
+            agent_name = self._agent_name,
+            items = self._product_provider.get_items(), # TODO: Read from db
+            role = self.role,
+            request = request
         )
 
-        rhbplog.loginfo("AssembleContractor(%s):: bidding on %s: %s",self.agent_name, request.id, bid.bid)
+        rhbplog.logerr("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
         self._pub_assemble_bid.publish(bid)
 
         self.current_task = request.id
@@ -63,9 +76,9 @@ class AssembleContractor:
     def _callback_assign(self, assembleAssignment):
 
 
-        if assembleAssignment.bid.agent_name != self.agent_name or self.current_task != assembleAssignment.bid.id:
+        if assembleAssignment.bid.agent_name != self._agent_name or self.current_task != assembleAssignment.bid.id:
             return
-        rhbplog.loginfo("AssembleContractor(%s):: Received assignage for %s", self.agent_name, assembleAssignment.bid.id)
+        rhbplog.logerr("AssembleContractor(%s):: Received assignage for %s", self._agent_name, assembleAssignment.bid.id)
 
         if assembleAssignment.assigned == False:
             self.busy = False
@@ -77,9 +90,9 @@ class AssembleContractor:
 
             accepted = self._assemble_knowledgebase.save_assemble(AssembleTask(
                 id=assembleAssignment.bid.id,
-                agent_name=self.agent_name,
-                pos=Position(0, 0),
-                tasks="assist",
+                agent_name=self._agent_name,
+                pos=assembleAssignment.bid.request.destination,
+                tasks=assembleAssignment.tasks,
                 active=True
             ))
             acknoledgement = AssembleAcknowledgement(

@@ -2,7 +2,8 @@ import random
 
 import rospy
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import GenericAction
+from mac_ros_bridge.msg import GenericAction, Agent
+from mapc_rhbp_ettlinger.msg import AssembleTaskProgress
 
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.movement import MovementKnowledgebase
@@ -46,7 +47,7 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
                 facilities = self._facility_knowledge.get_resources_for_items(neededIngredient)
                 if len(facilities) > 0:
                     closest_facility = AgentUtils.calculate_closest_facility(self._agent.agent_info.pos, facilities)
-                    self._selected_destination = closest_facility
+                    self._selected_destination = closest_facility.name
                     return closest_facility.pos
 
         else:
@@ -117,20 +118,70 @@ class AssembleProductBehaviour(BehaviourBase):
     """
     Behaviour for the assembly of a product
     """
-    def __init__(self, agent_name, product_provider_method, **kwargs):
+    def __init__(self, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \
             .__init__(
             requires_execution_steps=True,
             **kwargs)
+        self.assemble_task = None
         self._agent_name = agent_name
+        self._last_task = None
+        self._last_goal = None
         self._task_knowledge = TaskKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self._assist_knowledge = AssembleKnowledgebase()
-        self._product_providermethod = product_provider_method
+        self._assemble_knowledgebase = AssembleKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
             queue_size=10)
+
+        self._task_progress_dict = {}
+
+        self._pub_assemble_progress = rospy.Publisher(
+            AgentUtils.get_assemble_prefix() + "progress",
+            AssembleTaskProgress,
+            queue_size=10)
+
+        rospy.Subscriber(AgentUtils.get_assemble_prefix() + "progress", AssembleTaskProgress, self._callback_task_progress)
+
+        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent, self._action_request_agent)
+
+    def _callback_task_progress(self, assembleTaskProgress):
+        """
+
+        :param assembleTaskProgress:
+        :type assembleTaskProgress: AssembleTaskProgress
+        :return:
+        """
+        self._task_progress_dict[assembleTaskProgress.id] = assembleTaskProgress.step
+
+    def _action_request_agent(self, agent):
+        """
+
+        :param agent:
+        :type agent: Agent
+        :return:
+        """
+        # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
+        if self._last_task == "assemble" and agent.last_action == "assemble" and agent.last_action_result == "successful":
+            rospy.logerr("Last action assemble assemble")
+            self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
+            if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
+                # If there are still tasks to do, inform all others that the next task will be performed
+                rospy.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
+                assembleTaskCoordination = AssembleTaskProgress(
+                    id=self.assemble_task.id,
+                    step=self._get_assemble_step()
+                )
+                self._pub_assemble_progress.publish(assembleTaskCoordination)
+            else:
+                # If this was the last task -> cancel the assembly
+                rospy.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
+                self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_task.id)
+        elif agent.last_action == "assemble":
+            rospy.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+
+
 
     def action_assemble(self, item):
         """
@@ -145,45 +196,72 @@ class AssembleProductBehaviour(BehaviourBase):
 
         self._pub_generic_action.publish(action)
 
+    def action_assist_assemble(self, agent):
+        """
+        Performs the assist asemble action and publishes it towards the mac_ros_bridge
+        :param agent: str
+        :return:
+        """
+        action = GenericAction()
+        action.action_type = Action.ASSIST_ASSEMBLE
+        action.params = [
+            KeyValue("Agent", str(agent))]
+
+        self._pub_generic_action.publish(action)
+
+    def start(self):
+
+        self.assemble_task = self._assemble_knowledgebase.get_assemble_task(agent=self._agent_name)
+
+        super(AssembleProductBehaviour, self).start()
+
     def do_step(self):
-        products = self._product_providermethod()
-        if len(products) > 0:
-            self.action_assemble(products[0])
-        rospy.logerr("AssembleProductBehaviour:: assembling %s", str(products)  )
+        assert self.assemble_task != None
+        products = self.assemble_task.tasks.split(",")
+        if len(products) > 0 and self._get_assemble_step() < len(products):
+            (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
+            if self._last_task == "assemble":
+                self.action_assemble(self._last_goal)
+            elif self._last_task == "assist":
+                self.action_assist_assemble(self._last_goal)
+            else:
+                rospy.logerr("AssembleProductBehaviour(%s):: Invalid task", self._agent_name)
+
+            rospy.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name, self._get_assemble_step()+1, len(products), products[self._get_assemble_step()])
+        else:
+            rospy.logerr("This should never happen. Assembly is executed after all tasks are finished")
 
     def stop(self):
         # Once assembly is done, free all agents from assignemt task
-        self._assist_knowledge.cancel_assist_requests(agent_name=self._agent_name)
+        # self._assist_knowledge.cancel_assemble_requests(agent_name=self._agent_name)
 
+        self.assemble_task = None
         super(AssembleProductBehaviour, self).stop()
 
+    def _get_assemble_step(self):
+        return self._task_progress_dict.get(self.assemble_task.id, 0)
 
-class GoToWorkshopBehaviour(GoToFacilityBehaviour):
 
-    def __init__(self, product_provider_method, **kwargs):
+class GoToWorkshopBehaviour(GotoLocationBehaviour):
+
+    def __init__(self, **kwargs):
         super(GoToWorkshopBehaviour, self).__init__(
             **kwargs)
         self._selected_facility = None
-        self._product_provider_method = product_provider_method
         self._task_knowledge = TaskKnowledgebase()
-        self._product_provider = ProductProvider(self.agent._agent_name)
-        self.assist_knowledge = AssembleKnowledgebase()
+        self._product_provider = ProductProvider(self._agent_name)
+        self._assemble_knowledge = AssembleKnowledgebase()
 
-    def do_step(self):
+    def _select_pos(self):
+        assemble_task = self._assemble_knowledge.get_assemble_task(agent=self._agent_name)
+        if assemble_task is None:
+            rospy.logerr("no task assigned")
+            return
+        return assemble_task.pos
 
-        super(GoToWorkshopBehaviour, self).do_step()
-        if self._selected_pos != None:
-            # TODO: only do this once
-            self.request_assist()
-
-    def request_assist(self):
-        # TODO: This should be done in own behaviour ideally
-        finished_products = self._product_provider_method()
-        for product in finished_products:
-            # TODO: Do this recursive so we can make items that are needed to build other items
-            for role in self._product_provider.get_product_by_name(product).required_roles:
-                self.assist_knowledge.request_assist(agent_name=self._agent_name, role=role, pos=self._selected_pos)
-        pass
+    def start(self):
+        self._selected_pos = False
+        super(GoToWorkshopBehaviour, self).start()
 
 
 class DeliverJobBehaviour(BehaviourBase):

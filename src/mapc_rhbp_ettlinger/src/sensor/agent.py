@@ -49,5 +49,5 @@ class StorageAvailableForItemSensor(Sensor):
                 if load_after_gathering >=0:
                     load_after_gathering_final = load_after_gathering
 
-        rospy.loginfo("StorageAvailableForItemSensor::load_after_gathering_final: %s", str(load_after_gathering_final))
+
         self.update(load_after_gathering_final)

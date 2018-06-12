@@ -48,11 +48,12 @@ catkin_python_setup()
 add_message_files(
   FILES
   Task.msg
-  AssembleBid.msg
   AssembleRequest.msg
+  AssembleBid.msg
   AssembleAssignment.msg
   AssembleAcknowledgement.msg
   AssembleTask.msg
+  AssembleTaskProgress.msg
   StockItem.msg
   StockItemMsg.msg
   Movement.msg

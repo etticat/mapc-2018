@@ -50,7 +50,7 @@ class ProductValueInfo(object):
         # TODO: Also update ideal number of items
         pass
 
-    def choose_best_bid_combination(self, bids, manager_items):
+    def choose_best_bid_combination(self, bids, manager_items, manager_role):
 
         best_combination = []
         best_value = 0
@@ -59,11 +59,11 @@ class ProductValueInfo(object):
         # Go through all combinations
         for L in range(1, len(bids) + 1):
             for subset in itertools.combinations(bids, L):
-                stringi = ""
+                stringi = "agentA1(" + manager_role + ") - "
                 for item in subset:
-                    stringi = stringi + item.agent_name + " - "
+                    stringi = stringi + item.agent_name + "(" + item.role + ")" + " - "
 
-                combination = self.generate_best_combination(subset, manager_items)
+                combination = self.generate_best_combination(subset, manager_items, manager_role)
 
                 value = self.generate_value_from_combination(combination)
 
@@ -92,17 +92,21 @@ class ProductValueInfo(object):
 
         return (best_combination, best_finished_products)
 
-    def generate_best_combination(self, subset, manager_items):
+    def generate_best_combination(self, subset, manager_items, manager_role):
         item_dict = {}
+        roles = []
 
         for item in manager_items:
             item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
 
+        roles.append(manager_role)
+
         for bid in subset:
             for item in bid.items:
                 item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
+            roles.append(bid.role)
 
-        finished_products = self.generate_best_finished_product_combination(item_dict)
+        finished_products = self.generate_best_finished_product_combination(item_dict, roles)
 
         # for finished_product in self._product_provider.finished_products.keys():
         #     ingredients = self._product_provider.get_ingredients_of_product(finished_product)
@@ -110,14 +114,22 @@ class ProductValueInfo(object):
 
         return finished_products
 
-    def generate_best_finished_product_combination(self, item_dict):
+    def generate_best_finished_product_combination(self, item_dict, roles):
 
         item_dict = copy.copy(item_dict)
         combination = {}
 
         for item, count in reversed(sorted(self.get_goal_stock().items(), key=operator.itemgetter(1))):
+            required_roles = self._product_provider.get_roles_of_product(item)
             ingredients = self._product_provider.get_ingredients_of_product(item)
 
+            all_roles_available = True
+            for required_role in required_roles: # TODO: Do this more elegant
+                if required_role not in roles:
+                    all_roles_available = False
+
+            if all_roles_available == False:
+                continue
             item_count = CalcUtil.dict_max_diff(ingredients, item_dict)
 
             if item_count > 0:
