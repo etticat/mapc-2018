@@ -7,7 +7,6 @@ from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssign
 
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
-from coordination.product_info import ProductValueInfo
 
 import utils.rhbp_logging
 from provider.product_provider import ProductProvider
@@ -26,7 +25,6 @@ class AssembleManager(object):
         self.busy = False
         self.workshop_position = None
 
-        self._product_value_info = ProductValueInfo()
         if product_provider == None:
             self._product_provider = ProductProvider(agent_name=self._agent_name)
         else:
@@ -95,7 +93,7 @@ class AssembleManager(object):
 
         ettilog.logerr("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
 
-        self.accepted_bids, finished_products = self._product_value_info.choose_best_bid_combination(self.bids, self._product_provider.get_items(), self._role)
+        self.accepted_bids, finished_products = self._product_provider.choose_best_bid_combination(self.bids, self._product_provider.get_items(), self._role)
 
         if len(finished_products.keys()) == 0:
             ettilog.logerr("No useful bid combination found")

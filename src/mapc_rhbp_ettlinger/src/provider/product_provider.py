@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 import copy
+import itertools
+import operator
 
 import rospy
-from __builtin__ import xrange
 from mac_ros_bridge.msg import SimStart, Agent, Product, Item
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
@@ -10,13 +11,13 @@ from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.tasks import TaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
+from common_utils.singleton import Singleton
 
 
 class ProductProvider(object):
-
+    __metaclass__ = Singleton
 
     def __init__(self, agent_name):
-        # TODO: Make this a singleton. (And all other providers and knowledgebases. this should keep the load a little bit lower
 
         self.products = {}
         self.base_ingredients = {}
@@ -36,37 +37,14 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
-        rospy.Subscriber(
-            AgentUtils.get_internal_prefix(agent_name=agent_name) + "stock_goal",
-            StockItemMsg,
-            self._callback_stock_goal)
-        self._pub_stock_msg = rospy.Publisher(
-            AgentUtils.get_internal_prefix(agent_name=agent_name) + "stock_goal",
-            StockItemMsg
-            , queue_size=10)
-
         self._task_knowledgebase = TaskKnowledgebase()
         self._stock_item_knowledgebase = StockItemKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
-    def _callback_stock_goal(self, stockMsg):
-        """
-
-        :param stockMsg:
-        :type stockMsg: StockItemMsg
-        :return:
-        """
-        for stock_item in stockMsg.stock_items:
-            if stock_item.item in self.base_ingredients.keys():
-                self._gather_goal[stock_item.item] = stock_item.goal
-            elif stock_item.item in self.finished_products.keys():
-                self._assemble_goal[stock_item.item] = stock_item.goal
-
-
     def _callback_agent(self, msg):
         """
-
+        Retreives the current state of stock items for use in other methods
         :param msg:
         :type msg: Agent
         :return:
@@ -81,26 +59,16 @@ class ProductProvider(object):
 
 
         if items_in_stock_new != self._items_in_stock:
-            # for index in items_in_stock_new.keys():
-            #     rospy.logerr("%s: %s", str(index), str(items_in_stock_new[index]))
             self._items_in_stock = items_in_stock_new
-            self.save_stock_and_goals()
-
-
+            self.save_stock_and_sock_goals()
 
         self.load_max = msg.load_max
         self.load = msg.load
         self.load_free = msg.load_max - msg.load
 
-
-        # Show all ingredient volumes of all products
-        # for i in self.products.keys():
-        #     rospy.logerr("ProductProvider:: %s volume: %s total volume: %s", i, self.calculate_total_volume({i:1}), self.calculate_total_volume(self.get_ingredients_of_product(i)))
-        rospy.loginfo("ProductProvider:: Required ingredients: %s", str(self.calculate_desired_ingredient_stock()))
-
     def _callback_sim_start(self, msg):
         """
-
+        Retreives the products of the current simulation and their details
         :param msg:
         :type msg: SimStart
         :return:
@@ -112,57 +80,9 @@ class ProductProvider(object):
             else:
                 self.base_ingredients[product.name] = product
 
-
-    def get_required_finished_products_for_tasks(self):
-        all_required_finished_products = self._task_knowledgebase.get_tasks(
-            agent_name=self._agent_name,
-            status="assigned")
-
-        items_in_stock = copy.copy(self._items_in_stock)
-
-        still_required_finished_products = []
-
-        for product in all_required_finished_products:
-            if (items_in_stock.get(product.item, 0) > 0): # we already have the item
-                items_in_stock[product.item] -= 1
-            else: # we still need the item
-                still_required_finished_products.append(product.item)
-
-        return still_required_finished_products
-
-    def get_required_ingredients_for_tasks(self):
-        all_tasks = self._task_knowledgebase.get_tasks(
-            agent_name=self._agent_name,
-            status="assigned")
-
-        items_in_stock = copy.copy(self._items_in_stock)
-
-        still_needed_ingredients = []
-
-        while len(all_tasks ) > 0:
-            task = all_tasks.pop()
-
-            if (items_in_stock.get(task.item, 0) > 0):  # we already have the item
-                items_in_stock[task.item] -= 1
-            else:
-                ingredients = list(self.products[task.item].consumed_items)
-                while len(ingredients) > 0:
-                    ingredient = ingredients.pop()
-
-                    if len(self.products[ingredient.name].consumed_items) > 0: # If ingredient requires assembly
-                        ingredients.extend(self.products[ingredient.name].consumed_items)
-                    else:
-                        for ingredient_index in xrange(ingredient.amount):
-                            if items_in_stock.get(ingredient.name, 0) > 0:
-                                items_in_stock[ingredient.name] -= 1
-                            else:
-                                still_needed_ingredients.append(ingredient.name)
-
-        return still_needed_ingredients
-
     def get_product_by_name(self, product):
         """
-
+        Returns the product by name
         :param product:
         :return: Product
         """
@@ -171,16 +91,13 @@ class ProductProvider(object):
     def get_base_ingredients(self):
         return self.base_ingredients
 
-    def save_stock_and_goals(self, publish_goals=False):
+    def save_stock_and_sock_goals(self):
         msg = StockItemMsg()
         for index in self._items_in_stock.keys():
             item = StockItem(agent=self._agent_name, item=index, amount=self._items_in_stock[index],
                              goal=self._gather_goal.get(index, 0) + self._assemble_goal.get(index, 0))
             self._stock_item_knowledgebase.update_stock(item)
             msg.stock_items.append(item)
-
-        if publish_goals:
-            self._pub_stock_msg.publish(msg)
 
     def start_gathering(self, item_to_focus):
 
@@ -191,19 +108,19 @@ class ProductProvider(object):
         self._gather_goal = {
             item_to_focus: items_to_carry + self._items_in_stock.get(item_to_focus, 0)
         }
+        self.save_stock_and_sock_goals()
 
-        self.save_stock_and_goals(publish_goals=True)
     def start_assembly(self, items_to_assemble):
         self._assemble_goal = items_to_assemble
-        self.save_stock_and_goals(publish_goals=True)
+        self.save_stock_and_sock_goals()
 
     def stop_gathering(self):
         self._gather_goal = {}
-        self.save_stock_and_goals(publish_goals=True)
+        self.save_stock_and_sock_goals()
 
     def stop_assembly(self):
         self._assemble_goal = {}
-        self.save_stock_and_goals(publish_goals=True)
+        self.save_stock_and_sock_goals()
 
     def get_required_ingredients_for_hoarding(self):
         """
@@ -314,3 +231,112 @@ class ProductProvider(object):
                 ))
 
         return res
+    
+
+    def choose_best_bid_combination(self, bids, manager_items, manager_role):
+
+        best_combination = []
+        best_value = 0
+        best_finished_products = {}
+
+        # Go through all combinations
+        for L in range(1, len(bids) + 1):
+            for subset in itertools.combinations(bids, L):
+                stringi = "agentA1(" + manager_role + ") - "
+                for item in subset:
+                    stringi = stringi + item.agent_name + "(" + item.role + ")" + " - "
+
+                combination = self.generate_best_combination(subset, manager_items, manager_role)
+
+                value = self.generate_value_from_combination(combination)
+
+                # if value > 0:
+                #     rospy.logerr(stringi + str(value))
+
+                if value > best_value:
+                    best_value = value
+                    best_combination = subset
+                    best_finished_products = combination
+
+        return (best_combination, best_finished_products)
+
+    def generate_best_combination(self, subset, manager_items, manager_role):
+        item_dict = {}
+        roles = []
+
+        for item in manager_items:
+            item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
+
+        roles.append(manager_role)
+
+        for bid in subset:
+            for item in bid.items:
+                item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
+            roles.append(bid.role)
+
+        finished_products = self.generate_best_finished_product_combination(item_dict, roles)
+
+        return finished_products
+    
+
+
+    def get_product_worth(self, product):
+        # TODO: Temporarily
+        # This will be replaced with something that learns
+        product_worth = {
+            "item0": 21.1214,
+            "item1": 17.1214,
+            "item3": 28.1214,
+            "item4": 19.1214,
+        }
+        return product_worth[product]
+
+
+    def get_goal_stock(self):
+        # TODO: Temporarily
+        # This will be replaced with something that learns
+
+        goal_stock = {
+            "item5": 9,
+            "item6": 4,
+            "item7": 3,
+            "item8": 8,
+            "item9": 2,
+            "item10": 5,
+        }
+
+        return goal_stock
+
+    def update_product_worth(self, job):
+        # TODO: Use jobs to check item worth
+        # TODO: Also update ideal number of items
+        pass
+
+    def generate_best_finished_product_combination(self, item_dict, roles):
+
+        item_dict = copy.copy(item_dict)
+        combination = {}
+
+        for item, count in reversed(sorted(self.get_goal_stock().items(), key=operator.itemgetter(1))):
+            required_roles = self.get_roles_of_product(item)
+            if set(required_roles).issubset(roles):
+                ingredients = self.get_ingredients_of_product(item)
+                item_count = CalcUtil.dict_max_diff(ingredients, item_dict)
+
+                if item_count > 0:
+                    combination[item] = item_count
+
+                item_dict = CalcUtil.dict_diff(item_dict, self.get_ingredients_of_product(item, item_count))
+
+        return combination
+
+    def generate_value_from_combination(self, combination):
+        # TODO: There needs to be a better logic behind this
+
+        value = 0
+
+        for item, count in combination.iteritems():
+            value += self.get_goal_stock().get(item, 0) * count
+
+        return value
+

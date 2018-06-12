@@ -11,8 +11,8 @@ class ChooseIngredientBehaviour(BehaviourBase):
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def do_step(self):
-        stock = self._product_provider.calculate_desired_ingredient_stock()
         item_to_focus = None
+        stock = self._product_provider.calculate_desired_ingredient_stock()
         items_needed = 0
 
         # Selecting the item that we need the most of
@@ -26,7 +26,7 @@ class ChooseIngredientBehaviour(BehaviourBase):
                     items_needed = stock[item]
                     item_to_focus = item
 
-        if item_to_focus != None:
+        if item_to_focus is not None:
             self._product_provider.start_gathering(item_to_focus)
             rospy.logerr("ChooseIngredientBehaviour:: Chosing item %s", item_to_focus)
         else:

@@ -160,6 +160,6 @@ class CoordinateAssemblyBehaviour(BehaviourBase):
         # - ...
 
         if self._assemble_manager.busy == False:
-            self._assemble_manager.request_assist(Position(lat=48.82456, long=2.31017))
+            self._assemble_manager.request_assist(Position(lat=48.82456, long=2.31017)) # TODO: find closest one
         else:
             rospy.logerr("%s: manager busy", self._name)

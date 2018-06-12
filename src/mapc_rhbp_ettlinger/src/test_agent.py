@@ -1,7 +1,7 @@
 import time
 
 import rospy
-from mac_ros_bridge.msg import Item
+from mac_ros_bridge.msg import Item, Position
 
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_contractor import AssembleContractor
@@ -76,7 +76,7 @@ class TestAgent(object):
 
         time.sleep(1)
         rospy.logerr("Request assist")
-        self.assemble_manager.request_assist("workshop4")
+        self.assemble_manager.request_assist(Position(lat=48.82456, long=2.31017))
 
 class FakeProductProvider(ProductProvider):
 
