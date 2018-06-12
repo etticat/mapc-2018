@@ -14,7 +14,7 @@ from provider.product_provider import ProductProvider
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
 
-class AssembleContractor:
+class AssembleContractor(object):
 
 
     def __init__(self, agent_name, role, product_provider=None):
@@ -48,7 +48,7 @@ class AssembleContractor:
         :type request: AssembleRequest
         :return:
         """
-        if self.current_task == None and self.busy == False and self._agent_name != request.agent_name:
+        if self.current_task is None and self.busy is False:
             self.send_bid(request)
 
     def send_bid(self, request):
@@ -81,8 +81,10 @@ class AssembleContractor:
         rhbplog.logerr("AssembleContractor(%s):: Received assignage for %s", self._agent_name, assembleAssignment.bid.id)
 
         if assembleAssignment.assigned == False:
+            rhbplog.logerr("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
             self.busy = False
             return
+        rhbplog.logerr("AssembleContractor(%s):: Received assignment for %s", self._agent_name, assembleAssignment.bid.id)
 
         is_still_possible = True # TODO check if agent is still idle
 

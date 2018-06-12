@@ -4,7 +4,7 @@ import itertools
 import operator
 
 import rospy
-from mac_ros_bridge.msg import SimStart, Agent, Product, Item
+from mac_ros_bridge.msg import SimStart, Agent, Item
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
 from agent_knowledge.item import StockItemKnowledgebase
@@ -233,41 +233,36 @@ class ProductProvider(object):
         return res
     
 
-    def choose_best_bid_combination(self, bids, manager_items, manager_role):
+    def choose_best_bid_combination(self, bids):
 
         best_combination = []
         best_value = 0
         best_finished_products = {}
 
-        # Go through all combinations
-        for L in range(1, len(bids) + 1):
-            for subset in itertools.combinations(bids, L):
-                stringi = "agentA1(" + manager_role + ") - "
-                for item in subset:
-                    stringi = stringi + item.agent_name + "(" + item.role + ")" + " - "
+        if len(bids) >= 2:
+            # Go through all combinations
+            for L in range(2, len(bids) + 1):
+                for subset in itertools.combinations(bids, L):
+                    stringi = ""
+                    for item in subset:
+                        stringi = stringi + item.agent_name + "(" + item.role + ")" + " - "
 
-                combination = self.generate_best_combination(subset, manager_items, manager_role)
+                    combination = self.generate_best_combination(subset)
 
-                value = self.generate_value_from_combination(combination)
+                    value = self.generate_value_from_combination(combination)
 
-                # if value > 0:
-                #     rospy.logerr(stringi + str(value))
+                    # rospy.logerr(stringi + str(value) + str(combination))
 
-                if value > best_value:
-                    best_value = value
-                    best_combination = subset
-                    best_finished_products = combination
+                    if value > best_value:
+                        best_value = value
+                        best_combination = subset
+                        best_finished_products = combination
 
         return (best_combination, best_finished_products)
 
-    def generate_best_combination(self, subset, manager_items, manager_role):
+    def generate_best_combination(self, subset):
         item_dict = {}
         roles = []
-
-        for item in manager_items:
-            item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
-
-        roles.append(manager_role)
 
         for bid in subset:
             for item in bid.items:

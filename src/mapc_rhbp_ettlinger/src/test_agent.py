@@ -16,6 +16,10 @@ class TestAgent(object):
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
         self.assemble_manager = AssembleManager(
             agent_name="agentA1",
+            role="drone"
+        )
+        self.assemble_contractor_0 = AssembleContractor(
+            agent_name="agentA1",
             role="drone",
             product_provider=FakeProductProvider(
                 agent_name="agentA1",
