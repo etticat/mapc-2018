@@ -37,17 +37,15 @@ class StorageAvailableForItemSensor(Sensor):
         :return:
         """
 
-        stock = self._product_provider.calculate_desired_ingredient_stock()
         load_free = msg.load_max - msg.load
 
         load_after_gathering_final = -1
 
-        for item in stock.keys():
-            if stock[item] > 0:
-                product = self._product_provider.get_product_by_name(item)
-                load_after_gathering = load_free - product.volume
-                if load_after_gathering >=0:
-                    load_after_gathering_final = load_after_gathering
-
+        for item, already_in_stock_items in self._product_provider.ingredient_priority():
+            product = self._product_provider.get_product_by_name(item)
+            load_after_gathering = load_free - product.volume
+            if load_after_gathering >=0:
+                load_after_gathering_final = load_after_gathering
+                break
 
         self.update(load_after_gathering_final)

@@ -72,7 +72,7 @@ class MovementKnowledgebase(BaseKnowledgebase):
         search = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name)
         new = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name, active=True, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
 
-        rospy.logerr("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
+        rospy.loginfo("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
         ret_value = self._kb_client.update(search, new, push_without_existing = True)
 
     def stop_movement(self, agent_name, behaviour_name):

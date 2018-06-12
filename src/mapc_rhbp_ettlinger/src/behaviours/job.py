@@ -155,6 +155,8 @@ class AssembleProductBehaviour(BehaviourBase):
         """
         self._task_progress_dict[assembleTaskProgress.id] = assembleTaskProgress.step
 
+        rospy.logerr(str(self._task_progress_dict))
+
     def _action_request_agent(self, agent):
         """
 
@@ -163,8 +165,8 @@ class AssembleProductBehaviour(BehaviourBase):
         :return:
         """
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
-        if self._last_task == "assemble" and agent.last_action == "assemble" and agent.last_action_result == "successful":
-            rospy.logerr("Last action assemble assemble")
+        if self._last_task == "assemble" and agent.last_action == "assemble" and agent.last_action_result in ["successful", "failed_capacity"]:
+            rospy.logerr("Last action assemble")
             self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
             if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
                 # If there are still tasks to do, inform all others that the next task will be performed
@@ -249,7 +251,7 @@ class GoToWorkshopBehaviour(GotoLocationBehaviour):
             **kwargs)
         self._selected_facility = None
         self._task_knowledge = TaskKnowledgebase()
-        self._product_provider = ProductProvider(self._agent_name)
+        self._product_provider = ProductProvider(agent_name=self._agent_name)
         self._assemble_knowledge = AssembleKnowledgebase()
 
     def _select_pos(self):

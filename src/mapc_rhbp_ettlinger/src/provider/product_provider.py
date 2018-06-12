@@ -184,13 +184,21 @@ class ProductProvider(object):
 
     def get_ingredients_of_product(self, product_name, amount = 1):
         product = self.products[product_name]
+        res = {}
+        for ingredient in product.consumed_items:
+            res[ingredient.name] = ingredient.amount
+
+        return res
+
+    def get_base_ingredients_of_product_iteratively(self, product_name, amount = 1):
+        product = self.products[product_name]
 
         if len(product.consumed_items) == 0:
             return {product_name:amount}
         else:
             res = {}
             for ingredient in product.consumed_items:
-                res = CalcUtil.dict_sum(res, self.get_ingredients_of_product(ingredient.name, ingredient.amount * amount))
+                res = CalcUtil.dict_sum(res, self.get_base_ingredients_of_product_iteratively(ingredient.name, ingredient.amount * amount))
             return res
 
     def get_roles_of_product(self, product_name):
@@ -241,7 +249,7 @@ class ProductProvider(object):
 
         if len(bids) >= 2:
             # Go through all combinations
-            for L in range(2, len(bids) + 1):
+            for L in range(2, min(len(bids) + 1, 4)):
                 for subset in itertools.combinations(bids, L):
                     stringi = ""
                     for item in subset:
@@ -251,9 +259,9 @@ class ProductProvider(object):
 
                     value = self.generate_value_from_combination(combination)
 
-                    # rospy.logerr(stringi + str(value) + str(combination))
 
                     if value > best_value:
+                        rospy.logerr(stringi + str(value) + str(combination))
                         best_value = value
                         best_combination = subset
                         best_finished_products = combination
@@ -312,7 +320,8 @@ class ProductProvider(object):
         item_dict = copy.copy(item_dict)
         combination = {}
 
-        for item, count in reversed(sorted(self.get_goal_stock().items(), key=operator.itemgetter(1))):
+        finished_items_to_build = self.finished_items_priority()
+        for item, count in finished_items_to_build:
             required_roles = self.get_roles_of_product(item)
             if set(required_roles).issubset(roles):
                 ingredients = self.get_ingredients_of_product(item)
@@ -325,13 +334,36 @@ class ProductProvider(object):
 
         return combination
 
+    def finished_items_priority(self):
+        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
+        finished_stock_items = {}
+        for item in self.finished_products.keys():
+            finished_stock_items[item] = stock_items[item]["stock"] + stock_items[item]["goal"]
+        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
+
+    def ingredient_priority(self):
+        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
+        finished_stock_items = {}
+        for item in self.base_ingredients.keys():
+            finished_stock_items[item] = stock_items[item]["stock"] + stock_items[item]["goal"]
+        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
+
     def generate_value_from_combination(self, combination):
         # TODO: There needs to be a better logic behind this
 
         value = 0
 
+        max_priority = 0
+
+        finished_items_priority_list = self.finished_items_priority()
+        priority_dict = {}
+        for item, count in finished_items_priority_list:
+            if count > max_priority:
+                max_priority = count
+            priority_dict[item] = count
+
         for item, count in combination.iteritems():
-            value += self.get_goal_stock().get(item, 0) * count
+            value += (1+(max_priority - priority_dict[item]))  * count
 
         return value
 

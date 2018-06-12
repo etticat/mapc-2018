@@ -10,6 +10,7 @@ from behaviour_components.conditions import Negation, Disjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils.agent_utils import AgentUtils
+from common_utils.debug import DebugUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.assemble_manager import AssembleManager
 from network_behaviours.assemble import AssembleNetworkBehaviour
@@ -98,12 +99,12 @@ class RhbpAgent:
 
 
         ######################## Job Network Behaviour ########################
-        self._job_performance_network = JobExecutionNetworkBehaviour(
-            name=self._agent_name + '/JobPerformanceNetwork',
-            plannerPrefix=self._agent_name,
-            msg=msg,
-            agent=self,
-            max_parallel_behaviours=1)
+        # self._job_execution_network = JobExecutionNetworkBehaviour(
+        #     name=self._agent_name + '/JobPerformanceNetwork',
+        #     plannerPrefix=self._agent_name,
+        #     msg=msg,
+        #     agent=self,
+        #     max_parallel_behaviours=1)
 
         ######################## Gathering Network Behaviour ########################
         self._gathering_network = GatheringNetworkBehaviour(
@@ -170,12 +171,12 @@ class RhbpAgent:
         ######################## Job Network Behaviour ########################
 
         # Only perform jobs if there is enough charge left
-        self._job_performance_network.add_precondition(
-            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
+        # self._job_execution_network.add_precondition(
+        #     precondition=self._battery_charging_network_behaviour._enough_battery_cond)
 
         # Is done implicitly already through goal QQQ: Do I really need this?
-        self._job_performance_network.add_precondition(
-            precondition=self._job_performance_network.has_tasks_assigned_condition)
+        # self._job_execution_network.add_precondition(
+        #     precondition=self._job_execution_network.has_tasks_assigned_condition)
 
         # Only perform tasks when there is no assist required
         # self._job_performance_network.add_precondition(
@@ -202,8 +203,8 @@ class RhbpAgent:
         # TODO: We might want to allow this in the case where the agent does not have all items for the task
         # I do not think this makes sense as only accepting tasks where the agent already has all items seems more
         # promising. Might want to reconsider this at a later stage when the job execution is more clear
-        self._gathering_network.add_precondition(
-            precondition=Negation(self._job_performance_network.has_tasks_assigned_condition))
+        # self._gathering_network.add_precondition(
+        #     precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
         # Only perform gather when there is no assist required
         # self._gathering_network.add_precondition(
@@ -247,16 +248,14 @@ class RhbpAgent:
             precondition=self._battery_charging_network_behaviour._enough_battery_cond)
 
         # Only explore when there is not task assigned
-        self._exploration_network.add_precondition(
-            precondition=Negation(self._job_performance_network.has_tasks_assigned_condition))
+        # self._exploration_network.add_precondition(
+        #     precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
         # Only explore when not all resource nodes are discovered
         # TODO: Maybe it makes sense that some agents continue to explore
         self._exploration_network.add_precondition(
             precondition=Negation(self._exploration_network.all_resources_discovered_condition)
         )
-
-        
 
         # The overall goal is to gain score (For now to have wells)
         # TODO: Goal should be high well number. Will be changed once wells are implemented.

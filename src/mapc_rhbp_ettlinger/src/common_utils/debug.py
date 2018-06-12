@@ -1,9 +1,12 @@
+from agent_knowledge.assemble_task import AssembleKnowledgebase
+from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
 
 
 class DebugUtils:
 
-    def instant_find_resources(self, resource_knowledgebase):
+    @staticmethod
+    def instant_find_resources(resource_knowledgebase):
         resource_knowledgebase._kb_client.update(
             ("resource", "item4", "node10", "*", "*"),
             ("resource", "item4", "node10", "48.8651008606", "2.34387993813"),
@@ -36,6 +39,14 @@ class DebugUtils:
         )
 
 
+    @staticmethod
+    def show_total_stock_with_goals():
+        stock_item_knowledgebase = StockItemKnowledgebase()
+        return stock_item_knowledgebase.get_total_stock_and_goals()
 
+    @staticmethod
+    def cancel_task(task):
+        assemble_knowledgebase = AssembleKnowledgebase()
+        assemble_knowledgebase.cancel_assemble_requests(task)
 
 

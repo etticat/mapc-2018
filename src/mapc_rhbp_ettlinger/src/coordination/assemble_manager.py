@@ -1,3 +1,4 @@
+import random
 import time
 
 import rospy
@@ -14,20 +15,21 @@ ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DE
 
 class AssembleManager(object):
 
-    DEADLINE_BIDS = 0.5
-    DEADLINE_ACKNOLEDGEMENT = 1.5
+    DEADLINE_BIDS = 2
+    DEADLINE_ACKNOLEDGEMENT = 2
 
     def __init__(self, agent_name, role):
 
         self._agent_name = agent_name
         self._role = role
         self.workshop_position = None
+        self.busy = False
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
         self._assemble_knowledgebase = AssembleKnowledgebase()
 
-        self.id = time.time() %512
+        self.id = 0
 
         self.bids = []
         self.accepted_bids = []
@@ -46,14 +48,19 @@ class AssembleManager(object):
         The first step of the protocol
         :return:
         """
-        ettilog.logerr("AssembleManager(%s):: requesting assist", self._agent_name)
+        self.id = time.time() %512
+        self.bids = []
+
+        self.busy = True
+
+        ettilog.loginfo("AssembleManager(%s):: requesting assist", self._agent_name)
+
         request = AssembleRequest(
             deadline=time.time() + AssembleManager.DEADLINE_BIDS,
             destination = workshop,
             agent_name = self._agent_name,
             id = self.generate_assemble_id(new_id=True)
         )
-        self.bids = []
         self.workshop_position = workshop
         self._pub_assemble_request.publish(request)
 
@@ -70,7 +77,8 @@ class AssembleManager(object):
 
     def _callback_bid(self, bid):
         ettilog.loginfo("AssembleManager(%s): Received bid from %s", self._agent_name, bid.agent_name)
-        if bid.id != self.generate_assemble_id():
+        generated_id = self.generate_assemble_id()
+        if bid.id != generated_id:
             ettilog.loginfo("wrong id")
             return
         self.bids.append(bid)
@@ -85,14 +93,14 @@ class AssembleManager(object):
         :return:
         """
 
-        ettilog.logerr("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
+        ettilog.loginfo("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
 
         self.accepted_bids, finished_products = self._product_provider.choose_best_bid_combination(self.bids)
 
         if len(finished_products.keys()) == 0:
-            ettilog.logerr("No useful bid combination found")
-            rospy.signal_shutdown("test over")
-            return
+            ettilog.logerr("AssembleManager(%s): No useful bid combination found in %d bids", self._agent_name, len(self.bids))
+            self.busy = False
+            self.accepted_bids = []
 
         rejected_bids = []
 
@@ -101,13 +109,10 @@ class AssembleManager(object):
                 rejected_bids.append(bid)
 
 
-        ettilog.logerr("AssembleManager(%s): Assembling %s with %s", self._agent_name, str(finished_products), str([bid.agent_name for bid in self.accepted_bids]))
+        ettilog.loginfo("AssembleManager(%s): Assembling %s with %s", self._agent_name, str(finished_products), str([bid.agent_name for bid in self.accepted_bids]))
 
         ettilog.loginfo("AssembleManager(%s): Accepting %s bid(s)", self._agent_name, str(len(self.accepted_bids)))
         ettilog.loginfo("AssembleManager(%s): Rejecting %s bid(s)", self._agent_name, str(len(rejected_bids)))
-
-        products_to_assemble = []
-        products_to_assemble_others = []
 
         assembly_instructions = self.generate_assembly_instructions(self.accepted_bids, finished_products)
 
@@ -129,7 +134,7 @@ class AssembleManager(object):
                     tasks = ""
                 )
 
-            ettilog.logerr("AssembleManager(%s): Publishing assignment for %s (%s)", self._agent_name, bid.agent_name, str(assignment.assigned))
+            ettilog.loginfo("AssembleManager(%s): Publishing assignment for %s (%s)", self._agent_name, bid.agent_name, str(assignment.assigned))
             self._pub_assemble_assignment.publish(assignment)
 
         time.sleep(deadline - time.time())
@@ -151,15 +156,15 @@ class AssembleManager(object):
             ettilog.loginfo("wrong id")
             return
         if acknowledgement.acknowledged == False:
-            ettilog.logerr("Contractor rejected acknowledgement")
+            ettilog.loginfo("Contractor rejected acknowledgement")
             return
         self.acknowledgements.append(acknowledgement)
 
     def _process_bid_acknoledgements(self):
-        ettilog.logerr("AssembleManager(%s): Processing Acknoledgements. Received %d/%d from %s", self._agent_name, len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.bid.agent_name for acknowledgement in self.acknowledgements]))
+        ettilog.loginfo("AssembleManager(%s): Processing Acknoledgements. Received %d/%d from %s", self._agent_name, len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.bid.agent_name for acknowledgement in self.acknowledgements]))
 
         if len(self.acknowledgements) == len(self.accepted_bids):
-            ettilog.logerr("AssembleManager(%s): coordination successful. work can start", self._agent_name)
+            ettilog.logerr("AssembleManager(%s): coordination successful. work can start with %d agents", self._agent_name, len(self.accepted_bids))
         else:
             ettilog.logerr("AssembleManager(%s): coordination unsuccessful. cancelling...", self._agent_name)
 
@@ -172,6 +177,7 @@ class AssembleManager(object):
                     )
                     self._pub_assemble_assignment.publish(assignment)
 
+        self.busy = False
         # rospy.signal_shutdown("end of test")
 
     def generate_assembly_instructions(self, accepted_bids, finished_products):
@@ -183,9 +189,18 @@ class AssembleManager(object):
             agents.append(bid.agent_name)
 
         # Distributing tasks: TODO: currently manager builds everything. in future others may build
-        # for item, count in finished_products.iteritems():
-        #     for i in range(count):
-        #         products_to_assemble.append("assemble:" + item)
-        #         products_to_assemble_others.append("assist:" + self._agent_name)
+        for item, count in finished_products.iteritems():
+            for i in range(count):
+                selected_agent = random.choice(agents)
+                # TODO: Every agent could be selected at different points
+                # For now let this be done randomly. In future this has to be selected better
+                for agent in agents:
+                    if res[agent] is not "":
+                        res[agent] = res[agent]  + ","
+
+                    if agent == selected_agent:
+                        res[agent] = res[agent] + "assemble:" + item
+                    else:
+                        res[agent] = res[agent] + "assist:" + selected_agent
 
         return res

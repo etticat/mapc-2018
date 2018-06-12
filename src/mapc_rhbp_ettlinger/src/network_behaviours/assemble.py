@@ -151,6 +151,7 @@ class CoordinateAssemblyBehaviour(BehaviourBase):
     def __init__(self, agent_name, role, **kwargs):
         super(CoordinateAssemblyBehaviour, self).__init__(requires_execution_steps=True, **kwargs)
 
+        self._agent_name = agent_name
         self._assemble_manager = AssembleManager(agent_name=agent_name, role=role)
 
     def do_step(self):
@@ -159,7 +160,9 @@ class CoordinateAssemblyBehaviour(BehaviourBase):
         # - Decide who is the assembler (who gets the item)
         # - ...
 
-        if self._assemble_manager.busy == False:
+            if self._assemble_manager.busy == False and self._agent_name in ["agentA13", "agentA1"]: # Temporarily for testing. only 1 and 13 are managers
+            rospy.logerr("%s: assembling", self._name)
             self._assemble_manager.request_assist(Position(lat=48.82456, long=2.31017)) # TODO: find closest one
-        else:
-            rospy.logerr("%s: manager busy", self._name)
+        # else:
+            # rospy.logerr("%s: manager busy", self._name)
+        pass

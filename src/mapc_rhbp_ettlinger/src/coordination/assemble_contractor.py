@@ -1,5 +1,5 @@
 import random
-from time import time
+import time
 
 import rospy
 from mac_ros_bridge.msg import Position
@@ -48,13 +48,17 @@ class AssembleContractor(object):
         :type request: AssembleRequest
         :return:
         """
-        if self.current_task is None and self.busy is False:
+        assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
+
+        current_time = time.time()
+        if request.deadline < current_time:
+            rospy.logerr("Deadline over")
+            return
+
+        if self.busy is False and assemble_task is None:
             self.send_bid(request)
 
     def send_bid(self, request):
-
-        if self.busy: # If we already are busy, we don't send bids
-            return
 
         self.busy = True
         bid = AssembleBid(
@@ -71,6 +75,9 @@ class AssembleContractor(object):
 
         self.current_task = request.id
 
+        time.sleep(4)
+        self.busy = False
+
 
 
     def _callback_assign(self, assembleAssignment):
@@ -78,8 +85,6 @@ class AssembleContractor(object):
 
         if assembleAssignment.bid.agent_name != self._agent_name or self.current_task != assembleAssignment.bid.id:
             return
-        rhbplog.logerr("AssembleContractor(%s):: Received assignage for %s", self._agent_name, assembleAssignment.bid.id)
-
         if assembleAssignment.assigned == False:
             rhbplog.logerr("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
             self.busy = False
@@ -102,3 +107,5 @@ class AssembleContractor(object):
                 bid=assembleAssignment.bid
             )
             self._pub_assemble_acknowledge.publish(acknoledgement)
+
+        self.busy = False

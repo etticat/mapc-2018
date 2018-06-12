@@ -9,8 +9,8 @@ from agent_knowledge.base_knowledge import BaseKnowledgebase
 
 class AssembleKnowledgebase(BaseKnowledgebase):
 
-    ASSEMBLE_INDEX_AGENT_NAME = 1
-    ASSEMBLE_INDEX_ID = 2
+    ASSEMBLE_INDEX_ID = 1
+    ASSEMBLE_INDEX_AGENT_NAME = 2
     ASSEMBLE_INDEX_LAT = 3
     ASSEMBLE_INDEX_LONG = 4
     ASSEMBLE_INDEX_TASKS = 5
@@ -117,4 +117,4 @@ class AssembleKnowledgebase(BaseKnowledgebase):
         tuple = self.generate_tuple(
             id=id)
 
-        self._kb_client.pop(tuple)
+        cancelled = self._kb_client.pop(tuple)
