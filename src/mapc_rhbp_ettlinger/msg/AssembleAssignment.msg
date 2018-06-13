@@ -1,5 +1,5 @@
 string                              id
 bool                                assigned
-float                              deadline
+uint64                              deadline
 string                              tasks
 mapc_rhbp_ettlinger/AssembleBid     bid

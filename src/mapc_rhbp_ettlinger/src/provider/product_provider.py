@@ -249,7 +249,7 @@ class ProductProvider(object):
 
         if len(bids) >= 2:
             # Go through all combinations
-            for L in range(2, min(len(bids) + 1, 4)):
+            for L in range(2, min(len(bids) + 1, 7)): # We try all combinations using 2-7 agents
                 for subset in itertools.combinations(bids, L):
                     stringi = ""
                     for item in subset:
@@ -261,27 +261,31 @@ class ProductProvider(object):
 
 
                     if value > best_value:
-                        rospy.logerr(stringi + str(value) + str(combination))
+                        # rospy.logerr(stringi + str(value) + str(combination))
                         best_value = value
                         best_combination = subset
                         best_finished_products = combination
+                if L >= 4 and best_value > 0:
+                    # we only try combinations with more than 4 agents if we could not find anything with less
+                    break
 
         return (best_combination, best_finished_products)
 
     def generate_best_combination(self, subset):
-        item_dict = {}
-        roles = []
-
-        for bid in subset:
-            for item in bid.items:
-                item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
-            roles.append(bid.role)
+        item_dict, roles = self.get_items_and_roles_from_bids(subset)
 
         finished_products = self.generate_best_finished_product_combination(item_dict, roles)
 
         return finished_products
-    
 
+    def get_items_and_roles_from_bids(self, subset):
+        item_dict = {}
+        roles = []
+        for bid in subset:
+            for item in bid.items:
+                item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
+            roles.append(bid.role)
+        return item_dict, roles
 
     def get_product_worth(self, product):
         # TODO: Temporarily

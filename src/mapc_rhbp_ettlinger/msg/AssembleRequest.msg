@@ -1,4 +1,4 @@
 string                      agent_name
 string                      id
 mac_ros_bridge/Position     destination
-float                      deadline
+uint64                       deadline

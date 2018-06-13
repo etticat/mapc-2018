@@ -50,6 +50,7 @@ add_message_files(
   Task.msg
   AssembleRequest.msg
   AssembleBid.msg
+  AssembleManagerStatus.msg
   AssembleAssignment.msg
   AssembleAcknowledgement.msg
   AssembleTask.msg

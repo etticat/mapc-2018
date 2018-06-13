@@ -155,8 +155,6 @@ class AssembleProductBehaviour(BehaviourBase):
         """
         self._task_progress_dict[assembleTaskProgress.id] = assembleTaskProgress.step
 
-        rospy.logerr(str(self._task_progress_dict))
-
     def _action_request_agent(self, agent):
         """
 
@@ -165,23 +163,22 @@ class AssembleProductBehaviour(BehaviourBase):
         :return:
         """
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
-        if self._last_task == "assemble" and agent.last_action == "assemble" and agent.last_action_result in ["successful", "failed_capacity"]:
-            rospy.logerr("Last action assemble")
-            self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
-            if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
-                # If there are still tasks to do, inform all others that the next task will be performed
-                rospy.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
-                assembleTaskCoordination = AssembleTaskProgress(
-                    id=self.assemble_task.id,
-                    step=self._get_assemble_step()
-                )
-                self._pub_assemble_progress.publish(assembleTaskCoordination)
-            else:
-                # If this was the last task -> cancel the assembly
-                rospy.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
-                self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_task.id)
-        elif agent.last_action == "assemble":
+        if self._last_task == "assemble" and agent.last_action == "assemble":
             rospy.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+            for agent.last_action_result in ["successful", "failed_capacity"]:
+                self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
+                if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
+                    # If there are still tasks to do, inform all others that the next task will be performed
+                    rospy.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
+                    assembleTaskCoordination = AssembleTaskProgress(
+                        id=self.assemble_task.id,
+                        step=self._get_assemble_step()
+                    )
+                    self._pub_assemble_progress.publish(assembleTaskCoordination)
+                else:
+                    # If this was the last task -> cancel the assembly
+                    rospy.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
+                    self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_task.id)
 
 
 
@@ -223,13 +220,14 @@ class AssembleProductBehaviour(BehaviourBase):
         if len(products) > 0 and self._get_assemble_step() < len(products):
             (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
             if self._last_task == "assemble":
+                rospy.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name,
+                             self._get_assemble_step() + 1, len(products), products[self._get_assemble_step()])
                 self.action_assemble(self._last_goal)
             elif self._last_task == "assist":
                 self.action_assist_assemble(self._last_goal)
             else:
                 rospy.logerr("AssembleProductBehaviour(%s):: Invalid task", self._agent_name)
 
-            rospy.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name, self._get_assemble_step()+1, len(products), products[self._get_assemble_step()])
         else:
             rospy.logerr("This should never happen. Assembly is executed after all tasks are finished")
 

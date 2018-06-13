@@ -79,18 +79,20 @@ class StockItemKnowledgebase(BaseKnowledgebase):
 
         facts = self._kb_client.all(all)
 
-        for fact in facts:
-            stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
+        if facts != None:
+            for fact in facts:
+                stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
 
-            if stockItem.item not in res.keys():
-                res[stockItem.item] = {
-                    "stock": 0,
-                    "goal": 0
-                }
+                if stockItem.item not in res.keys():
+                    res[stockItem.item] = {
+                        "stock": 0,
+                        "goal": 0
+                    }
 
 
 
-            res[stockItem.item]["stock"] += stockItem.amount
-            res[stockItem.item]["goal"] += stockItem.goal
-
+                res[stockItem.item]["stock"] += stockItem.amount
+                res[stockItem.item]["goal"] += stockItem.amount
+        else:
+            rospy.logerr("Error reading from db")
         return res

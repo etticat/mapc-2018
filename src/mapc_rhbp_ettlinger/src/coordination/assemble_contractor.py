@@ -31,8 +31,6 @@ class AssembleContractor(object):
             # TODO: This is only for testing
             self._product_provider = product_provider
 
-        self.busy = self._assemble_knowledgebase.get_assemble_task(self._agent_name) != None
-
         prefix = AgentUtils.get_assemble_prefix()
 
         rospy.Subscriber(prefix + "request", AssembleRequest, self._callback_request)
@@ -55,12 +53,11 @@ class AssembleContractor(object):
             rospy.logerr("Deadline over")
             return
 
-        if self.busy is False and assemble_task is None:
+        if assemble_task is None:
             self.send_bid(request)
 
     def send_bid(self, request):
 
-        self.busy = True
         bid = AssembleBid(
             id=request.id,
             bid = random.randint(0,7),
@@ -70,15 +67,10 @@ class AssembleContractor(object):
             request = request
         )
 
-        rhbplog.logerr("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
+        rhbplog.loginfo("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
         self._pub_assemble_bid.publish(bid)
 
         self.current_task = request.id
-
-        time.sleep(4)
-        self.busy = False
-
-
 
     def _callback_assign(self, assembleAssignment):
 
@@ -86,9 +78,9 @@ class AssembleContractor(object):
         if assembleAssignment.bid.agent_name != self._agent_name or self.current_task != assembleAssignment.bid.id:
             return
         if assembleAssignment.assigned == False:
-            rhbplog.logerr("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
-            self.busy = False
+            rhbplog.loginfo("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
             return
+
         rhbplog.logerr("AssembleContractor(%s):: Received assignment for %s", self._agent_name, assembleAssignment.bid.id)
 
         is_still_possible = True # TODO check if agent is still idle
@@ -107,5 +99,3 @@ class AssembleContractor(object):
                 bid=assembleAssignment.bid
             )
             self._pub_assemble_acknowledge.publish(acknoledgement)
-
-        self.busy = False

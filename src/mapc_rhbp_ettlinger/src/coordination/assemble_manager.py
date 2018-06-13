@@ -2,8 +2,9 @@ import random
 import time
 
 import rospy
+from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement, \
-    AssembleTask
+    AssembleTask, AssembleManagerStatus
 
 import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
@@ -22,14 +23,13 @@ class AssembleManager(object):
 
         self._agent_name = agent_name
         self._role = role
-        self.workshop_position = None
-        self.busy = False
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
         self._assemble_knowledgebase = AssembleKnowledgebase()
 
-        self.id = 0
+        self.id = self.assemble_id(new_id=True)
+        self.current_running_id = None
 
         self.bids = []
         self.accepted_bids = []
@@ -43,41 +43,59 @@ class AssembleManager(object):
         rospy.Subscriber(AgentUtils.get_assemble_prefix() + "acknowledge", AssembleAcknowledgement,
                          self._callback_acknowledgement)
 
-    def request_assist(self, workshop):
+        rospy.Subscriber(AgentUtils.get_assemble_prefix() + "request_start", AssembleManagerStatus, self._callback_request_start)
+
+        self._pub_assemble_request_start = rospy.Publisher(AgentUtils.get_assemble_prefix() + "request_start", AssembleManagerStatus,
+                                                        queue_size=10)
+        rospy.Subscriber(AgentUtils.get_assemble_prefix() + "request_over", AssembleManagerStatus, self._callback_request_over)
+        self._pub_assemble_request_over = rospy.Publisher(AgentUtils.get_assemble_prefix() + "request_over", AssembleManagerStatus,
+                                                        queue_size=10)
+
+    def _callback_request_start(self, request):
+        if self.current_running_id == None:
+            self.current_running_id = request.id
+
+            if self.current_running_id == self.id:
+                self.bids = []
+                self.accepted_bids = []
+                self.acknowledgements = []
+
+                ettilog.logerr("AssembleManager(%s):: ---------------------------Manager start---------------------------", self._agent_name)
+
+                request = AssembleRequest(
+                    deadline=time.time() + AssembleManager.DEADLINE_BIDS,
+                    destination=Position(lat=48.82456, long=2.31017),
+                    agent_name=self._agent_name,
+                    id=self.assemble_id()
+                )
+                self._pub_assemble_request.publish(request)
+
+                sleep_time = request.deadline - time.time()
+                ettilog.loginfo("AssembleManager(%s):: sleeping for %s", self._agent_name, str(sleep_time))
+                time.sleep(sleep_time)
+                self.process_bids()
+
+    def _callback_request_over(self, request):
+        assert request.id == self.current_running_id
+        self.current_running_id = None
+
+    def request_assist(self):
         """
         The first step of the protocol
         :return:
         """
-        self.id = time.time() %512
-        self.bids = []
+        if self.current_running_id == None:
+            self._pub_assemble_request_start.publish(AssembleManagerStatus(id=self.assemble_id()))
 
-        self.busy = True
 
-        ettilog.loginfo("AssembleManager(%s):: requesting assist", self._agent_name)
-
-        request = AssembleRequest(
-            deadline=time.time() + AssembleManager.DEADLINE_BIDS,
-            destination = workshop,
-            agent_name = self._agent_name,
-            id = self.generate_assemble_id(new_id=True)
-        )
-        self.workshop_position = workshop
-        self._pub_assemble_request.publish(request)
-
-        sleep_time = request.deadline - time.time()
-        ettilog.loginfo("AssembleManager(%s):: sleeping for %s", self._agent_name, str(sleep_time))
-        time.sleep(sleep_time)
-        self.process_bids()
-
-    def generate_assemble_id(self, new_id=False):
+    def assemble_id(self, new_id=False):
         if new_id:
-            self.id = self.id + 1
-        id_ = self._agent_name + "-" + str(self.id)
-        return id_
+            self.id = self._agent_name + "-" + str(time.time() %512)
+        return self.id
 
     def _callback_bid(self, bid):
         ettilog.loginfo("AssembleManager(%s): Received bid from %s", self._agent_name, bid.agent_name)
-        generated_id = self.generate_assemble_id()
+        generated_id = self.assemble_id()
         if bid.id != generated_id:
             ettilog.loginfo("wrong id")
             return
@@ -93,14 +111,19 @@ class AssembleManager(object):
         :return:
         """
 
-        ettilog.loginfo("AssembleManager(%s): Processing %s bids", self._agent_name, str(len(self.bids)))
+        ettilog.loginfo("AssembleManager(%s, %s): Processing %s bids", self._agent_name, self.assemble_id(), str(len(self.bids)))
 
         self.accepted_bids, finished_products = self._product_provider.choose_best_bid_combination(self.bids)
 
         if len(finished_products.keys()) == 0:
             ettilog.logerr("AssembleManager(%s): No useful bid combination found in %d bids", self._agent_name, len(self.bids))
-            self.busy = False
+            bids, roles = self._product_provider.get_items_and_roles_from_bids(self.bids)
+            ettilog.logerr("AssembleManager(%s): ------ Items: %s", self._agent_name, str(bids))
+            ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
+            ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))
             self.accepted_bids = []
+        else:
+            ettilog.logerr("AssembleManager(%s): Bids processed: %s building %s", self._agent_name, ", ".join([bid.agent_name for bid in self.accepted_bids]), str(finished_products.keys()))
 
         rejected_bids = []
 
@@ -152,7 +175,7 @@ class AssembleManager(object):
 
     def _callback_acknowledgement(self, acknowledgement):
         ettilog.loginfo("AssembleManager(%s): Received Acknowledgement from %s", self._agent_name, acknowledgement.bid.agent_name)
-        if acknowledgement.bid.id != self.generate_assemble_id():
+        if acknowledgement.bid.id != self.assemble_id():
             ettilog.loginfo("wrong id")
             return
         if acknowledgement.acknowledged == False:
@@ -166,9 +189,9 @@ class AssembleManager(object):
         if len(self.acknowledgements) == len(self.accepted_bids):
             ettilog.logerr("AssembleManager(%s): coordination successful. work can start with %d agents", self._agent_name, len(self.accepted_bids))
         else:
-            ettilog.logerr("AssembleManager(%s): coordination unsuccessful. cancelling...", self._agent_name)
+            ettilog.logerr("AssembleManager(%s): coordination unsuccessful. cancelling... Received %d/%d from %s", self._agent_name, len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.bid.agent_name for acknowledgement in self.acknowledgements]))
 
-            self._assemble_knowledgebase.cancel_assemble_requests(self.generate_assemble_id())
+            self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_id())
             for bid in self.bids:
                     assignment = AssembleAssignment(
                         assigned = False,
@@ -177,8 +200,11 @@ class AssembleManager(object):
                     )
                     self._pub_assemble_assignment.publish(assignment)
 
-        self.busy = False
-        # rospy.signal_shutdown("end of test")
+        self._pub_assemble_request_over.publish(AssembleManagerStatus(id=self.id))
+        self.id = self.assemble_id(new_id=True)
+
+        ettilog.logerr("AssembleManager(%s):: ---------------------------Manager stop---------------------------",
+                   self._agent_name)
 
     def generate_assembly_instructions(self, accepted_bids, finished_products):
         res = {}

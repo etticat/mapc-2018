@@ -80,7 +80,7 @@ class TestAgent(object):
 
         time.sleep(1)
         rospy.logerr("Request assist")
-        self.assemble_manager.request_assist(Position(lat=48.82456, long=2.31017))
+        self.assemble_manager.request_assist()
 
 class FakeProductProvider(ProductProvider):
 

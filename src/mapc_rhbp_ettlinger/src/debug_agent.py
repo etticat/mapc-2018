@@ -37,13 +37,13 @@ class DebugAgent(object):
         for i in range(0,5):
             item = "item" + str(i)
             if item in stock.keys():
-                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["stock"] + stock[item]["goal"])
+                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
 
         rospy.logerr("Finished products:")
         for i in range(5,11):
             item = "item" + str(i)
             if item in stock.keys():
-                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["stock"] + stock[item]["goal"])
+                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
 
 
 if __name__ == '__main__':
