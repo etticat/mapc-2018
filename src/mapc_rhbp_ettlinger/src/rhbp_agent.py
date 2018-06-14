@@ -99,12 +99,12 @@ class RhbpAgent:
 
 
         ######################## Job Network Behaviour ########################
-        # self._job_execution_network = JobExecutionNetworkBehaviour(
-        #     name=self._agent_name + '/JobPerformanceNetwork',
-        #     plannerPrefix=self._agent_name,
-        #     msg=msg,
-        #     agent=self,
-        #     max_parallel_behaviours=1)
+        self._job_execution_network = JobExecutionNetworkBehaviour(
+            name=self._agent_name + '/JobPerformanceNetwork',
+            plannerPrefix=self._agent_name,
+            msg=msg,
+            agent=self,
+            max_parallel_behaviours=1)
 
         ######################## Gathering Network Behaviour ########################
         self._gathering_network = GatheringNetworkBehaviour(
@@ -121,14 +121,6 @@ class RhbpAgent:
             msg=msg,
             agent=self,
             max_parallel_behaviours=1)
-
-        ######################## Assist Network Behaviour ########################
-        # self._assist_task_network = AssistNetworkBehaviour(
-        #     agent_name=self._agent_name,
-        #     name=self._agent_name + '/AssistNetwork',
-        #     plannerPrefix=self._agent_name,
-        #     msg = msg,
-        #     max_parallel_behaviours=1)
 
         ######################## Exploration Network Behaviour ########################
         self._exploration_network = ExplorationNetworkBehaviour(
@@ -154,13 +146,12 @@ class RhbpAgent:
         
 
         # Battery network has the effect of charging the battery
-        # TODO: QQQ Is this needed?
-        # self._battery_charging_network_behaviour.add_effects_and_goals([(
-        #     self._battery_charging_network_behaviour._charge_sensor,
-        #     Effect(
-        #         sensor_name=self._battery_charging_network_behaviour._charge_sensor.name,
-        #         indicator=1.0,
-        #         sensor_type=float))])
+        self._battery_charging_network_behaviour.add_effects_and_goals([(
+            self._battery_charging_network_behaviour._charge_sensor,
+            Effect(
+                sensor_name=self._battery_charging_network_behaviour._charge_sensor.name,
+                indicator=1.0,
+                sensor_type=float))])
         
 
         # Only charge if charge is required
@@ -171,16 +162,12 @@ class RhbpAgent:
         ######################## Job Network Behaviour ########################
 
         # Only perform jobs if there is enough charge left
-        # self._job_execution_network.add_precondition(
-        #     precondition=self._battery_charging_network_behaviour._enough_battery_cond)
+        self._job_execution_network.add_precondition(
+            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
 
         # Is done implicitly already through goal QQQ: Do I really need this?
-        # self._job_execution_network.add_precondition(
-        #     precondition=self._job_execution_network.has_tasks_assigned_condition)
-
-        # Only perform tasks when there is no assist required
-        # self._job_performance_network.add_precondition(
-        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
+        self._job_execution_network.add_precondition(
+            precondition=self._job_execution_network.has_tasks_assigned_condition)
 
         ######################## Gathering Network Behaviour ########################
 
@@ -203,17 +190,13 @@ class RhbpAgent:
         # TODO: We might want to allow this in the case where the agent does not have all items for the task
         # I do not think this makes sense as only accepting tasks where the agent already has all items seems more
         # promising. Might want to reconsider this at a later stage when the job execution is more clear
-        # self._gathering_network.add_precondition(
-        #     precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
-
-        # Only perform gather when there is no assist required
-        # self._gathering_network.add_precondition(
-        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
+        self._gathering_network.add_precondition(
+            precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
         # Only gather if all resources are discovered
         self._gathering_network.add_precondition(
             precondition=self._exploration_network.all_resources_discovered_condition)
-        
+
 
         ######################## Assembly Network Behaviour ########################
         # Only assemble if there is enough battery left
@@ -230,17 +213,6 @@ class RhbpAgent:
             )
         )
 
-        # Only assist when an assist_task is assigned
-        # TODO: QQQ This should not be required. as the network should not be executed anyway when the goal is fulfilled.
-        # self._assist_task_network.add_precondition(
-        #     precondition=self._assist_task_network.assist_assigned_condition)
-
-        # Only assemble, when there is no assist required
-        # self._assembly_network.add_precondition(
-        #     precondition=Negation(self._assist_task_network.assist_assigned_condition))
-
-
-
         ######################## Exploration Network Behaviour ########################
 
         # Only do shop exploration when enough battery left
@@ -248,8 +220,8 @@ class RhbpAgent:
             precondition=self._battery_charging_network_behaviour._enough_battery_cond)
 
         # Only explore when there is not task assigned
-        # self._exploration_network.add_precondition(
-        #     precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
+        self._exploration_network.add_precondition(
+            precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
         # Only explore when not all resource nodes are discovered
         # TODO: Maybe it makes sense that some agents continue to explore
@@ -257,17 +229,12 @@ class RhbpAgent:
             precondition=Negation(self._exploration_network.all_resources_discovered_condition)
         )
 
-        # The overall goal is to gain score (For now to have wells)
-        # TODO: Goal should be high well number. Will be changed once wells are implemented.
-        # QQQ Does this make sense?
-
-        # TODO: Do I need these #33-1
         # Seems to work without. With them I get errors but it continues to run normally
-        # self._job_performance_goal = GoalBase(
-        #     name='score_goal',
-        #     permanent=True,
-        #     plannerPrefix=self._agent_name,
-        #     conditions=[Negation(self._job_performance_network.has_tasks_assigned_condition)])
+        self._job_performance_goal = GoalBase(
+            name='score_goal',
+            permanent=True,
+            plannerPrefix=self._agent_name,
+            conditions=[Negation(self._job_execution_network.has_tasks_assigned_condition)])
 
         rospy.logerr("behaviour connections initialized")
     def _callback_generic_action(self, msg):
@@ -312,16 +279,8 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        # for i in range(len(self._assembly_network._preconditions)):
-        #     rospy.logerr("precondition (%s): %s",self._assembly_network._preconditions[i]._name, str(self._assembly_network._get_satisfactions()[i]))
-        #
-        # rospy.logerr("------")
-
-        stock_item_knowledgebase = StockItemKnowledgebase()
-        all = stock_item_knowledgebase.get_total_stock_and_goals()
-
-        # for item in all.keys():
-        #     rospy.logerr("%s: %s/%s",item, str(all[item]["stock"]), str(all[item]["goal"]))
+        if hasattr(self, "_gathering_network"):
+            DebugUtils.print_precondition_states(self._gathering_network.gather_ingredients_behaviour)
 
         start_time = rospy.get_rostime()
         steps = 0

@@ -1,3 +1,5 @@
+import rospy
+
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
@@ -54,5 +56,16 @@ class DebugUtils:
     def cancel_task(task):
         assemble_knowledgebase = AssembleKnowledgebase()
         assemble_knowledgebase.cancel_assemble_requests(task)
+
+    @staticmethod
+    def print_precondition_states(behaviour):
+
+        rospy.logerr("------------------------------ Preconditions: ------------------------------------")
+        rospy.logerr("active: %s", str(behaviour._active))
+        for i in range(len(behaviour._preconditions)):
+            rospy.logerr("precondition (%s): %s",behaviour._preconditions[i]._name, str(behaviour._get_satisfactions()[i]))
+
+        rospy.logerr("----------------------------------------------------------------------------------")
+
 
 

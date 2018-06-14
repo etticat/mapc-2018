@@ -26,7 +26,6 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             agent_name=agent._agent_name)
 
         self.init_task_sensor(agent)
-        self.init_finished_product_sensor(agent)
 
         self.init_go_to_destination_behaviour(agent, proximity)
         self.init_deliver_job_behaviour(agent)
@@ -35,7 +34,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self._job_performance_goal = GoalBase(
             name='job_performance',
             permanent=True,
-            plannerPrefix=agent._agent_name,
+            plannerPrefix=self.get_manager_prefix(),
             conditions=[Negation(self.has_tasks_assigned_condition)])
 
     def init_go_to_destination_behaviour(self, agent, proximity):
@@ -58,9 +57,6 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             )
         )
 
-        self.go_to_destination_behaviour.add_precondition(
-            precondition=self.has_all_products_condition
-        )
 
         self.at_storage_condition = Condition(
             sensor=self.storage_destination_sensor,
@@ -74,17 +70,6 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         )
 
 
-    def init_finished_product_sensor(self, agent):
-        self.has_all_finished_products_sensor = ProductSensor(
-            name="has_all_finished_products_sensor",
-            agent_name=agent._agent_name,
-            product_provider_method=self._product_provider.get_required_finished_products_for_tasks
-        )
-        self.has_all_products_condition = Condition(
-            sensor=self.has_all_finished_products_sensor,
-            activator=AmountInListActivator(
-                amount=0
-            ))
 
     def init_task_sensor(self, agent):
         # Sensor that checks if agent has at least one assigned task
@@ -107,9 +92,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
-        self.deliver_job_bahviour.add_precondition(
-            precondition=self.has_all_products_condition
-        )
+
         self.deliver_job_bahviour.add_precondition(
             precondition=self.at_storage_condition
         )

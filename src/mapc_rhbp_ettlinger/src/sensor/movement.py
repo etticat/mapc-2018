@@ -17,16 +17,18 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
         pattern = MovementKnowledgebase.generate_tuple(agent_name=agent_name, behaviour=behaviour_name)
 
-        super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name)
+        super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name, initial_value=999.0)
 
-        self._latest_ref_value = None
+        self._last_pos = None
 
         self._movement_knowledge = MovementKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self.subscription_callback_ref_topic)
 
     def subscription_callback_ref_topic(self, msg):
-        self._latest_ref_value = msg
+        if self._last_pos != msg.pos:
+            self._last_pos = msg.pos
+            self._cache_update_callback() # Force update when position of agent changes
 
     def _reduce_facts(self, facts):
         """
@@ -36,20 +38,23 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         """
 
         # If we don't have a destination we handle it as if we are far away
-        res = 999
+        res = 999.0
 
-        if len(facts) > 0 and self._latest_ref_value != None:
+        if len(facts) > 0 and self._last_pos != None:
             fact_tuple = facts.pop()  # only getting the first fact
 
             try:
 
                 destination_pos = Position(lat=float(fact_tuple[4]), long=float(fact_tuple[5]))
-                agent_position = self._latest_ref_value.pos
+                agent_position = self._last_pos
+
+                # if self.name == "resource_destination_sensor_hoarding":
+                #     rospy.logerr("----------------- %s %s", str(destination_pos), str(agent_position))
 
                 res = AgentUtils.calculate_distance(destination_pos, agent_position)
 
             except Exception:
-                rospy.loginfo("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
+                rospy.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
         # if self.name == "resource_destination_sensor_hoarding":
         #     rospy.logerr("---%s", str(res))

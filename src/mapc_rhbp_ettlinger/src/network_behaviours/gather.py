@@ -37,6 +37,16 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             plannerPrefix=self.get_manager_prefix(),
             conditions=[Negation(self.next_item_fits_in_storage_condition)])
 
+        self.add_effect(
+            effect=Effect(
+                sensor_name=self.storage_space_after_next_item_sensor.name,
+                indicator=-1.0,
+                sensor_type=float
+
+            )
+        )
+
+
     def init_gather_behaviour(self, agent):
         ############### Gathering ##########################
         self.gather_ingredients_behaviour = GatherBehaviour(
