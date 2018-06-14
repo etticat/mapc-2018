@@ -75,8 +75,8 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # TODO: Do I need these #33-1
         # Seems to work without. With them I get errors but it continues to run normally
         # Exploration goal
-        self.exploration_goal = GoalBase(
-            name='exploration_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[self.all_resources_discovered_condition])
+        # self.exploration_goal = GoalBase(
+        #     name='exploration_goal',
+        #     permanent=True,
+        #     plannerPrefix=self.get_manager_prefix(),
+        #     conditions=[self.all_resources_discovered_condition])

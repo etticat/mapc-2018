@@ -38,6 +38,12 @@ class DebugUtils:
             push_without_existing = True
         )
 
+        resource_knowledgebase._kb_client.update(
+            ("resource", "item2", "node1"),
+            ("resource", "item2", "node1", "48.8847084045", "2.28618001938"),
+            push_without_existing = True
+        )
+
 
     @staticmethod
     def show_total_stock_with_goals():
