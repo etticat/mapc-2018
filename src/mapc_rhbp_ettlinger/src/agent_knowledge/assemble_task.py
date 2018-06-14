@@ -107,7 +107,7 @@ class AssembleKnowledgebase(BaseKnowledgebase):
         else:
             return None
 
-    def cancel_assemble_requests(self, id):
+    def cancel_assemble_request(self, agent_name, id):
         """
         Cancels all assemble tasks requested by an agent
         :param agent_name: Name of the agent
@@ -115,6 +115,7 @@ class AssembleKnowledgebase(BaseKnowledgebase):
         :return:
         """
         tuple = self.generate_tuple(
+            agent_name=agent_name,
             id=id)
 
         cancelled = self._kb_client.pop(tuple)

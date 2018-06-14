@@ -4,7 +4,7 @@ import time
 import rospy
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement, \
-    AssembleTask, AssembleManagerStatus
+    AssembleTask, AssembleManagerStatus, AssembleStop
 
 import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
@@ -42,9 +42,12 @@ class AssembleManager(object):
                                                         queue_size=10)
         rospy.Subscriber(AgentUtils.get_assemble_prefix() + "acknowledge", AssembleAcknowledgement,
                          self._callback_acknowledgement)
+        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_assemble_prefix() + "stop", AssembleStop,
+                                                        queue_size=10)
+
+
 
         rospy.Subscriber(AgentUtils.get_assemble_prefix() + "request_start", AssembleManagerStatus, self._callback_request_start)
-
         self._pub_assemble_request_start = rospy.Publisher(AgentUtils.get_assemble_prefix() + "request_start", AssembleManagerStatus,
                                                         queue_size=10)
         rospy.Subscriber(AgentUtils.get_assemble_prefix() + "request_over", AssembleManagerStatus, self._callback_request_over)
@@ -76,7 +79,6 @@ class AssembleManager(object):
                 self.process_bids()
 
     def _callback_request_over(self, request):
-        assert request.id == self.current_running_id
         self.current_running_id = None
 
     def request_assist(self):
@@ -182,14 +184,7 @@ class AssembleManager(object):
         else:
             ettilog.logerr("AssembleManager(%s): coordination unsuccessful. cancelling... Received %d/%d from %s", self._agent_name, len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.bid.agent_name for acknowledgement in self.acknowledgements]))
 
-            self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_id())
-            for bid in self.bids:
-                    assignment = AssembleAssignment(
-                        assigned = False,
-                        deadline=0,
-                        bid = bid,
-                    )
-                    self._pub_assemble_assignment.publish(assignment)
+            self._pub_assemble_stop.publish(AssembleStop(id=self.assemble_id(), reason="coordinatino unsuscessful"))
 
         self._pub_assemble_request_over.publish(AssembleManagerStatus(id=self.id))
         self.id = self.assemble_id(new_id=True)

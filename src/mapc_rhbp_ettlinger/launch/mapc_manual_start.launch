@@ -3,33 +3,28 @@
     <!-- Enable custom logger configuration-->
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 
-    <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
-    </include>
-
+    <!-- Drones -->
+        <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA1" />
     </include>
 
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
-    </include>
-
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA4" />
-    </include>
-
+    <!-- Motorcycles -->
+        <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA5" />
     </include>
 
+    <!-- Cars -->
+        <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA6" />
+        <arg name="agent_name" value="agentA13" />
     </include>
+
+    <!-- Trucks -->
+        <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA27" />
+        <arg name="agent_name" value="agentA23" />
     </include>
 
 </launch>

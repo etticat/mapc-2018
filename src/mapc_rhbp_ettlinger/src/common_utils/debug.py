@@ -53,11 +53,6 @@ class DebugUtils:
         return stock_item_knowledgebase.get_total_stock_and_goals()
 
     @staticmethod
-    def cancel_task(task):
-        assemble_knowledgebase = AssembleKnowledgebase()
-        assemble_knowledgebase.cancel_assemble_requests(task)
-
-    @staticmethod
     def print_precondition_states(behaviour):
 
         rospy.logerr("------------------------------ Preconditions: ------------------------------------")

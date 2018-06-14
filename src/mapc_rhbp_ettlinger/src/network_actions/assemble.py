@@ -9,7 +9,7 @@ from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
-from coordination.assemble_manager import AssembleManager
+from network_coordination.assemble_manager import AssembleManager
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorageAvailableForItemSensor
@@ -19,7 +19,7 @@ from sensor.movement import DestinationDistanceSensor
 
 class AssembleNetworkBehaviour(NetworkBehaviour):
 
-    def __init__(self, agent, name, msg, **kwargs):
+    def __init__(self, agent, name, msg, coordination_network_behaviour, **kwargs):
 
         proximity = msg.proximity
         self._product_provider = ProductProvider(
@@ -27,11 +27,8 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
         super(AssembleNetworkBehaviour, self).__init__(name, **kwargs)
 
-        self.init_product_sensor(agent)
-
-        self.init_choose_finished_products_behaviour(agent, msg.role)
-        self.init_go_to_workshop_behaviour(agent, proximity)
-        self.init_assembly_behaviour(agent)
+        self.init_go_to_workshop_behaviour(agent, proximity, coordination_network_behaviour)
+        self.init_assembly_behaviour(agent, coordination_network_behaviour)
 
         # The goal is to have a full storage (so we can use it to assemble)
         # self.fill_stock_up_goal = GoalBase(
@@ -40,7 +37,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         #     plannerPrefix=self.get_manager_prefix(),
         #     conditions=[Negation(self.)])
 
-    def init_assembly_behaviour(self, agent):
+    def init_assembly_behaviour(self, agent, coordination_network_behaviour):
         ############### Assembling ##########################
         self.assemble_product_behaviour = AssembleProductBehaviour(
             name="assemble_product_behaviour",
@@ -54,20 +51,20 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
         # only assemble if we have chosen an item to assemble
         self.assemble_product_behaviour.add_precondition(
-            precondition=self.has_assemble_task_assigned_cond
+            precondition=coordination_network_behaviour.has_assemble_task_assigned_cond
         )
 
         # TODO: Add a proper effect
         self.assemble_product_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.assemble_organized_sensor.name,
+                sensor_name=coordination_network_behaviour.assemble_organized_sensor.name,
                 indicator=-1.0,
                 sensor_type=float
 
             )
         )
 
-    def init_go_to_workshop_behaviour(self, agent, proximity):
+    def init_go_to_workshop_behaviour(self, agent, proximity, coordination_network_behaviour):
         ################ Going to Workshop #########################
         self.go_to_workshop_behaviour = GoToWorkshopBehaviour(
             agent=agent,
@@ -91,7 +88,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(self.at_workshop_condition))
         # only go to resource node if we have chosen an item to gather
         self.go_to_workshop_behaviour.add_precondition(
-            precondition=self.has_assemble_task_assigned_cond)
+            precondition=coordination_network_behaviour.has_assemble_task_assigned_cond)
 
         # Going to resource has the effect of decreasing the distance to go there
         self.go_to_workshop_behaviour.add_effect(
@@ -102,18 +99,6 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
             )
         )
-    def init_product_sensor(self, agent):
-        self.assemble_organized_sensor = KnowledgeSensor(
-            name="assemble_organized_sensor",
-            pattern=AssembleKnowledgebase.generate_tuple(
-                agent_name=agent._agent_name,
-                active=True))
-
-        self.has_assemble_task_assigned_cond = Condition(
-            sensor=self.assemble_organized_sensor,
-            activator=BooleanActivator(
-                desiredValue=True
-            ))
 
     def stop(self):
         """
@@ -122,46 +107,3 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         """
         self._product_provider.stop_assembly()
         super(AssembleNetworkBehaviour, self).stop()
-
-    def init_choose_finished_products_behaviour(self, agent, role):
-        self.choose_finished_products_behaviour = CoordinateAssemblyBehaviour(
-            name="choose_finished_products_behaviour",
-            agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix(),
-            role=role.name
-        )
-
-        # only chose an item if we currently don't have a goal
-        self.choose_finished_products_behaviour.add_precondition(
-            precondition=Negation(self.has_assemble_task_assigned_cond)
-        )
-
-        # Chosing an ingredient has the effect, that we have more ingredients to gather
-        self.choose_finished_products_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.assemble_organized_sensor.name,
-                indicator=1.0,
-                sensor_type=bool
-            )
-        )
-
-
-class CoordinateAssemblyBehaviour(BehaviourBase):
-
-    def __init__(self, agent_name, role, **kwargs):
-        super(CoordinateAssemblyBehaviour, self).__init__(requires_execution_steps=True, **kwargs)
-
-        self._agent_name = agent_name
-        self._assemble_manager = AssembleManager(agent_name=agent_name, role=role)
-
-    def do_step(self):
-        # TODO: Make this super elaborate
-        # - Check which products usually result in most money
-        # - Decide who is the assembler (who gets the item)
-        # - ...
-
-        # if self._agent_name in ["agentA13", "agentA1"]: # Temporarily for testing. only 1 and 13 are managers
-        self._assemble_manager.request_assist() # TODO: find closest one
-        # else:
-            # rospy.logerr("%s: manager busy", self._name)
-        pass

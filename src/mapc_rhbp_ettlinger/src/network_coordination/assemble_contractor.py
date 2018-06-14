@@ -4,7 +4,7 @@ import time
 import rospy
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAcknowledgement, AssembleAssignment, \
-    AssembleTask
+    AssembleTask, AssembleStop
 
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
@@ -23,6 +23,7 @@ class AssembleContractor(object):
         self.role = role
         self.current_task = None
         self._assemble_knowledgebase = AssembleKnowledgebase()
+        self.enabled = False
 
 
         if product_provider == None:
@@ -37,6 +38,7 @@ class AssembleContractor(object):
         self._pub_assemble_bid = rospy.Publisher(prefix + "bid", AssembleBid, queue_size=10)
         rospy.Subscriber(prefix + "assign", AssembleAssignment, self._callback_assign)
         self._pub_assemble_acknowledge = rospy.Publisher(prefix + "acknowledge", AssembleAcknowledgement, queue_size=10)
+        rospy.Subscriber(prefix + "stop", AssembleStop, self._callback_stop)
 
 
     def _callback_request(self, request):
@@ -46,6 +48,11 @@ class AssembleContractor(object):
         :type request: AssembleRequest
         :return:
         """
+
+        rospy.logerr("calback %s", str(self.enabled))
+        if self.enabled == False:
+            return
+
         assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
 
         current_time = time.time()
@@ -99,3 +106,15 @@ class AssembleContractor(object):
                 bid=assembleAssignment.bid
             )
             self._pub_assemble_acknowledge.publish(acknoledgement)
+
+    def _callback_stop(self, assemble_stop):
+        """
+
+        :param assemble_stop:
+        :type assemble_stop: AssembleStop
+        :return:
+        """
+        current_assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
+        if current_assemble_task is not None and current_assemble_task.id == assemble_stop.id:
+            self._assemble_knowledgebase.cancel_assemble_request(self._agent_name, assemble_stop.id)
+            rhbplog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, assemble_stop.id, assemble_stop.reason)

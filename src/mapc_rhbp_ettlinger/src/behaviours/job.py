@@ -3,7 +3,7 @@ import random
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
-from mapc_rhbp_ettlinger.msg import AssembleTaskProgress
+from mapc_rhbp_ettlinger.msg import AssembleTaskProgress, AssembleStop
 
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.movement import MovementKnowledgebase
@@ -146,6 +146,11 @@ class AssembleProductBehaviour(BehaviourBase):
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent, self._action_request_agent)
 
+
+        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_assemble_prefix() + "stop", AssembleStop,
+                                                        queue_size=10)
+
+
     def _callback_task_progress(self, assembleTaskProgress):
         """
 
@@ -178,9 +183,7 @@ class AssembleProductBehaviour(BehaviourBase):
                 else:
                     # If this was the last task -> cancel the assembly
                     rospy.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
-                    self._assemble_knowledgebase.cancel_assemble_requests(self.assemble_task.id)
-
-
+                    self._pub_assemble_stop.publish(AssembleStop(id=self.assemble_task.id, reason="assembly finished"))
 
     def action_assemble(self, item):
         """
@@ -233,7 +236,6 @@ class AssembleProductBehaviour(BehaviourBase):
 
     def stop(self):
         # Once assembly is done, free all agents from assignemt task
-        # self._assist_knowledge.cancel_assemble_requests(agent_name=self._agent_name)
 
         self.assemble_task = None
         super(AssembleProductBehaviour, self).stop()

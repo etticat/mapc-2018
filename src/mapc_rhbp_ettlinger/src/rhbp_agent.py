@@ -1,23 +1,13 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
+from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
-from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
-from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation, Disjunction
-from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils.agent_utils import AgentUtils
-from common_utils.debug import DebugUtils
-from coordination.assemble_contractor import AssembleContractor
-from coordination.assemble_manager import AssembleManager
-from network_behaviours.assemble import AssembleNetworkBehaviour
-from network_behaviours.battery import BatteryChargingNetworkBehaviour
-from network_behaviours.exploration import ExplorationNetworkBehaviour
-from network_behaviours.gather import GatheringNetworkBehaviour
-from network_behaviours.job_execution import JobExecutionNetworkBehaviour
+from network_actions.action import ActionNetworkBehaviour
+from network_coordination.coordination import CoordinationNetworkBehaviour
 
 
 class RhbpAgent:
@@ -44,7 +34,7 @@ class RhbpAgent:
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
-        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
+        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=2)
 
         self._sim_started = False
         self._initialized = False
@@ -76,167 +66,24 @@ class RhbpAgent:
             self._sim_started = True
             rospy.loginfo(self._agent_name + " startet")
 
-            self.assemble_contractor = AssembleContractor(
-                agent_name=self._agent_name,
-                role=msg.role.name)
-
             # init only once, even when run restarts
             if not self._initialized:
-                self.init_behaviour_network(msg)
-                self.init_behaviour_network_connections()
+                self._coordination_network_behaviour = CoordinationNetworkBehaviour(
+                        name=self._agent_name + '/coordination',
+                        plannerPrefix=agent_name,
+                        msg=msg,
+                        agent=self,
+                        max_parallel_behaviours=2)
+                self._action_network_behaviour = ActionNetworkBehaviour(
+                        name=self._agent_name + '/action',
+                        plannerPrefix=agent_name,
+                        msg=msg,
+                        agent=self,
+                        coordination_network_behaviour= self._coordination_network_behaviour,
+                        max_parallel_behaviours=1)
 
             self._initialized = True
 
-    def init_behaviour_network(self, msg):
-
-        ######################## Battery Network Behaviour ########################
-        self._battery_charging_network_behaviour = BatteryChargingNetworkBehaviour(
-            name=self._agent_name + '/BatteryChargingNetwork',
-            plannerPrefix=self._agent_name,
-            agent=self,
-            msg=msg,
-            max_parallel_behaviours=1)
-
-
-        ######################## Job Network Behaviour ########################
-        self._job_execution_network = JobExecutionNetworkBehaviour(
-            name=self._agent_name + '/JobPerformanceNetwork',
-            plannerPrefix=self._agent_name,
-            msg=msg,
-            agent=self,
-            max_parallel_behaviours=1)
-
-        ######################## Gathering Network Behaviour ########################
-        self._gathering_network = GatheringNetworkBehaviour(
-            name=self._agent_name + '/GatheringNetwork',
-            plannerPrefix=self._agent_name,
-            msg=msg,
-            agent=self,
-            max_parallel_behaviours=1)
-
-        ######################## Assembly Network Behaviour ########################
-        self._assembly_network = AssembleNetworkBehaviour(
-            name=self._agent_name + '/AssembleNetwork',
-            plannerPrefix=self._agent_name,
-            msg=msg,
-            agent=self,
-            max_parallel_behaviours=1)
-
-        ######################## Exploration Network Behaviour ########################
-        self._exploration_network = ExplorationNetworkBehaviour(
-            name=self._agent_name + '/ExplorationNetwork',
-            plannerPrefix=self._agent_name,
-            agent=self,
-            msg=msg,
-            max_parallel_behaviours=1)
-
-        ######################## Build Well Network Behaviour ########################
-        # self._build_wells_network_behaviour = BuildWellNetworkBehaviour(
-        #     name=self._agent_name + '/BuildWellsNetwork',
-        #     plannerPrefix=self._agent_name,
-        #     agent=self,
-        #     msg=msg,
-        #     max_parallel_behaviours=1)
-
-        rospy.logerr("behaviour initialized")
-
-    def init_behaviour_network_connections(self):
-
-        ######################## Battery Network Behaviour ########################
-        
-
-        # Battery network has the effect of charging the battery
-        self._battery_charging_network_behaviour.add_effects_and_goals([(
-            self._battery_charging_network_behaviour._charge_sensor,
-            Effect(
-                sensor_name=self._battery_charging_network_behaviour._charge_sensor.name,
-                indicator=1.0,
-                sensor_type=float))])
-        
-
-        # Only charge if charge is required
-        self._battery_charging_network_behaviour.add_precondition(
-            precondition=self._battery_charging_network_behaviour._require_charging_cond)
-
-
-        ######################## Job Network Behaviour ########################
-
-        # Only perform jobs if there is enough charge left
-        self._job_execution_network.add_precondition(
-            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
-
-        # Is done implicitly already through goal QQQ: Do I really need this?
-        self._job_execution_network.add_precondition(
-            precondition=self._job_execution_network.has_tasks_assigned_condition)
-
-        ######################## Gathering Network Behaviour ########################
-
-        # Only gather when there is enough battery left
-        self._gathering_network.add_precondition(
-            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
-
-        # Only gather if there is enough storage left
-        # TODO: This should be a linear activator or something
-        # Currently the problem is when an agent almost fills up their stock with one item while still having place
-        # for one item of a different kind, they may go to the oposite side of the map. This is quite inefficient
-        self._gathering_network.add_precondition(
-            precondition=self._gathering_network.next_item_fits_in_storage_condition
-        )
-        # Only gather when there is nothing to be assembled
-        self._gathering_network.add_precondition(
-            precondition=Negation(self._assembly_network.has_assemble_task_assigned_cond))
-
-        # Only gather if there is no task assigned
-        # TODO: We might want to allow this in the case where the agent does not have all items for the task
-        # I do not think this makes sense as only accepting tasks where the agent already has all items seems more
-        # promising. Might want to reconsider this at a later stage when the job execution is more clear
-        self._gathering_network.add_precondition(
-            precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
-
-        # Only gather if all resources are discovered
-        self._gathering_network.add_precondition(
-            precondition=self._exploration_network.all_resources_discovered_condition)
-
-
-        ######################## Assembly Network Behaviour ########################
-        # Only assemble if there is enough battery left
-        self._assembly_network.add_precondition(
-            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
-
-        # We should not assemble before the trunk is full. (except when we are already assembling)
-        self._assembly_network.add_precondition(
-            precondition=Disjunction(
-                # Start it when the storage is full
-                Negation(self._gathering_network.next_item_fits_in_storage_condition),
-                # But also keep this network active when task is assigned
-                self._assembly_network.has_assemble_task_assigned_cond
-            )
-        )
-
-        ######################## Exploration Network Behaviour ########################
-
-        # Only do shop exploration when enough battery left
-        self._exploration_network.add_precondition(
-            precondition=self._battery_charging_network_behaviour._enough_battery_cond)
-
-        # Only explore when there is not task assigned
-        self._exploration_network.add_precondition(
-            precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
-
-        # Only explore when not all resource nodes are discovered
-        # TODO: Maybe it makes sense that some agents continue to explore
-        self._exploration_network.add_precondition(
-            precondition=Negation(self._exploration_network.all_resources_discovered_condition)
-        )
-
-        # Seems to work without. With them I get errors but it continues to run normally
-        self._job_performance_goal = GoalBase(
-            name='score_goal',
-            permanent=True,
-            plannerPrefix=self._agent_name,
-            conditions=[Negation(self._job_execution_network.has_tasks_assigned_condition)])
-
-        rospy.logerr("behaviour connections initialized")
     def _callback_generic_action(self, msg):
         """
         ROS callback for generic actions
@@ -279,8 +126,8 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        if hasattr(self, "_gathering_network"):
-            DebugUtils.print_precondition_states(self._gathering_network.gather_ingredients_behaviour)
+        # if hasattr(self, "_gathering_network"):
+        #     DebugUtils.print_precondition_states(self._gathering_network.gather_ingredients_behaviour)
 
         start_time = rospy.get_rostime()
         steps = 0
