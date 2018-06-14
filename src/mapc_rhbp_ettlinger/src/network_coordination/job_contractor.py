@@ -2,6 +2,7 @@ import random
 import time
 
 import rospy
+from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
     JobTask
 
@@ -47,13 +48,13 @@ class JobContractor(object):
         """
 
         current_time = time.time()
-        if request.deadline < current_time:
-            rospy.logerr("Deadline over")
-            return
+        # if request.deadline < current_time:
+        #     rospy.logerr("Deadline over")
+        #     return
+        #
+        current_job = self._job_knowledgebase.get_task(agent_name=self._agent_name)
 
-        job_job = self._job_knowledgebase.get_tasks(agent_name=self._agent_name)
-
-        if job_job is None:
+        if current_job is None:
             self.send_bid(request)
 
     def send_bid(self, request):
@@ -88,17 +89,22 @@ class JobContractor(object):
 
         if is_still_possible:
 
-            # accepted = self._job_knowledgebase.save_job(JobTask(
-            #     id=job_assignment.id,
-            #     agent_name=self._agent_name,
-            #     pos=job_assignment.bid.request.destination,
-            #     jobs=job_assignment.jobs,
-            #     active=True
-            # ))
             acknoledgement = JobAcknowledgement(
                 acknowledged=True, # TODO check
                 agent_name=job_assignment.agent_name,
                 id=job_assignment.id,
                 items=job_assignment.items
             )
+            items = []
+
+            for item in job_assignment.items:
+                for i in range(item.amount):
+                    items.append(item.name)
+
+            self._job_knowledgebase.save_task(JobTask(
+                job_id = job_assignment.job_id,
+                agent_name = self._agent_name,
+                pos = job_assignment.pos,
+                items = items
+            ))
             self._pub_job_acknowledge.publish(acknoledgement)

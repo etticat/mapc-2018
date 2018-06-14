@@ -5,7 +5,7 @@ import operator
 
 import rospy
 from mac_ros_bridge.msg import SimStart, Agent, Item
-from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
+from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg, JobAssignment
 
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.tasks import JobKnowledgebase
@@ -261,7 +261,7 @@ class ProductProvider(object):
 
 
                     if value > best_value:
-                        # rospy.logerr(stringi + str(value) + str(combination))
+                        rospy.logerr(stringi + str(value) + str(combination))
                         best_value = value
                         best_combination = subset
                         best_finished_products = combination
@@ -370,4 +370,57 @@ class ProductProvider(object):
             value += (1+(max_priority - priority_dict[item]))  * count
 
         return value
+
+    def choose_best_job_bid_combination(self, job, bids):
+
+        best_combination = []
+        best_value = 0
+        best_finished_products = None
+
+        if len(bids) >= 2:
+            # Go through all combinations
+            for L in range(1, min(len(bids) + 1, 7)): # We try all combinations using 1-7 agents
+                for subset in itertools.combinations(bids, L):
+                    stringi = ""
+                    for item in subset:
+                        stringi = stringi + item.agent_name + " - "
+
+                    combination = self.generate_job_fulfillment_combination(job, subset)
+
+                    if combination != None:
+                        best_value = 1
+                        best_combination = subset
+                        best_finished_products = combination
+                if best_value > 0:
+                    # we only try combinations with more, if we could not find anything with less
+                    break
+
+        return best_finished_products
+
+    def generate_job_fulfillment_combination(self, job, bids):
+        res = []
+        job_items = CalcUtil.get_dict_from_items(job.items)
+
+        for bid in bids:
+            assignement = JobAssignment(
+                id = bid.id,
+                agent_name = bid.agent_name,
+                assigned = True,
+                deadline = 0,
+                items = [])
+            for item in bid.items:
+                useful_items = min(item.amount, job_items[item.name])
+                if useful_items >  0:
+                    job_items[item.name] = job_items[item.name] - useful_items
+                    assignement.items.append(Item(
+                        name=item.name,
+                        amount=useful_items))
+
+            res.append(assignement)
+
+        for job_item in job_items.values():
+            if job_item > 0: # If we could not find all items in combination, return empty
+                return None
+
+        return res
 

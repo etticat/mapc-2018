@@ -1,5 +1,4 @@
-string                      id
 string                      agent_name
+string                      job_id
 mac_ros_bridge/Position     pos
-string                      tasks
-bool                        active
+string[]                      items

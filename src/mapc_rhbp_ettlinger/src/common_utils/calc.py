@@ -34,3 +34,9 @@ class CalcUtil:
                     res.append(Item(name=item1.name,amount=min(item1.amount, item2.amount)))
                     break
         return res
+    @staticmethod
+    def get_dict_from_items(items):
+        res = {}
+        for item in items:
+            res[item.name] = res.get(item.name, 0) + item.amount
+        return res

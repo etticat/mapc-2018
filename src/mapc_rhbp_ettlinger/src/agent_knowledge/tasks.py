@@ -1,116 +1,91 @@
 #!/usr/bin/env python2
 
 import rospy
-from mapc_rhbp_ettlinger.msg import Task
+from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import JobTask
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
 
 class JobKnowledgebase(BaseKnowledgebase):
 
-    INDEX_JOB_ID = 1
-    INDEX_TASK_ID = 2
-    INDEX_DESTINATION = 3
-    INDEX_AGENT_NAME = 4
-    INDEX_STATUS = 5
-    INDEX_ITEM = 6
-
+    INDEX_AGENT_NAME = 1
+    INDEX_JOB_ID = 2
+    INDEX_LAT = 3
+    INDEX_LONG = 4
+    INDEX_ITEMS = 5
 
     @staticmethod
-    def generate_tuple(job_id="*", task_id="*", destination="*", agent="*", status="*", item="*"):
-        return 'task', job_id, task_id, destination, agent, status, item
+    def generate_tuple(agent_name="*", job_id="*", lat="*", long="*", items="*"):
+        return 'job_task', agent_name, job_id, str(lat), str(long), items
 
     @staticmethod
     def generate_task_from_fact(fact):
         """
-        Generates a Task from a Knowledgebase fact
+        Generates a JobTask from a Knowledgebase fact
         :param fact: The fact
         :type fact: list
-        :return: Task
+        :return: JobTask
         """
-        task = Task(
+        job_task = JobTask(
+            agent_name = fact[JobKnowledgebase.INDEX_AGENT_NAME],
             job_id = fact[JobKnowledgebase.INDEX_JOB_ID],
-            id = fact[JobKnowledgebase.INDEX_TASK_ID],
-            destination = fact[JobKnowledgebase.INDEX_DESTINATION],
-            item = fact[JobKnowledgebase.INDEX_ITEM],
-            agent = fact[JobKnowledgebase.INDEX_AGENT_NAME],
-            status = fact[JobKnowledgebase.INDEX_STATUS],
+            pos = Position(
+                lat=float(fact[JobKnowledgebase.INDEX_LAT]),
+                long=float(fact[JobKnowledgebase.INDEX_LONG])),
+            items=fact[JobKnowledgebase.INDEX_ITEMS].split(",")
         )
-        return task
+        return job_task
 
     @staticmethod
-    def generate_fact_from_task(task):
+    def generate_fact_from_task(job_task):
         """
-        Generates a knowledgebase fact rom a task
-        :param task: The task
-        :type task: Task
+        Generates a knowledgebase fact rom a job_task
+        :param job_task: The job_task
+        :type job_task: JobTask
         :return: list
         """
         return JobKnowledgebase.generate_tuple(
-            job_id=task.job_id,
-            task_id=task.id,
-            destination=task.destination,
-            item=task.item,
-            agent=task.agent,
-            status=task.status
+            job_id=job_task.job_id,
+            agent_name=job_task.agent_name,
+            lat=job_task.pos.lat,
+            long=job_task.pos.long,
+            items=",".join(job_task.items)
 
         )
 
-    def save_task(self, task):
+    def save_task(self, job_task):
         """
-        Saves a new task to the Knoledgebase
-        :param task:
-        :type task: Task
+        Saves a new job_task to the Knoledgebase
+        :param job_task:
+        :type job_task: JobTask
         :return:
         """
         tuple = JobKnowledgebase.generate_tuple(
-            job_id=task.job_id,
-            task_id=task.id,
-            destination="*",
-            agent="*",
-            status="*",
-            item=task.item
+            agent_name=job_task.agent_name
         )
         task_tuples = self._kb_client.all(tuple)
 
         if len(task_tuples) > 0:
-            rospy.loginfo("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
-            return
+            rospy.loginfo("TaskKnowledge:: Agent already has task assigned")
+            return False
         else:
-            new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none", item=task.item)
-            rospy.loginfo("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
+            new = JobKnowledgebase.generate_fact_from_task(job_task)
+            rospy.loginfo("TaskKnowledge:: JobTask %s saved", job_task.job_id)
             ret_value = self._kb_client.push(new)
+            return True
 
-    def assign_task(self, task, agent_name):
+    def end_job_task(self, job_id, agent_name):
         """
-        Assigns a task to an agent
-        :param task: The task
-        :type task: Task
+        Marks a job_task as finished
+        :param job_task: The job_task
+        :type job_task: JobTask
         :param agent_name: Agent name
         :type agent_name: str
         :return:
         """
-        search = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="open")
-        new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
+        return self._kb_client.pop(self.generate_tuple(agent_name=agent_name, job_id=job_id))
 
-        ret_value = self.__kb_client.update(search, new, push_without_existing = True)
-        return ret_value
-
-    def finish_task(self, task, agent_name):
-        """
-        Marks a task as finished
-        :param task: The task
-        :type task: Task
-        :param agent_name: Agent name
-        :type agent_name: str
-        :return:
-        """
-        search = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
-        new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="finished")
-
-        ret_value = self._kb_client.update(search, new, push_without_existing = True)
-        return ret_value
-
-    def get_tasks(self, agent_name, status="*", job_id="*", destination="*", task_id="*"):
+    def get_task(self, agent_name="*", job_id="*", lat="*", long="*", items="*"):
         """
         Returns the curretn tasks of an agent
         :param agent_name:
@@ -121,14 +96,10 @@ class JobKnowledgebase(BaseKnowledgebase):
         :return:
         """
         tuple = JobKnowledgebase.generate_tuple(
+            agent_name=agent_name,
             job_id=job_id,
-            task_id=task_id,
-            destination=destination,
-            agent=agent_name,
-            status=status)
+            lat=lat,
+            long=long,
+            items=items)
 
-        tasks = []
-
-        for fact in  self._kb_client.all(tuple):
-            tasks.append(JobKnowledgebase.generate_task_from_fact(fact))
-        return tasks
+        return self._kb_client.peek(tuple)

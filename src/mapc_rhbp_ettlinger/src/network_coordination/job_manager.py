@@ -6,7 +6,9 @@ from mac_ros_bridge.msg import Position, Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
 
 import utils.rhbp_logging
+from agent_knowledge.tasks import JobKnowledgebase
 from common_utils.agent_utils import AgentUtils
+from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
@@ -23,10 +25,12 @@ class JobManager(object):
         self._product_provider = ProductProvider(agent_name="agentA1") # temporarily just use any name
         # TODO: Make productProvider independent from agent
 
+        self._job_knowledgebase = JobKnowledgebase()
+        self._facility_provider = FacilityProvider()
+
         self.id = self.job_id(new_id=True)
 
         self.bids = []
-        self.accepted_bids = []
         self.acknowledgements = []
 
         self._pub_job_request = rospy.Publisher(AgentUtils.get_job_prefix() + "request", JobRequest,
@@ -45,7 +49,6 @@ class JobManager(object):
         :return:
         """
         self.bids = []
-        self.accepted_bids = []
         self.acknowledgements = []
 
         ettilog.logerr("JobManager:: ---------------------------Manager start---------------------------",)
@@ -87,46 +90,23 @@ class JobManager(object):
 
         ettilog.loginfo("JobManager(%s, %s): Processing %s bids", self.job_id(), str(len(self.bids)))
 
-        # self.accepted_bids = self._product_provider.choose_best_job_bid_combination(self.bids) # TODO
-        self.accepted_bids = self.bids # TODO: Temp: Accept everything
+        self.assignments = self._product_provider.choose_best_job_bid_combination(self._job, self.bids) # TODO
 
-        if len(self.accepted_bids) == 0:
+        if self.assignments == None:
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
             bids, roles = self._product_provider.get_items_and_roles_from_bids(self.bids)
             ettilog.logerr("JobManager:: ------ Items: %s", str(bids))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
-            self.accepted_bids = []
+            return
         else:
-            ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s ", ", ".join([bid.agent_name for bid in self.accepted_bids]))
+            ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s", ", ".join([bid.agent_name for bid in self.assignments]), str(self.assignments))
 
-        rejected_bids = []
-
-        for bid in self.bids:
-            if bid not in self.accepted_bids:
-                rejected_bids.append(bid)
-
-        ettilog.loginfo("JobManager:: Rejecting %s bid(s)", str(len(rejected_bids)))
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 
-        for bid in self.bids:
-            if bid in self.accepted_bids:
-                assignment = JobAssignment(
-                    id = bid.id,
-                    agent_name = bid.agent_name,
-                    assigned = True,
-                    deadline=deadline,
-                    items=bid.items # Currently let them bring all items from bid. TODO: only bring neccessary items
-                )
-            else:
-                assignment = JobAssignment(
-                    assigned = False,
-                    deadline=deadline,
-                    bid = bid,
-                    jobs = ""
-                )
-
-            ettilog.loginfo("JobManager:: Publishing assignment for %s (%s)", bid.agent_name, str(assignment.assigned))
+        for assignment in self.assignments:
+            assignment.pos = self._facility_provider.get_storage_by_name(self._job.storage_name).pos
+            ettilog.loginfo("JobManager:: Publishing assignment for %s (%s)", assignment.agent_name, str(assignment.assigned))
             self._pub_job_assignment.publish(assignment)
 
         time.sleep(deadline - time.time())
@@ -144,23 +124,25 @@ class JobManager(object):
         self.acknowledgements.append(acknowledgement)
 
     def _process_bid_acknoledgements(self):
-        ettilog.loginfo("JobManager:: Processing Acknowledgements. Received %d/%d from %s", len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
+        ettilog.loginfo("JobManager:: Processing Acknowledgements. Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
-        if len(self.acknowledgements) == len(self.accepted_bids):
-            ettilog.logerr("JobManager:: coordination successful. work can start with %d agents", len(self.accepted_bids))
+        if len(self.acknowledgements) == len(self.assignments):
+            ettilog.logerr("JobManager:: coordination successful. work can start with %d agents", len(self.assignments))
         else:
-            ettilog.logerr("JobManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.accepted_bids), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
+            ettilog.logerr("JobManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
             # TODO: Delete from db
-            # self._job_knowledgebase.cancel_job_requests(self.job_id())
-            # for bid in self.bids:
-            #         assignment = JobAssignment(
-            #             assigned = False,
-            #             deadline=0,
-            #             bid = bid,
-            #         )
-            #         self._pub_job_assignment.publish(assignment)
-
+            self._job_knowledgebase.end_job_task(
+                job_id=self._job.id,
+                agent_name="*")
+            for bid in self.bids:
+                    assignment = JobAssignment(
+                        assigned = False,
+                        deadline=0,
+                        bid = bid,
+                        job_id=self._job.id
+                    )
+                    self._pub_job_assignment.publish(assignment)
 
         self.id = self.job_id(new_id=True)
 
