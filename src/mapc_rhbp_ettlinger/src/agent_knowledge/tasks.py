@@ -5,7 +5,7 @@ from mapc_rhbp_ettlinger.msg import Task
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
 
-class TaskKnowledgebase(BaseKnowledgebase):
+class JobKnowledgebase(BaseKnowledgebase):
 
     INDEX_JOB_ID = 1
     INDEX_TASK_ID = 2
@@ -28,12 +28,12 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :return: Task
         """
         task = Task(
-            job_id = fact[TaskKnowledgebase.INDEX_JOB_ID],
-            id = fact[TaskKnowledgebase.INDEX_TASK_ID],
-            destination = fact[TaskKnowledgebase.INDEX_DESTINATION],
-            item = fact[TaskKnowledgebase.INDEX_ITEM],
-            agent = fact[TaskKnowledgebase.INDEX_AGENT_NAME],
-            status = fact[TaskKnowledgebase.INDEX_STATUS],
+            job_id = fact[JobKnowledgebase.INDEX_JOB_ID],
+            id = fact[JobKnowledgebase.INDEX_TASK_ID],
+            destination = fact[JobKnowledgebase.INDEX_DESTINATION],
+            item = fact[JobKnowledgebase.INDEX_ITEM],
+            agent = fact[JobKnowledgebase.INDEX_AGENT_NAME],
+            status = fact[JobKnowledgebase.INDEX_STATUS],
         )
         return task
 
@@ -45,7 +45,7 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :type task: Task
         :return: list
         """
-        return TaskKnowledgebase.generate_tuple(
+        return JobKnowledgebase.generate_tuple(
             job_id=task.job_id,
             task_id=task.id,
             destination=task.destination,
@@ -62,7 +62,7 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :type task: Task
         :return:
         """
-        tuple = TaskKnowledgebase.generate_tuple(
+        tuple = JobKnowledgebase.generate_tuple(
             job_id=task.job_id,
             task_id=task.id,
             destination="*",
@@ -76,7 +76,7 @@ class TaskKnowledgebase(BaseKnowledgebase):
             rospy.loginfo("TaskKnowledge:: Task %s%s already exists", task.job_id, task.id)
             return
         else:
-            new = TaskKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none", item=task.item)
+            new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="none", item=task.item)
             rospy.loginfo("TaskKnowledge:: Task %s%s saved", task.job_id, task.id)
             ret_value = self._kb_client.push(new)
 
@@ -89,8 +89,8 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :type agent_name: str
         :return:
         """
-        search = TaskKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="open")
-        new = TaskKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
+        search = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="open")
+        new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
 
         ret_value = self.__kb_client.update(search, new, push_without_existing = True)
         return ret_value
@@ -104,8 +104,8 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :type agent_name: str
         :return:
         """
-        search = TaskKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
-        new = TaskKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="finished")
+        search = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent=agent_name, status="assigned")
+        new = JobKnowledgebase.generate_tuple(job_id=task.job_id, task_id=task.id, destination=task.destination, agent="none", status="finished")
 
         ret_value = self._kb_client.update(search, new, push_without_existing = True)
         return ret_value
@@ -120,7 +120,7 @@ class TaskKnowledgebase(BaseKnowledgebase):
         :param task_id:
         :return:
         """
-        tuple = TaskKnowledgebase.generate_tuple(
+        tuple = JobKnowledgebase.generate_tuple(
             job_id=job_id,
             task_id=task_id,
             destination=destination,
@@ -130,5 +130,5 @@ class TaskKnowledgebase(BaseKnowledgebase):
         tasks = []
 
         for fact in  self._kb_client.all(tuple):
-            tasks.append(TaskKnowledgebase.generate_task_from_fact(fact))
+            tasks.append(JobKnowledgebase.generate_task_from_fact(fact))
         return tasks

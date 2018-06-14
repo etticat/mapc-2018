@@ -5,7 +5,7 @@ from mapc_rhbp_ettlinger.msg import Task
 from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
 from common_utils.agent_utils import AgentUtils
-from agent_knowledge.tasks import TaskKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
 
 
 class JobPlanner(object):
@@ -17,7 +17,7 @@ class JobPlanner(object):
         self.all_jobs = []
         self.all_tasks = []
 
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 

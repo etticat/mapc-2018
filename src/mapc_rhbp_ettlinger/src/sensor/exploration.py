@@ -1,7 +1,7 @@
 import rospy
 
 from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import TaskKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.sensors import Sensor
 from provider.product_provider import ProductProvider
 
@@ -15,7 +15,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
     def __init__(self, agent_name, optional=False, name=None, initial_value=0.0):
         super(ResourceDiscoveryProgressSensor, self).__init__(name=name, optional=optional, initial_value=initial_value)
         self._resource_knowledge = ResourceKnowledgebase()
-        self.task_knowledge = TaskKnowledgebase()
+        self.task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def sync(self):

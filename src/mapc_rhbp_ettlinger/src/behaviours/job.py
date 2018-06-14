@@ -8,7 +8,7 @@ from mapc_rhbp_ettlinger.msg import AssembleTaskProgress, AssembleStop
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.movement import MovementKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import TaskKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoLocationBehaviour, GoToFacilityBehaviour
@@ -36,7 +36,7 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
         self._product_provider_method = product_provider_method
         self._selected_facility = None
         self._agent = agent
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent._agent_name)
         self._facility_knowledge = ResourceKnowledgebase()
 
@@ -68,7 +68,7 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
             plannerPrefix=plannerPrefix,
             **kwargs)
         self._selected_facility = None
-        self.taskKnowledge = TaskKnowledgebase()
+        self.taskKnowledge = JobKnowledgebase()
         self.facility_provider = FacilityProvider()
 
     def start(self):
@@ -92,7 +92,7 @@ class GatherBehaviour(GenericActionBehaviour):
                       action_type=Action.GATHER,
                       **kwargs)
         self._movement_knowledge = MovementKnowledgebase()
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
         self._product_provider_method = product_provider_method
         self._resource_knowledgebase= ResourceKnowledgebase()
         self.movement_behaviour_name = behaviour_name
@@ -127,7 +127,7 @@ class AssembleProductBehaviour(BehaviourBase):
         self._agent_name = agent_name
         self._last_task = None
         self._last_goal = None
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._assemble_knowledgebase = AssembleKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
@@ -250,7 +250,7 @@ class GoToWorkshopBehaviour(GotoLocationBehaviour):
         super(GoToWorkshopBehaviour, self).__init__(
             **kwargs)
         self._selected_facility = None
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=self._agent_name)
         self._assemble_knowledge = AssembleKnowledgebase()
 
@@ -274,7 +274,7 @@ class DeliverJobBehaviour(BehaviourBase):
             requires_execution_steps=True,
             **kwargs)
         self._agent_name = agent_name
-        self._task_knowledge = TaskKnowledgebase()
+        self._task_knowledge = JobKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,

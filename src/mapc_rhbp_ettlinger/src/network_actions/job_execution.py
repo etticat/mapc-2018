@@ -1,6 +1,6 @@
 import rospy
 
-from agent_knowledge.tasks import TaskKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -75,7 +75,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         # Sensor that checks if agent has at least one assigned task
         self.has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
-            pattern=TaskKnowledgebase.generate_tuple(
+            pattern=JobKnowledgebase.generate_tuple(
                 job_id="*",
                 task_id="*",
                 destination="*",

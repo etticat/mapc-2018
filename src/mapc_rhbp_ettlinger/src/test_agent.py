@@ -1,13 +1,13 @@
 import time
 
 import rospy
-from mac_ros_bridge.msg import Item, Position
+from mac_ros_bridge.msg import Item, Position, Job
 
 from common_utils.agent_utils import AgentUtils
-from coordination.assemble_contractor import AssembleContractor
-from coordination.assemble_manager import AssembleManager
-from coordination.job_contractor import JobContractor
-from coordination.job_manager import JobManager
+from network_coordination.assemble_contractor import AssembleContractor
+from network_coordination.assemble_manager import AssembleManager
+from network_coordination.job_contractor import JobContractor
+from network_coordination.job_manager import JobManager
 from provider.product_provider import ProductProvider
 
 
@@ -21,9 +21,8 @@ class TestAgent(object):
         self.test_job_distribution_contract_net()
 
     def test_job_distribution_contract_net(self):
-        self.job_manager = JobManager(
-            agent_name="agentA1"
-        )
+        self.job_manager = JobManager()
+
         self.job_contractor_0 = JobContractor(
             agent_name="agentA1",
             role="drone",
@@ -32,7 +31,7 @@ class TestAgent(object):
                 items=[
                     Item(
                         name="item5",
-                        amount=2)
+                        amount=3)
                 ]
             )
         )
@@ -43,8 +42,8 @@ class TestAgent(object):
                 agent_name="agentA2",
                 items=[
                     Item(
-                        name="item6",
-                        amount=1)
+                        name="item5",
+                        amount=6)
                 ]
             )
         )
@@ -52,11 +51,11 @@ class TestAgent(object):
             agent_name="agentA3",
             role="motorcycle",
             product_provider=FakeProductProvider(
-                agent_name="agentA3",
+                agent_name="agentA5",
                 items=[
                     Item(
                         name="item8",
-                        amount=1)
+                        amount=4)
                 ]
             ))
         self.job_contractor_3 = JobContractor(
@@ -84,7 +83,19 @@ class TestAgent(object):
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
         time.sleep(1)
         rospy.logerr("Request assist")
-        self.job_manager.job_request()
+        self.job_manager.job_request(Job(
+            id = 'job12',
+            storage_name = 'storage2',
+            end = 0,
+            items = [
+                Item(
+                    name="item5",
+                    amount=6),
+                Item(
+                    name="item4",
+                    amount=3)
+            ]
+        ))
 
 
 

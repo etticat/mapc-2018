@@ -1,3 +1,4 @@
+from mac_ros_bridge.msg import Item
 
 
 class CalcUtil:
@@ -23,3 +24,13 @@ class CalcUtil:
                 max_nr = nr_possible
 
         return max_nr
+    @staticmethod
+    def items_intersect(items1, items2):
+        res = []
+
+        for item1 in items1:
+            for item2 in items2:
+                if item1.name == item2.name:
+                    res.append(Item(name=item1.name,amount=min(item1.amount, item2.amount)))
+                    break
+        return res

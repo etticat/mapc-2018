@@ -8,7 +8,7 @@ from mac_ros_bridge.msg import SimStart, Agent, Item
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
 from agent_knowledge.item import StockItemKnowledgebase
-from agent_knowledge.tasks import TaskKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from common_utils.singleton import Singleton
@@ -37,7 +37,7 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
-        self._task_knowledgebase = TaskKnowledgebase()
+        self._task_knowledgebase = JobKnowledgebase()
         self._stock_item_knowledgebase = StockItemKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
