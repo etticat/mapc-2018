@@ -113,7 +113,7 @@ class AssembleManager(object):
 
         ettilog.loginfo("AssembleManager(%s, %s): Processing %s bids", self._agent_name, self.assemble_id(), str(len(self.bids)))
 
-        self.accepted_bids, finished_products = self._product_provider.choose_best_bid_combination(self.bids)
+        self.accepted_bids, finished_products = self._product_provider.choose_best_assemble_bid_combination(self.bids)
 
         if len(finished_products.keys()) == 0:
             ettilog.logerr("AssembleManager(%s): No useful bid combination found in %d bids", self._agent_name, len(self.bids))
@@ -163,15 +163,6 @@ class AssembleManager(object):
         time.sleep(deadline - time.time())
 
         self._process_bid_acknoledgements()
-
-
-    def assign_bids(self, bids, combination):
-        """
-        Assignes assist tasks to assemble all items from the combinationarray
-        :param bids:
-        :param combination:
-        :return:
-        """
 
     def _callback_acknowledgement(self, acknowledgement):
         ettilog.loginfo("AssembleManager(%s): Received Acknowledgement from %s", self._agent_name, acknowledgement.bid.agent_name)

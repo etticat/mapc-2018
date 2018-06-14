@@ -55,5 +55,9 @@ class AgentUtils:
     @classmethod
     def get_assemble_prefix(cls):
         return '/assemble/'
+
+    @classmethod
+    def get_job_prefix(cls):
+        return '/job/'
         
         

@@ -241,7 +241,7 @@ class ProductProvider(object):
         return res
     
 
-    def choose_best_bid_combination(self, bids):
+    def choose_best_assemble_bid_combination(self, bids):
 
         best_combination = []
         best_value = 0

@@ -6,6 +6,8 @@ from mac_ros_bridge.msg import Item, Position
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.assemble_manager import AssembleManager
+from coordination.job_contractor import JobContractor
+from coordination.job_manager import JobManager
 from provider.product_provider import ProductProvider
 
 
@@ -14,6 +16,79 @@ class TestAgent(object):
     def __init__(self):
 
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
+
+        # self.test_assembly_contract_net()
+        self.test_job_distribution_contract_net()
+
+    def test_job_distribution_contract_net(self):
+        self.job_manager = JobManager(
+            agent_name="agentA1"
+        )
+        self.job_contractor_0 = JobContractor(
+            agent_name="agentA1",
+            role="drone",
+            product_provider=FakeProductProvider(
+                agent_name="agentA1",
+                items=[
+                    Item(
+                        name="item5",
+                        amount=2)
+                ]
+            )
+        )
+        self.job_contractor_1 = JobContractor(
+            agent_name="agentA2",
+            role="truck",
+            product_provider=FakeProductProvider(
+                agent_name="agentA2",
+                items=[
+                    Item(
+                        name="item6",
+                        amount=1)
+                ]
+            )
+        )
+        self.job_contractor_2 = JobContractor(
+            agent_name="agentA3",
+            role="motorcycle",
+            product_provider=FakeProductProvider(
+                agent_name="agentA3",
+                items=[
+                    Item(
+                        name="item8",
+                        amount=1)
+                ]
+            ))
+        self.job_contractor_3 = JobContractor(
+            agent_name="agentA4",
+            role="car",
+            product_provider=FakeProductProvider(
+                agent_name="agentA4",
+                items=[
+                    Item(
+                        name="item6",
+                        amount=3)
+                ]
+            ))
+        self.job_contractor_4 = JobContractor(
+            agent_name="agentA5",
+            role="motorcycle",
+            product_provider=FakeProductProvider(
+                agent_name="agentA6",
+                items=[
+                    Item(
+                        name="item4",
+                        amount=4)
+                ]
+            ))
+        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
+        time.sleep(1)
+        rospy.logerr("Request assist")
+        self.job_manager.job_request()
+
+
+
+    def test_assembly_contract_net(self):
         self.assemble_manager = AssembleManager(
             agent_name="agentA1",
             role="drone"

@@ -32,13 +32,11 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.init_deliver_job_behaviour(agent)
 
 
-        # QQQ: What is this error, when i uncomment this goal?
-        #---------------> "undeclared predicate has_task used in domain definition"
-        # self._job_performance_goal = GoalBase(
-        #     name='job_performance',
-        #     permanent=True,
-        #     plannerPrefix=agent._agent_name,
-        #     conditions=[Negation(self.has_tasks_assigned_condition)])
+        self._job_performance_goal = GoalBase(
+            name='job_performance',
+            permanent=True,
+            plannerPrefix=agent._agent_name,
+            conditions=[Negation(self.has_tasks_assigned_condition)])
 
     def init_go_to_destination_behaviour(self, agent, proximity):
         # go to destination

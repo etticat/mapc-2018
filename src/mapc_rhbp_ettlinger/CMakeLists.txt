@@ -50,11 +50,16 @@ add_message_files(
   Task.msg
   AssembleRequest.msg
   AssembleBid.msg
-  AssembleManagerStatus.msg
   AssembleAssignment.msg
   AssembleAcknowledgement.msg
   AssembleTask.msg
+  AssembleManagerStatus.msg
   AssembleTaskProgress.msg
+  JobRequest.msg
+  JobBid.msg
+  JobAssignment.msg
+  JobAcknowledgement.msg
+  JobTask.msg
   StockItem.msg
   StockItemMsg.msg
   Movement.msg
