@@ -4,7 +4,9 @@ from knowledge_base.knowledge_base_manager import KnowledgeBase
 
 class BaseKnowledgebase(object):
 
+    kb_instance=None
 
     def __init__(self):
-        self._kb_client = KnowledgeBaseClient(
-            knowledge_base_name = KnowledgeBase.DEFAULT_NAME)
+        if BaseKnowledgebase.kb_instance == None:
+            BaseKnowledgebase.kb_instance = KnowledgeBaseClient(knowledge_base_name = KnowledgeBase.DEFAULT_NAME)
+        self._kb_client = BaseKnowledgebase.kb_instance
