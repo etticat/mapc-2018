@@ -1,5 +1,6 @@
 import rospy
 
+from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
@@ -22,6 +23,9 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self._product_provider = ProductProvider(
             agent_name=agent._agent_name)
 
+        self._movement_knowledge = MovementKnowledgebase()
+        self._agent_name= agent._agent_name
+
         super(GatheringNetworkBehaviour, self).__init__(name, **kwargs)
 
         self.init_product_sensor(agent)
@@ -30,22 +34,6 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self.init_go_to_resource_behaviour(agent, proximity)
         self.init_gather_behaviour(agent)
 
-        # The goal is to have a full storage (so we can use it to assemble)
-        self.fill_stock_up_goal = GoalBase(
-            name='fill_up_stock',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self.next_item_fits_in_storage_condition)])
-
-        self.add_effect(
-            effect=Effect(
-                sensor_name=self.storage_space_after_next_item_sensor.name,
-                indicator=-1.0,
-                sensor_type=float
-
-            )
-        )
-
 
     def init_gather_behaviour(self, agent):
         ############### Gathering ##########################
@@ -53,8 +41,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             name="gather_for_hoarding_behaviour",
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            behaviour_name=self.go_to_resource_node_behaviour._name,
-            product_provider_method=self._product_provider.get_required_ingredients_for_hoarding
+            behaviour_name=self.go_to_resource_node_behaviour._name
         )
         # Only gather if we are at the intended resource node
         self.gather_ingredients_behaviour.add_precondition(
@@ -92,8 +79,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self.go_to_resource_node_behaviour = GoToResourceBehaviour(
             agent=agent,
             name="go_to_resource_node_behaviour",
-            plannerPrefix=self.get_manager_prefix(),
-            product_provider_method=self._product_provider.get_required_ingredients_for_hoarding
+            plannerPrefix=self.get_manager_prefix()
         )
         self.resource_destination_sensor_hoarding = DestinationDistanceSensor(
             name='resource_destination_sensor_hoarding',
@@ -124,8 +110,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
     def init_product_sensor(self, agent):
         self.has_all_ingredients_sensor = ProductSensor(
             name="has_all_ingredients_sensor",
-            agent_name=agent._agent_name,
-            product_provider_method=self._product_provider.get_required_ingredients_for_hoarding)
+            agent_name=agent._agent_name)
         self.has_all_ingredients_condition = Condition(
             sensor=self.has_all_ingredients_sensor,
             activator=AmountInListActivator(
@@ -138,6 +123,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         :return:
         """
         self._product_provider.stop_gathering()
+        self._movement_knowledge.stop_movement(self._agent_name, self.go_to_resource_node_behaviour.name)
         super(GatheringNetworkBehaviour, self).stop()
 
     def init_choose_ingredient_behaviour(self, agent, proximity):

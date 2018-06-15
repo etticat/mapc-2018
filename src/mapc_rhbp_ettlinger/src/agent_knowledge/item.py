@@ -92,7 +92,7 @@ class StockItemKnowledgebase(BaseKnowledgebase):
 
 
                 res[stockItem.item]["stock"] += stockItem.amount
-                res[stockItem.item]["goal"] += stockItem.amount
+                res[stockItem.item]["goal"] += max(stockItem.goal, stockItem.amount)
         else:
             rospy.logerr("Error reading from db")
         return res

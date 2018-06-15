@@ -4,8 +4,10 @@ import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
 from agent_knowledge.resource import ResourceKnowledgebase
+from behaviour_components.condition_elements import Effect
 from behaviour_components.managers import Manager
 from common_utils.agent_utils import AgentUtils
+from common_utils.debug import DebugUtils
 from network_actions.action import ActionNetworkBehaviour
 from network_coordination.coordination import CoordinationNetworkBehaviour
 
@@ -70,17 +72,35 @@ class RhbpAgent:
             if not self._initialized:
                 self._coordination_network_behaviour = CoordinationNetworkBehaviour(
                         name=self._agent_name + '/coordination',
-                        plannerPrefix=agent_name,
+                        plannerPrefix=self._agent_name,
                         msg=msg,
                         agent=self,
                         max_parallel_behaviours=2)
                 self._action_network_behaviour = ActionNetworkBehaviour(
                         name=self._agent_name + '/action',
-                        plannerPrefix=agent_name,
+                        plannerPrefix=self._agent_name,
                         msg=msg,
                         agent=self,
                         coordination_network_behaviour= self._coordination_network_behaviour,
                         max_parallel_behaviours=1)
+                self._coordination_network_behaviour.add_effects_and_goals([(
+                    self._coordination_network_behaviour.assemble_organized_sensor,
+                    Effect(
+                        sensor_name=self._coordination_network_behaviour.assemble_organized_sensor.name,
+                        indicator=1.0,
+                        sensor_type=bool
+                    )
+                )])
+
+                self._action_network_behaviour.add_effects_and_goals([(
+                    self._action_network_behaviour.massim_sensor,
+                    Effect(
+                        sensor_name=self._action_network_behaviour.massim_sensor.name,
+                        indicator=1.0,
+                        sensor_type=float
+                    )
+                )])
+
 
             self._initialized = True
 
@@ -126,8 +146,8 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        # if hasattr(self, "_gathering_network"):
-        #     DebugUtils.print_precondition_states(self._gathering_network.gather_ingredients_behaviour)
+        # if hasattr(self, "_coordination_network_behaviour"):
+        #     DebugUtils.print_precondition_states(self._coordination_network_behaviour.assembly_manager_behaviour)
 
         start_time = rospy.get_rostime()
         steps = 0
@@ -137,7 +157,7 @@ class RhbpAgent:
             self._manager.step() # selected behaviours eventually trigger action
             # Recharge if decision-making-time > 3.9 seconds
             if (rospy.get_rostime() - start_time).to_sec() > 3.9:
-                rospy.loginfo(
+                rospy.logerr(
                     "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
                     self._agent_name, steps)
                 #

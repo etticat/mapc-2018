@@ -10,6 +10,7 @@ from behaviour_components.conditions import Negation, Disjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from behaviour_components.network_behavior import NetworkBehaviour
+from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from network_actions.assemble import AssembleNetworkBehaviour
@@ -25,6 +26,14 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         super(ActionNetworkBehaviour, self).__init__(name, **kwargs)
         self._agent_name = agent._agent_name
         self._agent = agent
+        self.massim_sensor = TopicSensor(
+            topic="/team",
+            name="massium_sensor",
+            message_attr="massium")
+        self.score_sensor = TopicSensor(
+            topic="/team",
+            name="score_sensor",
+            message_attr="score")
         self.init_behaviour_network(msg, coordination_network_behaviour)
         self.init_behaviour_network_connections(coordination_network_behaviour)
 
@@ -105,6 +114,24 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         self._job_execution_network.add_precondition(
             precondition=self._job_execution_network.has_tasks_assigned_condition)
 
+
+        self._job_execution_network.add_effects_and_goals(
+            [(
+                self._job_execution_network.has_tasks_assigned_sensor,
+                Effect(
+                    sensor_name=self._job_execution_network.has_tasks_assigned_sensor.name,
+                    indicator=-1.0,
+                    sensor_type=bool
+                )),
+            (
+                self.massim_sensor,
+                Effect(
+                    sensor_name=self.massim_sensor.name,
+                    indicator=1.0,
+                    sensor_type=float
+                )
+            )]
+        )
         ######################## Gathering Network Behaviour ########################
 
         # Only gather when there is enough battery left
@@ -133,6 +160,15 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         self._gathering_network.add_precondition(
             precondition=self._exploration_network.all_resources_discovered_condition)
 
+        self._gathering_network.add_effects_and_goals([(
+            self._gathering_network.storage_space_after_next_item_sensor,
+            Effect(
+                sensor_name=self._gathering_network.storage_space_after_next_item_sensor.name,
+                indicator=-1.0,
+                sensor_type=float
+            )
+        )])
+
         ######################## Assembly Network Behaviour ########################
         # Only assemble if there is enough battery left
         self._assembly_network.add_precondition(
@@ -142,6 +178,15 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         self._assembly_network.add_precondition(
             # But also keep this network active when task is assigned
             coordination_network_behaviour.has_assemble_task_assigned_cond
+        )
+
+        self._assembly_network.add_effects_and_goals(
+            [(coordination_network_behaviour.assemble_organized_sensor,
+            Effect(
+                sensor_name=coordination_network_behaviour.assemble_organized_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool
+            ))]
         )
 
         ######################## Exploration Network Behaviour ########################
@@ -160,11 +205,14 @@ class ActionNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(self._exploration_network.all_resources_discovered_condition)
         )
 
-        # Seems to work without. With them I get errors but it continues to run normally
-        self._job_performance_goal = GoalBase(
-            name='score_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self._job_execution_network.has_tasks_assigned_condition)])
+        self._exploration_network.add_effects_and_goals(
+            [(self._exploration_network.resource_discovery_progress_sensor,
+            Effect(
+                sensor_name=self._exploration_network.resource_discovery_progress_sensor.name,
+                indicator=1.0,
+                sensor_type=float
+            ))]
+        )
+
 
         rospy.logerr("behaviour connections initialized")

@@ -1,0 +1,63 @@
+<launch>
+
+    <!-- Enable custom logger configuration-->
+    <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
+
+    <!-- Drones -->
+        <!-- Bridges -->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA1" />
+    </include>
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA2" />
+    </include>
+
+        <!-- applications -->
+    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA2" />
+    </include>
+
+    <!-- Motorcycles -->
+        <!-- Bridges -->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA5" />
+    </include>
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA6" />
+    </include>
+
+        <!-- applications -->
+    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA6" />
+    </include>
+
+
+
+    <!-- Cars -->
+        <!-- Bridges -->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA13" />
+    </include>
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA14" />
+    </include>
+
+        <!-- applications -->
+    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA14" />
+    </include>
+
+    <!-- Trucks -->
+        <!-- Bridges -->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA23" />
+    </include>
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA24" />
+    </include>
+        <!-- applications -->
+    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA24" />
+    </include>
+
+</launch>

@@ -76,11 +76,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.has_tasks_assigned_sensor = KnowledgeSensor(
             name='has_task',
             pattern=JobKnowledgebase.generate_tuple(
-                job_id="*",
-                task_id="*",
-                destination="*",
-                agent=agent._agent_name,
-                status="assigned"))
+                agent_name=agent._agent_name))
         self.has_tasks_assigned_condition = Condition(
             sensor=self.has_tasks_assigned_sensor,
             activator=BooleanActivator(
@@ -88,7 +84,7 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
 
     def init_deliver_job_behaviour(self, agent):
         self.deliver_job_bahviour = DeliverJobBehaviour(
-            name="deliver_job_bahviour",
+            name="deliver_job_behaviour",
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )

@@ -101,6 +101,7 @@ class ProductProvider(object):
 
     def start_gathering(self, item_to_focus):
 
+
         load_free = self.load_max - self.load
 
         items_to_carry = load_free / self.get_product_by_name(item_to_focus).volume
@@ -108,13 +109,19 @@ class ProductProvider(object):
         self._gather_goal = {
             item_to_focus: items_to_carry + self._items_in_stock.get(item_to_focus, 0)
         }
+        rospy.logerr("ProductProvider(%s)::---------------------- start gathering: %s", self._agent_name, str(self._gather_goal))
         self.save_stock_and_sock_goals()
 
     def start_assembly(self, items_to_assemble):
-        self._assemble_goal = items_to_assemble
+        goal = {}
+
+        for product in self.finished_products.keys():
+            goal[product] = items_to_assemble.get(product,0) + self._items_in_stock.get(product, 0)
+        self._assemble_goal = goal
         self.save_stock_and_sock_goals()
 
     def stop_gathering(self):
+        rospy.logerr("ProductProvider(%s)::---------------------- stop gathering", self._agent_name)
         self._gather_goal = {}
         self.save_stock_and_sock_goals()
 
@@ -122,7 +129,7 @@ class ProductProvider(object):
         self._assemble_goal = {}
         self.save_stock_and_sock_goals()
 
-    def get_required_ingredients_for_hoarding(self):
+    def get_planned_ingredients(self):
         """
         Returns all ingredients that an agent needs to gather to meet its goal
         :return: list
@@ -138,7 +145,7 @@ class ProductProvider(object):
         rospy.loginfo("All ingredients to gather: %s", str(res) )
         return res
 
-    def get_required_finished_products_for_hoarding(self):
+    def get_planned_finished_products(self):
         """
         Returns all finished products, that an agent needs to assemble to meet its goal
         :return: list
@@ -186,7 +193,7 @@ class ProductProvider(object):
         product = self.products[product_name]
         res = {}
         for ingredient in product.consumed_items:
-            res[ingredient.name] = ingredient.amount
+            res[ingredient.name] = ingredient.amount * amount
 
         return res
 
@@ -244,7 +251,7 @@ class ProductProvider(object):
     def choose_best_assemble_bid_combination(self, bids):
 
         best_combination = []
-        best_value = 0
+        best_value = 5
         best_finished_products = {}
 
         if len(bids) >= 2:
@@ -259,13 +266,11 @@ class ProductProvider(object):
 
                     value = self.generate_value_from_combination(combination)
 
-
                     if value > best_value:
-                        rospy.logerr(stringi + str(value) + str(combination))
                         best_value = value
                         best_combination = subset
                         best_finished_products = combination
-                if L >= 4 and best_value > 0:
+                if L >= 4 and best_value > 5:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
 
@@ -404,7 +409,7 @@ class ProductProvider(object):
 
         for bid in bids:
 
-            useful_items = CalcUtil.list_diff(job_items, bid.items)
+            useful_items = CalcUtil.list_intersect(job_items, bid.items)
             if len(useful_items) >  0:
                 assignement = JobAssignment(
                     id=bid.id,

@@ -10,6 +10,7 @@ from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 
 import utils.rhbp_logging
+from common_utils.calc import CalcUtil
 from provider.product_provider import ProductProvider
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
@@ -23,7 +24,7 @@ class AssembleContractor(object):
         self.role = role
         self.current_task = None
         self._assemble_knowledgebase = AssembleKnowledgebase()
-        self.enabled = False
+        self.enabled = True
 
 
         if product_provider == None:
@@ -49,7 +50,6 @@ class AssembleContractor(object):
         :return:
         """
 
-        rospy.logerr("calback %s", str(self.enabled))
         if self.enabled == False:
             return
 
@@ -57,8 +57,10 @@ class AssembleContractor(object):
 
         current_time = time.time()
         if request.deadline < current_time:
-            rospy.logerr("Deadline over")
+            rospy.logerr("Deadline over %f - %f", request.deadline, current_time)
             return
+        else:
+            rospy.logerr("Deadline NOT over %f - %f", request.deadline, current_time)
 
         if assemble_task is None:
             self.send_bid(request)
@@ -101,6 +103,13 @@ class AssembleContractor(object):
                 tasks=assembleAssignment.tasks,
                 active=True
             ))
+            items_to_assemble = {}
+            for task in assembleAssignment.tasks.split(","):
+                task_split = task.split(":")
+                if task_split[0] == "assemble":
+                    items_to_assemble[task_split[1]] = items_to_assemble.get(task_split[1], 0) + 1
+
+            self._product_provider.start_assembly(items_to_assemble=items_to_assemble)
             acknoledgement = AssembleAcknowledgement(
                 acknowledged=accepted,
                 bid=assembleAssignment.bid
@@ -117,4 +126,6 @@ class AssembleContractor(object):
         current_assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
         if current_assemble_task is not None and current_assemble_task.id == assemble_stop.id:
             self._assemble_knowledgebase.cancel_assemble_request(self._agent_name, assemble_stop.id)
+            self._product_provider.stop_assembly()
+
             rhbplog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, assemble_stop.id, assemble_stop.reason)

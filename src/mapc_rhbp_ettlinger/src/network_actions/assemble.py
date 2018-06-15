@@ -105,5 +105,4 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         Stoping all gather goals when leaving network
         :return:
         """
-        self._product_provider.stop_assembly()
         super(AssembleNetworkBehaviour, self).stop()

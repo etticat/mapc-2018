@@ -51,7 +51,7 @@ class TestAgent(object):
             agent_name="agentA3",
             role="motorcycle",
             product_provider=FakeProductProvider(
-                agent_name="agentA5",
+                agent_name="agentA3",
                 items=[
                     Item(
                         name="item8",
@@ -65,7 +65,7 @@ class TestAgent(object):
                 agent_name="agentA4",
                 items=[
                     Item(
-                        name="item6",
+                        name="item4",
                         amount=3)
                 ]
             ))
@@ -73,7 +73,7 @@ class TestAgent(object):
             agent_name="agentA5",
             role="motorcycle",
             product_provider=FakeProductProvider(
-                agent_name="agentA6",
+                agent_name="agentA5",
                 items=[
                     Item(
                         name="item4",

@@ -26,6 +26,9 @@ class JobKnowledgebase(BaseKnowledgebase):
         :type fact: list
         :return: JobTask
         """
+        if fact is None:
+            return None
+
         job_task = JobTask(
             agent_name = fact[JobKnowledgebase.INDEX_AGENT_NAME],
             job_id = fact[JobKnowledgebase.INDEX_JOB_ID],
@@ -102,4 +105,4 @@ class JobKnowledgebase(BaseKnowledgebase):
             long=long,
             items=items)
 
-        return self._kb_client.peek(tuple)
+        return self.generate_task_from_fact(self._kb_client.peek(tuple))

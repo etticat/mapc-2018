@@ -6,8 +6,6 @@ from mac_ros_bridge.msg import Item, Position, RequestAction
 from agent_knowledge.resource import ResourceKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from coordination.assemble_contractor import AssembleContractor
-from coordination.assemble_manager import AssembleManager
 from provider.product_provider import ProductProvider
 
 

@@ -33,6 +33,7 @@ class JobManager(object):
 
         self.bids = []
         self.acknowledgements = []
+        self.busy = False
 
         self._pub_job_request = rospy.Publisher(AgentUtils.get_job_prefix() + "request", JobRequest,
                                                      queue_size=10)
@@ -49,10 +50,13 @@ class JobManager(object):
         :type job: Job
         :return:
         """
+        self.busy = True
         self.bids = []
         self.acknowledgements = []
 
         ettilog.logerr("JobManager:: ---------------------------Manager start---------------------------",)
+        ettilog.logerr("JobManager:: looking for %s to be brought to %s for %d",
+                       [item.name + " (" + str(item.amount) + ")" for item in job.items], job.storage_name, job.reward + job.fine)
 
 
 
@@ -99,16 +103,20 @@ class JobManager(object):
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
             ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
+            self.busy = False
             return
         else:
             ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
                            ", ".join([bid.agent_name for bid in self.assignments]),
                            ", ".join([str(bid.items) for bid in self.assignments]))
 
+            self.assignments = self._product_provider.choose_best_job_bid_combination(self._job, self.bids)  # TODO
+
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 
         for assignment in self.assignments:
             assignment.pos = self._facility_provider.get_storage_by_name(self._job.storage_name).pos
+            assignment.job_id = self._job.id
             ettilog.loginfo("JobManager:: Publishing assignment for %s (%s)", assignment.agent_name, str(assignment.assigned))
             self._pub_job_assignment.publish(assignment)
 
@@ -134,19 +142,12 @@ class JobManager(object):
         else:
             ettilog.logerr("JobManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
-            # TODO: Delete from db
+            # TODO: Let the contractor do this, so they can cleanup the goals
             self._job_knowledgebase.end_job_task(
                 job_id=self._job.id,
                 agent_name="*")
-            for bid in self.bids:
-                    assignment = JobAssignment(
-                        assigned = False,
-                        deadline=0,
-                        bid = bid,
-                        job_id=self._job.id
-                    )
-                    self._pub_job_assignment.publish(assignment)
+
 
         self.id = self.job_id(new_id=True)
-
+        self.busy = False
         ettilog.logerr("JobManager:: ---------------------------Manager stop---------------------------")

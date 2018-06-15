@@ -21,7 +21,7 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
     """
     Behaviour that allows agents to move to a resource behaviour, so they can gather items for hoarding or performing jobs
     """
-    def __init__(self, agent, plannerPrefix, product_provider_method, **kwargs):
+    def __init__(self, agent, plannerPrefix, **kwargs):
         """
 
         :param agent:
@@ -33,7 +33,6 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
             agent._agent_name,
             plannerPrefix=plannerPrefix,
             **kwargs)
-        self._product_provider_method = product_provider_method
         self._selected_facility = None
         self._agent = agent
         self._task_knowledge = JobKnowledgebase()
@@ -41,14 +40,13 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
         self._facility_knowledge = ResourceKnowledgebase()
 
     def _select_pos(self):
-        neededIngredients = self._product_provider_method()
+        neededIngredients = self._product_provider.get_planned_ingredients()
         if len(neededIngredients) > 0:
-            for neededIngredient in neededIngredients:
-                facilities = self._facility_knowledge.get_resources_for_items(neededIngredient)
-                if len(facilities) > 0:
-                    closest_facility = AgentUtils.calculate_closest_facility(self._agent.agent_info.pos, facilities)
-                    self._selected_destination = closest_facility.name
-                    return closest_facility.pos
+            facilities = self._facility_knowledge.get_resources_for_items(neededIngredients[0])
+            if len(facilities) > 0:
+                closest_facility = AgentUtils.calculate_closest_facility(self._agent.agent_info.pos, facilities)
+                self._selected_destination = closest_facility.name
+                return closest_facility.pos
 
         else:
             rospy.logerr("%s:: Trying to go to resource but there is no ingredient left to gather.", self.name)
@@ -75,17 +73,16 @@ class GoToStorageBehaviour(GotoLocationBehaviour):
         super(GoToStorageBehaviour, self).start()
 
     def _select_pos(self):
-        task = self.taskKnowledge.get_tasks(agent_name=self._agent_name, status="assigned")
-        # TODO Maybe this can be done more elegant
-        if len(task) > 0:
-            return self.facility_provider.get_storage_by_name(task[0].destination).pos
+        task = self.taskKnowledge.get_task(agent_name=self._agent_name)
+        if task is not None:
+            return task.pos
 
 
 class GatherBehaviour(GenericActionBehaviour):
     """
     The behaviour allows gathering items for further assembly at a resource node
     """
-    def __init__(self, name, agent_name, behaviour_name, product_provider_method, **kwargs):
+    def __init__(self, name, agent_name, behaviour_name, **kwargs):
         super(GatherBehaviour, self) \
             .__init__(name=name,
                       agent_name=agent_name,
@@ -93,13 +90,13 @@ class GatherBehaviour(GenericActionBehaviour):
                       **kwargs)
         self._movement_knowledge = MovementKnowledgebase()
         self._task_knowledge = JobKnowledgebase()
-        self._product_provider_method = product_provider_method
+        self._product_provider = ProductProvider(agent_name=agent_name)
         self._resource_knowledgebase= ResourceKnowledgebase()
         self.movement_behaviour_name = behaviour_name
         self.agent_name = agent_name
 
     def do_step(self):
-        required_ingredients = self._product_provider_method()
+        required_ingredients = self._product_provider.get_planned_ingredients()
         movement = self._movement_knowledge.get_movement(
             agent_name=self.agent_name,
             behaviour_name=self.movement_behaviour_name
@@ -146,7 +143,6 @@ class AssembleProductBehaviour(BehaviourBase):
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent, self._action_request_agent)
 
-
         self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_assemble_prefix() + "stop", AssembleStop,
                                                         queue_size=10)
 
@@ -170,7 +166,7 @@ class AssembleProductBehaviour(BehaviourBase):
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self._last_task == "assemble" and agent.last_action == "assemble":
             rospy.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
-            for agent.last_action_result in ["successful", "failed_capacity"]:
+            if agent.last_action_result in ["successful", "failed_capacity"]:
                 self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
                 if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
                     # If there are still tasks to do, inform all others that the next task will be performed
@@ -273,12 +269,15 @@ class DeliverJobBehaviour(BehaviourBase):
             .__init__(
             requires_execution_steps=True,
             **kwargs)
+        self.current_task = None
         self._agent_name = agent_name
         self._task_knowledge = JobKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
             queue_size=10)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent, self._action_request_agent)
+
 
     def action_deliver_job(self, job):
         action = GenericAction()
@@ -287,13 +286,31 @@ class DeliverJobBehaviour(BehaviourBase):
             KeyValue("Job", str(job))]
 
         self._pub_generic_action.publish(action)
+    def _action_request_agent(self, agent):
+        """
+
+        :param agent:
+        :type agent: Agent
+        :return:
+        """
+        # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
+        if self.current_task != None and agent.last_action == "deliver_job":
+            rospy.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
+            self._task_knowledge.end_job_task(job_id=self.current_task.job_id, agent_name=self._agent_name)
+            self.current_task = None
+
+
+    def stop(self):
+        self.current_task = None
+        super(DeliverJobBehaviour, self).stop()
 
     def do_step(self):
-        tasks = self._task_knowledge.get_tasks(self._agent_name, status="assigned")
+        if self.current_task == None:
+            self.current_task = self._task_knowledge.get_task(self._agent_name)
 
-        if len(tasks) > 0:
-            rospy.loginfo("DeliverJobBehaviour:: delivering for job %s", tasks[0].job_id)
-            self.action_deliver_job(tasks[0].job_id)
+        if self.current_task != None:
+            rospy.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.job_id)
+            self.action_deliver_job(self.current_task.job_id)
             # TODO: Check what happens when the delivery fails ->
             # TODO: Pass an acnowledgement object into the mac ros bridge. Once it finishes/fails it notifies the application
 

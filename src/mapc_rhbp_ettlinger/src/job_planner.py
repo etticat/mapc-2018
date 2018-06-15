@@ -6,6 +6,7 @@ from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.tasks import JobKnowledgebase
+from network_coordination.job_manager import JobManager
 
 
 class JobPlanner(object):
@@ -21,8 +22,9 @@ class JobPlanner(object):
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 
+        self.job_manager = JobManager()
+
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
 
 
     def _action_request_callback(self, requestAction):
@@ -32,6 +34,10 @@ class JobPlanner(object):
         :type msg: RequestAction
         :return:
         """
+        if self.job_manager.busy:
+            rospy.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
+            return
+
         # get all jobs from request
         all_jobs_new = self.extract_jobs(requestAction)
 
@@ -39,10 +45,7 @@ class JobPlanner(object):
             # if job has not been seen before -> process it
             if job not in self.all_jobs:
                 rospy.loginfo("JobPlanner:: processing new job %s", job.id)
-                tasks = self.extract_tasks_from_job(job)
-                for task in tasks:
-                    rospy.loginfo("JobPlanner::              new task: %s -> %s", task.item, job.storage_name)
-                self.all_tasks += tasks
+                self.job_manager.job_request(job)
 
         self.all_jobs = all_jobs_new
 
@@ -68,31 +71,6 @@ class JobPlanner(object):
 
         return extracted_jobs
 
-
-    def extract_tasks_from_job(self, job):
-        """
-        Divides the job in small tasks that can be performed together by multiple agents
-        :param      job         : the job to decompose
-        :type       job         : Job
-        :return:    Task[]
-        """
-        tasks = []
-        id = 0
-        for item in job.items:
-            for i in xrange(item.amount):
-                task = Task(
-                    job_id=job.id,
-                    id=str(id),
-                    destination=job.storage_name,
-                    item=item.name,
-                )
-                tasks.append(task)
-                self._task_knowledge.save_task(task)
-                id = id+1
-        return tasks
-
-    def _sim_start_callback(self, msg):
-        self._task_knowledge._callback_sim_start(msg)
 
 
 

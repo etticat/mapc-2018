@@ -68,5 +68,3 @@ class FinishExplorationBehaviour(BehaviourBase):
     def do_step(self):
         # exploration done
         self._movement_knowledge.stop_movement(self._agent_name, self.movement_behaviour_name)
-
-

@@ -57,6 +57,7 @@ class DebugUtils:
 
         rospy.logerr("------------------------------ Preconditions: ------------------------------------")
         rospy.logerr("active: %s", str(behaviour._active))
+        rospy.logerr("isExecuting: %s", str(behaviour._isExecuting))
         for i in range(len(behaviour._preconditions)):
             rospy.logerr("precondition (%s): %s",behaviour._preconditions[i]._name, str(behaviour._get_satisfactions()[i]))
 

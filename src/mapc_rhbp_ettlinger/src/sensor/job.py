@@ -14,9 +14,9 @@ from provider.product_provider import ProductProvider
 
 class ProductSensor(Sensor):
 
-    def __init__(self, agent_name, product_provider_method, **kwargs):
+    def __init__(self, agent_name, **kwargs):
 
-        self._product_provider_method =  product_provider_method
+        self._product_provider = ProductProvider(agent_name=agent_name)
 
         self._agent_name = agent_name
 
@@ -32,7 +32,7 @@ class ProductSensor(Sensor):
         super(ProductSensor, self).sync()
 
     def get_still_needed_products(self):
-        products = self._product_provider_method()
+        products = self._product_provider.get_planned_ingredients()
         rospy.loginfo("%s:: Need following products:  %s",self._name, str(products))
         return products
 

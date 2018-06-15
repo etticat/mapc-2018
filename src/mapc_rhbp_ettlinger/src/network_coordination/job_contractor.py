@@ -16,10 +16,9 @@ rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DE
 class JobContractor(object):
 
 
-    def __init__(self, agent_name, role, product_provider=None):
+    def __init__(self, agent_name, product_provider=None):
 
         self._agent_name = agent_name
-        self.role = role
         self._job_knowledgebase = JobKnowledgebase()
 
 
@@ -69,7 +68,7 @@ class JobContractor(object):
                 items = item_intersect,
             )
 
-            rhbplog.loginfo("JobContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
+            rhbplog.logerr("JobContractor(%s):: bidding on %s: %s", self._agent_name, str(own_items), str(item_intersect))
             self._pub_job_bid.publish(bid)
 
 

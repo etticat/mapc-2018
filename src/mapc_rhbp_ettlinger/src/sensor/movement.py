@@ -41,11 +41,11 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         res = 999.0
 
         if len(facts) > 0 and self._last_pos != None:
-            fact_tuple = facts.pop()  # only getting the first fact
+            movement = MovementKnowledgebase.generate_movement_from_fact(facts.pop())  # only getting the first fact
 
             try:
 
-                destination_pos = Position(lat=float(fact_tuple[4]), long=float(fact_tuple[5]))
+                destination_pos = movement.pos
                 agent_position = self._last_pos
 
                 # if self.name == "resource_destination_sensor_hoarding":
@@ -54,8 +54,10 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
                 res = AgentUtils.calculate_distance(destination_pos, agent_position)
 
             except Exception:
-                rospy.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
+                rospy.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(movement))
 
-        # if self.name == "resource_destination_sensor_hoarding":
+            # if self.name == "at_charging_station":
+            #     rospy.logerr("////// %s", str(movement))
+        # if self.name == "at_charging_station":
         #     rospy.logerr("---%s", str(res))
         return res
