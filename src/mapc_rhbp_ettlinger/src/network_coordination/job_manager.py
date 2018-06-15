@@ -8,6 +8,7 @@ from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknow
 import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
@@ -53,10 +54,12 @@ class JobManager(object):
 
         ettilog.logerr("JobManager:: ---------------------------Manager start---------------------------",)
 
+
+
         request = JobRequest(
             id=self.job_id(),
             deadline =time.time() + JobManager.DEADLINE_BIDS,
-            items=job.items
+            items=CalcUtil.get_list_from_items(job.items)
         )
         self._pub_job_request.publish(request)
         self._job = job
@@ -94,13 +97,13 @@ class JobManager(object):
 
         if self.assignments == None:
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
-            bids, roles = self._product_provider.get_items_and_roles_from_bids(self.bids)
-            ettilog.logerr("JobManager:: ------ Items: %s", str(bids))
+            ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
             return
         else:
-            ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s", ", ".join([bid.agent_name for bid in self.assignments]), str(self.assignments))
-
+            ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
+                           ", ".join([bid.agent_name for bid in self.assignments]),
+                           ", ".join([str(bid.items) for bid in self.assignments]))
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 

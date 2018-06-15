@@ -1,3 +1,5 @@
+import copy
+
 from mac_ros_bridge.msg import Item
 
 
@@ -35,8 +37,32 @@ class CalcUtil:
                     break
         return res
     @staticmethod
+    def list_intersect(a, b):
+        res = []
+        for u in set(a):
+            for k in range(min(a.count(u), b.count(u))):
+                res.append(u)
+
+        return res
+
+    @staticmethod
+    def list_diff(a, b):
+        a = copy.copy(a)
+        for item in b:
+            if item in a:
+                a.remove(item)
+        return a
+
+    @staticmethod
     def get_dict_from_items(items):
         res = {}
         for item in items:
             res[item.name] = res.get(item.name, 0) + item.amount
+        return res
+    @staticmethod
+    def get_list_from_items(items):
+        res = []
+        for item in items:
+            for i in range(item.amount):
+                res.append(item.name)
         return res

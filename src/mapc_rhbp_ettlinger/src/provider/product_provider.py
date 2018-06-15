@@ -373,6 +373,7 @@ class ProductProvider(object):
 
     def choose_best_job_bid_combination(self, job, bids):
 
+        job_items = CalcUtil.get_list_from_items(job.items)
         best_combination = []
         best_value = 0
         best_finished_products = None
@@ -385,7 +386,7 @@ class ProductProvider(object):
                     for item in subset:
                         stringi = stringi + item.agent_name + " - "
 
-                    combination = self.generate_job_fulfillment_combination(job, subset)
+                    combination = self.generate_job_fulfillment_combination(job_items, subset)
 
                     if combination != None:
                         best_value = 1
@@ -397,30 +398,25 @@ class ProductProvider(object):
 
         return best_finished_products
 
-    def generate_job_fulfillment_combination(self, job, bids):
+    def generate_job_fulfillment_combination(self, job_items, bids):
         res = []
-        job_items = CalcUtil.get_dict_from_items(job.items)
+        job_items =copy.copy(job_items)
 
         for bid in bids:
-            assignement = JobAssignment(
-                id = bid.id,
-                agent_name = bid.agent_name,
-                assigned = True,
-                deadline = 0,
-                items = [])
-            for item in bid.items:
-                useful_items = min(item.amount, job_items[item.name])
-                if useful_items >  0:
-                    job_items[item.name] = job_items[item.name] - useful_items
-                    assignement.items.append(Item(
-                        name=item.name,
-                        amount=useful_items))
 
-            res.append(assignement)
+            useful_items = CalcUtil.list_diff(job_items, bid.items)
+            if len(useful_items) >  0:
+                assignement = JobAssignment(
+                    id=bid.id,
+                    agent_name=bid.agent_name,
+                    assigned=True,
+                    deadline=0,
+                    items=useful_items)
+                job_items = CalcUtil.list_diff(job_items, useful_items)
+                res.append(assignement)
 
-        for job_item in job_items.values():
-            if job_item > 0: # If we could not find all items in combination, return empty
-                return None
+        if len(job_items) > 0: # If we could not find all items in combination, return empty
+            return None
 
         return res
 

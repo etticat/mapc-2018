@@ -2,14 +2,12 @@ import random
 import time
 
 import rospy
-from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
     JobTask
 
+import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
 from common_utils.agent_utils import AgentUtils
-
-import utils.rhbp_logging
 from common_utils.calc import CalcUtil
 from provider.product_provider import ProductProvider
 
@@ -58,8 +56,9 @@ class JobContractor(object):
             self.send_bid(request)
 
     def send_bid(self, request):
-
-        item_intersect = CalcUtil.items_intersect(request.items, self._product_provider.get_items())
+        # Items which are requested and can be provided by agent
+        own_items = CalcUtil.get_list_from_items(self._product_provider.get_items())
+        item_intersect = CalcUtil.list_intersect(request.items, own_items)
 
         if len(item_intersect) > 0:
             bid = JobBid(
@@ -95,16 +94,11 @@ class JobContractor(object):
                 id=job_assignment.id,
                 items=job_assignment.items
             )
-            items = []
-
-            for item in job_assignment.items:
-                for i in range(item.amount):
-                    items.append(item.name)
 
             self._job_knowledgebase.save_task(JobTask(
                 job_id = job_assignment.job_id,
                 agent_name = self._agent_name,
                 pos = job_assignment.pos,
-                items = items
+                items = job_assignment.items
             ))
             self._pub_job_acknowledge.publish(acknoledgement)
