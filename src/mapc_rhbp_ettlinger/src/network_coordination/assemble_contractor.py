@@ -11,8 +11,8 @@ from common_utils.agent_utils import AgentUtils
 
 import utils.rhbp_logging
 from common_utils.calc import CalcUtil
+from decisions.assembly_bid import ShouldBidForAssembly
 from provider.product_provider import ProductProvider
-from reactions.assembly_bid import ShouldBidForAssembly
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
 

@@ -10,8 +10,8 @@ import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
+from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.product_provider import ProductProvider
-from reactions.assembly_combination import ChooseBestAssemblyCombination
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.assemble_manager')
 

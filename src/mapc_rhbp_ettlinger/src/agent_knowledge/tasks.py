@@ -35,7 +35,7 @@ class JobKnowledgebase(BaseKnowledgebase):
             pos = Position(
                 lat=float(fact[JobKnowledgebase.INDEX_LAT]),
                 long=float(fact[JobKnowledgebase.INDEX_LONG])),
-            items=fact[JobKnowledgebase.INDEX_ITEMS].split(",")
+            items=fact[JobKnowledgebase.INDEX_ITEMS]
         )
         return job_task
 
@@ -52,7 +52,7 @@ class JobKnowledgebase(BaseKnowledgebase):
             agent_name=job_task.agent_name,
             lat=job_task.pos.lat,
             long=job_task.pos.long,
-            items=",".join(job_task.items)
+            items=job_task.items
 
         )
 

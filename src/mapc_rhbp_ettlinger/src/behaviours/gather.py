@@ -4,7 +4,7 @@ from mac_ros_bridge.msg import Agent
 from behaviour_components.behaviours import BehaviourBase
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
-from reactions.gathering import ChooseIngredientToGather
+from decisions.gathering import ChooseIngredientToGather
 
 
 class ChooseIngredientBehaviour(BehaviourBase):

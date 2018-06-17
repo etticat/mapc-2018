@@ -452,7 +452,9 @@ class MacRosBridge(threading.Thread):
             initial_integrity = xml_item.get('initialIntegrity')
             if initial_integrity:
                 well.initial_integrity = int(initial_integrity)
-            well.efficiency = int(xml_item.get('efficiency'))
+            efficiency = xml_item.get('efficiency')
+            if efficiency:
+                well.efficiency = int(efficiency)
             well.integrity = int(xml_item.get('integrity'))
             wells.append(well)
         return wells

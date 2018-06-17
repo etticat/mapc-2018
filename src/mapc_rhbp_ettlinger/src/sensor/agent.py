@@ -11,7 +11,7 @@ from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import Sensor
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
-from reactions.gathering import ChooseIngredientToGather
+from decisions.gathering import ChooseIngredientToGather
 from sensor.movement import DestinationDistanceSensor
 
 

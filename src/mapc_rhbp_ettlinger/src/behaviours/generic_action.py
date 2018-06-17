@@ -8,6 +8,7 @@ from behaviour_components.behaviours import BehaviourBase
 
 
 class Action(object):
+    BUILD = "build"
     GO_TO = "goto"
     RECEIVE = "receive"
     GIVE = "give"

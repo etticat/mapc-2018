@@ -11,7 +11,6 @@ from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
-from reactions.job_combination import ChooseBestJobCombination
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
 

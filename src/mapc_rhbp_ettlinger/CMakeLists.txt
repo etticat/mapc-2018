@@ -63,6 +63,7 @@ add_message_files(
   StockItem.msg
   StockItemMsg.msg
   Movement.msg
+  WellTask.msg
 )
 ## Generate services in the 'srv' folder
 #add_service_files(

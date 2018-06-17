@@ -18,6 +18,7 @@ class DebugAgent(object):
         DebugUtils.instant_find_resources(ResourceKnowledgebase())
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")
+        DebugUtils.add_build_well_task()
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 

@@ -286,6 +286,14 @@ class DeliverJobBehaviour(BehaviourBase):
             KeyValue("Job", str(job))]
 
         self._pub_generic_action.publish(action)
+
+    def action_build_well(self, type):
+        action = GenericAction()
+        action.action_type = Action.BUILD
+        action.params = [
+            KeyValue("WellType", str(type))]
+
+        self._pub_generic_action.publish(action)
     def _action_request_agent(self, agent):
         """
 

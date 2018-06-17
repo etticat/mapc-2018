@@ -1,8 +1,12 @@
 import rospy
+from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import JobTask, WellTask
 
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
+from agent_knowledge.tasks import JobKnowledgebase
+from agent_knowledge.well import WellTaskKnowledgebase
 
 
 class DebugUtils:
@@ -60,6 +64,21 @@ class DebugUtils:
         rospy.logerr("isExecuting: %s", str(behaviour._isExecuting))
         for i in range(len(behaviour._preconditions)):
             rospy.logerr("precondition (%s): %s",behaviour._preconditions[i]._name, str(behaviour._get_satisfactions()[i]))
+
+        rospy.logerr("----------------------------------------------------------------------------------")
+
+
+
+    @staticmethod
+    def add_build_well_task():
+
+        rospy.logerr("------------------------------ Building well: ------------------------------------")
+        well_task_knowledebase = WellTaskKnowledgebase()
+        well_task_knowledebase.save_task(WellTask(
+            agent_name = 'agentA1',
+            pos = Position(lat="48.84778", long="2.33733"),
+            well_type = "wellType1"
+        ))
 
         rospy.logerr("----------------------------------------------------------------------------------")
 
