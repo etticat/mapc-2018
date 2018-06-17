@@ -135,7 +135,10 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
                 well_task = WellTaskKnowledgebase.generate_well_task_from_fact(fact_tuple)
                 for well in self._well_provider.get_existing_wells().values():
                     if AgentUtils.calculate_distance(well.pos, well_task.pos) < self.proximity:
-                        val = well.integrity
+                        well_prototype = self._well_provider.get_well(well_task.well_type)
+                        integrity = well.integrity
+                        max_integrity = well_prototype.integrity
+                        val = integrity*100/max_integrity
             except Exception:
                 rospy.logwarn("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 

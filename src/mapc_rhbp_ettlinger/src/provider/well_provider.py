@@ -63,3 +63,6 @@ class WellProvider(object):
 
     def get_existing_wells(self):
         return self.wells
+
+    def get_well(self, well_type):
+        return self.wells_to_build[well_type]
