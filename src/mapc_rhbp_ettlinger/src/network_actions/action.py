@@ -165,7 +165,7 @@ class ActionNetworkBehaviour(NetworkBehaviour):
             Effect(
                 sensor_name=self._gathering_network.storage_space_after_next_item_sensor.name,
                 indicator=-1.0,
-                sensor_type=float
+                sensor_type=bool
             )
         )])
 
@@ -202,7 +202,9 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         # Only explore when not all resource nodes are discovered
         # TODO: Maybe it makes sense that some agents continue to explore
         self._exploration_network.add_precondition(
-            precondition=Negation(self._exploration_network.all_resources_discovered_condition)
+            precondition = Disjunction(
+                Negation(self._exploration_network.all_resources_discovered_condition),  # Explore if not all resources have been found
+                Negation(self._gathering_network.next_item_fits_in_storage_condition))  # Or when storage is full withouth having any tasks
         )
 
         self._exploration_network.add_effects_and_goals(

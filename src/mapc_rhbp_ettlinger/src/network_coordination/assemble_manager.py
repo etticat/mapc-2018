@@ -11,6 +11,7 @@ from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
 from provider.product_provider import ProductProvider
+from reactions.assembly_combination import ChooseBestAssemblyCombination
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.assemble_manager')
 
@@ -22,6 +23,7 @@ class AssembleManager(object):
 
     def __init__(self, agent_name):
 
+        self._assembly_combination = ChooseBestAssemblyCombination()
         self._agent_name = agent_name
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
@@ -118,7 +120,7 @@ class AssembleManager(object):
 
         ettilog.logdebug("AssembleManager(%s, %s): Processing %s bids", self._agent_name, self.assemble_id(), str(len(self.bids)))
 
-        self.accepted_bids, finished_products = self._product_provider.choose_best_assemble_bid_combination(self.bids)
+        self.accepted_bids, finished_products = self._assembly_combination.choose(self.bids)
 
         if len(finished_products.keys()) == 0:
             ettilog.logerr("AssembleManager(%s): No useful bid combination found in %d bids", self._agent_name, len(self.bids))

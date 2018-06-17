@@ -12,7 +12,7 @@ from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProdu
 from network_coordination.assemble_manager import AssembleManager
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.agent import StorageAvailableForItemSensor
+from sensor.agent import StorageFitsMoreItemsSensor
 from sensor.job import ProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
 

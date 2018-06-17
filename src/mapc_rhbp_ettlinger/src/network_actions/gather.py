@@ -1,7 +1,7 @@
 import rospy
 
 from agent_knowledge.movement import MovementKnowledgebase
-from behaviour_components.activators import ThresholdActivator
+from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Conjunction
@@ -10,7 +10,7 @@ from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
 from provider.product_provider import ProductProvider
-from sensor.agent import StorageAvailableForItemSensor
+from sensor.agent import StorageFitsMoreItemsSensor
 from sensor.job import ProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
 
@@ -48,7 +48,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             precondition=self.at_resource_node_condition)
 
         # Sensor to check how much space there is left after gaining the next intended item
-        self.storage_space_after_next_item_sensor = StorageAvailableForItemSensor(
+        self.storage_space_after_next_item_sensor = StorageFitsMoreItemsSensor(
             name="space_available_in_stock_sensor",
             agent_name=agent._agent_name,
             behaviour_name=self.go_to_resource_node_behaviour.name
@@ -60,16 +60,14 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         # Checks if the next item fits into the stock
         self.next_item_fits_in_storage_condition = Condition(
             sensor=self.storage_space_after_next_item_sensor,
-            activator=ThresholdActivator(
-                thresholdValue=0,
-                isMinimum=True)
+            activator=BooleanActivator(desiredValue=True)
         )
         # TODO: Add a proper effect
         self.gather_ingredients_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self.storage_space_after_next_item_sensor.name,
                 indicator=-1.0,
-                sensor_type=float
+                sensor_type=bool
 
             )
         )
@@ -82,7 +80,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             plannerPrefix=self.get_manager_prefix()
         )
         self.resource_destination_sensor_hoarding = DestinationDistanceSensor(
-            name='resource_destination_sensor_hoarding',
+            name='resource_destination_sensor',
             agent_name=agent._agent_name,
             behaviour_name=self.go_to_resource_node_behaviour._name)
         self.at_resource_node_condition = Condition(

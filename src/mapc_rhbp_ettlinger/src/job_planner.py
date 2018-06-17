@@ -7,12 +7,16 @@ from mac_ros_bridge.msg import RequestAction, Job, SimStart
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.tasks import JobKnowledgebase
 from network_coordination.job_manager import JobManager
+from provider.product_provider import ProductProvider
+from reactions.job_activation import JobDecider
 
 
 class JobPlanner(object):
 
     def __init__(self, agent_name):
 
+        self._job_decider = JobDecider()
+        self._product_provider = ProductProvider(agent_name=agent_name)
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
 
         self.all_jobs = []
@@ -44,13 +48,22 @@ class JobPlanner(object):
         for job in all_jobs_new:
             # if job has not been seen before -> process it
             if job not in self.all_jobs:
-                rospy.loginfo("JobPlanner:: processing new job %s", job.id)
-                self.job_manager.job_request(job)
+                # rospy.logerr("JobPlanner:: processing new job %s, %d: %d factor: %f", job.id, interna_value, job.reward, (job.reward/float(interna_value)))
+
+                self._job_decider.train_decider(job)
+                job_activation = self._job_decider.get_job_activation(job)
+                if job_activation > self._job_decider.get_threshold():
+                    rospy.logerr("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
+                                 str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
+                    self.job_manager.job_request(job)
 
         self.all_jobs = all_jobs_new
 
 
         rospy.loginfo("JobPlanner:: Jobs processed")
+
+
+
 
     def extract_jobs(self, msg):
         """

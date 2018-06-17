@@ -1,7 +1,10 @@
 import rospy
+from mac_ros_bridge.msg import Agent
 
 from behaviour_components.behaviours import BehaviourBase
+from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
+from reactions.gathering import ChooseIngredientToGather
 
 
 class ChooseIngredientBehaviour(BehaviourBase):
@@ -9,21 +12,25 @@ class ChooseIngredientBehaviour(BehaviourBase):
     def __init__(self, agent_name, **kwargs):
         super(ChooseIngredientBehaviour, self).__init__(**kwargs)
         self._product_provider = ProductProvider(agent_name=agent_name)
+        self._choose_item = ChooseIngredientToGather(agent_name=agent_name)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name=agent_name), Agent, callback=self.callback_agent)
+
+    def callback_agent(self, msg):
+        """
+
+        :param self:
+        :param msg:
+        :type msg: Agent
+        :return:
+        """
+
+        self._choose_item.update(msg)
 
     def do_step(self):
-        item_to_focus = None
+        item = self._choose_item.choose()
 
-        # Selecting the item that we need the most of
-        # At least 1 of these itesm needs to fit into the stock
-        for item, already_in_stock_items in self._product_provider.ingredient_priority():
-            product = self._product_provider.get_product_by_name(item)
-            load_after_gathering = self._product_provider.load_free - product.volume
-            if load_after_gathering >= 0:
-                item_to_focus = item
-                break
-
-        if item_to_focus is not None:
-            self._product_provider.start_gathering(item_to_focus)
-            rospy.logerr("ChooseIngredientBehaviour:: Chosing item %s", item_to_focus)
+        if item is not None:
+            self._product_provider.start_gathering(item)
+            rospy.logerr("ChooseIngredientBehaviour:: Chosing item %s", item)
         else:
             rospy.logerr("ChooseIngredientBehaviour:: Trying to choose item, but none fit in stock")

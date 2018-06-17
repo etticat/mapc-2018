@@ -38,7 +38,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         """
 
         # If we don't have a destination we handle it as if we are far away
-        res = 999.0
+        res = 1.0
 
         if len(facts) > 0 and self._last_pos != None:
             movement = MovementKnowledgebase.generate_movement_from_fact(facts.pop())  # only getting the first fact

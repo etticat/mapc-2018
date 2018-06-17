@@ -11,6 +11,7 @@ from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
+from reactions.job_combination import ChooseBestJobCombination
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
 
@@ -23,6 +24,7 @@ class JobManager(object):
     def __init__(self):
 
 
+        self._job_combination = ChooseBestJobCombination()
         self._product_provider = ProductProvider(agent_name="agentA1") # temporarily just use any name
         # TODO: Make productProvider independent from agent
 
@@ -97,7 +99,7 @@ class JobManager(object):
 
         ettilog.loginfo("JobManager(%s, %s): Processing %s bids", self.job_id(), str(len(self.bids)))
 
-        self.assignments = self._product_provider.choose_best_job_bid_combination(self._job, self.bids) # TODO
+        self.assignments = self._job_combination.choose(self._job, self.bids) # TODO
 
         if self.assignments == None:
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
@@ -109,8 +111,6 @@ class JobManager(object):
             ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
                            ", ".join([bid.agent_name for bid in self.assignments]),
                            ", ".join([str(bid.items) for bid in self.assignments]))
-
-            self.assignments = self._product_provider.choose_best_job_bid_combination(self._job, self.bids)  # TODO
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 

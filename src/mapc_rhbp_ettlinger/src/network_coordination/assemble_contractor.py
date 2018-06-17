@@ -12,6 +12,7 @@ from common_utils.agent_utils import AgentUtils
 import utils.rhbp_logging
 from common_utils.calc import CalcUtil
 from provider.product_provider import ProductProvider
+from reactions.assembly_bid import ShouldBidForAssembly
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
 
@@ -20,6 +21,7 @@ class AssembleContractor(object):
 
     def __init__(self, agent_name, role, product_provider=None):
 
+        self._assembly_bid_chooser = ShouldBidForAssembly(agent_name=agent_name, role=role)
         self._agent_name = agent_name
         self.role = role
         self.current_task = None
@@ -57,24 +59,17 @@ class AssembleContractor(object):
 
         current_time = time.time()
         if request.deadline < current_time:
-            rospy.logerr("Deadline over %f - %f", request.deadline, current_time)
+            rospy.loginfo("Deadline over %f - %f", request.deadline, current_time)
             return
-        else:
-            rospy.logerr("Deadline NOT over %f - %f", request.deadline, current_time)
 
         if assemble_task is None:
             self.send_bid(request)
 
     def send_bid(self, request):
 
-        bid = AssembleBid(
-            id=request.id,
-            bid = random.randint(0,7),
-            agent_name = self._agent_name,
-            items = self._product_provider.get_items(), # TODO: Read from db
-            role = self.role,
-            request = request
-        )
+        bid = self._assembly_bid_chooser.choose(request)
+        if bid == None:
+            return
 
         rhbplog.loginfo("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
         self._pub_assemble_bid.publish(bid)

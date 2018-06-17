@@ -11,15 +11,17 @@ from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import Sensor
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
+from reactions.gathering import ChooseIngredientToGather
 from sensor.movement import DestinationDistanceSensor
 
 
 
-class StorageAvailableForItemSensor(Sensor):
+class StorageFitsMoreItemsSensor(Sensor):
 
     def __init__(self,agent_name, behaviour_name, **kwargs):
-        super(StorageAvailableForItemSensor, self).__init__(**kwargs)
+        super(StorageFitsMoreItemsSensor, self).__init__(**kwargs)
 
+        self.gathering = ChooseIngredientToGather(agent_name=agent_name)
         self._agent_name = agent_name
         self.free_load = 0
         self._behaviour_name = behaviour_name
@@ -37,15 +39,6 @@ class StorageAvailableForItemSensor(Sensor):
         :return:
         """
 
-        load_free = msg.load_max - msg.load
-
-        load_after_gathering_final = -1
-
-        for item, already_in_stock_items in self._product_provider.ingredient_priority():
-            product = self._product_provider.get_product_by_name(item)
-            load_after_gathering = load_free - product.volume
-            if load_after_gathering >=0:
-                load_after_gathering_final = load_after_gathering
-                break
-
-        self.update(load_after_gathering_final)
+        self.gathering.update(msg)
+        item = self.gathering.choose()
+        self.update(item != None)
