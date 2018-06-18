@@ -14,14 +14,11 @@ class ChooseIngredientToGather(object):
         self.load_free = msg.load_max - msg.load
 
     def choose(self):
-
-        load_after_gathering_final = -1
         choosen_item  = None
 
         for item, already_in_stock_items in self.ingredient_priority():
             load_after_gathering = self.load_after_gathering(item)
-            if load_after_gathering > load_after_gathering_final:
-                load_after_gathering_final = load_after_gathering
+            if load_after_gathering >= 0:
                 choosen_item = item
                 break
 

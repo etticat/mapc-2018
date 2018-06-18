@@ -4,32 +4,28 @@ import itertools
 from mapc_rhbp_ettlinger.msg import JobAssignment
 
 from common_utils.calc import CalcUtil
+from provider.stats_provider import StatsProvider
 
 
 class ChooseBestJobCombination(object):
 
+    MIN_STEP_BUFFER = 5
+
     WEIGHT_LOAD = 8
     WEIGHT_INGREDIENT_LOAD = 8
-    WEIGHT_STEPS = -9
+    WEIGHT_STEPS = -1
 
-    ACTIVATION_THRESHOLD = 77
+    ACTIVATION_THRESHOLD = -20
 
     def __init__(self):
 
-        self.max_load = 100
-        self.load = 60
-        self.load_ingredients = 40
-        self.load_finished_products = 35
-        self.speed = 10
-        self.transport = "air"
-        self.items = {}
+        self._stats_provider = StatsProvider()
 
-    def choose(self, job, bids):
+    def choose_best_agent_combination(self, job, bids):
 
         job_items = CalcUtil.get_list_from_items(job.items)
-        best_combination = []
-        best_value = 0
-        best_finished_products = None
+        best_agent_subset = []
+        best_value = -1000
 
         if len(bids) >= 2:
             # Go through all combinations
@@ -39,39 +35,38 @@ class ChooseBestJobCombination(object):
                     for item in subset:
                         stringi = stringi + item.agent_name + " - "
 
-                    combination = self.generate_job_fulfillment_combination(job_items, subset)
+                    subset_can_fulfill_job = self.job_fulfillment_possible(job_items, subset)
 
-                    if combination != None:
-                        best_value = 1
-                        best_combination = subset
-                        best_finished_products = combination
-                if best_value > 0:
+                    if subset_can_fulfill_job:
+                        best_value = self.generate_activation(subset, job)
+                        best_agent_subset = subset
+
+                if best_value > ChooseBestJobCombination.ACTIVATION_THRESHOLD:
                     # we only try combinations with more, if we could not find anything with less
                     break
 
-        return best_finished_products
+        return best_agent_subset
 
 
-    def generate_job_fulfillment_combination(self, job_items, bids):
-        res = []
+    def job_fulfillment_possible(self, job_items, bids):
         job_items =copy.copy(job_items)
 
         for bid in bids:
 
             useful_items = CalcUtil.list_intersect(job_items, bid.items)
-            if len(useful_items) >  0:
-                assignement = JobAssignment(
-                    id=bid.id,
-                    agent_name=bid.agent_name,
-                    assigned=True,
-                    deadline=0,
-                    type="delivery",
-                    items=useful_items)
+            if len(useful_items) > 0:
+
                 job_items = CalcUtil.list_diff(job_items, useful_items)
-                res.append(assignement)
 
-        if len(job_items) > 0: # If we could not find all items in combination, return empty
-            return None
+        return len(job_items) == 0 # If we could not find all items in combination, return empty
 
-        return res
+    def generate_activation(self, subset, job):
 
+        # The number of step until all agents can be at the workshop
+        max_step_count = max([bid.expected_steps for bid in subset])
+
+        if job.end - self._stats_provider.simulation_step < max_step_count + ChooseBestJobCombination.MIN_STEP_BUFFER:
+            return 0 # This combination of agents can't make it in time
+
+
+        return max_step_count * ChooseBestJobCombination.WEIGHT_STEPS

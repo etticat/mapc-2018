@@ -96,9 +96,9 @@ class JobManager(object):
 
         ettilog.loginfo("JobManager(%s, %s): Processing %s bids", self.job_id(), str(len(self.bids)))
 
-        self.assignments = self._job_combination.choose(self._job, self.bids) # TODO
+        bids = self._job_combination.choose_best_agent_combination(self._job, self.bids) # TODO
 
-        if self.assignments == None:
+        if bids == None:
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
             ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
@@ -111,11 +111,19 @@ class JobManager(object):
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 
-        for assignment in self.assignments:
-            assignment.pos = self._facility_provider.get_storage_by_name(self._job.storage_name).pos
-            assignment.job_id = self._job.id
-            ettilog.loginfo("JobManager:: Publishing assignment for %s (%s)", assignment.agent_name, str(assignment.assigned))
-            self._pub_job_assignment.publish(assignment)
+        self.assignments =[]
+        for bid in bids:
+            assignement = JobAssignment(
+                id=bid.id,
+                agent_name=bid.agent_name,
+                assigned=True,
+                deadline=0,
+                type="delivery",
+                pos = self._facility_provider.get_storage_by_name(self._job.storage_name).pos,
+                job_id = self._job.id)
+            self.assignments.append(assignement)
+            ettilog.loginfo("JobManager:: Publishing assignment for %s (%s)", assignement.agent_name, str(assignement.assigned))
+            self._pub_job_assignment.publish(assignement)
 
         time.sleep(deadline - time.time())
 

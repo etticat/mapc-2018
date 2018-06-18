@@ -4,7 +4,6 @@ import operator
 
 from agent_knowledge.item import StockItemKnowledgebase
 from common_utils.calc import CalcUtil
-from common_utils.product_util import ProductUtil
 from provider.product_provider import ProductProvider
 
 
