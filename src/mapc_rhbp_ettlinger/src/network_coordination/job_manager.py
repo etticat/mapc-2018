@@ -11,7 +11,6 @@ from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.job_combination import ChooseBestJobCombination
 from provider.facility_provider import FacilityProvider
-from provider.product_provider import ProductProvider
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
 
@@ -25,8 +24,6 @@ class JobManager(object):
 
 
         self._job_combination = ChooseBestJobCombination()
-        self._product_provider = ProductProvider(agent_name="agentA1") # temporarily just use any name
-        # TODO: Make productProvider independent from agent
 
         self._job_knowledgebase = JobKnowledgebase()
         self._facility_provider = FacilityProvider()

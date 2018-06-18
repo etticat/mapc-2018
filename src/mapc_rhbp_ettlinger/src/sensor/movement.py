@@ -49,16 +49,9 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
                 destination_pos = movement.pos
                 agent_position = self._last_pos
 
-                # if self.name == "resource_destination_sensor_hoarding":
-                #     rospy.logerr("----------------- %s %s", str(destination_pos), str(agent_position))
-
                 res = AgentUtils.calculate_distance(destination_pos, agent_position)
 
             except Exception:
                 rospy.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(movement))
 
-            # if self.name == "at_charging_station":
-            #     rospy.logerr("////// %s", str(movement))
-        # if self.name == "at_charging_station":
-        #     rospy.logerr("---%s", str(res))
         return res

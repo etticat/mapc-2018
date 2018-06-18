@@ -9,6 +9,7 @@ from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssign
 import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
+from common_utils.product_util import ProductUtil
 from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
 from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.facility_provider import FacilityProvider
@@ -126,14 +127,14 @@ class AssembleManager(object):
 
         if len(finished_products.keys()) == 0:
             ettilog.logerr("AssembleManager(%s): No useful bid combination found in %d bids", self._agent_name, len(self.bids))
-            bids, roles = self._product_provider.get_items_and_roles_from_bids(self.bids)
+            bids, roles = ProductUtil.get_items_and_roles_from_bids(self.bids)
             ettilog.logerr("AssembleManager(%s): ------ Items: %s", self._agent_name, str(bids))
             ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
             ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))
             self.accepted_bids = []
         else:
             ettilog.logerr("AssembleManager(%s): Bids processed: %s building %s", self._agent_name, ", ".join([bid.agent_name for bid in self.accepted_bids]), str(finished_products.keys()))
-            bids, roles = self._product_provider.get_items_and_roles_from_bids(self.bids)
+            bids, roles = ProductUtil.get_items_and_roles_from_bids(self.bids)
             ettilog.logerr("AssembleManager(%s): ------ Items: %s", self._agent_name, str(bids))
             ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
             ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))

@@ -5,6 +5,7 @@ from mac_ros_bridge.msg import StorageMsg
 
 
 class FacilityProvider(object):
+    __metaclass__ = Singleton
     """
     Keeps a list of all Facilities readily available for various components to use
     """

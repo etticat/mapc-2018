@@ -15,6 +15,8 @@ from common_utils.singleton import Singleton
 
 
 class WellProvider(object):
+    __metaclass__ = Singleton
+
     WELL_TOPIC = "/well"
 
     def __init__(self):

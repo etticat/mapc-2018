@@ -216,16 +216,6 @@ class ProductProvider(object):
                 ))
         return res
 
-    def get_items_and_roles_from_bids(self, subset):
-        item_dict = {}
-        roles = []
-        for bid in subset:
-            for item in bid.items:
-                item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
-            roles.append(bid.role)
-        return item_dict, roles
-
-
     def get_base_ingredients_of_product_iteratively(self, product_name, amount = 1):
         product = self.products[product_name]
 

@@ -4,6 +4,7 @@ import operator
 
 from agent_knowledge.item import StockItemKnowledgebase
 from common_utils.calc import CalcUtil
+from common_utils.product_util import ProductUtil
 from provider.product_provider import ProductProvider
 
 
@@ -65,7 +66,7 @@ class ChooseBestAssemblyCombination(object):
         return (best_combination, best_finished_products)
 
     def generate_best_combination(self, subset):
-        item_dict, roles = self._product_provider.get_items_and_roles_from_bids(subset)
+        item_dict, roles = ProductUtil.get_items_and_roles_from_bids(subset)
 
         item_dict = copy.copy(item_dict)
         combination = {}

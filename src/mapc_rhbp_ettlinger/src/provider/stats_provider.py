@@ -17,6 +17,8 @@ from provider.well_provider import WellProvider
 
 
 class StatsProvider(object):
+    __metaclass__ = Singleton
+
     STATS_TOPIC = "/team"
 
     def __init__(self):

@@ -17,6 +17,8 @@ from math import sin, cos, sqrt, atan2, radians
 
 
 class StepProvider(object):
+    __metaclass__ = Singleton
+
     RADIUS_EARTH_METERS = 6373000.0 # Using same approximation as server
 
     def __init__(self, agent_name):
