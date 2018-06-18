@@ -62,7 +62,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             sensor=self.storage_space_after_next_item_sensor,
             activator=BooleanActivator(desiredValue=True)
         )
-        # TODO: Add a proper effect
+
         self.gather_ingredients_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self.storage_space_after_next_item_sensor.name,

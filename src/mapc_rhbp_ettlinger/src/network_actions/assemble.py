@@ -70,8 +70,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             agent=agent,
             agent_name=agent._agent_name,
             name="go_to_workshop",
-            plannerPrefix=self.get_manager_prefix(),
-            # TODO: Remove this method and use the data from the contract net
+            plannerPrefix=self.get_manager_prefix()
 
         )
         self.workshop_destination_sensor = DestinationDistanceSensor(

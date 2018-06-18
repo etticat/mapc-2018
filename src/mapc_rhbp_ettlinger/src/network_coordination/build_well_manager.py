@@ -58,7 +58,7 @@ class BuildWellManager(JobManager):
         :return:
         """
 
-        accepted_bids = self._well_chooser.choose_agent_for_building(self.bids) # TODO
+        accepted_bids = self._well_chooser.choose_agent_for_building(self.bids)
 
         if len(accepted_bids) == 0:
             ettilog.logerr("BuildWellManager:: No useful bid found in %d bids", len(self.bids))

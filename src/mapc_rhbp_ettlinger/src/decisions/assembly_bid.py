@@ -76,7 +76,7 @@ class ShouldBidForAssembly(object):
                 id=request.id,
                 bid = activation,
                 agent_name = self._agent_name,
-                items = self._product_provider.get_items(), # TODO: Read from db
+                items = self._product_provider.get_items(),
                 role = self.role,
                 request = request
             )

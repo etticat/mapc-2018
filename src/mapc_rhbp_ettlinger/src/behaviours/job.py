@@ -103,7 +103,6 @@ class GatherBehaviour(GenericActionBehaviour):
         )
 
         # If we don't need item anymore stop gathering
-        # TODO: This could be moved to a seperate sensor/behaviour?
         resource = self._resource_knowledgebase.get_resource_by_name(movement.destination)
         if resource != None and resource.item.name not in required_ingredients:
             self._movement_knowledge.stop_movement(self.agent_name, self.movement_behaviour_name)

@@ -90,7 +90,7 @@ class JobContractor(object):
         if is_still_possible:
 
             acknoledgement = JobAcknowledgement(
-                acknowledged=True, # TODO check
+                acknowledged=True,
                 agent_name=job_assignment.agent_name,
                 id=job_assignment.id,
                 items=job_assignment.items

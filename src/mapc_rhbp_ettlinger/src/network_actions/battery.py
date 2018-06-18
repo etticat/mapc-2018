@@ -24,7 +24,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         agent_topic = agent._agent_topic_prefix + "agent"
         proximity = msg.proximity
 
-        agent_recharge_upper_bound = msg.role.base_battery  # TODO this would have to be updated when upgrades are performed
+        agent_recharge_upper_bound = msg.role.base_battery
 
         agent_recharge_lower_bound = agent_recharge_upper_bound * recharge_lower_bound_percentage
         self.agent_charge_critical = agent_recharge_upper_bound * recharge_critical_bound_percentage

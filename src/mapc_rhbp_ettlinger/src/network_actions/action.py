@@ -153,9 +153,6 @@ class ActionNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(coordination_network_behaviour.has_assemble_task_assigned_cond))
 
         # Only gather if there is no task assigned
-        # TODO: We might want to allow this in the case where the agent does not have all items for the task
-        # I do not think this makes sense as only accepting tasks where the agent already has all items seems more
-        # promising. Might want to reconsider this at a later stage when the job execution is more clear
         self._gathering_network.add_precondition(
             precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
@@ -211,7 +208,6 @@ class ActionNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(self._job_execution_network.has_tasks_assigned_condition))
 
         # Only explore when not all resource nodes are discovered
-        # TODO: Maybe it makes sense that some agents continue to explore
         self.exploration_network.add_precondition(
             precondition = Disjunction(
                 Negation(self.exploration_network.all_resources_discovered_condition),  # Explore if not all resources have been found
