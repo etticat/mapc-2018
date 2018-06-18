@@ -12,10 +12,11 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
     INDEX_LAT = 2
     INDEX_LONG = 3
     INDEX_WELL_TYPE = 4
+    INDEX_BUILT = 5
 
     @staticmethod
-    def generate_tuple(agent_name="*", lat="*", long="*", well_type="*"):
-        return 'well_task', agent_name, str(lat), str(long), well_type
+    def generate_tuple(agent_name="*", lat="*", long="*", well_type="*", built="*"):
+        return 'well_task', agent_name, str(lat), str(long), well_type, str(built)
 
     @staticmethod
     def generate_well_task_from_fact(fact):
@@ -33,7 +34,8 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
             pos = Position(
                 lat=float(fact[WellTaskKnowledgebase.INDEX_LAT]),
                 long=float(fact[WellTaskKnowledgebase.INDEX_LONG])),
-            well_type=fact[WellTaskKnowledgebase.INDEX_WELL_TYPE]
+            well_type=fact[WellTaskKnowledgebase.INDEX_WELL_TYPE],
+            built=bool(WellTaskKnowledgebase.INDEX_BUILT)
         )
         return well_task
 
@@ -49,7 +51,8 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
             agent_name=well_task.agent_name,
             lat=well_task.pos.lat,
             long=well_task.pos.long,
-            well_type=well_task.well_type
+            well_type=well_task.well_type,
+            built=well_task.built
 
         )
 
@@ -85,6 +88,20 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
         """
         return self._kb_client.pop(self.generate_tuple(agent_name=agent_name))
 
+    def build_finished(self, well_task):
+        well_task.built = "*"
+        search = self.generate_fact_from_task(well_task)
+        well_task.built = True
+        replace = self.generate_fact_from_task(well_task)
+        return self._kb_client.update(search, replace, push_without_existing=False)
+
+    def build_up_finished(self, well_task):
+        well_task.built = "*"
+        delete_fact = self.generate_fact_from_task(well_task)
+        pop = self._kb_client.pop(delete_fact)
+
+        return pop
+
     def get_task(self, agent_name="*", lat="*", long="*", well_type="*"):
         """
         Returns the curretn tasks of an agent
@@ -102,3 +119,11 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
             well_type=well_type)
 
         return self.generate_well_task_from_fact(self._kb_client.peek(tuple))
+
+    def get_tasks(self, tuple):
+
+        res = []
+        for fact in self._kb_client.all(tuple):
+            res.append(self.generate_well_task_from_fact(fact))
+
+        return res

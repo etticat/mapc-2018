@@ -5,3 +5,4 @@ bool                                assigned
 float32                             deadline
 string[]                            items
 mac_ros_bridge/Position             pos
+string                              type

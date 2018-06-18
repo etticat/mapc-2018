@@ -9,6 +9,7 @@ import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
+from decisions.job_combination import ChooseBestJobCombination
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 

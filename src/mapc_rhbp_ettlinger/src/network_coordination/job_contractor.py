@@ -3,10 +3,11 @@ import time
 
 import rospy
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
-    JobTask
+    JobTask, WellTask
 
 import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
+from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from provider.product_provider import ProductProvider
@@ -20,6 +21,7 @@ class JobContractor(object):
 
         self._agent_name = agent_name
         self._job_knowledgebase = JobKnowledgebase()
+        self._well_task_knowledgebase = WellTaskKnowledgebase()
 
 
         if product_provider == None:
@@ -46,20 +48,20 @@ class JobContractor(object):
 
         current_time = time.time()
         # if request.deadline < current_time:
-        #     rospy.logerr("Deadline over")
+        #     rospy.loginfo("Deadline over")
         #     return
         #
         current_job = self._job_knowledgebase.get_task(agent_name=self._agent_name)
+        current_well_job = self._well_task_knowledgebase.get_task(agent_name=self._agent_name)
 
-        if current_job is None:
+        if current_job is None and current_well_job is None:
             self.send_bid(request)
 
     def send_bid(self, request):
         # Items which are requested and can be provided by agent
         own_items = CalcUtil.get_list_from_items(self._product_provider.get_items())
         item_intersect = CalcUtil.list_intersect(request.items, own_items)
-
-        if len(item_intersect) > 0:
+        if len(item_intersect) > 0 or len(request.items) == 0:
             bid = JobBid(
                 id=request.id,
                 bid = random.randint(0, 7), # TODO
@@ -68,7 +70,7 @@ class JobContractor(object):
                 items = item_intersect,
             )
 
-            rhbplog.logerr("JobContractor(%s):: bidding on %s: %s", self._agent_name, str(own_items), str(item_intersect))
+            rhbplog.loginfo("JobContractor(%s):: bidding on %s: %s", self._agent_name, str(own_items), str(item_intersect))
             self._pub_job_bid.publish(bid)
 
 
@@ -81,7 +83,7 @@ class JobContractor(object):
             rhbplog.loginfo("JobContractor(%s):: Cancelled assignment for %s", self._agent_name, job_assignment.id)
             return
 
-        rhbplog.logerr("JobContractor(%s):: Received assignment for %s", self._agent_name, job_assignment.id)
+        rhbplog.loginfo("JobContractor(%s):: Received assignment for %s", self._agent_name, job_assignment.id)
 
         is_still_possible = True # TODO check if agent is still idle
 
@@ -94,10 +96,19 @@ class JobContractor(object):
                 items=job_assignment.items
             )
 
-            self._job_knowledgebase.save_task(JobTask(
-                job_id = job_assignment.job_id,
-                agent_name = self._agent_name,
-                pos = job_assignment.pos,
-                items = job_assignment.items
-            ))
+            if job_assignment.type == "deliver":
+
+                self._job_knowledgebase.save_task(JobTask(
+                    job_id = job_assignment.job_id,
+                    agent_name = self._agent_name,
+                    pos = job_assignment.pos,
+                    items = job_assignment.items
+                ))
+            elif job_assignment.type == "build_well":
+                self._well_task_knowledgebase.save_task(WellTask(
+                    agent_name = self._agent_name,
+                    pos = job_assignment.pos,
+                    well_type = job_assignment.job_id,
+                    built = False
+                ))
             self._pub_job_acknowledge.publish(acknoledgement)

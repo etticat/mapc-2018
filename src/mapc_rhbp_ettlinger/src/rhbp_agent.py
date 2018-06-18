@@ -146,8 +146,8 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        if hasattr(self, "_action_network_behaviour"):
-            DebugUtils.print_precondition_states(self._action_network_behaviour.build_well_network.build_up_well_bahviour)
+        # if hasattr(self, "_action_network_behaviour"):
+        #     DebugUtils.print_precondition_states(self._action_network_behaviour.build_well_network.build_up_well_bahviour)
 
         start_time = rospy.get_rostime()
         steps = 0

@@ -6,9 +6,11 @@ from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.tasks import JobKnowledgebase
+from decisions.job_activation import JobDecider
+from decisions.well_chooser import ChooseWellToBuild
+from network_coordination.build_well_manager import BuildWellManager
 from network_coordination.job_manager import JobManager
 from provider.product_provider import ProductProvider
-from reactions.job_activation import JobDecider
 
 
 class JobPlanner(object):
@@ -22,11 +24,14 @@ class JobPlanner(object):
         self.all_jobs = []
         self.all_tasks = []
 
+        self.well_chooser = ChooseWellToBuild()
+
         self._task_knowledge = JobKnowledgebase()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 
         self.job_manager = JobManager()
+        self.well_manager = BuildWellManager()
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
@@ -42,9 +47,15 @@ class JobPlanner(object):
             rospy.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
             return
 
+        self.coordinate_wells(requestAction)
+        self.coordinate_jobs(requestAction)
+
+
+        rospy.loginfo("JobPlanner:: Jobs processed")
+
+    def coordinate_jobs(self, requestAction):
         # get all jobs from request
         all_jobs_new = self.extract_jobs(requestAction)
-
         for job in all_jobs_new:
             # if job has not been seen before -> process it
             if job not in self.all_jobs:
@@ -53,16 +64,18 @@ class JobPlanner(object):
                 self._job_decider.train_decider(job)
                 job_activation = self._job_decider.get_job_activation(job)
                 if job_activation > self._job_decider.get_threshold():
-                    rospy.logerr("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
-                                 str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
+                    rospy.loginfo("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
+                                  str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
                     self.job_manager.job_request(job)
-
         self.all_jobs = all_jobs_new
 
+    def coordinate_wells(self, msg):
+        well_to_build = self.well_chooser.choose_well_type()
 
-        rospy.loginfo("JobPlanner:: Jobs processed")
+        if well_to_build == None:
+            return
 
-
+        self.well_manager.well_request(well_to_build, self.well_chooser.choose_well_position())
 
 
     def extract_jobs(self, msg):

@@ -77,7 +77,8 @@ class DebugUtils:
         well_task_knowledebase.save_task(WellTask(
             agent_name = 'agentA1',
             pos = Position(lat="48.84778", long="2.33733"),
-            well_type = "wellType1"
+            well_type = "wellType1",
+            built=False
         ))
 
         rospy.logerr("----------------------------------------------------------------------------------")

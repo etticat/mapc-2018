@@ -72,7 +72,7 @@ class BuildWellBehaviour(BehaviourBase):
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self.current_task != None and agent.last_action == "build":
             rospy.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
-            self.current_task = None
+            self._task_knowledge.build_finished(self.current_task)
 
 
     def stop(self):
@@ -97,6 +97,11 @@ class BuildUpWellBehaviour(BuildWellBehaviour):
         action.action_type = Action.BUILD
 
         self._pub_generic_action.publish(action)
+
+    def stop(self):
+        self._task_knowledge.build_up_finished(self.current_task)
+        super(BuildUpWellBehaviour, self).stop()
+
 
 class WellIntegritySensor(KnowledgeFirstFactSensor):
 

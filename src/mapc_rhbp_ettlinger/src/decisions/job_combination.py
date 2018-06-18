@@ -65,6 +65,7 @@ class ChooseBestJobCombination(object):
                     agent_name=bid.agent_name,
                     assigned=True,
                     deadline=0,
+                    type="delivery",
                     items=useful_items)
                 job_items = CalcUtil.list_diff(job_items, useful_items)
                 res.append(assignement)
