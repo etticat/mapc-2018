@@ -11,15 +11,15 @@ class ShouldBidForAssembly(object):
 
     WEIGHT_LOAD = 30
     WEIGHT_INGREDIENT_LOAD = 100
-    WEIGHT_STEPS = -0
+    WEIGHT_STEPS = -7
 
-    ACTIVATION_THRESHOLD = 70
+    ACTIVATION_THRESHOLD = 50
 
     def __init__(self, agent_name, role):
 
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self.set_provider = StepProvider()
+        self.set_provider = StepProvider(agent_name=agent_name)
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
@@ -27,8 +27,6 @@ class ShouldBidForAssembly(object):
         self.load = None
         self.load_ingredients = None
         self.load_finished_products = None
-        self.speed = None
-        self.transport = None
         self.pos = None
         self.role = role
 
@@ -46,8 +44,6 @@ class ShouldBidForAssembly(object):
         self.load = agent.load
         self.load_ingredients = self._product_provider.calculate_total_volume(self._product_provider.get_base_ingredients_in_stock())
         self.load_finished_products = self._product_provider.calculate_total_volume(self._product_provider.get_finished_products_in_stock())
-        self.speed = agent.speed
-        self.transport = "road" # TODO
         self.items = {}
         self.pos = agent.pos
 
@@ -61,7 +57,7 @@ class ShouldBidForAssembly(object):
         ingredient_fullness = float(self.load_ingredients) / self.max_load
         general_fulness = float(self.load) / self.max_load
 
-        steps_to_destination = self.set_provider.calculate_steps(self.pos, request.destination, self.speed, self.transport)
+        steps_to_destination = self.set_provider.calculate_steps(self.pos, request.destination)
 
 
 

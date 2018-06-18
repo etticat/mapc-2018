@@ -8,6 +8,7 @@ from mac_ros_bridge.msg import Position, Agent
 
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledgebase
+from provider.step_provider import StepProvider
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
 
 

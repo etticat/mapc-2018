@@ -11,6 +11,7 @@ from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
 from decisions.assembly_combination import ChooseBestAssemblyCombination
+from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.assemble_manager')
@@ -23,6 +24,7 @@ class AssembleManager(object):
 
     def __init__(self, agent_name):
 
+        self._facility_provider = FacilityProvider()
         self._assembly_combination = ChooseBestAssemblyCombination()
         self._agent_name = agent_name
 
@@ -69,7 +71,7 @@ class AssembleManager(object):
 
                 request = AssembleRequest(
                     deadline=(time.time() + AssembleManager.DEADLINE_BIDS),
-                    destination=Position(lat=48.82456, long=2.31017),
+                    destination=self._facility_provider.get_random_storage(),
                     agent_name=self._agent_name,
                     id=self.assemble_id()
                 )

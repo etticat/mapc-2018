@@ -10,6 +10,7 @@ from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
+from decisions.job_bid import JobBidDecider
 from provider.product_provider import ProductProvider
 
 rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_contractor')
@@ -22,6 +23,7 @@ class JobContractor(object):
         self._agent_name = agent_name
         self._job_knowledgebase = JobKnowledgebase()
         self._well_task_knowledgebase = WellTaskKnowledgebase()
+        self.job_bid_decider = JobBidDecider(self._agent_name)
 
 
         if product_provider == None:
@@ -59,17 +61,10 @@ class JobContractor(object):
 
     def send_bid(self, request):
         # Items which are requested and can be provided by agent
-        own_items = CalcUtil.get_list_from_items(self._product_provider.get_items())
-        item_intersect = CalcUtil.list_intersect(request.items, own_items)
-        if len(item_intersect) > 0 or len(request.items) == 0:
-            bid = JobBid(
-                id=request.id,
-                bid = random.randint(0, 7), # TODO
-                expected_steps=random.randint(3, 10), # TODO
-                agent_name = self._agent_name,
-                items = item_intersect,
-            )
 
+        bid = self.job_bid_decider.generate_bid(request)
+
+        if bid != None:
             rhbplog.loginfo("JobContractor(%s):: bidding on %s: %s", self._agent_name, str(own_items), str(item_intersect))
             self._pub_job_bid.publish(bid)
 

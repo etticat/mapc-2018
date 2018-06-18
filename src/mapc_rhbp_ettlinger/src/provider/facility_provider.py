@@ -1,3 +1,5 @@
+import random
+
 import rospy
 from mac_ros_bridge.msg import StorageMsg
 
@@ -26,3 +28,6 @@ class FacilityProvider(object):
 
     def get_storage_by_name(self, name):
         return self.storages[name]
+
+    def get_random_storage(self):
+        return random.choice(self.storages.values())
