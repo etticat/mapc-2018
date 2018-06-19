@@ -1,8 +1,7 @@
-import random
 import time
 
 import rospy
-from mac_ros_bridge.msg import Position, Job
+from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
 
 import utils.rhbp_logging
@@ -17,8 +16,8 @@ ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DE
 
 class JobManager(object):
 
-    DEADLINE_BIDS = 2
-    DEADLINE_ACKNOLEDGEMENT = 2
+    DEADLINE_BIDS = 0.7
+    DEADLINE_ACKNOLEDGEMENT = 0.7
 
     def __init__(self):
 
@@ -102,6 +101,8 @@ class JobManager(object):
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
             ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
+
+            self.id = self.job_id(new_id=True)
             self.busy = False
             return
         else:

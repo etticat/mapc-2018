@@ -129,24 +129,38 @@ class RhbpAgent:
         # if hasattr(self, "_action_network_behaviour"):
         #     DebugUtils.print_precondition_states(self._action_network_behaviour.build_well_network.build_up_well_bahviour)
 
-        start_time = rospy.get_rostime()
-        steps = 0
-        # wait for generic action response (send by any behaviour)
-        while not self._received_action_response:
-            steps += 1
-            self._manager.step() # selected behaviours eventually trigger action
-            # Recharge if decision-making-time > 3.9 seconds
-            if (rospy.get_rostime() - start_time).to_sec() > 3.9:
-                rospy.logerr(
-                    "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
-                    self._agent_name, steps)
-                # TODO: Comment in
-                # pub_generic_action = rospy.Publisher(
-                #     self._agent_topic_prefix + 'generic_action',
-                #     GenericAction, queue_size=10)
-                # action_generic(publisher=pub_generic_action,
-                #                action_type=Action.RECHARGE)
-                break
+
+        if self._initialized:
+            start_time = rospy.get_rostime()
+            steps = 0
+            # wait for generic action response (send by any behaviour)
+            while not self._received_action_response:
+                steps += 1
+                self._manager.step() # selected behaviours eventually trigger action
+                # Recharge if decision-making-time > 3.9 seconds
+                if (rospy.get_rostime() - start_time).to_sec() > 3.9:
+                    rospy.logerr(
+                        "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
+                        self._agent_name, steps)
+                    # TODO: Comment in
+                    # pub_generic_action = rospy.Publisher(
+                    #     self._agent_topic_prefix + 'generic_action',
+                    #     GenericAction, queue_size=10)
+                    # action_generic(publisher=pub_generic_action,
+                    #                action_type=Action.RECHARGE)
+                    break
+
+        else:
+            rospy.logerr(
+                "%s: Decision-making skipped. Not initialized yet. Recharging.",
+                self._agent_name)
+            # TODO: Comment in
+            # pub_generic_action = rospy.Publisher(
+            #     self._agent_topic_prefix + 'generic_action',
+            #     GenericAction, queue_size=10)
+            # action_generic(publisher=pub_generic_action,
+            #                action_type=Action.RECHARGE)
+
 
         duration = rospy.get_rostime() - start_time
         rospy.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())

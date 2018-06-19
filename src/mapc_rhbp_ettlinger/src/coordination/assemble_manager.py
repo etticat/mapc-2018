@@ -19,8 +19,8 @@ ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.asse
 
 class AssembleManager(object):
 
-    DEADLINE_BIDS = 2.0
-    DEADLINE_ACKNOLEDGEMENT = 2.0
+    DEADLINE_BIDS = 0.7
+    DEADLINE_ACKNOLEDGEMENT = 0.7
 
     def __init__(self, agent_name):
 
@@ -71,7 +71,7 @@ class AssembleManager(object):
 
                 request = AssembleRequest(
                     deadline=(time.time() + AssembleManager.DEADLINE_BIDS),
-                    destination=self._facility_provider.get_random_storage(),
+                    destination=self._facility_provider.get_random_workshop().pos,
                     agent_name=self._agent_name,
                     id=self.assemble_id()
                 )
@@ -129,12 +129,16 @@ class AssembleManager(object):
             ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
             ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))
             self.accepted_bids = []
-        else:
-            ettilog.logerr("AssembleManager(%s): Bids processed: %s building %s", self._agent_name, ", ".join([bid.agent_name for bid in self.accepted_bids]), str(finished_products.keys()))
-            bids, roles = ProductUtil.get_items_and_roles_from_bids(self.bids)
-            ettilog.logerr("AssembleManager(%s): ------ Items: %s", self._agent_name, str(bids))
-            ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
-            ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))
+
+            self._pub_assemble_request_over.publish(AssembleManagerStatus(id=self.id))
+            self.id = self.assemble_id(new_id=True)
+            return
+
+        ettilog.logerr("AssembleManager(%s): Bids processed: %s building %s", self._agent_name, ", ".join([bid.agent_name for bid in self.accepted_bids]), str(finished_products.keys()))
+        bids, roles = ProductUtil.get_items_and_roles_from_bids(self.bids)
+        ettilog.logerr("AssembleManager(%s): ------ Items: %s", self._agent_name, str(bids))
+        ettilog.logerr("AssembleManager(%s): ------ Agents: %s", self._agent_name, str([bid.agent_name for bid in self.bids]))
+        ettilog.logerr("AssembleManager(%s): ------ roles: %s", self._agent_name, str(roles))
         rejected_bids = []
 
         for bid in self.bids:

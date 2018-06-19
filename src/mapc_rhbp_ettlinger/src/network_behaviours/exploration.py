@@ -70,10 +70,3 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         self._shop_exploration.add_precondition(
             precondition=Negation(at_shop_cond)
         )
-
-
-        self.add_effect(
-            effect=Effect(
-                sensor_name=self.resource_discovery_progress_sensor.name,
-                indicator=0.2,
-                sensor_type=float))

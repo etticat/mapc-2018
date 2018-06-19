@@ -1,12 +1,10 @@
 import time
 
-import rospy
 from mac_ros_bridge.msg import Job
-from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
+from mapc_rhbp_ettlinger.msg import JobRequest, JobAssignment
 
 import utils.rhbp_logging
 from agent_knowledge.well import WellTaskKnowledgebase
-from common_utils.agent_utils import AgentUtils
 from coordination.job_manager import JobManager
 from decisions.well_chooser import ChooseWellToBuild
 
@@ -63,6 +61,8 @@ class BuildWellManager(JobManager):
         if len(accepted_bids) == 0:
             ettilog.logerr("BuildWellManager:: No useful bid found in %d bids", len(self.bids))
             self.busy = False
+
+            self.id = self.job_id(new_id=True)
             return
         else:
             ettilog.logerr("BuildWellManager:: Bids processed: Accepted bids from %s",
