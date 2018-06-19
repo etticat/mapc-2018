@@ -1,0 +1,15 @@
+<launch>
+
+    <arg name="initial_port" default="8989" />
+
+    <!-- Enable custom logger configuration-->
+    <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
+
+    <!--Infrastructure Nodes-->
+    <node pkg="mapc_rhbp_ettlinger" type="graphhopper.py" name ="graphhopper_node" output="screen">
+        <!--List the preloaded maps separated by comma in start_maps-->
+        <param name="start_maps" value="paris,london,hannover" />
+        <param name="initial_port" value="$(arg initial_port)" />
+    </node>
+
+</launch>

@@ -16,6 +16,8 @@ class ChooseIngredientToGather(object):
     def choose(self):
         choosen_item  = None
 
+        # TODO: Take distance into account
+
         for item, already_in_stock_items in self.ingredient_priority():
             load_after_gathering = self.load_after_gathering(item)
             if load_after_gathering >= 0:

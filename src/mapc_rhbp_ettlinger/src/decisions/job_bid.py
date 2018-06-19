@@ -1,10 +1,10 @@
 import random
 
-from mapc_rhbp_ettlinger.msg import JobBid, JobRequest
+from mapc_rhbp_ettlinger.msg import JobBid
 
 from common_utils.calc import CalcUtil
+from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
-from provider.step_provider import StepProvider
 
 
 class JobBidDecider(object):
@@ -12,7 +12,7 @@ class JobBidDecider(object):
     def __init__(self, agent_name):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._agent_name = agent_name
-        self._step_provider = StepProvider()
+        self._step_provider = DistanceProvider()
 
     def generate_bid(self, request):
         """

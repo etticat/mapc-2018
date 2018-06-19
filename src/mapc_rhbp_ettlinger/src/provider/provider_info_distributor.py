@@ -1,14 +1,14 @@
 from agent_knowledge.resource import ResourceKnowledgebase
+from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
 from provider.stats_provider import StatsProvider
-from provider.step_provider import StepProvider
 from provider.well_provider import WellProvider
 
 
 class ProviderInfoDistributor(object):
 
     def __init__(self):
-        self.step_provider = StepProvider()
+        self.step_provider = DistanceProvider()
         self.well_provider = WellProvider()
         self.simulation_provider = SimulationProvider()
         self.stats_provider = StatsProvider()

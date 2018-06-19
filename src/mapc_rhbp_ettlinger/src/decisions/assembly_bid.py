@@ -1,10 +1,10 @@
 import rospy
-from mac_ros_bridge.msg import Position, Agent
+from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import AssembleBid
 
 from common_utils.agent_utils import AgentUtils
+from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
-from provider.step_provider import StepProvider
 
 
 class ShouldBidForAssembly(object):
@@ -19,7 +19,7 @@ class ShouldBidForAssembly(object):
 
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self.set_provider = StepProvider()
+        self.set_provider = DistanceProvider()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 

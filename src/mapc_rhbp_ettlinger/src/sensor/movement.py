@@ -4,11 +4,10 @@
 from __future__ import division  # force floating point division when using plain /
 
 import rospy
-from mac_ros_bridge.msg import Position, Agent
+from mac_ros_bridge.msg import Agent
 
-from common_utils.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledgebase
-from provider.step_provider import StepProvider
+from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
 
 
