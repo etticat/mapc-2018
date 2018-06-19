@@ -12,7 +12,7 @@ class JobBidDecider(object):
     def __init__(self, agent_name):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._agent_name = agent_name
-        self._step_provider = StepProvider(agent_name=agent_name)
+        self._step_provider = StepProvider()
 
     def generate_bid(self, request):
         """

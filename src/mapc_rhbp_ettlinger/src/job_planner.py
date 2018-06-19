@@ -12,6 +12,7 @@ from coordination.job_manager import JobManager
 from decisions.job_activation import JobDecider
 from decisions.well_chooser import ChooseWellToBuild
 from provider.product_provider import ProductProvider
+from provider.provider_info_distributor import ProviderInfoDistributor
 
 
 class JobPlanner(object):
@@ -37,8 +38,20 @@ class JobPlanner(object):
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
+        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
 
-    def _action_request_callback(self, requestAction):
+        self._provider_info_distributor = ProviderInfoDistributor()
+
+    def _sim_start_callback(self, sim_start):
+        """
+        here we could also evaluate the msg in order to initialize depending on the role etc.
+        :param sim_start:  the message
+        :type sim_start: SimStart
+        """
+
+        self._provider_info_distributor.callback_sim_start(sim_start)
+
+    def _action_request_callback(self, request_action):
         """
         here we just trigger the decision-making and plannig
         :param msg: The request for action message
@@ -49,9 +62,11 @@ class JobPlanner(object):
             rospy.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
             return
 
-        self.coordinate_wells(requestAction)
-        self.coordinate_jobs(requestAction)
-        self.coordinate_assembly(requestAction)
+        self._provider_info_distributor.callback_request_action(request_action=request_action)
+
+        self.coordinate_wells(request_action)
+        self.coordinate_jobs(request_action)
+        self.coordinate_assembly(request_action)
 
 
         rospy.loginfo("JobPlanner:: Jobs processed")

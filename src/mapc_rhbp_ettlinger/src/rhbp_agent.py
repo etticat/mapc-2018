@@ -12,6 +12,7 @@ from common_utils.debug import DebugUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
 from network_behaviours.first_level import FirstLevelBehaviours
+from provider.provider_info_distributor import ProviderInfoDistributor
 
 
 class RhbpAgent:
@@ -25,7 +26,6 @@ class RhbpAgent:
         :param agent_name:
         :type agent_name:  str
         """
-        self._resource_knowledgebase = ResourceKnowledgebase()
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
         # Take the name from the constructor parameter in case it was started from a development environment
@@ -56,15 +56,17 @@ class RhbpAgent:
 
         self._received_action_response = False
 
+        self._provider_info_distributor = ProviderInfoDistributor()
 
 
-    def _sim_start_callback(self, msg):
+    def _sim_start_callback(self, sim_start):
         """
         here we could also evaluate the msg in order to initialize depending on the role etc.
-        :param msg:  the message
-        :type msg: SimStart
+        :param sim_start:  the message
+        :type sim_start: SimStart
         """
 
+        self._provider_info_distributor.callback_sim_start(sim_start)
         if not self._sim_started:  # init only once here
 
             self._sim_started = True
@@ -73,12 +75,12 @@ class RhbpAgent:
             # init only once, even when run restarts
             if not self._initialized:
                 self._action_network_behaviour = FirstLevelBehaviours(
-                        msg=msg,
+                        msg=sim_start,
                         agent=self)
 
                 self.assemble_contractor = AssembleContractor(
                     agent_name=self._agent_name,
-                    role=msg.role.name)
+                    role=sim_start.role.name)
                 self.assemble_contractor = JobContractor(
                     agent_name=self._agent_name)
 
@@ -108,21 +110,20 @@ class RhbpAgent:
         """
         rospy.loginfo("Bye:" + str(msg))
 
-    def _action_request_callback(self, msg):
+    def _action_request_callback(self, request_action):
         """
         here we just trigger the decision-making and plannig
-        :param msg: the message
-        :type msg: RequestAction
+        :param request_action: the message
+        :type request_action: RequestAction
         :return:
         """
 
+        self._provider_info_distributor.callback_request_action(request_action)
         start_time = rospy.get_rostime()
         # rospy.logerr("-------------------------------------- Step %d (action_request) --------------------------------------", msg.simulation_step)
 
-        self.agent_info = msg.agent
+        self.agent_info = request_action.agent
 
-        for resource in msg.resources:
-            self._resource_knowledgebase.add_new_resource(resource)
 
         self._received_action_response = False
 

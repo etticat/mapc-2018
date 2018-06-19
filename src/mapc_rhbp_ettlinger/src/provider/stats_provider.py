@@ -28,15 +28,11 @@ class StatsProvider(object):
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
 
-
-        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
-        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._callback_request_action)
-
         self.simulation_step = 0
         self.massium = 0
         self.score = 0
 
-    def _callback_request_action(self, request_action):
+    def callback_request_action(self, request_action):
         """
 
         :param request_action:

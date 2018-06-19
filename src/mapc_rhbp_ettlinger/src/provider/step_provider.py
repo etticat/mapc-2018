@@ -21,16 +21,11 @@ class StepProvider(object):
 
     RADIUS_EARTH_METERS = 6373000.0 # Using same approximation as server
 
-    def __init__(self, agent_name):
-
-
-        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
-        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
-
+    def __init__(self):
         self.cell_size = 1.0
         self.can_fly = ""
 
-    def _sim_start_callback(self, sim_start):
+    def callback_sim_start(self, sim_start):
         """
 
         :param sim_start:

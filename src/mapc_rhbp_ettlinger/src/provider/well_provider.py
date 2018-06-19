@@ -27,17 +27,16 @@ class WellProvider(object):
 
 
         rospy.Subscriber(WellProvider.WELL_TOPIC, WellMsg, self._callback_well)
-        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._callback_sim_start)
 
 
-    def _callback_sim_start(self, simStart):
+    def callback_sim_start(self, sim_start):
         """
 
-        :param simStart:
-        :type simStart: SimStart
+        :param sim_start:
+        :type sim_start: SimStart
         :return:
         """
-        for well in simStart.wells:
+        for well in sim_start.wells:
             self.wells_to_build[well.name] = well
 
 

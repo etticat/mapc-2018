@@ -19,7 +19,7 @@ class ShouldBidForAssembly(object):
 
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self.set_provider = StepProvider(agent_name=agent_name)
+        self.set_provider = StepProvider()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
