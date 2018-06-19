@@ -3,8 +3,6 @@
 
 from __future__ import division  # force floating point division when using plain /
 
-from abc import abstractmethod
-
 import rospy
 
 from behaviour_components.activators import BooleanActivator
@@ -34,7 +32,7 @@ class ProductSensor(Sensor):
     def get_still_needed_products(self):
         products = self._product_provider.get_planned_ingredients()
         rospy.loginfo("%s:: Need following products:  %s",self._name, str(products))
-        return products
+        return len(products)
 
 
 class AmountInListActivator(BooleanActivator):

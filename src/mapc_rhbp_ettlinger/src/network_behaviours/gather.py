@@ -7,7 +7,7 @@ from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour
 from provider.product_provider import ProductProvider
 from sensor.agent import StorageFitsMoreItemsSensor
-from sensor.job import ProductSensor, AmountInListActivator
+from sensor.job import ProductSensor
 from sensor.movement import DestinationDistanceSensor
 
 
@@ -111,13 +111,14 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             )
         )
     def init_product_sensor(self, agent):
-        self.has_all_ingredients_sensor = ProductSensor(
-            name="has_all_ingredients_sensor",
+        self.number_of_products_to_gather_sensor = ProductSensor(
+            name="number_of_products_to_gather_sensor",
             agent_name=agent._agent_name)
         self.has_all_ingredients_condition = Condition(
-            sensor=self.has_all_ingredients_sensor,
-            activator=AmountInListActivator(
-                amount=0
+            sensor=self.number_of_products_to_gather_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=0,
+                isMinimum=False
             ))
 
     def stop(self):
@@ -144,7 +145,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         # Chosing an ingredient has the effect, that we have more ingredients to gather
         self.choose_ingredient_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.has_all_ingredients_sensor.name,
+                sensor_name=self.number_of_products_to_gather_sensor.name,
                 indicator=1.0,
                 sensor_type=bool
             )
