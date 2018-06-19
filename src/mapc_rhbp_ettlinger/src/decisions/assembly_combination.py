@@ -14,6 +14,7 @@ class ChooseBestAssemblyCombination(object):
     WEIGHT_PRIORITISATION_ACTIVATION = 20
     WEIGHT_IDLE_STEPS = -3
     WEIGHT_MAX_STEP_COUNT = -10
+
     ACTIVATION_THRESHOLD = 77
 
     def __init__(self):

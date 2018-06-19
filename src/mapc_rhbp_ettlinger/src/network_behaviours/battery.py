@@ -133,13 +133,6 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
                 thresholdValue=self.agent_charge_critical,
                 isMinimum=True))
 
-
-        self._charging_goal = GoalBase(
-            name='charging_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self._require_charging_cond)])
-
     def stop(self):
 
         super(BatteryChargingNetworkBehaviour, self).stop()

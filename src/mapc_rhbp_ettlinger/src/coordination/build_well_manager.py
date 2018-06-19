@@ -7,8 +7,8 @@ from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknow
 import utils.rhbp_logging
 from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
+from coordination.job_manager import JobManager
 from decisions.well_chooser import ChooseWellToBuild
-from network_coordination.job_manager import JobManager
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
 

@@ -71,10 +71,3 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         self._shop_exploration.add_precondition(
             precondition=Negation(at_shop_cond)
         )
-
-        # Exploration goal
-        self.exploration_goal = GoalBase(
-            name='exploration_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[self.all_resources_discovered_condition])

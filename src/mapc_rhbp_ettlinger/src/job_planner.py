@@ -6,10 +6,11 @@ from mac_ros_bridge.msg import RequestAction, Job, SimStart
 
 from common_utils.agent_utils import AgentUtils
 from agent_knowledge.tasks import JobKnowledgebase
+from coordination.assemble_manager import AssembleManager
+from coordination.build_well_manager import BuildWellManager
+from coordination.job_manager import JobManager
 from decisions.job_activation import JobDecider
 from decisions.well_chooser import ChooseWellToBuild
-from network_coordination.build_well_manager import BuildWellManager
-from network_coordination.job_manager import JobManager
 from provider.product_provider import ProductProvider
 
 
@@ -32,6 +33,7 @@ class JobPlanner(object):
 
         self.job_manager = JobManager()
         self.well_manager = BuildWellManager()
+        self._assemble_planner = AssembleManager()
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
@@ -49,6 +51,7 @@ class JobPlanner(object):
 
         self.coordinate_wells(requestAction)
         self.coordinate_jobs(requestAction)
+        self.coordinate_assembly(requestAction)
 
 
         rospy.loginfo("JobPlanner:: Jobs processed")
@@ -77,6 +80,9 @@ class JobPlanner(object):
 
         self.well_manager.well_request(well_to_build, self.well_chooser.choose_well_position())
 
+    def coordinate_assembly(self, requestAction):
+
+        self._assemble_planner.request_assist()
 
     def extract_jobs(self, msg):
         """
@@ -96,7 +102,6 @@ class JobPlanner(object):
             extracted_jobs += [priced]
 
         return extracted_jobs
-
 
 
 

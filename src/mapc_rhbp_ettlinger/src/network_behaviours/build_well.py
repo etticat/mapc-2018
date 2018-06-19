@@ -40,13 +40,6 @@ class BuildWellNetworkBehaviour(NetworkBehaviour):
             self._target_well_damaged_condition
         )
 
-        self._job_performance_goal = GoalBase(
-            name='build_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self._has_tasks_assigned_condition)])
-
-
     def init_go_to_destination_behaviour(self, agent, proximity):
         # go to destination
         self.go_to_well_behaviour = GoToWellBehaviour(

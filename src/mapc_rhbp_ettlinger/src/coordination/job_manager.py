@@ -96,9 +96,9 @@ class JobManager(object):
 
         ettilog.loginfo("JobManager(%s, %s): Processing %s bids", self.job_id(), str(len(self.bids)))
 
-        bids = self._job_combination.choose_best_agent_combination(self._job, self.bids) # TODO
+        selected_bids = self._job_combination.choose_best_agent_combination(self._job, self.bids) # TODO
 
-        if bids == None:
+        if selected_bids == None:
             ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
             ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
             ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
@@ -106,13 +106,13 @@ class JobManager(object):
             return
         else:
             ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
-                           ", ".join([bid.agent_name for bid in self.assignments]),
-                           ", ".join([str(bid.items) for bid in self.assignments]))
+                           ", ".join([bid.agent_name for bid in self.bids]),
+                           ", ".join([str(bid.items) for bid in self.bids]))
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
 
         self.assignments =[]
-        for bid in bids:
+        for bid in selected_bids:
             assignement = JobAssignment(
                 id=bid.id,
                 agent_name=bid.agent_name,

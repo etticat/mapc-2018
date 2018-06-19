@@ -9,7 +9,7 @@ from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
-from network_coordination.assemble_manager import AssembleManager
+
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorageFitsMoreItemsSensor
@@ -19,25 +19,18 @@ from sensor.movement import DestinationDistanceSensor
 
 class AssembleNetworkBehaviour(NetworkBehaviour):
 
-    def __init__(self, agent, name, msg, coordination_network_behaviour, **kwargs):
+    def __init__(self, agent, name, msg, **kwargs):
 
         proximity = msg.proximity
         self._product_provider = ProductProvider(
             agent_name=agent._agent_name)
 
         super(AssembleNetworkBehaviour, self).__init__(name, **kwargs)
+        self.init_product_sensor(agent=agent)
+        self.init_go_to_workshop_behaviour(agent, proximity)
+        self.init_assembly_behaviour(agent)
 
-        self.init_go_to_workshop_behaviour(agent, proximity, coordination_network_behaviour)
-        self.init_assembly_behaviour(agent, coordination_network_behaviour)
-
-        # The goal is to have a full storage (so we can use it to assemble)
-        # self.fill_stock_up_goal = GoalBase(
-        #     name='fill_up_stock',
-        #     permanent=True,
-        #     plannerPrefix=self.get_manager_prefix(),
-        #     conditions=[Negation(self.)])
-
-    def init_assembly_behaviour(self, agent, coordination_network_behaviour):
+    def init_assembly_behaviour(self, agent):
         ############### Assembling ##########################
         self.assemble_product_behaviour = AssembleProductBehaviour(
             name="assemble_product_behaviour",
@@ -51,20 +44,20 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
 
         # only assemble if we have chosen an item to assemble
         self.assemble_product_behaviour.add_precondition(
-            precondition=coordination_network_behaviour.has_assemble_task_assigned_cond
+            precondition=self.has_assemble_task_assigned_cond
         )
 
         # TODO: Add a proper effect
         self.assemble_product_behaviour.add_effect(
             effect=Effect(
-                sensor_name=coordination_network_behaviour.assemble_organized_sensor.name,
+                sensor_name=self.assemble_organized_sensor.name,
                 indicator=-1.0,
                 sensor_type=float
 
             )
         )
 
-    def init_go_to_workshop_behaviour(self, agent, proximity, coordination_network_behaviour):
+    def init_go_to_workshop_behaviour(self, agent, proximity):
         ################ Going to Workshop #########################
         self.go_to_workshop_behaviour = GoToWorkshopBehaviour(
             agent=agent,
@@ -87,7 +80,7 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
             precondition=Negation(self.at_workshop_condition))
         # only go to resource node if we have chosen an item to gather
         self.go_to_workshop_behaviour.add_precondition(
-            precondition=coordination_network_behaviour.has_assemble_task_assigned_cond)
+            precondition=self.has_assemble_task_assigned_cond)
 
         # Going to resource has the effect of decreasing the distance to go there
         self.go_to_workshop_behaviour.add_effect(
@@ -105,3 +98,18 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         :return:
         """
         super(AssembleNetworkBehaviour, self).stop()
+
+    def init_product_sensor(self, agent):
+        self.assemble_organized_sensor = KnowledgeSensor(
+            name="assemble_organized_sensor",
+            pattern=AssembleKnowledgebase.generate_tuple(
+                agent_name=agent._agent_name,
+                active=True))
+
+        self.has_assemble_task_assigned_cond = Condition(
+            sensor=self.assemble_organized_sensor,
+            activator=BooleanActivator(
+                desiredValue=True
+            ))
+
+

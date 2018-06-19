@@ -3,6 +3,8 @@ import random
 import rospy
 from mac_ros_bridge.msg import StorageMsg
 
+from common_utils.singleton import Singleton
+
 
 class FacilityProvider(object):
     __metaclass__ = Singleton

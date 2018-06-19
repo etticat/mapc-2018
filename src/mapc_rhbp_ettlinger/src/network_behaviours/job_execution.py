@@ -30,13 +30,6 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.init_go_to_destination_behaviour(agent, proximity)
         self.init_deliver_job_behaviour(agent)
 
-
-        self._job_performance_goal = GoalBase(
-            name='job_performance',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self.has_tasks_assigned_condition)])
-
     def init_go_to_destination_behaviour(self, agent, proximity):
         # go to destination
         self.go_to_destination_behaviour = GoToStorageBehaviour(

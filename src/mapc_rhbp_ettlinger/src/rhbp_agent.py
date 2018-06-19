@@ -8,8 +8,10 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.managers import Manager
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from network_actions.action import ActionNetworkBehaviour
-from network_coordination.coordination import CoordinationNetworkBehaviour
+
+from coordination.assemble_contractor import AssembleContractor
+from coordination.job_contractor import JobContractor
+from network_behaviours.first_level import FirstLevelBehaviours
 
 
 class RhbpAgent:
@@ -70,37 +72,15 @@ class RhbpAgent:
 
             # init only once, even when run restarts
             if not self._initialized:
-                self._coordination_network_behaviour = CoordinationNetworkBehaviour(
-                        name=self._agent_name + '/coordination',
-                        plannerPrefix=self._agent_name,
+                self._action_network_behaviour = FirstLevelBehaviours(
                         msg=msg,
-                        agent=self,
-                        max_parallel_behaviours=2)
-                self._action_network_behaviour = ActionNetworkBehaviour(
-                        name=self._agent_name + '/action',
-                        plannerPrefix=self._agent_name,
-                        msg=msg,
-                        agent=self,
-                        coordination_network_behaviour= self._coordination_network_behaviour,
-                        max_parallel_behaviours=1)
-                self._coordination_network_behaviour.add_effects_and_goals([(
-                    self._coordination_network_behaviour.assemble_organized_sensor,
-                    Effect(
-                        sensor_name=self._coordination_network_behaviour.assemble_organized_sensor.name,
-                        indicator=1.0,
-                        sensor_type=bool
-                    )
-                )])
+                        agent=self)
 
-                self._action_network_behaviour.add_effects_and_goals([(
-                    self._action_network_behaviour.massim_sensor,
-                    Effect(
-                        sensor_name=self._action_network_behaviour.massim_sensor.name,
-                        indicator=1.0,
-                        sensor_type=float
-                    )
-                )])
-
+                self.assemble_contractor = AssembleContractor(
+                    agent_name=self._agent_name,
+                    role=msg.role.name)
+                self.assemble_contractor = JobContractor(
+                    agent_name=self._agent_name)
 
             self._initialized = True
 
@@ -160,7 +140,7 @@ class RhbpAgent:
                 rospy.logerr(
                     "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
                     self._agent_name, steps)
-                #
+                # TODO: Comment in
                 # pub_generic_action = rospy.Publisher(
                 #     self._agent_topic_prefix + 'generic_action',
                 #     GenericAction, queue_size=10)

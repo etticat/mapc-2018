@@ -13,20 +13,20 @@ from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from network_actions.assemble import AssembleNetworkBehaviour
-from network_actions.battery import BatteryChargingNetworkBehaviour
-from network_actions.build_well import BuildWellNetworkBehaviour
-from network_actions.exploration import ExplorationNetworkBehaviour
-from network_actions.gather import GatheringNetworkBehaviour
-from network_actions.job_execution import JobExecutionNetworkBehaviour
+from network_behaviours.assemble import AssembleNetworkBehaviour
+from network_behaviours.battery import BatteryChargingNetworkBehaviour
+from network_behaviours.build_well import BuildWellNetworkBehaviour
+from network_behaviours.exploration import ExplorationNetworkBehaviour
+from network_behaviours.gather import GatheringNetworkBehaviour
+from network_behaviours.job_execution import JobExecutionNetworkBehaviour
 
 
-class ActionNetworkBehaviour(NetworkBehaviour):
-    def __init__(self, agent, name, msg, coordination_network_behaviour,  **kwargs):
+class FirstLevelBehaviours(object):
+    def __init__(self, agent, msg):
 
-        super(ActionNetworkBehaviour, self).__init__(name, **kwargs)
         self._agent_name = agent._agent_name
         self._agent = agent
+
         self.massim_sensor = TopicSensor(
             topic="/team",
             name="massium_sensor",
@@ -35,61 +35,61 @@ class ActionNetworkBehaviour(NetworkBehaviour):
             topic="/team",
             name="score_sensor",
             message_attr="score")
-        self.init_behaviour_network(msg, coordination_network_behaviour)
-        self.init_behaviour_network_connections(coordination_network_behaviour)
+        self.init_behaviour_network(msg)
+        self.init_behaviour_network_connections()
+        # TODO: Add goals for assembly, massim, score, battery
 
-    def init_behaviour_network(self, msg, coordination_network_behaviour):
+    def init_behaviour_network(self, msg):
         ######################## Battery Network Behaviour ########################
         self.battery_charging_network_behaviour = BatteryChargingNetworkBehaviour(
-            name=self.get_manager_prefix() + '/battery',
-            plannerPrefix=self.get_manager_prefix(),
+            name=self._agent_name + '/battery',
+            plannerPrefix=self._agent_name,
             agent=self._agent,
             msg=msg,
             max_parallel_behaviours=1)
 
         ######################## Job Network Behaviour ########################
         self._job_execution_network = JobExecutionNetworkBehaviour(
-            name=self.get_manager_prefix() + '/job',
-            plannerPrefix=self.get_manager_prefix(),
+            name=self._agent_name + '/job',
+            plannerPrefix=self._agent_name,
             msg=msg,
             agent=self._agent,
             max_parallel_behaviours=1)
 
         ######################## Gathering Network Behaviour ########################
         self._gathering_network = GatheringNetworkBehaviour(
-            name=self.get_manager_prefix() + '/gathering',
-            plannerPrefix=self.get_manager_prefix(),
+            name=self._agent_name + '/gathering',
+            plannerPrefix=self._agent_name,
             msg=msg,
             agent=self._agent,
             max_parallel_behaviours=1)
 
         ######################## Assembly Network Behaviour ########################
         self._assembly_network = AssembleNetworkBehaviour(
-            name=self.get_manager_prefix() + '/assemble',
-            plannerPrefix=self.get_manager_prefix(),
-            coordination_network_behaviour = coordination_network_behaviour,
+            name=self._agent_name + '/assemble',
+            plannerPrefix=self._agent_name,
             msg=msg,
             agent=self._agent,
             max_parallel_behaviours=1)
 
         ######################## Exploration Network Behaviour ########################
         self.exploration_network = ExplorationNetworkBehaviour(
-            name=self.get_manager_prefix() + '/explore',
-            plannerPrefix=self.get_manager_prefix(),
+            name=self._agent_name + '/explore',
+            plannerPrefix=self._agent_name,
             agent=self._agent,
             msg=msg,
             max_parallel_behaviours=1)
         ######################## Build Well Behaviour ########################
         self.build_well_network = BuildWellNetworkBehaviour(
-            name=self.get_manager_prefix() + '/well',
-            plannerPrefix=self.get_manager_prefix(),
+            name=self._agent_name + '/well',
+            plannerPrefix=self._agent_name,
             agent=self._agent,
             msg=msg,
             max_parallel_behaviours=1)
 
         rospy.logerr("behaviour initialized")
 
-    def init_behaviour_network_connections(self, coordination_network_behaviour):
+    def init_behaviour_network_connections(self):
         ######################## Battery Network Behaviour ########################
 
         # Battery network has the effect of charging the battery
@@ -150,7 +150,7 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         )
         # Only gather when there is nothing to be assembled
         self._gathering_network.add_precondition(
-            precondition=Negation(coordination_network_behaviour.has_assemble_task_assigned_cond))
+            precondition=Negation(self._assembly_network.has_assemble_task_assigned_cond))
 
         # Only gather if there is no task assigned
         self._gathering_network.add_precondition(
@@ -181,7 +181,7 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         # We should not assemble before the trunk is full. (except when we are already assembling)
         self._assembly_network.add_precondition(
             # But also keep this network active when task is assigned
-            coordination_network_behaviour.has_assemble_task_assigned_cond
+            self._assembly_network.has_assemble_task_assigned_cond
         )
 
         self._assembly_network.add_precondition(
@@ -189,9 +189,9 @@ class ActionNetworkBehaviour(NetworkBehaviour):
         )
 
         self._assembly_network.add_effects_and_goals(
-            [(coordination_network_behaviour.assemble_organized_sensor,
+            [(self._assembly_network.assemble_organized_sensor,
             Effect(
-                sensor_name=coordination_network_behaviour.assemble_organized_sensor.name,
+                sensor_name=self._assembly_network.assemble_organized_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
             ))]
