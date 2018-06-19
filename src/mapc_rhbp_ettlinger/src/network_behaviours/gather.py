@@ -56,8 +56,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         # Sensor to check how much space there is left after gaining the next intended item
         self.storage_space_after_next_item_sensor = StorageFitsMoreItemsSensor(
             name="space_available_in_stock_sensor",
-            agent_name=agent._agent_name,
-            behaviour_name=self.go_to_resource_node_behaviour.name
+            agent_name=agent._agent_name
         )
         # only gather if we have chosen an item to gather
         self.gather_ingredients_behaviour.add_precondition(
