@@ -1,14 +1,10 @@
-import rospy
-
 from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
-from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation, Conjunction
-from behaviour_components.goals import GoalBase
+from behaviour_components.conditions import Condition, Negation
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.gather import ChooseIngredientBehaviour
-from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
+from behaviours.job import GoToResourceBehaviour, GatherBehaviour
 from provider.product_provider import ProductProvider
 from sensor.agent import StorageFitsMoreItemsSensor
 from sensor.job import ProductSensor, AmountInListActivator
@@ -33,6 +29,16 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self.init_choose_ingredient_behaviour(agent, proximity)
         self.init_go_to_resource_behaviour(agent, proximity)
         self.init_gather_behaviour(agent)
+
+
+        self.add_effect(
+            effect=Effect(
+                sensor_name=self.storage_space_after_next_item_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool
+
+            )
+        )
 
 
     def init_gather_behaviour(self, agent):

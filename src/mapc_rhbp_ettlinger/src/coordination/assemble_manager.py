@@ -2,9 +2,8 @@ import random
 import time
 
 import rospy
-from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement, \
-    AssembleTask, AssembleManagerStatus, AssembleStop
+    AssembleManagerStatus, AssembleStop
 
 import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
@@ -91,8 +90,6 @@ class AssembleManager(object):
         The first step of the protocol
         :return:
         """
-        if self._agent_name != "agentA1":
-            return # For debugging only allow A1 to manage
 
         if self.current_running_id == None:
             self._pub_assemble_request_start.publish(AssembleManagerStatus(id=self.assemble_id()))

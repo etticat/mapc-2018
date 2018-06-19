@@ -1,24 +1,16 @@
-import random
-
 import rospy
 from diagnostic_msgs.msg import KeyValue
+from knowledge_base.knowledge_base_manager import KnowledgeBase
 from mac_ros_bridge.msg import GenericAction, Agent, WellMsg
-from mapc_rhbp_ettlinger.msg import AssembleTaskProgress, AssembleStop
 
-from agent_knowledge.assemble_task import AssembleKnowledgebase
-from agent_knowledge.movement import MovementKnowledgebase
-from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import GenericActionBehaviour, Action
-from behaviours.movement import GotoLocationBehaviour, GoToFacilityBehaviour
+from behaviours.generic_action import Action
+from behaviours.movement import GotoLocationBehaviour
 from common_utils.agent_utils import AgentUtils
 from provider.facility_provider import FacilityProvider
-from provider.product_provider import ProductProvider
 from provider.well_provider import WellProvider
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
-from knowledge_base.knowledge_base_manager import KnowledgeBase
 
 
 class GoToWellBehaviour(GotoLocationBehaviour):
@@ -122,7 +114,13 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
         :type wellMsg: WellMsg
         :return:
         """
-        self._cache_update_callback()
+        try:
+            self._cache_update_callback()
+        except Exception:
+            # KB not loaded first well callback is  called.
+            # Can be ignored as it is called immediately after Knowledgebase is loaded again.
+            pass
+
 
     def _reduce_facts(self, facts):
         """

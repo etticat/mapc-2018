@@ -1,4 +1,3 @@
-import random
 import time
 
 import rospy
@@ -9,7 +8,6 @@ import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
-from common_utils.calc import CalcUtil
 from decisions.job_bid import JobBidDecider
 from provider.product_provider import ProductProvider
 
@@ -65,7 +63,7 @@ class JobContractor(object):
         bid = self.job_bid_decider.generate_bid(request)
 
         if bid != None:
-            rhbplog.loginfo("JobContractor(%s):: bidding on %s: %s", self._agent_name, str(own_items), str(item_intersect))
+            rhbplog.loginfo("JobContractor(%s):: bidding on %s", self._agent_name, request.id)
             self._pub_job_bid.publish(bid)
 
 

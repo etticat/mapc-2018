@@ -24,7 +24,5 @@ class ProviderInfoDistributor(object):
     def callback_request_action(self, request_action):
         self.stats_provider.callback_request_action(request_action=request_action)
 
-
-
         for resource in request_action.resources:
             self._resource_knowledgebase.add_new_resource(resource)

@@ -2,7 +2,6 @@ from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, LinearActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import TopicSensor
 from behaviours.battery import ChargeBehaviour, RechargeBehaviour
@@ -132,6 +131,13 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
             activator=ThresholdActivator(
                 thresholdValue=self.agent_charge_critical,
                 isMinimum=True))
+
+        #charging has an effect on charging_sensor
+        self.add_effect(Effect(
+            sensor_name=self._charge_sensor.name,
+            indicator=2.0,  # here we could also use the real charging effects
+            sensor_type=float))
+
 
     def stop(self):
 

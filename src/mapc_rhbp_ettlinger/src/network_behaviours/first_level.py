@@ -1,18 +1,8 @@
 #!/usr/bin/env python2
 
-import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
-
-from agent_knowledge.item import StockItemKnowledgebase
-from agent_knowledge.resource import ResourceKnowledgebase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction
-from behaviour_components.goals import GoalBase
-from behaviour_components.managers import Manager
-from behaviour_components.network_behavior import NetworkBehaviour
 from behaviour_components.sensors import TopicSensor
-from common_utils.agent_utils import AgentUtils
-from common_utils.debug import DebugUtils
 from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
@@ -86,8 +76,6 @@ class FirstLevelBehaviours(object):
             agent=self._agent,
             msg=msg,
             max_parallel_behaviours=1)
-
-        rospy.logerr("behaviour initialized")
 
     def init_behaviour_network_connections(self):
         ######################## Battery Network Behaviour ########################
@@ -246,5 +234,3 @@ class FirstLevelBehaviours(object):
                 sensor_type=float
             ))]
         )
-
-        rospy.logerr("behaviour connections initialized")

@@ -3,12 +3,8 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
-from agent_knowledge.resource import ResourceKnowledgebase
-from behaviour_components.condition_elements import Effect
 from behaviour_components.managers import Manager
 from common_utils.agent_utils import AgentUtils
-from common_utils.debug import DebugUtils
-
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
 from network_behaviours.first_level import FirstLevelBehaviours
@@ -34,11 +30,12 @@ class RhbpAgent:
         else:
             self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
 
-        rospy.logerr("RhbpAgent:: Starting %s", self._agent_name)
+        rospy.logerr("RhbpAgent(%s):: Starting", self._agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
         self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=2)
+        self._provider_info_distributor = ProviderInfoDistributor()
 
         self._sim_started = False
         self._initialized = False
@@ -56,7 +53,6 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        self._provider_info_distributor = ProviderInfoDistributor()
 
 
     def _sim_start_callback(self, sim_start):
@@ -83,6 +79,9 @@ class RhbpAgent:
                     role=sim_start.role.name)
                 self.assemble_contractor = JobContractor(
                     agent_name=self._agent_name)
+
+                rospy.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
+
 
             self._initialized = True
 

@@ -1,11 +1,8 @@
-from __builtin__ import xrange
-
 import rospy
-from mapc_rhbp_ettlinger.msg import Task
-from mac_ros_bridge.msg import RequestAction, Job, SimStart
+from mac_ros_bridge.msg import RequestAction, SimStart
 
-from common_utils.agent_utils import AgentUtils
 from agent_knowledge.tasks import JobKnowledgebase
+from common_utils.agent_utils import AgentUtils
 from coordination.assemble_manager import AssembleManager
 from coordination.build_well_manager import BuildWellManager
 from coordination.job_manager import JobManager
@@ -15,7 +12,7 @@ from provider.product_provider import ProductProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
 
 
-class JobPlanner(object):
+class Planner(object):
 
     def __init__(self, agent_name):
 
@@ -34,13 +31,13 @@ class JobPlanner(object):
 
         self.job_manager = JobManager()
         self.well_manager = BuildWellManager()
-        self._assemble_planner = AssembleManager()
+        self._assemble_planner = AssembleManager(agent_name="agentA1")
+        self._provider_info_distributor = ProviderInfoDistributor()
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
 
-        self._provider_info_distributor = ProviderInfoDistributor()
 
     def _sim_start_callback(self, sim_start):
         """
@@ -125,7 +122,7 @@ if __name__ == '__main__':
     try:
 
         # Just take a random agent. doesn't really matter
-        job_planner = JobPlanner(
+        job_planner = Planner(
             agent_name="agentA1")
 
         rospy.spin()

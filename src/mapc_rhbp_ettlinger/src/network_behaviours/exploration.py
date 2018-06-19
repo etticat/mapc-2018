@@ -1,7 +1,6 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
-from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.exploration import ExplorationBehaviour, FinishExplorationBehaviour
 from sensor.exploration import ResourceDiscoveryProgressSensor
@@ -71,3 +70,10 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         self._shop_exploration.add_precondition(
             precondition=Negation(at_shop_cond)
         )
+
+
+        self.add_effect(
+            effect=Effect(
+                sensor_name=self.resource_discovery_progress_sensor.name,
+                indicator=0.2,
+                sensor_type=float))

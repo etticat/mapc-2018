@@ -1,19 +1,12 @@
-import rospy
-from mac_ros_bridge.msg import Position
-
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
-from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation, Conjunction
-from behaviour_components.goals import GoalBase
+from behaviour_components.conditions import Condition, Negation
 from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.job import GoToResourceBehaviour, GatherBehaviour, AssembleProductBehaviour, GoToWorkshopBehaviour
+from behaviours.job import AssembleProductBehaviour, GoToWorkshopBehaviour
 
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.agent import StorageFitsMoreItemsSensor
-from sensor.job import ProductSensor, AmountInListActivator
 from sensor.movement import DestinationDistanceSensor
 
 
@@ -29,6 +22,16 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         self.init_product_sensor(agent=agent)
         self.init_go_to_workshop_behaviour(agent, proximity)
         self.init_assembly_behaviour(agent)
+
+        self.add_effect(
+            effect=Effect(
+                sensor_name=self.assemble_organized_sensor.name,
+                indicator=-1.0,
+                sensor_type=float
+
+            )
+        )
+
 
     def init_assembly_behaviour(self, agent):
         ############### Assembling ##########################
