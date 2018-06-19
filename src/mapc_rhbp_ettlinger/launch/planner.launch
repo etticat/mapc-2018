@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="mapc_rhbp_ettlinger" type="planner.py" name ="planner" />
+</launch>
