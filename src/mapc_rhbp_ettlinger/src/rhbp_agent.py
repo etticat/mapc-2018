@@ -4,6 +4,7 @@ import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
 from behaviour_components.managers import Manager
+from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
@@ -142,31 +143,24 @@ class RhbpAgent:
                     rospy.logerr(
                         "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
                         self._agent_name, steps)
-                    # TODO: Comment in
-                    # pub_generic_action = rospy.Publisher(
-                    #     self._agent_topic_prefix + 'generic_action',
-                    #     GenericAction, queue_size=10)
-                    # action_generic(publisher=pub_generic_action,
-                    #                action_type=Action.RECHARGE)
+                    self.fallback_recharge()
                     break
 
         else:
             rospy.logerr(
                 "%s: Decision-making skipped. Not initialized yet. Recharging.",
                 self._agent_name)
-            # TODO: Comment in
-            # pub_generic_action = rospy.Publisher(
-            #     self._agent_topic_prefix + 'generic_action',
-            #     GenericAction, queue_size=10)
-            # action_generic(publisher=pub_generic_action,
-            #                action_type=Action.RECHARGE)
-
+            self.fallback_recharge()
 
         duration = rospy.get_rostime() - start_time
         rospy.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
-
-
+    def fallback_recharge(self):
+        pub_generic_action = rospy.Publisher(
+            self._agent_topic_prefix + 'generic_action',
+            GenericAction, queue_size=10)
+        GenericActionBehaviour.action_generic(publisher=pub_generic_action,
+                                              action_type=Action.RECHARGE)
 
 
 if __name__ == '__main__':
