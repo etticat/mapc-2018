@@ -29,7 +29,7 @@ class BuildWellManager(JobManager):
         self.bids = []
         self.acknowledgements = []
 
-        ettilog.logerr("BuildWellManager:: ---------------------------BuildWell start---------------------------",)
+        ettilog.loginfo("BuildWellManager:: ---------------------------BuildWell start---------------------------",)
 
         request = JobRequest(
             id=self.job_id(),
@@ -58,13 +58,13 @@ class BuildWellManager(JobManager):
         accepted_bids = self._well_chooser.choose_agent_for_building(self.bids)
 
         if len(accepted_bids) == 0:
-            ettilog.logerr("BuildWellManager:: No useful bid found in %d bids", len(self.bids))
+            ettilog.loginfo("BuildWellManager:: No useful bid found in %d bids", len(self.bids))
             self.busy = False
 
             self.id = self.job_id(new_id=True)
             return
         else:
-            ettilog.logerr("BuildWellManager:: Bids processed: Accepted bids from %s",
+            ettilog.loginfo("BuildWellManager:: Bids processed: Accepted bids from %s",
                            ", ".join([bid.agent_name for bid in accepted_bids]))
 
         deadline = time.time() + JobManager.DEADLINE_ACKNOLEDGEMENT
@@ -82,7 +82,7 @@ class BuildWellManager(JobManager):
                 pos = self.pos
             )
             self.assignments.append(job_assignement)
-            ettilog.logerr("BuildWellManager:: Publishing assignment for %s", bid.agent_name)
+            ettilog.loginfo("BuildWellManager:: Publishing assignment for %s", bid.agent_name)
             self._pub_job_assignment.publish(job_assignement)
 
         time.sleep(deadline - time.time())
@@ -92,12 +92,12 @@ class BuildWellManager(JobManager):
     def _process_bid_acknoledgements(self):
 
         if len(self.acknowledgements) == len(self.assignments):
-            ettilog.logerr("BuildWellManager:: coordination successful. work can start with %d agents", len(self.assignments))
+            ettilog.loginfo("BuildWellManager:: coordination successful. work can start with %d agents", len(self.assignments))
         else:
-            ettilog.logerr("BuildWellManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
+            ettilog.loginfo("BuildWellManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
             # TODO: Let the contractor delete the task, so they can cleanup the goals
 
         self.id = self.job_id(new_id=True)
         self.busy = False
-        ettilog.logerr("BuildWellManager:: ---------------------------Manager stop---------------------------")
+        ettilog.loginfo("BuildWellManager:: ---------------------------Manager stop---------------------------")

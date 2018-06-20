@@ -51,8 +51,8 @@ class JobManager(object):
         self.bids = []
         self.acknowledgements = []
 
-        ettilog.logerr("JobManager:: ---------------------------Manager start---------------------------",)
-        ettilog.logerr("JobManager:: looking for %s to be brought to %s for %d",
+        ettilog.loginfo("JobManager:: ---------------------------Manager start---------------------------",)
+        ettilog.loginfo("JobManager:: looking for %s to be brought to %s for %d",
                        [item.name + " (" + str(item.amount) + ")" for item in job.items], job.storage_name, job.reward + job.fine)
 
 
@@ -97,15 +97,15 @@ class JobManager(object):
         selected_bids = self._job_combination.choose_best_agent_combination(self._job, self.bids) # TODO
 
         if selected_bids == None:
-            ettilog.logerr("JobManager:: No useful bid combination found in %d bids", len(self.bids))
-            ettilog.logerr("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
-            ettilog.logerr("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
+            ettilog.loginfo("JobManager:: No useful bid combination found in %d bids", len(self.bids))
+            ettilog.loginfo("JobManager:: ------ Items: %s", str([bid.items for bid in self.bids]))
+            ettilog.loginfo("JobManager:: ------ Agents: %s", str([bid.agent_name for bid in self.bids]))
 
             self.id = self.job_id(new_id=True)
             self.busy = False
             return
         else:
-            ettilog.logerr("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
+            ettilog.loginfo("JobManager:: Bids processed: Accepted bids from %s  assignments: %s",
                            ", ".join([bid.agent_name for bid in self.bids]),
                            ", ".join([str(bid.items) for bid in self.bids]))
 
@@ -143,9 +143,9 @@ class JobManager(object):
         ettilog.loginfo("JobManager:: Processing Acknowledgements. Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
         if len(self.acknowledgements) == len(self.assignments):
-            ettilog.logerr("JobManager:: coordination successful. work can start with %d agents", len(self.assignments))
+            ettilog.loginfo("JobManager:: coordination successful. work can start with %d agents", len(self.assignments))
         else:
-            ettilog.logerr("JobManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
+            ettilog.loginfo("JobManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 
             # TODO: Let the contractor do this, so they can cleanup the goals
             self._job_knowledgebase.end_job_task(
@@ -155,4 +155,4 @@ class JobManager(object):
 
         self.id = self.job_id(new_id=True)
         self.busy = False
-        ettilog.logerr("JobManager:: ---------------------------Manager stop---------------------------")
+        ettilog.loginfo("JobManager:: ---------------------------Manager stop---------------------------")
