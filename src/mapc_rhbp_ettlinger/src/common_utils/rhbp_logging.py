@@ -7,7 +7,7 @@ class LogManager(object):
     Class enabling the creation of custom loggers, for instance per package, module or class
     in the fashion of rospy.logging
     
-    By default a sublogger of rosout with rhbp postfix is created
+    By default a sublogger of rosout with etti postfix is created
     """
 
     def __init__(self, logger_name=LOGGER_DEFAULT_NAME):

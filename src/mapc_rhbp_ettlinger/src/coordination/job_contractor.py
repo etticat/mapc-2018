@@ -1,17 +1,16 @@
-import time
-
 import rospy
+import time
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
     JobTask, WellTask
 
-import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from decisions.job_bid import JobBidDecider
 from provider.product_provider import ProductProvider
 
-rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_contractor')
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.coordination.job_contractor')
 
 class JobContractor(object):
 
@@ -47,10 +46,6 @@ class JobContractor(object):
         """
 
         current_time = time.time()
-        # if request.deadline < current_time:
-        #     rospy.loginfo("Deadline over")
-        #     return
-        #
         current_job = self._job_knowledgebase.get_task(agent_name=self._agent_name)
         current_well_job = self._well_task_knowledgebase.get_task(agent_name=self._agent_name)
 
@@ -63,7 +58,7 @@ class JobContractor(object):
         bid = self.job_bid_decider.generate_bid(request)
 
         if bid != None:
-            rhbplog.loginfo("JobContractor(%s):: bidding on %s", self._agent_name, request.id)
+            ettilog.loginfo("JobContractor(%s):: bidding on %s", self._agent_name, request.id)
             self._pub_job_bid.publish(bid)
 
 
@@ -73,10 +68,10 @@ class JobContractor(object):
         if job_assignment.agent_name != self._agent_name:
             return
         if job_assignment.assigned == False:
-            rhbplog.loginfo("JobContractor(%s):: Cancelled assignment for %s", self._agent_name, job_assignment.id)
+            ettilog.loginfo("JobContractor(%s):: Cancelled assignment for %s", self._agent_name, job_assignment.id)
             return
 
-        rhbplog.loginfo("JobContractor(%s):: Received assignment for %s", self._agent_name, job_assignment.id)
+        ettilog.loginfo("JobContractor(%s):: Received assignment for %s", self._agent_name, job_assignment.id)
 
         is_still_possible = True # TODO check if agent is still idle
 

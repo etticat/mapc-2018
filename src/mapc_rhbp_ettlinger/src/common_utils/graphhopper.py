@@ -11,7 +11,11 @@ import rospy
 from fcntl import fcntl, F_GETFL, F_SETFL
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap, SetGraphhopperMapResponse
 
+from common_utils import rhbp_logging
+
 GRAPHHOPPER_DEFAULT_PORT = 8989
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.utils.graphhoppper')
 
 class GraphhopperProcessHandler(object):
     """
@@ -58,7 +62,7 @@ class GraphhopperProcessHandler(object):
                 if map_name:
                     self._set_map(map_name)
             except Exception as e:
-                rospy.logerr(e)
+                ettilog.logerr(e)
 
     def _set_map(self, map_name):
         """
@@ -75,7 +79,7 @@ class GraphhopperProcessHandler(object):
                 self._next_port += 1
                 g_process = GraphhopperProcessHandler.GraphHopperProcess(map_name=map_name, port=port, process=process)
 
-                rospy.loginfo("Map '%s' is available on port:%d", map_name, port)
+                ettilog.loginfo("Map '%s' is available on port:%d", map_name, port)
 
                 # store process in dict
                 self._processes[map_name] = g_process
@@ -90,7 +94,7 @@ class GraphhopperProcessHandler(object):
         map_file = self._package_path + GraphhopperProcessHandler.MAP_PATH + map_name + GraphhopperProcessHandler.MAP_EXTENSION
         if path.exists(map_file):
 
-            rospy.loginfo('Creating Graphhopper process for map %s', map_file)
+            ettilog.loginfo('Creating Graphhopper process for map %s', map_file)
 
             cmd = self._package_path + GraphhopperProcessHandler.GRAPHHOPPER_PATH + r'/' + GraphhopperProcessHandler.GRAPHHOPPER_CMD + map_file
 
@@ -148,14 +152,14 @@ class GraphhopperProcessHandler(object):
             try:
                 ret = gp.process.poll()
                 if ret: # check if the process terminated
-                    rospy.logerr('Graphhopper has terminated with ret:%d. Trying a restart...', ret)
+                    ettilog.logerr('Graphhopper has terminated with ret:%d. Trying a restart...', ret)
                     gp.process = self.start_graphhopper_process(map_name=gp.map_name,port=gp.port)
 
             except Exception as e:
                 if e.errno == 11:  # corresponds to "Resource temporarily unavailable" and indicates we do not have more data
                     break
                 else:
-                    rospy.logerr(e)
+                    ettilog.logerr(e)
 
     def _stop_processes(self):
 

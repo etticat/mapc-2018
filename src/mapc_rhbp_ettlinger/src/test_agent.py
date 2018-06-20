@@ -1,10 +1,12 @@
 import rospy
 from mac_ros_bridge.msg import Position, SimStart
 
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.well_provider import WellProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.test')
 
 class TestAgent(object):
 
@@ -31,11 +33,11 @@ class TestAgent(object):
 
         self.step_provider = DistanceProvider()
         self.step_provider.callback_sim_start(simStart)
-        rospy.logerr("Air distance: %f", self.step_provider.calculate_distance(pos1, pos2))
-        rospy.logerr("Air steps: %f", self.step_provider.calculate_steps(pos1, pos2))
+        ettilog.logerr("Air distance: %f", self.step_provider.calculate_distance(pos1, pos2))
+        ettilog.logerr("Air steps: %f", self.step_provider.calculate_steps(pos1, pos2))
         self.step_provider.can_fly = False
-        rospy.logerr("Street distance: %f", self.step_provider.calculate_distance(pos1, pos2))
-        rospy.logerr("Street steps: %f", self.step_provider.calculate_steps(pos1, pos2))
+        ettilog.logerr("Street distance: %f", self.step_provider.calculate_distance(pos1, pos2))
+        ettilog.logerr("Street steps: %f", self.step_provider.calculate_steps(pos1, pos2))
 
         rospy.signal_shutdown("test over")
 
@@ -51,4 +53,4 @@ if __name__ == '__main__':
         rospy.spin()
 
     except rospy.ROSInterruptException:
-        rospy.logerr("program interrupted before completion")
+        ettilog.logerr("program interrupted before completion")

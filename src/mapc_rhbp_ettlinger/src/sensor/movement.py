@@ -7,9 +7,11 @@ import rospy
 from mac_ros_bridge.msg import Agent
 
 from agent_knowledge.movement import MovementKnowledgebase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.movement')
 
 class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
@@ -51,6 +53,6 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
                 res = AgentUtils.calculate_distance(destination_pos, agent_position)
 
             except Exception:
-                rospy.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(movement))
+                ettilog.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(movement))
 
         return res

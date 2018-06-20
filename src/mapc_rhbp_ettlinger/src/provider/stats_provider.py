@@ -1,20 +1,14 @@
 #!/usr/bin/env python2
-import copy
-import itertools
-import operator
 
 import rospy
-from mac_ros_bridge.msg import SimStart, Agent, Item, WellMsg, Well, Team, RequestAction
-from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg, JobAssignment
+from mac_ros_bridge.msg import Team, RequestAction
 
-from agent_knowledge.item import StockItemKnowledgebase
-from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
-from common_utils.agent_utils import AgentUtils
-from common_utils.calc import CalcUtil
+from common_utils import rhbp_logging
 from common_utils.singleton import Singleton
 from provider.well_provider import WellProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.stats')
 
 class StatsProvider(object):
     __metaclass__ = Singleton

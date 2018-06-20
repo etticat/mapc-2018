@@ -1,13 +1,11 @@
-import rospy
 from mac_ros_bridge.msg import Position
-from mapc_rhbp_ettlinger.msg import JobTask, WellTask
+from mapc_rhbp_ettlinger.msg import WellTask
 
-from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.item import StockItemKnowledgebase
-from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.utils.debug')
 
 class DebugUtils:
 
@@ -59,20 +57,20 @@ class DebugUtils:
     @staticmethod
     def print_precondition_states(behaviour):
 
-        rospy.logerr("------------------------------ Preconditions: ------------------------------------")
-        rospy.logerr("active: %s", str(behaviour._active))
-        rospy.logerr("isExecuting: %s", str(behaviour._isExecuting))
+        ettilog.logerr("------------------------------ Preconditions: ------------------------------------")
+        ettilog.logerr("active: %s", str(behaviour._active))
+        ettilog.logerr("isExecuting: %s", str(behaviour._isExecuting))
         for i in range(len(behaviour._preconditions)):
-            rospy.logerr("precondition (%s): %s",behaviour._preconditions[i]._name, str(behaviour._get_satisfactions()[i]))
+            ettilog.logerr("precondition (%s): %s",behaviour._preconditions[i]._name, str(behaviour._get_satisfactions()[i]))
 
-        rospy.logerr("----------------------------------------------------------------------------------")
+        ettilog.logerr("----------------------------------------------------------------------------------")
 
 
 
     @staticmethod
     def add_build_well_task():
 
-        rospy.logerr("------------------------------ Building well: ------------------------------------")
+        ettilog.logerr("------------------------------ Building well: ------------------------------------")
         well_task_knowledebase = WellTaskKnowledgebase()
         well_task_knowledebase.save_task(WellTask(
             agent_name = 'agentA1',
@@ -81,7 +79,7 @@ class DebugUtils:
             built=False
         ))
 
-        rospy.logerr("----------------------------------------------------------------------------------")
+        ettilog.logerr("----------------------------------------------------------------------------------")
 
 
 

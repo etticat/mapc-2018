@@ -11,9 +11,11 @@ from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 from math import sin, cos, sqrt, atan2, radians
 
+from common_utils import rhbp_logging
 from common_utils.graphhopper import GraphhopperProcessHandler
 from common_utils.singleton import Singleton
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.distance')
 
 class DistanceProvider(object):
     __metaclass__ = Singleton
@@ -47,14 +49,14 @@ class DistanceProvider(object):
         if self.can_fly:
             return self.calculate_distance_air(startPosition, endPosition)
         else:
-            rospy.logerr("using graphhopper")
+            ettilog.logerr("using graphhopper")
             try:
                 return self.calculate_distance_street(startPosition, endPosition)
             except LookupError as e:
-                rospy.logwarn(e)
+                ettilog.logwarn(e)
             except Exception as e:
-                rospy.logwarn("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                rospy.logdebug(traceback.format_exc())
+                ettilog.logwarn("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+                ettilog.logdebug(traceback.format_exc())
 
             return self.calculate_distance_air(startPosition, endPosition) * 2 # Fallback
 
@@ -100,7 +102,7 @@ class DistanceProvider(object):
         except KeyError:
             distance = self._request_street_distance(a,b)
             self._cache[key] = distance
-            # rospy.logdebug("Cache size increased to %d", len(self._cache))
+            # ettilog.logdebug("Cache size increased to %d", len(self._cache))
         return distance
 
     def _request_street_distance(self, a, b):
@@ -123,7 +125,7 @@ class DistanceProvider(object):
             connection.close()
             distance = parsed['paths'][0]['distance']
             if distance:
-                # rospy.loginfo("Successful route to '%s'", request)
+                # ettilog.loginfo("Successful route to '%s'", request)
                 return distance
             else:
                 raise LookupError('Graphhopper: Route not available for:'+request)
@@ -148,4 +150,4 @@ class DistanceProvider(object):
                 self.graphhopper_port = res.port
                 self._cache = {}
         except rospy.ServiceException:
-            rospy.logerr("ROS service exception in set_map_service %s", traceback.format_exc())
+            ettilog.logerr("ROS service exception in set_map_service %s", traceback.format_exc())

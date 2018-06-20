@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
 
-import rospy
-from mapc_rhbp_ettlinger.msg import Task, StockItem
+from mapc_rhbp_ettlinger.msg import StockItem
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.item')
 class StockItemKnowledgebase(BaseKnowledgebase):
 
     INDEX_AGENT = 1
@@ -94,5 +95,5 @@ class StockItemKnowledgebase(BaseKnowledgebase):
                 res[stockItem.item]["stock"] += stockItem.amount
                 res[stockItem.item]["goal"] += max(stockItem.goal, stockItem.amount)
         else:
-            rospy.logerr("Error reading from db")
+            ettilog.logerr("Error reading from db")
         return res

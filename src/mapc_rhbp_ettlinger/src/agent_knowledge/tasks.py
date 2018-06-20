@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
 
-import rospy
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import JobTask
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.tasks')
 
 class JobKnowledgebase(BaseKnowledgebase):
 
@@ -69,11 +71,11 @@ class JobKnowledgebase(BaseKnowledgebase):
         task_tuples = self._kb_client.all(tuple)
 
         if len(task_tuples) > 0:
-            rospy.loginfo("TaskKnowledge:: Agent already has task assigned")
+            ettilog.loginfo("TaskKnowledge:: Agent already has task assigned")
             return False
         else:
             new = JobKnowledgebase.generate_fact_from_task(job_task)
-            rospy.loginfo("TaskKnowledge:: JobTask %s saved", job_task.job_id)
+            ettilog.loginfo("TaskKnowledge:: JobTask %s saved", job_task.job_id)
             ret_value = self._kb_client.push(new)
             return True
 

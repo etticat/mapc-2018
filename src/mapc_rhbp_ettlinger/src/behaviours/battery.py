@@ -1,4 +1,7 @@
 from behaviours.generic_action import GenericActionBehaviour, Action
+from common_utils import rhbp_logging
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.battery')
 
 
 class RechargeBehaviour(GenericActionBehaviour):

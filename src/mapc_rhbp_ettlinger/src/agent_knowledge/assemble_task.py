@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
-import rospy
-from mapc_rhbp_ettlinger.msg import AssembleTask, AssembleTask
 from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import AssembleTask
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.assemble')
 
 class AssembleKnowledgebase(BaseKnowledgebase):
 
@@ -74,7 +75,7 @@ class AssembleKnowledgebase(BaseKnowledgebase):
         task_tuples = self._kb_client.all(search)
 
         if len(task_tuples) > 0:
-            rospy.logerr("TaskKnowledge:: Agent %s is already busy", task.agent_name)
+            ettilog.logerr("TaskKnowledge:: Agent %s is already busy", task.agent_name)
             return False
         else:
 
@@ -82,7 +83,7 @@ class AssembleKnowledgebase(BaseKnowledgebase):
                 agent_name=task.agent_name
             )
             tuple = AssembleKnowledgebase.generate_fact_from_assemble_task(task)
-            rospy.loginfo("TaskKnowledge:: Agent assembly task saved for %s", task.agent_name)
+            ettilog.loginfo("TaskKnowledge:: Agent assembly task saved for %s", task.agent_name)
             self._kb_client.update(search, tuple, push_without_existing=True)
             return True
 

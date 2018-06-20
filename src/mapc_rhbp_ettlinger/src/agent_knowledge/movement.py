@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
-import rospy
-from mapc_rhbp_ettlinger.msg import Movement
 from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import Movement
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.movement')
 
 class MovementKnowledgebase(BaseKnowledgebase):
 
@@ -69,7 +70,7 @@ class MovementKnowledgebase(BaseKnowledgebase):
         search = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name)
         new = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name, lat=destinationPos.lat, long=destinationPos.long, destination=destination)
 
-        rospy.loginfo("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
+        ettilog.loginfo("MovementKnowledge(%s:%s):: Moving to %s ", agent_name, behaviour_name, destination)
         ret_value = self._kb_client.update(search, new, push_without_existing = True)
 
     def stop_movement(self, agent_name, behaviour_name):
@@ -80,7 +81,7 @@ class MovementKnowledgebase(BaseKnowledgebase):
         :return:
         """
         search = MovementKnowledgebase.generate_tuple(agent_name, behaviour_name)
-        rospy.loginfo("MovementKnowledge(%s:%s):: Stopping movement", agent_name, behaviour_name)
+        ettilog.loginfo("MovementKnowledge(%s:%s):: Stopping movement", agent_name, behaviour_name)
 
         return self._kb_client.pop(search)
 

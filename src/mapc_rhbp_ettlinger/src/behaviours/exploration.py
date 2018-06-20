@@ -6,7 +6,10 @@ from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.movement import GotoLocationBehaviour
+from common_utils import rhbp_logging
 from utils.ros_helpers import get_topic_type
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.exploration')
 
 
 class ExplorationBehaviour(GotoLocationBehaviour):

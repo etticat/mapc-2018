@@ -1,17 +1,16 @@
-import time
-
 import rospy
+import time
 from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
 
-import utils.rhbp_logging
 from agent_knowledge.tasks import JobKnowledgebase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.job_combination import ChooseBestJobCombination
 from provider.facility_provider import FacilityProvider
 
-ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.coordination.job_manager')
 
 
 class JobManager(object):

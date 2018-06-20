@@ -3,8 +3,10 @@ import random
 import rospy
 from mac_ros_bridge.msg import StorageMsg, WorkshopMsg
 
+from common_utils import rhbp_logging
 from common_utils.singleton import Singleton
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.facility')
 
 class FacilityProvider(object):
     __metaclass__ = Singleton

@@ -1,10 +1,10 @@
-import rospy
-
 from agent_knowledge.resource import ResourceKnowledgebase
 from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.sensors import Sensor
+from common_utils import rhbp_logging
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.exploration')
 
 class ResourceDiscoveryProgressSensor(Sensor):
     """
@@ -31,7 +31,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
         discovered_ingredients = total_ingredients - len(base_ingredients)
 
         res = float(discovered_ingredients) / total_ingredients
-        rospy.loginfo("%s:: Discovery progress: %s",self.name, str(res))
+        ettilog.loginfo("%s:: Discovery progress: %s",self.name, str(res))
 
         self.update(res)
         super(ResourceDiscoveryProgressSensor, self).sync()

@@ -2,9 +2,12 @@ import rospy
 from mac_ros_bridge.msg import Agent
 
 from behaviour_components.behaviours import BehaviourBase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
-from provider.product_provider import ProductProvider
 from decisions.gathering import ChooseIngredientToGather
+from provider.product_provider import ProductProvider
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.gather')
 
 
 class ChooseIngredientBehaviour(BehaviourBase):
@@ -31,6 +34,6 @@ class ChooseIngredientBehaviour(BehaviourBase):
 
         if item is not None:
             self._product_provider.start_gathering(item)
-            rospy.logerr("ChooseIngredientBehaviour:: Chosing item %s", item)
+            ettilog.logerr("ChooseIngredientBehaviour:: Chosing item %s", item)
         else:
-            rospy.logerr("ChooseIngredientBehaviour:: Trying to choose item, but none fit in stock")
+            ettilog.logerr("ChooseIngredientBehaviour:: Trying to choose item, but none fit in stock")

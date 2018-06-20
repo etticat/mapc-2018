@@ -1,5 +1,7 @@
+from common_utils import rhbp_logging
 from common_utils.singleton import Singleton
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.simulation')
 
 class SimulationProvider(object):
     __metaclass__ = Singleton

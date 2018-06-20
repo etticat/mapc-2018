@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
-import rospy
 from mac_ros_bridge.msg import Resource, Position, Item
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.resource')
 
 class ResourceKnowledgebase(BaseKnowledgebase):
     """

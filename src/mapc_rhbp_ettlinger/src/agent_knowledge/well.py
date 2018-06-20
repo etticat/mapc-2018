@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
-import rospy
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import WellTask
 
 from agent_knowledge.base_knowledge import BaseKnowledgebase
+from common_utils import rhbp_logging
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.welll')
 class WellTaskKnowledgebase(BaseKnowledgebase):
 
     INDEX_AGENT_NAME = 1
@@ -69,11 +70,11 @@ class WellTaskKnowledgebase(BaseKnowledgebase):
         task_tuples = self._kb_client.all(tuple)
 
         if len(task_tuples) > 0:
-            rospy.loginfo("TaskKnowledge:: Agent already has task assigned")
+            ettilog.loginfo("TaskKnowledge:: Agent already has task assigned")
             return False
         else:
             new = WellTaskKnowledgebase.generate_fact_from_task(well_task)
-            rospy.loginfo("TaskKnowledge:: WellTask %s saved", well_task.well_type)
+            ettilog.loginfo("TaskKnowledge:: WellTask %s saved", well_task.well_type)
             ret_value = self._kb_client.push(new)
             return True
 

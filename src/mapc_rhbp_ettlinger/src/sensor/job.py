@@ -3,12 +3,12 @@
 
 from __future__ import division  # force floating point division when using plain /
 
-import rospy
-
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.sensors import Sensor
+from common_utils import rhbp_logging
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.job')
 
 class ProductSensor(Sensor):
 
@@ -31,7 +31,7 @@ class ProductSensor(Sensor):
 
     def get_still_needed_products(self):
         products = self._product_provider.get_planned_ingredients()
-        rospy.loginfo("%s:: Need following products:  %s",self._name, str(products))
+        ettilog.loginfo("%s:: Need following products:  %s",self._name, str(products))
         return len(products)
 
 

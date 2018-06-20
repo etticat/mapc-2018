@@ -1,5 +1,3 @@
-import random
-
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
@@ -11,11 +9,13 @@ from agent_knowledge.resource import ResourceKnowledgebase
 from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
-from behaviours.movement import GotoLocationBehaviour, GoToFacilityBehaviour
+from behaviours.movement import GotoLocationBehaviour
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 
 class GoToResourceBehaviour(GotoLocationBehaviour):
     """
@@ -49,9 +49,9 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
                 return closest_facility.pos
 
         else:
-            rospy.logerr("%s:: Trying to go to resource but there is no ingredient left to gather.", self.name)
+            ettilog.logerr("%s:: Trying to go to resource but there is no ingredient left to gather.", self.name)
 
-        rospy.logerr("%s:: Can't find resource node for any required ingredient. %s", self.name, str(neededIngredients))
+        ettilog.logerr("%s:: Can't find resource node for any required ingredient. %s", self.name, str(neededIngredients))
         self._selected_destination = "none"
         return None
 
@@ -164,12 +164,12 @@ class AssembleProductBehaviour(BehaviourBase):
         """
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self._last_task == "assemble" and agent.last_action == "assemble":
-            rospy.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+            ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
             if agent.last_action_result in ["successful", "failed_capacity"]:
                 self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
                 if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
                     # If there are still tasks to do, inform all others that the next task will be performed
-                    rospy.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
+                    ettilog.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
                     assembleTaskCoordination = AssembleTaskProgress(
                         id=self.assemble_task.id,
                         step=self._get_assemble_step()
@@ -177,7 +177,7 @@ class AssembleProductBehaviour(BehaviourBase):
                     self._pub_assemble_progress.publish(assembleTaskCoordination)
                 else:
                     # If this was the last task -> cancel the assembly
-                    rospy.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
+                    ettilog.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
                     self._pub_assemble_stop.publish(AssembleStop(id=self.assemble_task.id, reason="assembly finished"))
 
     def action_assemble(self, item):
@@ -218,16 +218,16 @@ class AssembleProductBehaviour(BehaviourBase):
         if len(products) > 0 and self._get_assemble_step() < len(products):
             (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
             if self._last_task == "assemble":
-                rospy.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name,
+                ettilog.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name,
                              self._get_assemble_step() + 1, len(products), products[self._get_assemble_step()])
                 self.action_assemble(self._last_goal)
             elif self._last_task == "assist":
                 self.action_assist_assemble(self._last_goal)
             else:
-                rospy.logerr("AssembleProductBehaviour(%s):: Invalid task", self._agent_name)
+                ettilog.logerr("AssembleProductBehaviour(%s):: Invalid task", self._agent_name)
 
         else:
-            rospy.logerr("This should never happen. Assembly is executed after all tasks are finished")
+            ettilog.logerr("This should never happen. Assembly is executed after all tasks are finished")
 
     def stop(self):
         # Once assembly is done, free all agents from assignemt task
@@ -252,7 +252,7 @@ class GoToWorkshopBehaviour(GotoLocationBehaviour):
     def _select_pos(self):
         assemble_task = self._assemble_knowledge.get_assemble_task(agent=self._agent_name)
         if assemble_task is None:
-            rospy.logerr("no task assigned")
+            ettilog.logerr("no task assigned")
             return
         return assemble_task.pos
 
@@ -302,7 +302,7 @@ class DeliverJobBehaviour(BehaviourBase):
         """
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self.current_task != None and agent.last_action == "deliver_job":
-            rospy.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
+            ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
             self._task_knowledge.end_job_task(job_id=self.current_task.job_id, agent_name=self._agent_name)
             self.current_task = None
 
@@ -316,7 +316,7 @@ class DeliverJobBehaviour(BehaviourBase):
             self.current_task = self._task_knowledge.get_task(self._agent_name)
 
         if self.current_task != None:
-            rospy.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.job_id)
+            ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.job_id)
             self.action_deliver_job(self.current_task.job_id)
             # TODO: Check what happens when the delivery fails ->
             # TODO: Pass an acnowledgement object into the mac ros bridge. Once it finishes/fails it notifies the application

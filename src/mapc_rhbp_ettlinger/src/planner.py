@@ -2,6 +2,7 @@ import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart
 
 from agent_knowledge.tasks import JobKnowledgebase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_manager import AssembleManager
 from coordination.build_well_manager import BuildWellManager
@@ -11,6 +12,7 @@ from decisions.well_chooser import ChooseWellToBuild
 from provider.product_provider import ProductProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.planner')
 
 class Planner(object):
 
@@ -56,7 +58,7 @@ class Planner(object):
         :return:
         """
         if self.job_manager.busy:
-            rospy.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
+            ettilog.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
             return
 
         self._provider_info_distributor.callback_request_action(request_action=request_action)
@@ -66,7 +68,7 @@ class Planner(object):
         self.coordinate_assembly(request_action)
 
 
-        rospy.loginfo("JobPlanner:: Jobs processed")
+        ettilog.loginfo("JobPlanner:: Jobs processed")
 
     def coordinate_jobs(self, requestAction):
         # get all jobs from request
@@ -74,12 +76,12 @@ class Planner(object):
         for job in all_jobs_new:
             # if job has not been seen before -> process it
             if job not in self.all_jobs:
-                # rospy.logerr("JobPlanner:: processing new job %s, %d: %d factor: %f", job.id, interna_value, job.reward, (job.reward/float(interna_value)))
+                # ettilog.logerr("JobPlanner:: processing new job %s, %d: %d factor: %f", job.id, interna_value, job.reward, (job.reward/float(interna_value)))
 
                 self._job_decider.train_decider(job)
                 job_activation = self._job_decider.get_job_activation(job)
                 if job_activation > self._job_decider.get_threshold():
-                    rospy.loginfo("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
+                    ettilog.loginfo("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
                                   str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
                     self.job_manager.job_request(job)
         self.all_jobs = all_jobs_new
@@ -128,4 +130,4 @@ if __name__ == '__main__':
         rospy.spin()
 
     except rospy.ROSInterruptException:
-        rospy.logerr("program interrupted before completion")
+        ettilog.logerr("program interrupted before completion")

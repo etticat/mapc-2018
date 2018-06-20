@@ -7,10 +7,13 @@ from agent_knowledge.well import WellTaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import Action
 from behaviours.movement import GotoLocationBehaviour
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.facility_provider import FacilityProvider
 from provider.well_provider import WellProvider
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.well')
 
 
 class GoToWellBehaviour(GotoLocationBehaviour):
@@ -63,7 +66,7 @@ class BuildWellBehaviour(BehaviourBase):
         """
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self.current_task != None and agent.last_action == "build":
-            rospy.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
+            ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
             self._task_knowledge.build_finished(self.current_task)
 
 
@@ -76,7 +79,7 @@ class BuildWellBehaviour(BehaviourBase):
             self.current_task = self._task_knowledge.get_task(self._agent_name)
 
         if self.current_task != None:
-            rospy.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.well_type)
+            ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.well_type)
             self.action_build_well(self.current_task.well_type)
             # TODO: Check what happens when the delivery fails ->
             # TODO: Pass an acnowledgement object into the mac ros bridge. Once it finishes/fails it notifies the application
@@ -143,7 +146,7 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
                         max_integrity = well_prototype.integrity
                         val = integrity*100/max_integrity
             except Exception:
-                rospy.logwarn("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
+                ettilog.logwarn("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
 
         return val

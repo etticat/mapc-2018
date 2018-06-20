@@ -2,10 +2,12 @@ import rospy
 from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import AssembleBid
 
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_bid')
 
 class ShouldBidForAssembly(object):
 
@@ -52,7 +54,7 @@ class ShouldBidForAssembly(object):
     def choose(self, request):
 
         if self.initialized == False:
-            rospy.logerr("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
+            ettilog.logerr("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
             return
         ingredient_fullness = float(self.load_ingredients) / self.max_load
         general_fulness = float(self.load) / self.max_load

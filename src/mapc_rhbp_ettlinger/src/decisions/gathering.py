@@ -1,8 +1,10 @@
 import operator
 
 from agent_knowledge.item import StockItemKnowledgebase
+from common_utils import rhbp_logging
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.gathering')
 
 class ChooseIngredientToGather(object):
 

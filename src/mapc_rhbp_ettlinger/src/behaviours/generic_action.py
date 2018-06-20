@@ -3,8 +3,11 @@ from __future__ import division
 import rospy
 from mac_ros_bridge.msg import GenericAction
 
-from common_utils.agent_utils import AgentUtils
 from behaviour_components.behaviours import BehaviourBase
+from common_utils import rhbp_logging
+from common_utils.agent_utils import AgentUtils
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.generic')
 
 
 class Action(object):
@@ -61,7 +64,7 @@ class GenericActionBehaviour(BehaviourBase):
 
 
     def do_step(self):
-        rospy.logdebug(self._agent_name + "::" + self._name + " executing: " + self._action_type)
+        ettilog.logdebug(self._agent_name + "::" + self._name + " executing: " + self._action_type)
         GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action, action_type=self._action_type, params=self.generate_params())
 
 
@@ -77,7 +80,7 @@ class GenericActionBehaviour(BehaviourBase):
         action.action_type = action_type
         action.params = params
 
-        rospy.logdebug("Published action %s", action)
+        ettilog.logdebug("Published action %s", action)
 
         publisher.publish(action)
 

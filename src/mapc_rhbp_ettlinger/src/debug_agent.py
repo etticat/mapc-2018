@@ -1,12 +1,13 @@
-import time
-
 import rospy
-from mac_ros_bridge.msg import Item, Position, RequestAction
+import time
+from mac_ros_bridge.msg import RequestAction
 
 from agent_knowledge.resource import ResourceKnowledgebase
+from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from provider.product_provider import ProductProvider
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
 
 class DebugAgent(object):
@@ -30,19 +31,19 @@ class DebugAgent(object):
         :type msg: RequestAction
         :return:
         """
-        rospy.logerr("-----------------------------------")
-        rospy.logerr("Ingredients:")
+        ettilog.logerr("-----------------------------------")
+        ettilog.logerr("Ingredients:")
         stock = DebugUtils.show_total_stock_with_goals()
         for i in range(0,5):
             item = "item" + str(i)
             if item in stock.keys():
-                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
+                ettilog.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
 
-        rospy.logerr("Finished products:")
+        ettilog.logerr("Finished products:")
         for i in range(5,11):
             item = "item" + str(i)
             if item in stock.keys():
-                rospy.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
+                ettilog.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
 
 
 if __name__ == '__main__':
@@ -55,4 +56,4 @@ if __name__ == '__main__':
         rospy.spin()
 
     except rospy.ROSInterruptException:
-        rospy.logerr("program interrupted before completion")
+        ettilog.logerr("program interrupted before completion")

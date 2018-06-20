@@ -1,11 +1,12 @@
 import copy
+
 import itertools
 
-from mapc_rhbp_ettlinger.msg import JobAssignment
-
+from common_utils import rhbp_logging
 from common_utils.calc import CalcUtil
 from provider.stats_provider import StatsProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.job_combination')
 
 class ChooseBestJobCombination(object):
 

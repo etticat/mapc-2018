@@ -10,11 +10,14 @@ from diagnostic_msgs.msg import KeyValue
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import GenericAction, Position
 
-from common_utils.agent_utils import AgentUtils
 from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
+from common_utils import rhbp_logging
+from common_utils.agent_utils import AgentUtils
 from utils.ros_helpers import get_topic_type
+
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.movement')
 
 
 
@@ -91,13 +94,13 @@ class GotoLocationBehaviour(BehaviourBase):
 
         if self._selected_pos: # in case we did not find/know a facility
 
-            rospy.loginfo(self._agent_name + "::" +self._name + " to "+ str(self._selected_pos))
+            ettilog.loginfo(self._agent_name + "::" +self._name + " to "+ str(self._selected_pos))
             if isinstance(self._selected_pos, Position):
                 GotoLocationBehaviour.action_goto_location(lat=self._selected_pos.lat, long=self._selected_pos.long, publisher=self._pub_generic_action)
             else:
                 GotoLocationBehaviour.action_goto_facility(facility=self._selected_pos, publisher=self._pub_generic_action)
         else: # backup action recharge agent
-            rospy.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
+            ettilog.loginfo(self._agent_name + "::" + self._name + " recharging because of missing facility.")
             GenericActionBehaviour.action_generic_simple(publisher=self._pub_generic_action,action_type='recharge')
 
     @abc.abstractmethod
@@ -106,11 +109,11 @@ class GotoLocationBehaviour(BehaviourBase):
 
 
     def start(self):
-        rospy.loginfo(self._agent_name + "::" + self._name + " enabled")
+        ettilog.loginfo(self._agent_name + "::" + self._name + " enabled")
 
         self._selected_pos = self._select_pos()
 
-        rospy.loginfo(self._agent_name + "::" + self._name + " selected facility: " + str(self._selected_pos))
+        ettilog.loginfo(self._agent_name + "::" + self._name + " selected facility: " + str(self._selected_pos))
 
         # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
 
@@ -121,7 +124,7 @@ class GotoLocationBehaviour(BehaviourBase):
 
     def stop(self):
 
-        rospy.loginfo(self._agent_name + "::" + self._name + " disabled")
+        ettilog.loginfo(self._agent_name + "::" + self._name + " disabled")
 
         super(GotoLocationBehaviour, self).stop()
 

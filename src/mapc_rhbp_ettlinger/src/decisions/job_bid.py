@@ -2,10 +2,12 @@ import random
 
 from mapc_rhbp_ettlinger.msg import JobBid
 
+from common_utils import rhbp_logging
 from common_utils.calc import CalcUtil
 from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
 
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.job_bid')
 
 class JobBidDecider(object):
 

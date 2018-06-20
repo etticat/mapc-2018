@@ -1,16 +1,11 @@
-import random
-import time
-
 import rospy
-from mac_ros_bridge.msg import Position
+import time
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAcknowledgement, AssembleAssignment, \
     AssembleTask, AssembleStop
 
+import utils.rhbp_logging
 from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
-
-import utils.rhbp_logging
-from common_utils.calc import CalcUtil
 from decisions.assembly_bid import ShouldBidForAssembly
 from provider.product_provider import ProductProvider
 
@@ -59,7 +54,7 @@ class AssembleContractor(object):
 
         current_time = time.time()
         if request.deadline < current_time:
-            rospy.loginfo("Deadline over %f - %f", request.deadline, current_time)
+            ettilog.loginfo("Deadline over %f - %f", request.deadline, current_time)
             return
 
         if assemble_task is None:

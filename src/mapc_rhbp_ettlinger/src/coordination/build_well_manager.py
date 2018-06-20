@@ -1,14 +1,13 @@
 import time
-
 from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobAssignment
 
-import utils.rhbp_logging
 from agent_knowledge.well import WellTaskKnowledgebase
+from common_utils import rhbp_logging
 from coordination.job_manager import JobManager
 from decisions.well_chooser import ChooseWellToBuild
 
-ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.job_manager')
+ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.coordination.build_well_manager')
 
 
 class BuildWellManager(JobManager):
