@@ -3,48 +3,54 @@ from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
 from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.job import GoToStorageForJobBehaviour, DeliverJobBehaviour
+from behaviours.job import DeliverJobBehaviour, GoToStorageBehaviour
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.movement import DestinationDistanceSensor
 
 
-class JobExecutionNetworkBehaviour(NetworkBehaviour):
+class BringToStorageNetworkBehaviour(NetworkBehaviour):
 
     def __init__(self, agent, name, msg, **kwargs):
 
         proximity = msg.proximity
 
-        super(JobExecutionNetworkBehaviour, self).__init__(name, **kwargs)
+        super(BringToStorageNetworkBehaviour, self).__init__(name, **kwargs)
 
         self._product_provider = ProductProvider(
             agent_name=agent._agent_name)
 
         self.init_task_sensor(agent)
 
-        self.init_go_to_destination_behaviour(agent, proximity)
-        self.init_deliver_job_behaviour(agent)
+        self.init_go_to_storage_behaviour(agent, proximity)
+        self.init_store_behaviour(agent)
 
 
         self.add_effect(
             effect=Effect(
-                sensor_name=self.has_tasks_assigned_sensor.name,
+                sensor_name=self.has_finished_products.name,
                 indicator=-1.0,
-                sensor_type=bool
+                sensor_type=float
             )
         )
 
+        self.add_effect(
+            effect=Effect(
+                sensor_name=self.stored_finished_products.name,
+                indicator=1.0,
+                sensor_type=float
+            )
+        )
 
-
-    def init_go_to_destination_behaviour(self, agent, proximity):
+    def init_go_to_storage_behaviour(self, agent, proximity):
         # go to destination
-        self.go_to_destination_behaviour = GoToStorageForJobBehaviour(
+        self.go_to_destination_behaviour = GoToStorageBehaviour(
             plannerPrefix=self.get_manager_prefix(),
-            name="go_to_storage",
+            name="go_to_storage_for_hoarding",
             agent=agent)
 
         self.storage_destination_sensor = DestinationDistanceSensor(
-            name='storage_destination_sensor',
+            name='storage_for_hoarding_destination_sensor',
             agent_name=agent._agent_name,
             behaviour_name=self.go_to_destination_behaviour._name)
 

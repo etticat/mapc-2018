@@ -45,7 +45,8 @@ class FacilityProvider(object):
     def get_storage_by_name(self, name):
         return self.storages[name]
 
-    def get_random_storage(self):
-        return random.choice(self.storages.values())
+    def get_storages(self):
+        return self.storages
+
     def get_random_workshop(self):
         return random.choice(self.workshops.values())

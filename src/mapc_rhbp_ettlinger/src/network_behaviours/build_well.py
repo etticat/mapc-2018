@@ -1,19 +1,12 @@
-import rospy
-
-from agent_knowledge.tasks import JobKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
-from behaviour_components.activators import BooleanActivator, ThresholdActivator, LinearActivator
+from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation, Disjunction, Conjunction
-from behaviour_components.goals import GoalBase
+from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.job import GoToStorageBehaviour, AssembleProductBehaviour, GatherBehaviour, GoToResourceBehaviour, \
-    GoToWorkshopBehaviour, DeliverJobBehaviour
 from behaviours.well import GoToWellBehaviour, WellIntegritySensor, BuildWellBehaviour, \
     BuildUpWellBehaviour
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.job import AmountInListActivator, ProductSensor
 from sensor.movement import DestinationDistanceSensor
 
 

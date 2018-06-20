@@ -56,6 +56,27 @@ class GoToResourceBehaviour(GotoLocationBehaviour):
         return None
 
 
+class GoToStorageForJobBehaviour(GotoLocationBehaviour):
+    """
+    Behaviour, that allows going to the Storage location to finish a job
+    """
+    def __init__(self, agent, plannerPrefix, **kwargs):
+        super(GoToStorageForJobBehaviour, self).__init__(
+            agent_name=agent._agent_name,
+            plannerPrefix=plannerPrefix,
+            **kwargs)
+        self._selected_facility = None
+        self.taskKnowledge = JobKnowledgebase()
+        self.facility_provider = FacilityProvider()
+
+    def start(self):
+        super(GoToStorageForJobBehaviour, self).start()
+
+    def _select_pos(self):
+        task = self.taskKnowledge.get_task(agent_name=self._agent_name)
+        if task is not None:
+            return task.pos
+
 class GoToStorageBehaviour(GotoLocationBehaviour):
     """
     Behaviour, that allows going to the Storage location to finish a job
