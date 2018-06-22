@@ -37,7 +37,7 @@ class RhbpAgent:
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
-        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=2)
+        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
         self._provider_info_distributor = ProviderInfoDistributor()
 
         self._sim_started = False
@@ -69,7 +69,6 @@ class RhbpAgent:
         if not self._sim_started:  # init only once here
 
             self._sim_started = True
-            ettilog.loginfo(self._agent_name + " startet")
 
             # init only once, even when run restarts
             if not self._initialized:
@@ -130,7 +129,7 @@ class RhbpAgent:
         self._received_action_response = False
 
         # if hasattr(self, "_action_network_behaviour"):
-        #     DebugUtils.print_precondition_states(self._action_network_behaviour.build_well_network.build_up_well_bahviour)
+        #     DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network._go_to_exploration_target_behaviour)
 
 
         if self._initialized:

@@ -1,15 +1,15 @@
 #!/usr/bin/env python2
 import json
+import math
 import socket
 import traceback
 import urllib2
+from math import sin, cos, sqrt, atan2, radians
 from urllib2 import URLError
 
-import math
 import rospy
 from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
-from math import sin, cos, sqrt, atan2, radians
 
 from common_utils import rhbp_logging
 from common_utils.graphhopper import GraphhopperProcessHandler
@@ -61,6 +61,9 @@ class DistanceProvider(object):
             return self.calculate_distance_air(startPosition, endPosition) * 2 # Fallback
 
     def calculate_steps(self, pos1, pos2):
+        if self.calculate_positions_eucledian_distance(pos1,
+                                                                         pos2) < self._proximity:
+            return 0
         size_ = self.calculate_distance(pos1, pos2) / (self.speed * self.cell_size)
         return math.ceil(size_ / 1000)
 
@@ -151,3 +154,17 @@ class DistanceProvider(object):
                 self._cache = {}
         except rospy.ServiceException:
             ettilog.logerr("ROS service exception in set_map_service %s", traceback.format_exc())
+
+    def calculate_positions_eucledian_distance(self, pos1, pos2):
+
+        return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
+
+    def get_closest_facility(self, agent_position, charging_stations):
+        closest_facility = None
+        closest_facility_steps = 99
+        for charging_station in charging_stations:
+            steps = self.calculate_steps(agent_position, charging_station.pos)
+            if steps < closest_facility_steps:
+                closest_facility_steps = steps
+                closest_facility = charging_station
+        return closest_facility

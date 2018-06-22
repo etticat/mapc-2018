@@ -177,3 +177,51 @@ class GoToFacilityBehaviour(GotoLocationBehaviour):
 
     def stop(self):
         super(GoToFacilityBehaviour, self).stop()
+
+
+
+
+class GotoLocationBehaviour2(BehaviourBase):
+    """
+    Behaviour that explores the environment by going to a randomly selected facility
+    """
+
+    def __init__(self, agent_name, identifier, **kwargs):
+
+        super(GotoLocationBehaviour2, self) \
+            .__init__(requires_execution_steps=True, **kwargs)
+
+        self._movement_knowledge = MovementKnowledgebase()
+
+        self._agent_name = agent_name
+        self.identifier = identifier
+
+        self._pub_generic_action = rospy.Publisher(AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
+                                                   , queue_size=10)
+
+    def set_distance(self, destination):
+        self.destination = destination
+
+    @staticmethod
+    def action_goto_location(lat, long, publisher):
+        """
+        Specific "goto" action publishing helper function
+        :param facility_name: name of the facility we want to go to
+        :param publisher: publisher to use
+        """
+        action = GenericAction()
+        action.action_type = Action.GO_TO
+        action.params = [
+            KeyValue("latitude", str(lat)),
+            KeyValue("longitude", str(long))]
+        publisher.publish(action)
+
+    def do_step(self):
+        destination = self._movement_knowledge.get_movement(agent_name=self._agent_name, identifier=self.identifier)
+
+        assert destination is not None
+
+        destination = destination.pos
+
+        GotoLocationBehaviour2.action_goto_location(lat=destination.lat, long=destination.long,
+                                                    publisher=self._pub_generic_action)

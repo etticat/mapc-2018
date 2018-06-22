@@ -4,12 +4,16 @@
 from __future__ import division  # force floating point division when using plain /
 
 import rospy
-from mac_ros_bridge.msg import Agent
+from mac_ros_bridge.msg import Agent, Position
+from mapc_rhbp_ettlinger.msg import Movement
 
 from agent_knowledge.movement import MovementKnowledgebase
+from behaviour_components.sensors import Sensor, AggregationSensor
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
-from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
+from provider.distance_provider import DistanceProvider
+from provider.facility_provider import FacilityProvider
+from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor, KnowledgeFactSensor
 
 ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.movement')
 
@@ -42,7 +46,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         # If we don't have a destination we handle it as if we are far away
         res = 1.0
 
-        if len(facts) > 0 and self._last_pos != None:
+        if len(facts) > 0 and self._last_pos is not None:
             movement = MovementKnowledgebase.generate_movement_from_fact(facts.pop())  # only getting the first fact
 
             try:
@@ -56,3 +60,107 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
                 ettilog.logerr("Couldn't get last tuple element of: %s. Resetting to initial_value", str(movement))
 
         return res
+
+
+class AgentPositionSensor(Sensor):
+
+    def __init__(self, agent_name, name=None):
+        super(AgentPositionSensor, self).__init__(name=name, initial_value=None)
+        # TODO this might just be a Topic Sensor now...
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent,
+                                         self.subscription_callback_ref_topic)
+
+    def subscription_callback_ref_topic(self, msg):
+        self.update(msg.pos)
+
+
+class SelectedTargetPositionSensor(KnowledgeFactSensor):
+
+    def __init__(self, identifier, agent_name, name=None):
+        super(SelectedTargetPositionSensor, self).__init__(
+            name=name,
+            initial_value=None,
+            pattern=MovementKnowledgebase.generate_tuple(agent_name=agent_name, identifier=identifier)
+        )
+
+
+    def update(self, newValue):
+        if len(newValue) > 0:
+            movement = MovementKnowledgebase.generate_movement_from_fact(newValue.pop())  # only getting the first fact
+
+            if movement is not None:
+                destination = movement.pos
+            else:
+                destination = None
+
+            super(SelectedTargetPositionSensor, self).update(destination)
+        else:
+            super(SelectedTargetPositionSensor, self).update(None)
+
+
+class StepDistanceSensor(AggregationSensor):
+
+    def __init__(self, name, position_sensor_1, position_sensor_2, initial_value):
+        super(StepDistanceSensor, self).__init__(
+            name=name,
+            sensors=[position_sensor_1, position_sensor_2],
+            func=None,
+            initial_value=initial_value)
+        self.distance_provider = DistanceProvider()
+
+    def _aggregate(self, sensor_values):
+        assert len(sensor_values) == 2
+
+
+        pos1 = sensor_values[0]
+        pos2 = sensor_values[1]
+
+        if pos1 is None or pos2 is None:
+            rospy.logerr("Cant get distance of %s and %s", str(pos1), str(pos2))
+            return self._initial_value
+
+        if not isinstance(pos1, Position):
+            pos1 = pos1.pos
+
+        if not isinstance(pos2, Position):
+            pos2 = pos2.pos
+
+        steps = self.distance_provider.calculate_steps(pos1, pos2)
+
+        return steps
+
+class ClosestChargingStationSensor(Sensor):
+
+    def __init__(self, agent_name, name=None, optional=False, initial_value=None):
+        super(ClosestChargingStationSensor, self).__init__(name=name, initial_value=None)
+
+        self._agent_name = agent_name
+        self._last_agent_position = None
+
+
+        self.distance_provider = DistanceProvider()
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent,
+                                         self.subscription_callback_ref_topic)
+
+        self.facility_provider = FacilityProvider()
+        self.movement_knowledgebase = MovementKnowledgebase()
+
+
+    def subscription_callback_ref_topic(self, msg):
+        if msg.pos != self._last_agent_position:
+            self._last_agent_position = msg.pos
+            charging_stations = self.facility_provider.get_charging_stations()
+            closest_facility = self.distance_provider.get_closest_facility(self._last_agent_position, charging_stations)
+
+            self.update(closest_facility)
+
+
+    def update(self, newValue):
+        if self._latestValue is not newValue:
+            self.movement_knowledgebase.start_movement(Movement(
+                identifier = MovementKnowledgebase.IDENTIFIER_CHARGING_STATION,
+                agent_name = self._agent_name,
+                pos = newValue.pos,
+                destination = ''
+            ))
+        super(ClosestChargingStationSensor, self).update(newValue)

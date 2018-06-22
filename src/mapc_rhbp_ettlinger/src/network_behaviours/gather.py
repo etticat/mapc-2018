@@ -24,21 +24,23 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
 
         super(GatheringNetworkBehaviour, self).__init__(name, **kwargs)
 
-        self.init_product_sensor(agent)
 
-        self.init_choose_ingredient_behaviour(agent, proximity)
-        self.init_go_to_resource_behaviour(agent, proximity)
-        self.init_gather_behaviour(agent)
-
-
-        self.add_effect(
-            effect=Effect(
-                sensor_name=self.storage_space_after_next_item_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool
-
-            )
+        # Sensor to check how much space there is left after gaining the next intended item
+        self.storage_fits_more_items_sensor = StorageFitsMoreItemsSensor(
+            name="storage_fits_more_items_sensor",
+            agent_name=agent._agent_name
         )
+        # Checks if the next item fits into the stock
+        self.next_item_fits_in_storage_condition = Condition(
+            sensor=self.storage_fits_more_items_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
+
+        # self.init_product_sensor(agent)
+
+        # self.init_choose_ingredient_behaviour(agent, proximity)
+        # self.init_go_to_resource_behaviour(agent, proximity)
+        # self.init_gather_behaviour(agent)
 
 
     def init_gather_behaviour(self, agent):
@@ -53,24 +55,14 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self.gather_ingredients_behaviour.add_precondition(
             precondition=self.at_resource_node_condition)
 
-        # Sensor to check how much space there is left after gaining the next intended item
-        self.storage_space_after_next_item_sensor = StorageFitsMoreItemsSensor(
-            name="space_available_in_stock_sensor",
-            agent_name=agent._agent_name
-        )
         # only gather if we have chosen an item to gather
         self.gather_ingredients_behaviour.add_precondition(
             precondition=Negation(self.has_all_ingredients_condition)
         )
-        # Checks if the next item fits into the stock
-        self.next_item_fits_in_storage_condition = Condition(
-            sensor=self.storage_space_after_next_item_sensor,
-            activator=BooleanActivator(desiredValue=True)
-        )
 
         self.gather_ingredients_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.storage_space_after_next_item_sensor.name,
+                sensor_name=self.storage_fits_more_items_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
 
@@ -127,7 +119,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         :return:
         """
         self._product_provider.stop_gathering()
-        self._movement_knowledge.stop_movement(self._agent_name, self.go_to_resource_node_behaviour.name)
+        # self._movement_knowledge.stop_movement(self._agent_name, self.go_to_resource_node_behaviour.name)
         super(GatheringNetworkBehaviour, self).stop()
 
     def init_choose_ingredient_behaviour(self, agent, proximity):

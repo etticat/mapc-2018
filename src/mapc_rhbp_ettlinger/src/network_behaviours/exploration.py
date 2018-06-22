@@ -1,72 +1,168 @@
-from behaviour_components.activators import ThresholdActivator
+import rospy
+from mapc_rhbp_ettlinger.msg import Movement
+
+from agent_knowledge.movement import MovementKnowledgebase
+from behaviour_components.activators import ThresholdActivator, GreedyActivator
+from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.exploration import ExplorationBehaviour, FinishExplorationBehaviour
+from behaviours.movement import GotoLocationBehaviour2
+from provider.simulation_provider import SimulationProvider
 from sensor.exploration import ResourceDiscoveryProgressSensor
-from sensor.movement import DestinationDistanceSensor
+from sensor.movement import StepDistanceSensor, AgentPositionSensor, SelectedTargetPositionSensor
 
 
 class ExplorationNetworkBehaviour(NetworkBehaviour):
-    def __init__(self, agent, msg, name, **kwargs):
+    def __init__(self, agent, msg, name, charging_components, **kwargs):
         super(ExplorationNetworkBehaviour, self).__init__(name, **kwargs)
 
-        proximity = msg.proximity
 
-        self._shop_exploration = ExplorationBehaviour(
+        self.init_resource_sensor(agent)
+        self.init_destination_step_sensor(agent_name=agent._agent_name)
+
+        self.init_go_to_destination_behaviour(agent, charging_components)
+        self.init_choose_destination_behaviour(agent)
+
+        self._last_agent_pos = None
+
+        charging_components.init_charge_behaviours(
+            planner_prefix=self.get_manager_prefix())
+
+        self.exploration_goal = GoalBase(
+            name='exploration_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Condition(
+                sensor=self.resource_discovery_progress_sensor,
+                activator=GreedyActivator()
+            )])
+
+    def init_choose_destination_behaviour(self, agent):
+        ####################### CHOOSE DESTINATION BEHAVIOUR ###################
+        self.choose_destination_behaviour = ChooseDestinationBehaviour(
+            plannerPrefix=self.get_manager_prefix(),
+            name='choose_destination_behaviour',
+            identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION,
+            agent_name=agent._agent_name
+        )
+        self.choose_destination_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.target_step_sensor.name,
+                indicator=1.0,  # Choosing a new destination increases the distance to the target
+                sensor_type=float))
+        # self.choose_destination_behaviour.add_effect(
+        #     effect=Effect(
+        #         sensor_name=self.exploration_target_exists_sensor.name,
+        #         indicator=1.0,  # Choosing a new destination increases the distance to the target
+        #         sensor_type=bool)) # TODO #86 How do I use this for a sensor with return value pos
+
+        # Maybe use this: only allow picking a new one when the target is reached
+        # self.choose_destination_behaviour.add_precondition(
+        #     precondition=self.at_shop_cond)  # only finish if we are at a charging station
+
+
+    def init_go_to_destination_behaviour(self, agent, charging_components):
+        ####################### GO TO DESTINATION BEHAVIOUR ###################
+        self._go_to_exploration_target_behaviour = GotoLocationBehaviour2(
             agent_name=agent._agent_name,
-            plannerPrefix = self.get_manager_prefix(),
-            name = 'explore_shops'
+            identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION,
+            plannerPrefix=self.get_manager_prefix(),
+            name='go_to_exploration_target'
+        )
+        # exploration increases the nr of resources we know
+        self._go_to_exploration_target_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.resource_discovery_progress_sensor.name,
+                indicator=0.01,  # This should be less right? TODO #86
+                sensor_type=float))
+        # exploration has the effect that we well be at the place at some point
+        self._go_to_exploration_target_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=charging_components.charge_sensor.name,
+                indicator=-1.0,
+                sensor_type=float))
+        # Going to Shop gets us 1 step closer to the shop
+        self._go_to_exploration_target_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.target_step_sensor.name,
+                indicator=-1.0,
+                sensor_type=float))
+
+        # We can only walk to shop until we are there
+        self._go_to_exploration_target_behaviour.add_precondition(
+            precondition=Negation(self.at_shop_cond)
         )
 
+        self._go_to_exploration_target_behaviour.add_precondition(
+            precondition=charging_components.enough_battery_to_move_cond
+        )
+
+        # We can only walk to destination, if there is one already chosen
+        # self._go_to_exploration_target_behaviour.add_precondition(
+        #     precondition=self.has_exploration_target_cond)
+
+    def init_destination_step_sensor(self, agent_name):
+
+        self.agent_position_sensor = AgentPositionSensor(
+            name="agent_position_sensor",
+            agent_name=agent_name # TODO: We should only use one of these per agent.
+        )
+        self.exploration_target_sensor = SelectedTargetPositionSensor(
+            identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION,
+            name="exploration_target_sensor",
+            agent_name=agent_name
+        )
+
+        # Sensor to check distance to charging station
+        self.target_step_sensor = StepDistanceSensor(
+            name='target_step_sensor',
+            position_sensor_1=self.agent_position_sensor,
+            position_sensor_2=self.exploration_target_sensor,
+            initial_value=0
+        )
+
+        self.at_shop_cond = Condition(
+            sensor=self.target_step_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=0,
+                isMinimum=False))
+
+        # self.has_exploration_target_cond = Negation(Condition(
+        #     sensor=self.exploration_target_sensor,
+        #     activator=EqualActivator(
+        #         desiredValue=None
+        #     )
+        # ))
+
+    def init_resource_sensor(self, agent):
         self.resource_discovery_progress_sensor = ResourceDiscoveryProgressSensor(
             name="resource_discovery_progress_sensor",
             agent_name=agent._agent_name
 
         )
-
-        self.all_resources_discovered_condition = Condition(
+        self.resources_of_all_items_discovered_condition = Condition(
             sensor=self.resource_discovery_progress_sensor,
             activator=ThresholdActivator(
                 thresholdValue=1.0,
                 isMinimum=True))
 
 
-        # Condition to check if we are close to (in) a shop
-        at_shop_sensor = DestinationDistanceSensor(
-            name='at_shop',
-            agent_name=agent._agent_name,
-            behaviour_name=self._shop_exploration._name)
+class ChooseDestinationBehaviour(BehaviourBase):
+    def __init__(self, name, agent_name, identifier, **kwargs):
+        super(ChooseDestinationBehaviour, self).__init__(name, requires_execution_steps=True, **kwargs)
+        self.identifier = identifier
+        self._simulation_provider = SimulationProvider()
+        self._movement_knowledgebase = MovementKnowledgebase()
 
-        at_shop_cond = Condition(
-            sensor=at_shop_sensor,
-            activator=ThresholdActivator(
-                thresholdValue=proximity,
-                isMinimum=False))  # highest activation if the value is below threshold
+        self.agent_name = agent_name
 
-        # exploration has the effect that we well be at the place at some point
-        self._shop_exploration.add_effect(
-            effect=Effect(
-                sensor_name=at_shop_sensor.name,
-                indicator=-1.0,
-                sensor_type=float))
-
-        self._finish_shop_exploration = FinishExplorationBehaviour(
-            plannerPrefix=self.get_manager_prefix(),
-            agent_name=agent._agent_name,
-            name='finish_explore_shops',
-            facility_topic='/shop',
-            movement_behaviour_name=self._shop_exploration._name)
-
-        self._finish_shop_exploration.add_effect(
-            effect=Effect(
-                sensor_name=self.resource_discovery_progress_sensor.name,
-                indicator=1.0,
-                sensor_type=float))
-
-        self._finish_shop_exploration.add_precondition(
-            precondition=at_shop_cond)  # only finish if we are at a charging station
-
-        self._shop_exploration.add_precondition(
-            precondition=Negation(at_shop_cond)
-        )
+    def do_step(self):
+        destination = self._simulation_provider.get_random_position()
+        self._movement_knowledgebase.start_movement(Movement(
+            identifier = self.identifier,
+            agent_name = self.agent_name,
+            pos = destination
+        ))
+        rospy.logerr("ChooseDestinationBehaviour:: dostep")

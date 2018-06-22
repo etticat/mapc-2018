@@ -1,7 +1,5 @@
 import random
 
-from mac_ros_bridge.msg import Position
-
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.simulation_provider import SimulationProvider
@@ -33,9 +31,7 @@ class ChooseWellToBuild(object):
     def choose_well_position(self):
 
         # TODO: Choose it more elegantly
-        return Position(
-            lat=random.uniform(self._simulation_provider.min_lat, self._simulation_provider.max_lat),
-            long=random.uniform(self._simulation_provider.min_long, self._simulation_provider.max_long))
+        return self._simulation_provider.get_random_position()
 
     def choose_agent_for_building(self, bids):
 

@@ -2,6 +2,7 @@ from agent_knowledge.tasks import JobKnowledgebase
 from behaviour_components.activators import BooleanActivator, ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import GoToStorageForJobBehaviour, DeliverJobBehaviour
 from provider.product_provider import ProductProvider
@@ -25,15 +26,11 @@ class JobExecutionNetworkBehaviour(NetworkBehaviour):
         self.init_go_to_destination_behaviour(agent, proximity)
         self.init_deliver_job_behaviour(agent)
 
-
-        self.add_effect(
-            effect=Effect(
-                sensor_name=self.has_tasks_assigned_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool
-            )
-        )
-
+        self.goal = GoalBase(
+            name='job_fulfillment_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self.has_tasks_assigned_condition)])
 
 
     def init_go_to_destination_behaviour(self, agent, proximity):

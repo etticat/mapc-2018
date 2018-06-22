@@ -2,6 +2,7 @@ from agent_knowledge.assemble_task import AssembleKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.job import AssembleProductBehaviour, GoToWorkshopBehaviour
 
@@ -23,14 +24,12 @@ class AssembleNetworkBehaviour(NetworkBehaviour):
         self.init_go_to_workshop_behaviour(agent, proximity)
         self.init_assembly_behaviour(agent)
 
-        self.add_effect(
-            effect=Effect(
-                sensor_name=self.assemble_organized_sensor.name,
-                indicator=-1.0,
-                sensor_type=float
 
-            )
-        )
+        self.goal = GoalBase(
+            name='job_fulfillment_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self.has_assemble_task_assigned_cond)])
 
 
     def init_assembly_behaviour(self, agent):

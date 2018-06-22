@@ -1,3 +1,7 @@
+import random
+
+from mac_ros_bridge.msg import Position
+
 from common_utils import rhbp_logging
 from common_utils.singleton import Singleton
 
@@ -25,3 +29,8 @@ class SimulationProvider(object):
         self.min_long = sim_start.min_lon
         self.max_long = sim_start.max_lon
         pass
+
+    def get_random_position(self):
+        return Position(
+            lat=random.uniform(self.min_lat, self.max_lat),
+            long=random.uniform(self.min_long, self.max_long))

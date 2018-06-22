@@ -1,6 +1,7 @@
 from mac_ros_bridge.msg import Position
-from mapc_rhbp_ettlinger.msg import WellTask
+from mapc_rhbp_ettlinger.msg import WellTask, AssembleTask
 
+from agent_knowledge.assemble_task import AssembleKnowledgebase
 from agent_knowledge.item import StockItemKnowledgebase
 from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils import rhbp_logging
@@ -81,5 +82,17 @@ class DebugUtils:
 
         ettilog.logerr("----------------------------------------------------------------------------------")
 
+    @staticmethod
+    def assign_assembly_task():
+
+        assembly_knowledgebase= AssembleKnowledgebase()
+
+        assembly_knowledgebase.save_assemble(AssembleTask(
+            id = 'edawd',
+            agent_name = 'agentA1',
+            pos = Position(long=2.31017, lat=48.82456),
+            tasks = 'assemble:item8',
+            active = False
+        ))
 
 
