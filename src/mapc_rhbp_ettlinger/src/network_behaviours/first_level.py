@@ -4,7 +4,6 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.sensors import TopicSensor
-from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.sensor_map import SensorAndConditionMap
@@ -25,7 +24,7 @@ class FirstLevelBehaviours(object):
             name="score_sensor",
             message_attr="score")
 
-        self.sensor_map = SensorAndConditionMap(agent_name=agent._agent_name)
+        self.sensor_map = SensorAndConditionMap(agent_name=agent._agent_name, msg=msg)
 
         self.init_behaviour_network(msg)
         self.init_behaviour_network_connections()
@@ -33,13 +32,6 @@ class FirstLevelBehaviours(object):
         # TODO: Add goals for assembly, massim, score, battery
 
     def init_behaviour_network(self, msg):
-        ######################## Battery Behaviours ########################
-        self.battery_charging_behaviours = BatteryChargingNetworkBehaviour(
-            agent=self._agent,
-            sensor_map=self.sensor_map,
-            msg=msg,)
-
-
         ######################## Gathering Network Behaviour ########################
         self._gathering_network = GatheringNetworkBehaviour(
             name=self._agent_name + '/gathering',
@@ -77,7 +69,6 @@ class FirstLevelBehaviours(object):
             plannerPrefix=self._agent_name,
             agent=self._agent,
             sensor_map=self.sensor_map,
-            charging_components=self.battery_charging_behaviours,
             msg=msg,
             max_parallel_behaviours=1)
 

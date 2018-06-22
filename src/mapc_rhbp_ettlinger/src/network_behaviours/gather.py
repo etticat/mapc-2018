@@ -3,15 +3,15 @@ from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.movement import GotoLocationBehaviour2
+from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.movement import SelectedTargetPositionSensor, StepDistanceSensor
 
 
-class GatheringNetworkBehaviour(NetworkBehaviour):
+class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
     def __init__(self, agent, name, msg, sensor_map, **kwargs):
 
@@ -22,7 +22,7 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
         self._movement_knowledge = MovementKnowledgebase()
         self._agent_name= agent._agent_name
 
-        super(GatheringNetworkBehaviour, self).__init__(name, **kwargs)
+        super(GatheringNetworkBehaviour, self).__init__(name=name, agent=agent, msg=msg, sensor_map=sensor_map, **kwargs)
 
         self.init_choose_ingredient_behaviour(agent, proximity)
         self.init_go_to_resource_behaviour(agent, proximity, sensor_map)

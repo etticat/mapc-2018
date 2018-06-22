@@ -6,29 +6,26 @@ from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
 from behaviour_components.goals import GoalBase
-from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.movement import GotoLocationBehaviour2
+from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from provider.simulation_provider import SimulationProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor
 from sensor.movement import StepDistanceSensor, SelectedTargetPositionSensor
 
 
-class ExplorationNetworkBehaviour(NetworkBehaviour):
-    def __init__(self, agent, msg, name, sensor_map, charging_components, **kwargs):
-        super(ExplorationNetworkBehaviour, self).__init__(name, **kwargs)
+class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
+    def __init__(self, agent, msg, name, sensor_map, **kwargs):
+        super(ExplorationNetworkBehaviour, self).__init__(name=name, agent=agent, msg=msg, sensor_map=sensor_map, **kwargs)
 
 
         self.init_resource_sensor(agent)
         self.init_destination_step_sensor(agent_name=agent._agent_name, sensor_map=sensor_map)
 
         self.init_choose_destination_behaviour(agent)
-        self.init_go_to_destination_behaviour(agent, charging_components)
+        self.init_go_to_destination_behaviour(agent, sensor_map)
 
         self._last_agent_pos = None
-
-        charging_components.init_charge_behaviours(
-            planner_prefix=self.get_manager_prefix())
 
         self.exploration_goal = GoalBase(
             name='exploration_goal',
@@ -81,7 +78,7 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
                 sensor_type=bool))
 
 
-    def init_go_to_destination_behaviour(self, agent, charging_components):
+    def init_go_to_destination_behaviour(self, agent, sensor_map):
         ####################### GO TO DESTINATION BEHAVIOUR ###################
         self._go_to_exploration_target_behaviour = GotoLocationBehaviour2(
             agent_name=agent._agent_name,
@@ -98,7 +95,7 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # exploration has the effect that we well be at the place at some point
         self._go_to_exploration_target_behaviour.add_effect(
             effect=Effect(
-                sensor_name=charging_components.charge_sensor.name,
+                sensor_name=sensor_map.charge_sensor.name,
                 indicator=-1.0,
                 sensor_type=float))
         # Going to Shop gets us 1 step closer to the shop
@@ -117,7 +114,7 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         )
 
         self._go_to_exploration_target_behaviour.add_precondition(
-            precondition=charging_components.enough_battery_to_move_cond
+            precondition=sensor_map.enough_battery_to_move_cond
         )
 
         # We can only walk to destination, if there is one already chosen
