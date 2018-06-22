@@ -16,6 +16,7 @@ class MovementKnowledgebase(BaseKnowledgebase):
     INDEX_MOVEMENT_LONG = 4
     INDEX_MOVEMENT_DESTINATION = 5
 
+    IDENTIFIER_GATHERING = "gathering"
     IDENTIFIER_CHARGING_STATION = "charging_station"
     IDENTIFIER_EXPLORATION = "exploration"
 

@@ -1,8 +1,7 @@
-import rospy
 from mapc_rhbp_ettlinger.msg import Movement
 
 from agent_knowledge.movement import MovementKnowledgebase
-from behaviour_components.activators import ThresholdActivator, GreedyActivator
+from behaviour_components.activators import ThresholdActivator, GreedyActivator, LinearActivator, BooleanActivator
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition
@@ -10,20 +9,21 @@ from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.movement import GotoLocationBehaviour2
 from provider.simulation_provider import SimulationProvider
+from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor
-from sensor.movement import StepDistanceSensor, AgentPositionSensor, SelectedTargetPositionSensor
+from sensor.movement import StepDistanceSensor, SelectedTargetPositionSensor
 
 
 class ExplorationNetworkBehaviour(NetworkBehaviour):
-    def __init__(self, agent, msg, name, charging_components, **kwargs):
+    def __init__(self, agent, msg, name, sensor_map, charging_components, **kwargs):
         super(ExplorationNetworkBehaviour, self).__init__(name, **kwargs)
 
 
         self.init_resource_sensor(agent)
-        self.init_destination_step_sensor(agent_name=agent._agent_name)
+        self.init_destination_step_sensor(agent_name=agent._agent_name, sensor_map=sensor_map)
 
-        self.init_go_to_destination_behaviour(agent, charging_components)
         self.init_choose_destination_behaviour(agent)
+        self.init_go_to_destination_behaviour(agent, charging_components)
 
         self._last_agent_pos = None
 
@@ -63,13 +63,31 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         #     precondition=self.at_shop_cond)  # only finish if we are at a charging station
 
 
+        self.has_gathering_task_sensor = KnowledgeSensor(
+            name="has_exploration_task_sensor",
+            pattern=MovementKnowledgebase.generate_tuple(
+                agent_name=agent._agent_name,
+                identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION
+            )
+        )
+        self.has_gathering_task_cond = Condition(
+            sensor=self.has_gathering_task_sensor,
+            activator=BooleanActivator(desiredValue=True))
+
+        self.choose_destination_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.has_gathering_task_sensor.name,
+                indicator=1.0,
+                sensor_type=bool))
+
+
     def init_go_to_destination_behaviour(self, agent, charging_components):
         ####################### GO TO DESTINATION BEHAVIOUR ###################
         self._go_to_exploration_target_behaviour = GotoLocationBehaviour2(
             agent_name=agent._agent_name,
             identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION,
             plannerPrefix=self.get_manager_prefix(),
-            name='go_to_exploration_target'
+            name='go_to_exploration_target',
         )
         # exploration increases the nr of resources we know
         self._go_to_exploration_target_behaviour.add_effect(
@@ -93,6 +111,9 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # We can only walk to shop until we are there
         self._go_to_exploration_target_behaviour.add_precondition(
             precondition=Negation(self.at_shop_cond)
+        )      # We can only walk to shop until we are there
+        self._go_to_exploration_target_behaviour.add_precondition(
+            precondition=Negation(self.has_gathering_task_cond)
         )
 
         self._go_to_exploration_target_behaviour.add_precondition(
@@ -103,12 +124,7 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # self._go_to_exploration_target_behaviour.add_precondition(
         #     precondition=self.has_exploration_target_cond)
 
-    def init_destination_step_sensor(self, agent_name):
-
-        self.agent_position_sensor = AgentPositionSensor(
-            name="agent_position_sensor",
-            agent_name=agent_name # TODO: We should only use one of these per agent.
-        )
+    def init_destination_step_sensor(self, agent_name, sensor_map):
         self.exploration_target_sensor = SelectedTargetPositionSensor(
             identifier=MovementKnowledgebase.IDENTIFIER_EXPLORATION,
             name="exploration_target_sensor",
@@ -118,7 +134,7 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
         # Sensor to check distance to charging station
         self.target_step_sensor = StepDistanceSensor(
             name='target_step_sensor',
-            position_sensor_1=self.agent_position_sensor,
+            position_sensor_1=sensor_map.agent_position_sensor,
             position_sensor_2=self.exploration_target_sensor,
             initial_value=0
         )
@@ -142,6 +158,12 @@ class ExplorationNetworkBehaviour(NetworkBehaviour):
             agent_name=agent._agent_name
 
         )
+        self.discovery_completeness_condition = Condition(
+            sensor=self.resource_discovery_progress_sensor,
+            activator=LinearActivator(
+                zeroActivationValue=0.0,
+                fullActivationValue=1.0
+            ))
         self.resources_of_all_items_discovered_condition = Condition(
             sensor=self.resource_discovery_progress_sensor,
             activator=ThresholdActivator(
@@ -165,4 +187,3 @@ class ChooseDestinationBehaviour(BehaviourBase):
             agent_name = self.agent_name,
             pos = destination
         ))
-        rospy.logerr("ChooseDestinationBehaviour:: dostep")

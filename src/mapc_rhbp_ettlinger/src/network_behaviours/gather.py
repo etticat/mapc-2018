@@ -1,19 +1,19 @@
+from agent_behaviours.generic_action_behaviour import Action, GenericActionBehaviour
 from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.gather import ChooseIngredientBehaviour
-from behaviours.job import GoToResourceBehaviour, GatherBehaviour
+from behaviours.movement import GotoLocationBehaviour2
 from provider.product_provider import ProductProvider
-from sensor.agent import StorageFitsMoreItemsSensor
-from sensor.job import ProductSensor
-from sensor.movement import DestinationDistanceSensor
+from rhbp_utils.knowledge_sensors import KnowledgeSensor
+from sensor.movement import SelectedTargetPositionSensor, StepDistanceSensor
 
 
 class GatheringNetworkBehaviour(NetworkBehaviour):
 
-    def __init__(self, agent, name, msg, **kwargs):
+    def __init__(self, agent, name, msg, sensor_map, **kwargs):
 
         proximity = msg.proximity
         self._product_provider = ProductProvider(
@@ -24,103 +24,85 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
 
         super(GatheringNetworkBehaviour, self).__init__(name, **kwargs)
 
-
-        # Sensor to check how much space there is left after gaining the next intended item
-        self.storage_fits_more_items_sensor = StorageFitsMoreItemsSensor(
-            name="storage_fits_more_items_sensor",
-            agent_name=agent._agent_name
-        )
-        # Checks if the next item fits into the stock
-        self.next_item_fits_in_storage_condition = Condition(
-            sensor=self.storage_fits_more_items_sensor,
-            activator=BooleanActivator(desiredValue=True)
-        )
-
-        # self.init_product_sensor(agent)
-
-        # self.init_choose_ingredient_behaviour(agent, proximity)
-        # self.init_go_to_resource_behaviour(agent, proximity)
-        # self.init_gather_behaviour(agent)
+        self.init_choose_ingredient_behaviour(agent, proximity)
+        self.init_go_to_resource_behaviour(agent, proximity, sensor_map)
+        self.init_gather_behaviour(agent, sensor_map)
 
 
-    def init_gather_behaviour(self, agent):
+    def init_gather_behaviour(self, agent, sensor_map):
         ############### Gathering ##########################
-        self.gather_ingredients_behaviour = GatherBehaviour(
-            name="gather_for_hoarding_behaviour",
+        self.gather_behviour = GenericActionBehaviour(
+            name="gather_behviour",
+            action_type=Action.GATHER,
             agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix(),
-            behaviour_name=self.go_to_resource_node_behaviour._name
+            plannerPrefix=self.get_manager_prefix()
         )
+        self.go_to_resource_node_behaviour.add_precondition(
+            precondition=self.has_gathering_task_cond)
         # Only gather if we are at the intended resource node
-        self.gather_ingredients_behaviour.add_precondition(
+        self.gather_behviour.add_precondition(
             precondition=self.at_resource_node_condition)
 
-        # only gather if we have chosen an item to gather
-        self.gather_ingredients_behaviour.add_precondition(
-            precondition=Negation(self.has_all_ingredients_condition)
-        )
-
-        self.gather_ingredients_behaviour.add_effect(
+        self.gather_behviour.add_effect(
             effect=Effect(
-                sensor_name=self.storage_fits_more_items_sensor.name,
+                sensor_name=sensor_map.load_factor_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
 
             )
         )
+        # Gathering will eventually lead to finishing the gathering task
+        self.gather_behviour.add_effect(
+            effect=Effect(
+                sensor_name=self.has_gathering_task_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool
+            )
+        )
 
-    def init_go_to_resource_behaviour(self, agent, proximity):
+    def init_go_to_resource_behaviour(self, agent, proximity, sensor_map):
         ################ Going to resource #########################
-        self.go_to_resource_node_behaviour = GoToResourceBehaviour(
-            agent=agent,
+        self.go_to_resource_node_behaviour = GotoLocationBehaviour2(
+            agent_name=agent._agent_name,
+            identifier=MovementKnowledgebase.IDENTIFIER_GATHERING,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix()
         )
-        self.resource_destination_sensor_hoarding = DestinationDistanceSensor(
-            name='resource_destination_sensor',
-            agent_name=agent._agent_name,
-            behaviour_name=self.go_to_resource_node_behaviour._name)
+
+        self.gather_target_sensor = SelectedTargetPositionSensor(
+            identifier=MovementKnowledgebase.IDENTIFIER_GATHERING,
+            name="gather_target_sensor",
+            agent_name=agent._agent_name
+        )
+        self.go_to_resource_node_behaviour.add_precondition(
+            precondition=self.has_gathering_task_cond)
+        # Sensor to check distance to charging station
+        self.target_step_sensor = StepDistanceSensor(
+            name='gather_target_step_sensor',
+            position_sensor_1=sensor_map.agent_position_sensor,
+            position_sensor_2=self.gather_target_sensor,
+            initial_value=0
+        )
         self.at_resource_node_condition = Condition(
-            sensor=self.resource_destination_sensor_hoarding,
+            sensor=self.target_step_sensor,
             activator=ThresholdActivator(
-                thresholdValue=proximity,
+                thresholdValue=0,
                 isMinimum=False))  # highest activation if the value is below threshold
+
         # Only go to resource node if we aren't already there
         self.go_to_resource_node_behaviour.add_precondition(
             precondition=Negation(self.at_resource_node_condition))
-        # only go to resource node if we have chosen an item to gather
-        self.go_to_resource_node_behaviour.add_precondition(
-            precondition=Negation(self.has_all_ingredients_condition)
-        )
 
         # Going to resource has the effect of decreasing the distance to go there
         self.go_to_resource_node_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.resource_destination_sensor_hoarding.name,
-                indicator=-1.0,
+                sensor_name=self.target_step_sensor.name,
+                indicator=-1.0, # decreasing by 1 step
                 sensor_type=float
 
             )
         )
-    def init_product_sensor(self, agent):
-        self.number_of_products_to_gather_sensor = ProductSensor(
-            name="number_of_products_to_gather_sensor",
-            agent_name=agent._agent_name)
-        self.has_all_ingredients_condition = Condition(
-            sensor=self.number_of_products_to_gather_sensor,
-            activator=ThresholdActivator(
-                thresholdValue=0,
-                isMinimum=False
-            ))
 
-    def stop(self):
-        """
-        Stoping all gather goals when leaving network
-        :return:
-        """
-        self._product_provider.stop_gathering()
-        # self._movement_knowledge.stop_movement(self._agent_name, self.go_to_resource_node_behaviour.name)
-        super(GatheringNetworkBehaviour, self).stop()
 
     def init_choose_ingredient_behaviour(self, agent, proximity):
         self.choose_ingredient_behaviour = ChooseIngredientBehaviour(
@@ -128,16 +110,27 @@ class GatheringNetworkBehaviour(NetworkBehaviour):
             agent_name=agent._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
+        self.has_gathering_task_sensor = KnowledgeSensor(
+            name="has_gathering_task_sensor",
+            pattern=MovementKnowledgebase.generate_tuple(
+                agent_name=agent._agent_name,
+                identifier=MovementKnowledgebase.IDENTIFIER_GATHERING
+            )
+        )
+        self.has_gathering_task_cond = Condition(
+            sensor=self.has_gathering_task_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
 
         # only chose an item if we currently don't have a goal
         self.choose_ingredient_behaviour.add_precondition(
-            precondition=self.has_all_ingredients_condition
+            precondition=Negation(self.has_gathering_task_cond)
         )
 
         # Chosing an ingredient has the effect, that we have more ingredients to gather
         self.choose_ingredient_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.number_of_products_to_gather_sensor.name,
+                sensor_name=self.has_gathering_task_sensor.name,
                 indicator=1.0,
                 sensor_type=bool
             )

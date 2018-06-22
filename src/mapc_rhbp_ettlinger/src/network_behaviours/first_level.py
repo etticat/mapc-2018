@@ -1,10 +1,13 @@
 #!/usr/bin/env python2
 from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
+from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.sensors import TopicSensor
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
+from network_behaviours.gather import GatheringNetworkBehaviour
+from network_behaviours.sensor_map import SensorAndConditionMap
 
 
 class FirstLevelBehaviours(object):
@@ -21,6 +24,9 @@ class FirstLevelBehaviours(object):
             topic="/team",
             name="score_sensor",
             message_attr="score")
+
+        self.sensor_map = SensorAndConditionMap(agent_name=agent._agent_name)
+
         self.init_behaviour_network(msg)
         self.init_behaviour_network_connections()
         self.init_coordination()
@@ -30,16 +36,19 @@ class FirstLevelBehaviours(object):
         ######################## Battery Behaviours ########################
         self.battery_charging_behaviours = BatteryChargingNetworkBehaviour(
             agent=self._agent,
+            sensor_map=self.sensor_map,
             msg=msg,)
 
 
         ######################## Gathering Network Behaviour ########################
-        # self._gathering_network = GatheringNetworkBehaviour(
-        #     name=self._agent_name + '/gathering',
-        #     plannerPrefix=self._agent_name,
-        #     msg=msg,
-        #     agent=self._agent,
-        #     max_parallel_behaviours=1)
+        self._gathering_network = GatheringNetworkBehaviour(
+            name=self._agent_name + '/gathering',
+            plannerPrefix=self._agent_name,
+            msg=msg,
+            agent=self._agent,
+            readyThreshold = 0.01, # I want this behaviour to be executed whenever at least some activation is there
+            sensor_map=self.sensor_map,
+            max_parallel_behaviours=1)
 
         # Add charging behaviours to gathering Network
         # self.battery_charging_behaviours.init_charge_behaviours(
@@ -67,6 +76,7 @@ class FirstLevelBehaviours(object):
             name=self._agent_name + '/explore',
             plannerPrefix=self._agent_name,
             agent=self._agent,
+            sensor_map=self.sensor_map,
             charging_components=self.battery_charging_behaviours,
             msg=msg,
             max_parallel_behaviours=1)
@@ -106,30 +116,31 @@ class FirstLevelBehaviours(object):
 
         ######################## Gathering Network Behaviour ########################
 
-        # self._gathering_network.go_to_resource_node_behaviour.add_precondition(
-        #     self.battery_charging_network_behaviour.enough_battery_cond)
-
-        # self._gathering_network.add_effects_and_goals([(
-        #     self._gathering_network.storage_fits_more_items_sensor,
-        #     Effect(
-        #         sensor_name=self._gathering_network.storage_fits_more_items_sensor.name,
-        #         indicator=1.0, # Was muss hier rein?
-        #         sensor_type=bool
-        #     )
-        # )])
-
-
-        # self._gathering_goal = GoalBase(
-        #     name='gathering_goal',
-        #     permanent=True,
-        #     plannerPrefix=self._agent_name,
-        #     conditions=[Negation(self._gathering_network.next_item_fits_in_storage_condition)])
-
-        self._exploration_goal = GoalBase(
-            name='charge_goal',
+        self._gather_goal = GoalBase(
+            name='fill_load_goal',
             permanent=True,
             plannerPrefix=self._agent_name,
-            conditions=[self.exploration_network.resources_of_all_items_discovered_condition])
+            conditions=[self.sensor_map.load_fullnes_condition])
+
+        # Gather when there is space left in load
+        self._gathering_network.add_precondition(Negation(self.sensor_map.load_fullnes_condition))
+
+        # Gather when we know some of the resource nodes already
+        self._gathering_network.add_precondition(self.exploration_network.discovery_completeness_condition)
+
+        # Gather only when next item fits in storage
+        self._gathering_network.add_precondition(self.sensor_map.can_fit_more_ingredients_cond)
+
+        self._gathering_network.add_effects_and_goals([(
+            self.sensor_map.load_factor_sensor,
+            Effect(
+                sensor_name=self.sensor_map.load_factor_sensor.name,
+                indicator=1.0,
+                sensor_type=float
+            )
+        )])
+
+
 
         ######################## Assembly Network Behaviour ########################
         # Only assemble if there is enough battery left
@@ -157,6 +168,12 @@ class FirstLevelBehaviours(object):
         # )
 
         ######################## Exploration Network Behaviour ########################
+
+        self._exploration_goal = GoalBase(
+            name='charge_goal',
+            permanent=True,
+            plannerPrefix=self._agent_name,
+            conditions=[self.exploration_network.resources_of_all_items_discovered_condition])
 
         # Only do shop exploration when enough battery left
         # self.exploration_network.add_precondition(

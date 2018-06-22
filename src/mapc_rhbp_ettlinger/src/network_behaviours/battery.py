@@ -1,18 +1,19 @@
 from agent_knowledge.movement import MovementKnowledgebase
 from behaviour_components.activators import ThresholdActivator, LinearActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition
+from behaviour_components.conditions import Condition, Negation
+from behaviour_components.goals import GoalBase
 from behaviour_components.sensors import TopicSensor
 from behaviours.battery import ChargeBehaviour, RechargeBehaviour
 from behaviours.movement import GotoLocationBehaviour2
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
-from sensor.movement import AgentPositionSensor, StepDistanceSensor, ClosestChargingStationSensor
+from sensor.movement import StepDistanceSensor, ClosestChargingStationSensor
 
 
 class BatteryChargingNetworkBehaviour():
 
-    def __init__(self, agent, msg, recharge_lower_bound_percentage=0.7, recharge_critical_bound_percentage=0.2,):
+    def __init__(self, agent, msg, sensor_map, recharge_lower_bound_percentage=0.7, recharge_critical_bound_percentage=0.2,):
 
         self._movement_knowledge = MovementKnowledgebase()
         self.facility_knowledgebase = FacilityProvider()
@@ -37,7 +38,7 @@ class BatteryChargingNetworkBehaviour():
             name="charge_sensor",
             message_attr='charge')
 
-        self.init_step_sensor(agent_name=agent._agent_name)
+        self.init_step_sensor(agent_name=agent._agent_name, sensor_map=sensor_map)
 
 
         # charging required condition: When closer to lower bound -> higher activation
@@ -61,7 +62,6 @@ class BatteryChargingNetworkBehaviour():
             activator=ThresholdActivator(
                 thresholdValue=0,
                 isMinimum=False))
-
 
         # CONDITION: Vehicle has enough charge to function
         self.enough_battery_to_move_cond = Condition(
@@ -93,12 +93,8 @@ class BatteryChargingNetworkBehaviour():
         # Only recharge if battery is empty
         # self._recharge_behaviour.add_precondition(self._battery_empty_cond)
 
-    def init_step_sensor(self, agent_name):
+    def init_step_sensor(self, agent_name, sensor_map):
 
-        self.agent_position_sensor = AgentPositionSensor(
-            name="agent_position_sensor",
-            agent_name=agent_name
-        )
         self.closest_charging_station_sensor = ClosestChargingStationSensor(
             name="closest_charging_station_sensor",
             agent_name=agent_name
@@ -107,7 +103,7 @@ class BatteryChargingNetworkBehaviour():
         # Sensor to check distance to charging station
         self._charging_station_step_sensor = StepDistanceSensor(
             name='charging_station_step_distance',
-            position_sensor_1=self.agent_position_sensor,
+            position_sensor_1=sensor_map.agent_position_sensor,
             position_sensor_2=self.closest_charging_station_sensor,
             initial_value=10
         )
@@ -155,3 +151,28 @@ class BatteryChargingNetworkBehaviour():
         recharge_behaviour.add_effect(self.recharge_effect)
 
         self._recharge_behaviours[planner_prefix] = recharge_behaviour
+
+        #### Technically not needed????? ###################
+        # TODO #86 why do I need those?
+        # The behaviours don't seem to get enough activation before its too late (and the agent can't make it to the station anymore)
+        # Ideally we don't use any preconditions for this and let the planner decide. Why does it not worko without?
+
+
+        # do not look for charging station if we are already at one
+        go_to_charging_station_behaviour.add_precondition(
+            Negation(self._at_charging_station_cond))
+
+        # do not try to find charging station when battery is completely empty
+        go_to_charging_station_behaviour.add_precondition(
+            Negation(self._battery_empty_cond))
+
+        charge_behaviour.add_precondition(self._require_charging_cond)
+        recharge_behaviour.add_precondition(self._battery_empty_cond)
+        go_to_charging_station_behaviour.add_precondition(self._require_charging_cond)
+
+
+        self.charge_goal = GoalBase(
+            name='charge_goal',
+            permanent=True,
+            plannerPrefix=planner_prefix,
+            conditions=[Negation(self._require_charging_cond)])

@@ -3,6 +3,7 @@ import random
 import rospy
 from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg
 
+from agent_knowledge.resource import ResourceKnowledgebase
 from common_utils import rhbp_logging
 from common_utils.singleton import Singleton
 
@@ -14,6 +15,7 @@ class FacilityProvider(object):
     Keeps a list of all Facilities readily available for various components to use
     """
     def __init__(self):
+        self._resource_knowledge = ResourceKnowledgebase()
         self.charging_stations = {}
         self.storages = {}
         self.workshops = {}
@@ -64,3 +66,12 @@ class FacilityProvider(object):
 
     def get_charging_stations(self):
         return self.charging_stations.values()
+
+    def get_resources(self):
+        resources = self._resource_knowledge.get_resources_for_item(item="*")
+        res = {}
+
+        for resource in resources:
+            res[resource.name] = resource
+
+        return res

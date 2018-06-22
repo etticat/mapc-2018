@@ -7,6 +7,7 @@ from behaviour_components.managers import Manager
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.debug import DebugUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
 from network_behaviours.first_level import FirstLevelBehaviours
@@ -128,8 +129,8 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        # if hasattr(self, "_action_network_behaviour"):
-        #     DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network._go_to_exploration_target_behaviour)
+        if hasattr(self, "_action_network_behaviour"):
+            DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network)
 
 
         if self._initialized:

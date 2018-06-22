@@ -61,19 +61,6 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
         return res
 
-
-class AgentPositionSensor(Sensor):
-
-    def __init__(self, agent_name, name=None):
-        super(AgentPositionSensor, self).__init__(name=name, initial_value=None)
-        # TODO this might just be a Topic Sensor now...
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent,
-                                         self.subscription_callback_ref_topic)
-
-    def subscription_callback_ref_topic(self, msg):
-        self.update(msg.pos)
-
-
 class SelectedTargetPositionSensor(KnowledgeFactSensor):
 
     def __init__(self, identifier, agent_name, name=None):
@@ -127,6 +114,8 @@ class StepDistanceSensor(AggregationSensor):
 
         steps = self.distance_provider.calculate_steps(pos1, pos2)
 
+        if self._name == "charging_station_step_distance":
+            ettilog.logerr("STEPS: %s", steps)
         return steps
 
 class ClosestChargingStationSensor(Sensor):
@@ -137,13 +126,13 @@ class ClosestChargingStationSensor(Sensor):
         self._agent_name = agent_name
         self._last_agent_position = None
 
-
+        self.movement_knowledgebase = MovementKnowledgebase()
+        self.facility_provider = FacilityProvider()
         self.distance_provider = DistanceProvider()
+
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent,
                                          self.subscription_callback_ref_topic)
 
-        self.facility_provider = FacilityProvider()
-        self.movement_knowledgebase = MovementKnowledgebase()
 
 
     def subscription_callback_ref_topic(self, msg):

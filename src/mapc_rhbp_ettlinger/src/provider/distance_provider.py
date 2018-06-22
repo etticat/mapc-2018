@@ -25,13 +25,7 @@ class DistanceProvider(object):
     GRAPHHOPPER_DEFAULT_PORT = 8989
 
     def __init__(self):
-        self.cell_size = 1.0
-        self.can_fly = ""
-        self._cache = {}
-        self._proximity = 0
-        self._map = None
         self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
-
 
     def callback_sim_start(self, sim_start):
         """
@@ -65,7 +59,8 @@ class DistanceProvider(object):
                                                                          pos2) < self._proximity:
             return 0
         size_ = self.calculate_distance(pos1, pos2) / (self.speed * self.cell_size)
-        return math.ceil(size_ / 1000)
+        return math.ceil((size_ / 1000) - 0.002) # round up except when its really close
+        # TODO Maype this can be better approximated using proximity. But then need to conver from latlong eucliedian to meters
 
 
     def calculate_distance_air(self, pos1, pos2):
