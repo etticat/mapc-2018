@@ -8,5 +8,5 @@ ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME +
 class BaseKnowledgebase(object):
 
 
-    def __init__(self):
-        self._kb_client = BaseKnowledgebase.kb_instance = KnowledgeBaseClient(knowledge_base_name = KnowledgeBase.DEFAULT_NAME)
+    def __init__(self, knowledge_base_name=KnowledgeBase.DEFAULT_NAME):
+        self._kb_client = BaseKnowledgebase.kb_instance = KnowledgeBaseClient(knowledge_base_name = knowledge_base_name)

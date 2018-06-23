@@ -3,14 +3,13 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
-from behaviour_components.managers import Manager
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
-from network_behaviours.first_level import FirstLevelBehaviours
+from network_behaviours.first_level import ActionManager
 from provider.provider_info_distributor import ProviderInfoDistributor
 
 ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
@@ -38,7 +37,7 @@ class RhbpAgent:
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
-        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
+        self._action_manager = ActionManager(agent_name=self._agent_name)
         self._provider_info_distributor = ProviderInfoDistributor()
 
         self._sim_started = False
@@ -73,9 +72,7 @@ class RhbpAgent:
 
             # init only once, even when run restarts
             if not self._initialized:
-                self._action_network_behaviour = FirstLevelBehaviours(
-                        msg=sim_start,
-                        agent=self)
+                self._action_manager.init_behaviours(msg=sim_start)
 
                 self.assemble_contractor = AssembleContractor(
                     agent_name=self._agent_name,
@@ -139,7 +136,7 @@ class RhbpAgent:
             # wait for generic action response (send by any behaviour)
             while not self._received_action_response:
                 steps += 1
-                self._manager.step() # selected behaviours eventually trigger action
+                self._action_manager.step() # selected behaviours eventually trigger action
                 # Recharge if decision-making-time > 3.9 seconds
                 if (rospy.get_rostime() - start_time).to_sec() > 3.9:
                     ettilog.logerr(

@@ -7,10 +7,9 @@ import abc
 
 import rospy
 from diagnostic_msgs.msg import KeyValue
-from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from mac_ros_bridge.msg import GenericAction, Position
 
-from agent_knowledge.movement import MovementKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import rhbp_logging
@@ -33,7 +32,7 @@ class GotoLocationBehaviour(BehaviourBase):
 
         self._agent_name = agent_name
 
-        self._movement_knowledge = MovementKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
 
         self._selected_pos = None
 
@@ -118,7 +117,7 @@ class GotoLocationBehaviour(BehaviourBase):
         # we set to false in order to fulfil the requirements of FinishExplorationBehaviour
 
         if self._selected_pos:
-            self._movement_knowledge.start_movement(self._agent_name, self._name, self._selected_pos, self._selected_destination)
+            self._movement_knowledge.create_task(self._agent_name, self._name, self._selected_pos, self._selected_destination)
 
         super(GotoLocationBehaviour, self).start()
 
@@ -134,7 +133,7 @@ class GotoLocationBehaviour(BehaviourBase):
             self._selected_pos = self._select_pos()
 
             if self._selected_pos:
-                self._movement_knowledge.start_movement(self._agent_name, self._name, self._selected_pos, self._selected_destination)
+                self._movement_knowledge.create_task(self._agent_name, self._name, self._selected_pos, self._selected_destination)
 
         self.move()
 
@@ -191,7 +190,7 @@ class GotoLocationBehaviour2(BehaviourBase):
         super(GotoLocationBehaviour2, self) \
             .__init__(requires_execution_steps=True, **kwargs)
 
-        self._movement_knowledge = MovementKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
 
         self._agent_name = agent_name
         self.identifier = identifier
@@ -217,7 +216,7 @@ class GotoLocationBehaviour2(BehaviourBase):
         publisher.publish(action)
 
     def do_step(self):
-        destination = self._movement_knowledge.get_movement(agent_name=self._agent_name, identifier=self.identifier)
+        destination = self._movement_knowledge.get_task(agent_name=self._agent_name, type=self.identifier)
 
         assert destination is not None
 

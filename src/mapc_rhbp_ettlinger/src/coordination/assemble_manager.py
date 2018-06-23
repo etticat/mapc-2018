@@ -1,12 +1,11 @@
 import random
+import time
 
 import rospy
-import time
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssignment, AssembleAcknowledgement, \
     AssembleManagerStatus, AssembleStop
 
 import utils.rhbp_logging
-from agent_knowledge.assemble_task import AssembleKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from common_utils.product_util import ProductUtil
 from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
@@ -14,13 +13,13 @@ from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
-ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.assemble_manager')
+ettilog = utils.rhbp_logging.LogManager(logger_name=LOGGER_DEFAULT_NAME + '.coordination.assemble_manager')
 
 
 class AssembleManager(object):
 
-    DEADLINE_BIDS = 0.7
-    DEADLINE_ACKNOLEDGEMENT = 0.7
+    DEADLINE_BIDS = 2.5
+    DEADLINE_ACKNOLEDGEMENT = 2.0
 
     def __init__(self, agent_name):
 
@@ -29,8 +28,6 @@ class AssembleManager(object):
         self._agent_name = agent_name
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
-
-        self._assemble_knowledgebase = AssembleKnowledgebase()
 
         self.id = self.assemble_id(new_id=True)
         self.current_running_id = None
@@ -90,7 +87,6 @@ class AssembleManager(object):
         The first step of the protocol
         :return:
         """
-
         if self.current_running_id == None:
             self._pub_assemble_request_start.publish(AssembleManagerStatus(id=self.assemble_id()))
 

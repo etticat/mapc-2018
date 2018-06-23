@@ -35,11 +35,12 @@ class ChooseIngredientToGather(object):
 
         max_activation = ChooseIngredientToGather.THRESHOLD
 
-        for item, already_in_stock_items in self.ingredient_priority():
+        item_priority = self.ingredient_priority()
+        for item, already_in_stock_items in item_priority:
             load_after_gathering = self.load_after_gathering(item)
             if load_after_gathering >= 0 and item in gatherable_items:
                 steps, resource = self.steps_to_closest_resource(resources, item)
-                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_ALREADY_IN_STOCK *\
+                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_ALREADY_IN_STOCK +\
                              steps * ChooseIngredientToGather.WEIGHT_STEPS
                 if activation > max_activation:
                     max_activation = activation
@@ -61,12 +62,13 @@ class ChooseIngredientToGather(object):
 
     def steps_to_closest_resource(self, resources, item):
         min_steps = 999
-        resource = None
+        best_resource = None
 
         for resource in resources.values():
-            steps = self.step_provider.calculate_steps(self._agent_info_provider.pos, resource.pos)
-            if steps < min_steps:
-                min_steps = steps
-                resource = resource
+            if resource.item.name == item:
+                steps = self.step_provider.calculate_steps(self._agent_info_provider.pos, resource.pos)
+                if steps < min_steps:
+                    min_steps = steps
+                    best_resource = resource
 
-        return min_steps, resource
+        return min_steps, best_resource

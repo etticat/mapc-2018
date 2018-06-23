@@ -3,10 +3,8 @@ from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
 from mapc_rhbp_ettlinger.msg import AssembleTaskProgress, AssembleStop
 
-from agent_knowledge.assemble_task import AssembleKnowledgebase
-from agent_knowledge.movement import MovementKnowledgebase
 from agent_knowledge.resource import ResourceKnowledgebase
-from agent_knowledge.tasks import JobKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from behaviours.movement import GotoLocationBehaviour
@@ -109,7 +107,7 @@ class GatherBehaviour(GenericActionBehaviour):
                       agent_name=agent_name,
                       action_type=Action.GATHER,
                       **kwargs)
-        self._movement_knowledge = MovementKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
         self._task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._resource_knowledgebase= ResourceKnowledgebase()
@@ -118,15 +116,15 @@ class GatherBehaviour(GenericActionBehaviour):
 
     def do_step(self):
         required_ingredients = self._product_provider.get_planned_ingredients()
-        movement = self._movement_knowledge.get_movement(
+        movement = self._movement_knowledge.get_task(
             agent_name=self.agent_name,
-            behaviour_name=self.movement_behaviour_name
+            type=TaskKnowledgebase.TYPE_GATHERING
         )
 
         # If we don't need item anymore stop gathering
         resource = self._resource_knowledgebase.get_resource_by_name(movement.destination)
         if resource != None and resource.item.name not in required_ingredients:
-            self._movement_knowledge.stop_movement(self.agent_name, self.movement_behaviour_name)
+            self._movement_knowledge.finish_task(self.agent_name, self.movement_behaviour_name)
 
         super(GatherBehaviour, self).do_step()
 
@@ -140,13 +138,12 @@ class AssembleProductBehaviour(BehaviourBase):
             .__init__(
             requires_execution_steps=True,
             **kwargs)
-        self.assemble_task = None
+        self._task = None
         self._agent_name = agent_name
         self._last_task = None
         self._last_goal = None
-        self._task_knowledge = JobKnowledgebase()
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self._assemble_knowledgebase = AssembleKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -187,19 +184,19 @@ class AssembleProductBehaviour(BehaviourBase):
         if self._last_task == "assemble" and agent.last_action == "assemble":
             ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
             if agent.last_action_result in ["successful", "failed_capacity"]:
-                self._task_progress_dict[self.assemble_task.id] = self._task_progress_dict.get(self.assemble_task.id, 0) + 1
-                if self._get_assemble_step() < len(self.assemble_task.tasks.split(",")):
+                self._task_progress_dict[self._task.id] = self._task_progress_dict.get(self._task.id, 0) + 1
+                if self._get_assemble_step() < len(self._task.task.split(",")):
                     # If there are still tasks to do, inform all others that the next task will be performed
                     ettilog.logerr("AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....", self._agent_name)
                     assembleTaskCoordination = AssembleTaskProgress(
-                        id=self.assemble_task.id,
+                        id=self._task.id,
                         step=self._get_assemble_step()
                     )
                     self._pub_assemble_progress.publish(assembleTaskCoordination)
                 else:
                     # If this was the last task -> cancel the assembly
                     ettilog.logerr("AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly", self._agent_name)
-                    self._pub_assemble_stop.publish(AssembleStop(id=self.assemble_task.id, reason="assembly finished"))
+                    self._pub_assemble_stop.publish(AssembleStop(id=self._task.id, reason="assembly finished"))
 
     def action_assemble(self, item):
         """
@@ -229,13 +226,13 @@ class AssembleProductBehaviour(BehaviourBase):
 
     def start(self):
 
-        self.assemble_task = self._assemble_knowledgebase.get_assemble_task(agent=self._agent_name)
+        self._task = self._movement_knowledge.get_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_ASSEMBLE)
 
         super(AssembleProductBehaviour, self).start()
 
     def do_step(self):
-        assert self.assemble_task != None
-        products = self.assemble_task.tasks.split(",")
+        assert self._task != None
+        products = self._task.task.split(",")
         if len(products) > 0 and self._get_assemble_step() < len(products):
             (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
             if self._last_task == "assemble":
@@ -253,34 +250,11 @@ class AssembleProductBehaviour(BehaviourBase):
     def stop(self):
         # Once assembly is done, free all agents from assignemt task
 
-        self.assemble_task = None
+        self._task = None
         super(AssembleProductBehaviour, self).stop()
 
     def _get_assemble_step(self):
-        return self._task_progress_dict.get(self.assemble_task.id, 0)
-
-
-class GoToWorkshopBehaviour(GotoLocationBehaviour):
-
-    def __init__(self, **kwargs):
-        super(GoToWorkshopBehaviour, self).__init__(
-            **kwargs)
-        self._selected_facility = None
-        self._task_knowledge = JobKnowledgebase()
-        self._product_provider = ProductProvider(agent_name=self._agent_name)
-        self._assemble_knowledge = AssembleKnowledgebase()
-
-    def _select_pos(self):
-        assemble_task = self._assemble_knowledge.get_assemble_task(agent=self._agent_name)
-        if assemble_task is None:
-            ettilog.logerr("no task assigned")
-            return
-        return assemble_task.pos
-
-    def start(self):
-        self._selected_pos = False
-        super(GoToWorkshopBehaviour, self).start()
-
+        return self._task_progress_dict.get(self._task.id, 0)
 
 class DeliverJobBehaviour(BehaviourBase):
 
@@ -291,7 +265,7 @@ class DeliverJobBehaviour(BehaviourBase):
             **kwargs)
         self.current_task = None
         self._agent_name = agent_name
-        self._task_knowledge = JobKnowledgebase()
+        self._task_knowledge = TaskKnowledgebase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -324,7 +298,7 @@ class DeliverJobBehaviour(BehaviourBase):
         # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
         if self.current_task != None and agent.last_action == "deliver_job":
             ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result, agent.last_action_result)
-            self._task_knowledge.end_job_task(job_id=self.current_task.job_id, agent_name=self._agent_name)
+            self._task_knowledge.finish_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_DELIVER)
             self.current_task = None
 
 

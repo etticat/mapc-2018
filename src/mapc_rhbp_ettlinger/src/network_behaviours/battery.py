@@ -1,17 +1,18 @@
-from agent_knowledge.movement import MovementKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.battery import ChargeBehaviour, RechargeBehaviour
 from behaviours.movement import GotoLocationBehaviour2
+from network_behaviours.sensor_map import SensorAndConditionMap
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 
 
 class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
-    def __init__(self, agent, sensor_map, name, **kwargs):
+    def __init__(self, agent_name, sensor_map, name, **kwargs):
         """
 
         :param agent:
@@ -20,18 +21,18 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         :type sensor_map: SensorAndConditionMap
         """
         super(BatteryChargingNetworkBehaviour, self).__init__(name=name, **kwargs)
-
-        self._movement_knowledge = MovementKnowledgebase()
+        self._agent_name = agent_name
+        self._movement_knowledge = TaskKnowledgebase()
         self.facility_knowledgebase = FacilityProvider()
         self.distance_provider = DistanceProvider()
-        self._agent_name = agent._agent_name
+        self._agent_name = self._agent_name
         self.sensor_map = sensor_map
 
         # Behaviour to go to the closest Charging station
         go_to_charging_station_behaviour = GotoLocationBehaviour2(
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + "/go_to_charging_station_behaviour",
-            identifier=MovementKnowledgebase.IDENTIFIER_CHARGING_STATION,
+            identifier=TaskKnowledgebase.TYPE_CHARGING_STATION,
             agent_name=self._agent_name)
         go_to_charging_station_behaviour.add_effect(
             effect=self.sensor_map.go_to_charging_station_effect
@@ -92,5 +93,18 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         self.charge_goal = GoalBase(
             name='charge_goal',
             permanent=True,
+            priority=10,
             plannerPrefix=self.get_manager_prefix(),
             conditions=[Negation(self.sensor_map._require_charging_cond)])
+
+    def apply_charging_restrictions(self, movement_behaviour):
+        # exploration has the effect that we well be at the place at some point
+        movement_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.sensor_map.charge_sensor.name,
+                indicator=-1.0,
+                sensor_type=float))
+        # TODO #86: Is this sufficient to tell the planner, that even in 5 steps thi has to be met?
+        movement_behaviour.add_precondition(
+            precondition=self.sensor_map.enough_battery_to_move_cond
+        )

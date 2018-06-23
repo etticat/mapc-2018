@@ -59,11 +59,9 @@ add_message_files(
   JobBid.msg
   JobAcknowledgement.msg
   JobAssignment.msg
-  JobTask.msg
   StockItem.msg
   StockItemMsg.msg
-  Movement.msg
-  WellTask.msg
+  Task.msg
 )
 ## Generate services in the 'srv' folder
 add_service_files(

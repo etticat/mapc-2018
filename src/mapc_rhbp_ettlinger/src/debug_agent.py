@@ -21,7 +21,7 @@ class DebugAgent(object):
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")
         # DebugUtils.add_build_well_task()
-        DebugUtils.assign_assembly_task()
+        # DebugUtils.assign_assembly_task()
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 

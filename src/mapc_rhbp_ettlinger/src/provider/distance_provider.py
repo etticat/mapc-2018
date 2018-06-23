@@ -12,6 +12,7 @@ from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import rhbp_logging
+from common_utils.agent_utils import AgentUtils
 from common_utils.graphhopper import GraphhopperProcessHandler
 from common_utils.singleton import Singleton
 
@@ -43,7 +44,6 @@ class DistanceProvider(object):
         if self.can_fly:
             return self.calculate_distance_air(startPosition, endPosition)
         else:
-            ettilog.logerr("using graphhopper")
             try:
                 return self.calculate_distance_street(startPosition, endPosition)
             except LookupError as e:
@@ -52,6 +52,7 @@ class DistanceProvider(object):
                 ettilog.logwarn("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
                 ettilog.logdebug(traceback.format_exc())
 
+            ettilog.logwarn("DistanceProvider:: Using fallback approximation")
             return self.calculate_distance_air(startPosition, endPosition) * 2 # Fallback
 
     def calculate_steps(self, pos1, pos2):
@@ -163,3 +164,6 @@ class DistanceProvider(object):
                 closest_facility_steps = steps
                 closest_facility = charging_station
         return closest_facility
+
+    def at_same_location(self, pos1, pos2):
+        return AgentUtils.calculate_distance(pos1, pos2) < self._proximity

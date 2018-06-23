@@ -1,9 +1,10 @@
-from agent_behaviours.generic_action_behaviour import Action, GenericActionBehaviour
-from agent_knowledge.movement import MovementKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
+from behaviour_components.goals import GoalBase
 from behaviours.gather import ChooseIngredientBehaviour
+from behaviours.generic_action import Action, GenericActionBehaviour
 from behaviours.movement import GotoLocationBehaviour2
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from provider.product_provider import ProductProvider
@@ -13,28 +14,38 @@ from sensor.movement import SelectedTargetPositionSensor, StepDistanceSensor
 
 class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
-    def __init__(self, agent, name, msg, sensor_map, **kwargs):
+    def __init__(self, agent_name, name, sensor_map, **kwargs):
 
-        proximity = msg.proximity
+
+        super(GatheringNetworkBehaviour, self).__init__(name=name, agent_name=agent_name, sensor_map=sensor_map, **kwargs)
+
         self._product_provider = ProductProvider(
-            agent_name=agent._agent_name)
+            agent_name=self._agent_name)
 
-        self._movement_knowledge = MovementKnowledgebase()
-        self._agent_name= agent._agent_name
+        self._movement_knowledge = TaskKnowledgebase()
+        self._agent_name= self._agent_name
 
-        super(GatheringNetworkBehaviour, self).__init__(name=name, agent=agent, msg=msg, sensor_map=sensor_map, **kwargs)
+        self.init_choose_ingredient_behaviour()
+        self.init_go_to_resource_behaviour()
+        self.init_gather_behaviour()
 
-        self.init_choose_ingredient_behaviour(agent, proximity)
-        self.init_go_to_resource_behaviour(agent, proximity, sensor_map)
-        self.init_gather_behaviour(agent, sensor_map)
+        self.apply_charging_restrictions(self.go_to_resource_node_behaviour)
 
 
-    def init_gather_behaviour(self, agent, sensor_map):
+        self.charge_goal = GoalBase(
+            name='gather_goal',
+            permanent=True,
+            priority=100,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Negation(self.sensor_map.load_fullnes_condition)])
+
+
+    def init_gather_behaviour(self):
         ############### Gathering ##########################
         self.gather_behviour = GenericActionBehaviour(
             name="gather_behviour",
             action_type=Action.GATHER,
-            agent_name=agent._agent_name,
+            agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
         self.go_to_resource_node_behaviour.add_precondition(
@@ -45,7 +56,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.gather_behviour.add_effect(
             effect=Effect(
-                sensor_name=sensor_map.load_factor_sensor.name,
+                sensor_name=self.sensor_map.load_factor_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
 
@@ -60,26 +71,26 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             )
         )
 
-    def init_go_to_resource_behaviour(self, agent, proximity, sensor_map):
+    def init_go_to_resource_behaviour(self):
         ################ Going to resource #########################
         self.go_to_resource_node_behaviour = GotoLocationBehaviour2(
-            agent_name=agent._agent_name,
-            identifier=MovementKnowledgebase.IDENTIFIER_GATHERING,
+            agent_name=self._agent_name,
+            identifier=TaskKnowledgebase.TYPE_GATHERING,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix()
         )
 
         self.gather_target_sensor = SelectedTargetPositionSensor(
-            identifier=MovementKnowledgebase.IDENTIFIER_GATHERING,
+            type=TaskKnowledgebase.TYPE_GATHERING,
             name="gather_target_sensor",
-            agent_name=agent._agent_name
+            agent_name=self._agent_name
         )
         self.go_to_resource_node_behaviour.add_precondition(
             precondition=self.has_gathering_task_cond)
         # Sensor to check distance to charging station
         self.target_step_sensor = StepDistanceSensor(
             name='gather_target_step_sensor',
-            position_sensor_1=sensor_map.agent_position_sensor,
+            position_sensor_1=self.sensor_map.agent_position_sensor,
             position_sensor_2=self.gather_target_sensor,
             initial_value=0
         )
@@ -104,17 +115,17 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         )
 
 
-    def init_choose_ingredient_behaviour(self, agent, proximity):
+    def init_choose_ingredient_behaviour(self):
         self.choose_ingredient_behaviour = ChooseIngredientBehaviour(
             name="choose_ingredient_behaviour",
-            agent_name=agent._agent_name,
+            agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
         self.has_gathering_task_sensor = KnowledgeSensor(
             name="has_gathering_task_sensor",
-            pattern=MovementKnowledgebase.generate_tuple(
-                agent_name=agent._agent_name,
-                identifier=MovementKnowledgebase.IDENTIFIER_GATHERING
+            pattern=TaskKnowledgebase.generate_tuple(
+                agent_name=self._agent_name,
+                type=TaskKnowledgebase.TYPE_GATHERING
             )
         )
         self.has_gathering_task_cond = Condition(

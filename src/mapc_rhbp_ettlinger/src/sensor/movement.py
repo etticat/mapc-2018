@@ -5,9 +5,9 @@ from __future__ import division  # force floating point division when using plai
 
 import rospy
 from mac_ros_bridge.msg import Agent, Position
-from mapc_rhbp_ettlinger.msg import Movement
+from mapc_rhbp_ettlinger.msg import Task
 
-from agent_knowledge.movement import MovementKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.sensors import Sensor, AggregationSensor
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
@@ -21,13 +21,13 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
     def __init__(self, agent_name, behaviour_name, name):
 
-        pattern = MovementKnowledgebase.generate_tuple(agent_name=agent_name, behaviour=behaviour_name)
+        pattern = TaskKnowledgebase.generate_tuple(agent_name=agent_name, behaviour=behaviour_name)
 
         super(DestinationDistanceSensor, self).__init__(pattern=pattern, name=name, initial_value=999.0)
 
         self._last_pos = None
 
-        self._movement_knowledge = MovementKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self.subscription_callback_ref_topic)
 
@@ -47,7 +47,7 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
         res = 1.0
 
         if len(facts) > 0 and self._last_pos is not None:
-            movement = MovementKnowledgebase.generate_movement_from_fact(facts.pop())  # only getting the first fact
+            movement = TaskKnowledgebase.generate_task_from_fact(facts.pop())  # only getting the first fact
 
             try:
 
@@ -63,17 +63,17 @@ class DestinationDistanceSensor(KnowledgeFirstFactSensor):
 
 class SelectedTargetPositionSensor(KnowledgeFactSensor):
 
-    def __init__(self, identifier, agent_name, name=None):
+    def __init__(self, type, agent_name, name=None):
         super(SelectedTargetPositionSensor, self).__init__(
             name=name,
             initial_value=None,
-            pattern=MovementKnowledgebase.generate_tuple(agent_name=agent_name, identifier=identifier)
+            pattern=TaskKnowledgebase.generate_tuple(agent_name=agent_name, type=type)
         )
 
 
     def update(self, newValue):
         if len(newValue) > 0:
-            movement = MovementKnowledgebase.generate_movement_from_fact(newValue.pop())  # only getting the first fact
+            movement = TaskKnowledgebase.generate_task_from_fact(newValue.pop())  # only getting the first fact
 
             if movement is not None:
                 destination = movement.pos
@@ -103,7 +103,7 @@ class StepDistanceSensor(AggregationSensor):
         pos2 = sensor_values[1]
 
         if pos1 is None or pos2 is None:
-            rospy.logerr("Cant get distance of %s and %s", str(pos1), str(pos2))
+            rospy.logwarn("StepDistanceSensor(%s):: Cant get distance of %s and %s", self.name, str(pos1), str(pos2))
             return self._initial_value
 
         if not isinstance(pos1, Position):
@@ -114,8 +114,6 @@ class StepDistanceSensor(AggregationSensor):
 
         steps = self.distance_provider.calculate_steps(pos1, pos2)
 
-        if self._name == "charging_station_step_distance":
-            ettilog.logerr("STEPS: %s", steps)
         return steps
 
 class ClosestChargingStationSensor(Sensor):
@@ -126,7 +124,7 @@ class ClosestChargingStationSensor(Sensor):
         self._agent_name = agent_name
         self._last_agent_position = None
 
-        self.movement_knowledgebase = MovementKnowledgebase()
+        self.movement_knowledgebase = TaskKnowledgebase()
         self.facility_provider = FacilityProvider()
         self.distance_provider = DistanceProvider()
 
@@ -146,10 +144,10 @@ class ClosestChargingStationSensor(Sensor):
 
     def update(self, newValue):
         if self._latestValue is not newValue:
-            self.movement_knowledgebase.start_movement(Movement(
-                identifier = MovementKnowledgebase.IDENTIFIER_CHARGING_STATION,
+            self.movement_knowledgebase.create_task(Task(
+                type = TaskKnowledgebase.TYPE_CHARGING_STATION,
                 agent_name = self._agent_name,
                 pos = newValue.pos,
-                destination = ''
+                task = ''
             ))
         super(ClosestChargingStationSensor, self).update(newValue)

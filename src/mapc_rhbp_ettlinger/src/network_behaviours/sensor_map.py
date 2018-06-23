@@ -1,11 +1,14 @@
-from behaviour_components.activators import ThresholdActivator, LinearActivator
+from agent_knowledge.task import TaskKnowledgebase
+from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition
+from behaviour_components.conditions import Condition, Negation
 from behaviour_components.sensors import AggregationSensor, Sensor
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
+from rhbp_utils.knowledge_sensors import KnowledgeSensor
+from sensor.exploration import ResourceDiscoveryProgressSensor
 from sensor.movement import StepDistanceSensor, ClosestChargingStationSensor
 
 
@@ -18,6 +21,8 @@ class SensorAndConditionMap(object):
         self.init_load_sensors()
         self.init_agent_sensors()
         self.init_battery_sensors(msg)
+        self.init_resource_sensor(agent_name=agent_name)
+        self.init_task_sensor(agent_name=agent_name)
 
     def init_load_sensors(self):
 
@@ -42,7 +47,7 @@ class SensorAndConditionMap(object):
             subtrahend_sensor=self.load_sensor
         )
         self.load_factor_sensor = FactorSensor(
-            name="free_load_sensor",
+            name="load_factor_sensor",
             dividend_sensor=self.load_sensor,
             divisor_sensor=self.max_load_sensor
         )
@@ -80,7 +85,7 @@ class SensorAndConditionMap(object):
             name="agent_position_sensor",
             message_attr='pos')
 
-    def init_battery_sensors(self, msg, recharge_lower_bound_percentage=0.7, recharge_critical_bound_percentage=0.2):
+    def init_battery_sensors(self, msg, recharge_lower_bound_percentage=0.2, recharge_critical_bound_percentage=0.2):
         agent_recharge_upper_bound = msg.role.base_battery
 
         agent_recharge_lower_bound = agent_recharge_upper_bound * recharge_lower_bound_percentage
@@ -156,6 +161,69 @@ class SensorAndConditionMap(object):
             indicator=100,  # here we could also use the real charging effects
             # this is replaced immediately by the subscriber callback
             sensor_type=float)
+
+    def init_resource_sensor(self, agent_name):
+        self.resource_discovery_progress_sensor = ResourceDiscoveryProgressSensor(
+            name="resource_discovery_progress_sensor",
+            agent_name=agent_name
+
+        )
+        self.discovery_completeness_condition = Condition(
+            sensor=self.resource_discovery_progress_sensor,
+            activator=LinearActivator(
+                zeroActivationValue=0.0,
+                fullActivationValue=1.0
+            ))
+        self.resources_of_all_items_discovered_condition = Condition(
+            sensor=self.resource_discovery_progress_sensor,
+            activator=ThresholdActivator(
+                thresholdValue=1.0,
+                isMinimum=True))
+
+    def init_task_sensor(self, agent_name):
+
+        self.assemble_task_sensor = KnowledgeSensor(
+            name="assemble_task_sensor",
+            pattern=TaskKnowledgebase.generate_tuple(agent_name=agent_name, type=TaskKnowledgebase.TYPE_ASSEMBLE)
+        )
+
+        self.has_assemble_task_assigned_cond = Condition(
+            name="has_assemble_task_assigned_cond",
+            sensor=self.assemble_task_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
+
+        self.well_task_sensor = KnowledgeSensor(
+            name="well_task_sensor",
+            pattern=TaskKnowledgebase.generate_tuple(agent_name=agent_name, type=TaskKnowledgebase.TYPE_BUILD_WELL)
+        )
+        self.has_build_well_task_assigned_cond = Condition(
+            name="has_build_well_task_assigned_cond",
+            sensor=self.well_task_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
+
+        self.deliver_task_sensor = KnowledgeSensor(
+            name="deliver_task_sensor",
+            pattern=TaskKnowledgebase.generate_tuple(agent_name=agent_name, type=TaskKnowledgebase.TYPE_DELIVER)
+        )
+        self.has_deliver_job_task_assigned_cond = Condition(
+            name="has_deliver_job_task_assigned_cond",
+            sensor=self.deliver_task_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
+
+        self.has_task_sensor = KnowledgeSensor(
+            name="has_task_sensor",
+            pattern=TaskKnowledgebase.generate_tuple(agent_name=agent_name)
+        )
+
+        self.has_task_assigned_cond = Condition(
+            name="has_task_assigned_condition",
+            sensor=self.has_task_sensor,
+            activator=BooleanActivator(desiredValue=True))
+
+        self.has_no_task_assigned_cond = Negation(self.has_task_assigned_cond)
 
 
 class SubtractionSensor(AggregationSensor):

@@ -1,97 +1,43 @@
-from agent_knowledge.well import WellTaskKnowledgebase
-from behaviour_components.activators import BooleanActivator, ThresholdActivator
+from agent_knowledge.task import TaskKnowledgebase
+from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation, Conjunction
-from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.well import GoToWellBehaviour, WellIntegritySensor, BuildWellBehaviour, \
-    BuildUpWellBehaviour
-from provider.product_provider import ProductProvider
-from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.movement import DestinationDistanceSensor
+from behaviour_components.conditions import Condition, Negation
+from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor, FinishTaskBehaviour
+from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
 
-class BuildWellNetworkBehaviour(NetworkBehaviour):
+class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
 
-    def __init__(self, agent, name, msg, **kwargs):
+    def __init__(self, agent_name, name, sensor_map, **kwargs):
+        super(BuildWellNetworkBehaviour, self).__init__(
+            agent_name=agent_name,
+            sensor_map=sensor_map,
+            name=name,
+            task_type=TaskKnowledgebase.TYPE_BUILD_WELL,
+            **kwargs)
 
-        proximity = msg.proximity
-
-        super(BuildWellNetworkBehaviour, self).__init__(name, **kwargs)
-
-        self._product_provider = ProductProvider(
-            agent_name=agent._agent_name)
-
-        self.init_assignage_sensor(agent)
-        self.init_well_sensors(agent, msg.proximity)
-
-        self.init_go_to_destination_behaviour(agent, proximity)
-        self.init_build_behaviour(agent)
-        self.init_build_up_behaviour(agent)
-
-        self.requires_action_condition = Conjunction(
-            self._has_tasks_assigned_condition,
-            self._target_well_damaged_condition
-        )
-
-    def init_go_to_destination_behaviour(self, agent, proximity):
-        # go to destination
-        self.go_to_well_behaviour = GoToWellBehaviour(
-            plannerPrefix=self.get_manager_prefix(),
-            name="go_to_well",
-            agent=agent)
-
-        self.well_distance_sensor = DestinationDistanceSensor(
-            name='well_destination_sensor',
-            agent_name=agent._agent_name,
-            behaviour_name=self.go_to_well_behaviour._name)
-
-        self.go_to_well_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.well_distance_sensor.name,
-                indicator=-1.0,
-                sensor_type=float
-            )
-        )
-
-        self.at_well_condition = Condition(
-            sensor=self.well_distance_sensor,
-            activator=ThresholdActivator(
-                thresholdValue=proximity,
-                isMinimum=False))  # highest activation if the value is below threshold
-
-        self.go_to_well_behaviour.add_precondition(
-            precondition=Negation(self.at_well_condition)
-        )
+        self.init_well_sensors()
+        self.init_build_behaviour()
+        self.init_build_up_behaviour()
+        self.init_finish_behaviour()
 
 
-
-    def init_assignage_sensor(self, agent):
-        # Sensor that checks if agent has at least one assigned task
-        self.has_tasks_assigned_sensor = KnowledgeSensor(
-            name='has_task',
-            pattern=WellTaskKnowledgebase.generate_tuple(
-                agent_name=agent._agent_name))
-
-        self._has_tasks_assigned_condition = Condition(
-            sensor=self.has_tasks_assigned_sensor,
-            activator=BooleanActivator(
-                desiredValue=True))
-
-    def init_well_sensors(self, agent, proximity):
+    def init_well_sensors(self):
         # Sensor that checks if agent has at least one assigned task
 
         self.target_well_integrity_sensor = WellIntegritySensor(
-            agent_name=agent._agent_name,
-            name="target_well_integrity_sensor",
-            proximity=proximity)
+            agent_name=self._agent_name,
+            name="target_well_integrity_sensor")
 
-        self._target_well_damaged_condition = Condition(
+        self._target_well_intact_condition = Condition(
             sensor=self.target_well_integrity_sensor,
             activator=ThresholdActivator(
-                thresholdValue=99,
-                isMinimum=False
+                thresholdValue=1,
+                isMinimum=True
             )
         )
+
+        self._target_well_damaged_condition = Negation(self._target_well_intact_condition)
 
         self._target_well_exists_sensor = Condition(
             sensor=self.target_well_integrity_sensor,
@@ -100,38 +46,32 @@ class BuildWellNetworkBehaviour(NetworkBehaviour):
                 isMinimum=True
             )
         )
-    def init_build_behaviour(self, agent):
+    def init_build_behaviour(self):
         self.build_well_bahviour = BuildWellBehaviour(
             name="build_well_behaviour",
-            agent_name=agent._agent_name,
+            agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
-        )
-
-        self.build_well_bahviour.add_precondition(
-            precondition=self.at_well_condition
         )
 
         self.build_well_bahviour.add_precondition(
             precondition=Negation(self._target_well_exists_sensor)
         )
-
         self.build_well_bahviour.add_effect(
             effect=Effect(
-                sensor_name=self.has_tasks_assigned_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool
+                sensor_name=self.target_well_integrity_sensor.name,
+                indicator=1.0,
+                sensor_type=float
+
             )
         )
 
-    def init_build_up_behaviour(self, agent):
+        self.init_do_behaviour(self.build_well_bahviour, effect_on_goal=False)
+
+    def init_build_up_behaviour(self):
         self.build_up_well_bahviour = BuildUpWellBehaviour(
             name="build_up_well_behaviour",
-            agent_name=agent._agent_name,
+            agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
-        )
-
-        self.build_up_well_bahviour.add_precondition(
-            precondition=self.at_well_condition
         )
 
         self.build_up_well_bahviour.add_precondition(
@@ -141,12 +81,31 @@ class BuildWellNetworkBehaviour(NetworkBehaviour):
             precondition=self._target_well_exists_sensor
         )
 
-
-        self.build_up_well_bahviour.add_effect(
+        self.build_well_bahviour.add_effect(
             effect=Effect(
                 sensor_name=self.target_well_integrity_sensor.name,
                 indicator=1.0,
                 sensor_type=float
+
             )
         )
 
+        self.init_do_behaviour(self.build_up_well_bahviour, effect_on_goal=False)
+
+    def init_finish_behaviour(self):
+        self.finish_building_behaviour = FinishTaskBehaviour(
+            name="finish_build_well_behaviour",
+            type=TaskKnowledgebase.TYPE_BUILD_WELL,
+            agent_name=self._agent_name,
+            plannerPrefix=self.get_manager_prefix()
+        )
+
+        self.finish_building_behaviour.add_precondition(
+            precondition=self._target_well_intact_condition
+        )
+
+        self.finish_building_behaviour.add_precondition(
+            precondition=self._target_well_exists_sensor
+        )
+
+        self.init_do_behaviour(self.finish_building_behaviour)

@@ -1,9 +1,9 @@
-import rospy
 import time
+
+import rospy
 from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
 
-from agent_knowledge.tasks import JobKnowledgebase
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
@@ -23,7 +23,6 @@ class JobManager(object):
 
         self._job_combination = ChooseBestJobCombination()
 
-        self._job_knowledgebase = JobKnowledgebase()
         self._facility_provider = FacilityProvider()
 
         self.id = self.job_id(new_id=True)
@@ -76,10 +75,10 @@ class JobManager(object):
         return self.id
 
     def _callback_bid(self, bid):
-        ettilog.loginfo("JobManager(%s): Received bid from %s", bid.agent_name)
+        ettilog.loginfo("JobManager: Received bid from %s", bid.agent_name)
         generated_id = self.job_id()
         if bid.id != generated_id:
-            ettilog.logerr("JobManager(%s): wrong id")
+            ettilog.loginfo("JobManager: JobManager: wrong id")
             return
 
         self.bids.append(bid)
@@ -92,7 +91,7 @@ class JobManager(object):
         :return:
         """
 
-        ettilog.loginfo("JobManager(%s, %s): Processing %s bids", self.job_id(), str(len(self.bids)))
+        ettilog.loginfo("JobManager: Processing %s bids", str(len(self.bids)))
 
         selected_bids = self._job_combination.choose_best_agent_combination(self._job, self.bids) # TODO
 

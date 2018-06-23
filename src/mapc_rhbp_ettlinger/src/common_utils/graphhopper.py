@@ -5,17 +5,15 @@ import rospkg
 import shlex
 import subprocess
 import threading
+from fcntl import fcntl, F_GETFL, F_SETFL
 from os import O_NONBLOCK, path, environ
 
 import rospy
-from fcntl import fcntl, F_GETFL, F_SETFL
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap, SetGraphhopperMapResponse
-
-from common_utils import rhbp_logging
 
 GRAPHHOPPER_DEFAULT_PORT = 8989
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.utils.graphhoppper')
+ettilog = rospy # TODO: somehow the import does not work. Just use the standard logger for now
 
 class GraphhopperProcessHandler(object):
     """

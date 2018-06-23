@@ -21,7 +21,7 @@ class ShouldBidForAssembly(object):
 
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self.set_provider = DistanceProvider()
+        self.distance_provider = DistanceProvider()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
@@ -59,7 +59,7 @@ class ShouldBidForAssembly(object):
         ingredient_fullness = float(self.load_ingredients) / self.max_load
         general_fulness = float(self.load) / self.max_load
 
-        steps_to_destination = self.set_provider.calculate_steps(self.pos, request.destination)
+        steps_to_destination = self.distance_provider.calculate_steps(self.pos, request.destination)
 
 
 
@@ -76,7 +76,8 @@ class ShouldBidForAssembly(object):
                 agent_name = self._agent_name,
                 items = self._product_provider.get_items(),
                 role = self.role,
-                request = request
+                request = request,
+                expected_steps=steps_to_destination
             )
         else:
             return None

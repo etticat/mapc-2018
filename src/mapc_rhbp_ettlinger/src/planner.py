@@ -1,7 +1,6 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart
 
-from agent_knowledge.tasks import JobKnowledgebase
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_manager import AssembleManager
@@ -26,8 +25,6 @@ class Planner(object):
         self.all_tasks = []
 
         self.well_chooser = ChooseWellToBuild()
-
-        self._task_knowledge = JobKnowledgebase()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 

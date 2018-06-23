@@ -3,7 +3,7 @@ import random
 import rospy
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 
-from agent_knowledge.movement import MovementKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.movement import GotoLocationBehaviour
 from common_utils import rhbp_logging
@@ -62,7 +62,7 @@ class FinishExplorationBehaviour(BehaviourBase):
 
         self._facility_topic = facility_topic
 
-        self._movement_knowledge = MovementKnowledgebase()
+        self._movement_knowledge = TaskKnowledgebase()
 
         self.movement_behaviour_name = movement_behaviour_name
 
@@ -70,4 +70,4 @@ class FinishExplorationBehaviour(BehaviourBase):
 
     def do_step(self):
         # exploration done
-        self._movement_knowledge.stop_movement(self._agent_name, self.movement_behaviour_name)
+        self._movement_knowledge.finish_task(self._agent_name, self.movement_behaviour_name)

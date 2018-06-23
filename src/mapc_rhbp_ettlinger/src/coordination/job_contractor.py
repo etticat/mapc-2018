@@ -1,10 +1,10 @@
-import rospy
 import time
-from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
-    JobTask, WellTask
 
-from agent_knowledge.tasks import JobKnowledgebase
-from agent_knowledge.well import WellTaskKnowledgebase
+import rospy
+from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
+    JobTask, Task
+
+from agent_knowledge.task import TaskKnowledgebase
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from decisions.job_bid import JobBidDecider
@@ -18,8 +18,7 @@ class JobContractor(object):
     def __init__(self, agent_name, product_provider=None):
 
         self._agent_name = agent_name
-        self._job_knowledgebase = JobKnowledgebase()
-        self._well_task_knowledgebase = WellTaskKnowledgebase()
+        self._task_knowledgebase = TaskKnowledgebase()
         self.job_bid_decider = JobBidDecider(self._agent_name)
 
 
@@ -46,10 +45,11 @@ class JobContractor(object):
         """
 
         current_time = time.time()
-        current_job = self._job_knowledgebase.get_task(agent_name=self._agent_name)
-        current_well_job = self._well_task_knowledgebase.get_task(agent_name=self._agent_name)
+        current_job = self._task_knowledgebase.get_task(agent_name=self._agent_name, type="*")
 
-        if current_job is None and current_well_job is None:
+        if current_job is None or current_job.type not in [TaskKnowledgebase.TYPE_ASSEMBLE,
+                                                           TaskKnowledgebase.TYPE_DELIVER,
+                                                           TaskKnowledgebase.TYPE_BUILD_WELL]:
             self.send_bid(request)
 
     def send_bid(self, request):
@@ -93,10 +93,10 @@ class JobContractor(object):
                     items = job_assignment.items
                 ))
             elif job_assignment.type == "build_well":
-                self._well_task_knowledgebase.save_task(WellTask(
+                self._task_knowledgebase.create_task(Task(
                     agent_name = self._agent_name,
                     pos = job_assignment.pos,
-                    well_type = job_assignment.job_id,
-                    built = False
+                    task = job_assignment.job_id,
+                    type = TaskKnowledgebase.TYPE_BUILD_WELL
                 ))
             self._pub_job_acknowledge.publish(acknoledgement)

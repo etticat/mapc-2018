@@ -1,15 +1,16 @@
-import rospy
 import time
+
+import rospy
 from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAcknowledgement, AssembleAssignment, \
     AssembleTask, AssembleStop
 
 import utils.rhbp_logging
-from agent_knowledge.assemble_task import AssembleKnowledgebase
+from agent_knowledge.task import TaskKnowledgebase
 from common_utils.agent_utils import AgentUtils
 from decisions.assembly_bid import ShouldBidForAssembly
 from provider.product_provider import ProductProvider
 
-rhbplog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
+ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.assemble_contractor')
 
 class AssembleContractor(object):
 
@@ -20,7 +21,7 @@ class AssembleContractor(object):
         self._agent_name = agent_name
         self.role = role
         self.current_task = None
-        self._assemble_knowledgebase = AssembleKnowledgebase()
+        self._task_knowledge_base = TaskKnowledgebase()
         self.enabled = True
 
 
@@ -50,7 +51,9 @@ class AssembleContractor(object):
         if self.enabled == False:
             return
 
-        assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
+        assemble_task = self._task_knowledge_base.get_task(
+            agent_name=self._agent_name,
+            type=TaskKnowledgebase.TYPE_ASSEMBLE)
 
         current_time = time.time()
         if request.deadline < current_time:
@@ -66,7 +69,7 @@ class AssembleContractor(object):
         if bid == None:
             return
 
-        rhbplog.loginfo("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
+        ettilog.loginfo("AssembleContractor(%s):: bidding on %s: %s", self._agent_name, request.id, bid.bid)
         self._pub_assemble_bid.publish(bid)
 
         self.current_task = request.id
@@ -77,16 +80,16 @@ class AssembleContractor(object):
         if assembleAssignment.bid.agent_name != self._agent_name or self.current_task != assembleAssignment.bid.id:
             return
         if assembleAssignment.assigned == False:
-            rhbplog.loginfo("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
+            ettilog.loginfo("AssembleContractor(%s):: Cancelled assignment for %s", self._agent_name, assembleAssignment.bid.id)
             return
 
-        rhbplog.logerr("AssembleContractor(%s):: Received assignment for %s", self._agent_name, assembleAssignment.bid.id)
+        ettilog.logerr("AssembleContractor(%s):: Received assignment for %s", self._agent_name, assembleAssignment.bid.id)
 
         is_still_possible = True # TODO check if agent is still idle
 
         if is_still_possible:
 
-            accepted = self._assemble_knowledgebase.save_assemble(AssembleTask(
+            accepted = self._task_knowledge_base.save_assemble(AssembleTask(
                 id=assembleAssignment.bid.id,
                 agent_name=self._agent_name,
                 pos=assembleAssignment.bid.request.destination,
@@ -113,9 +116,9 @@ class AssembleContractor(object):
         :type assemble_stop: AssembleStop
         :return:
         """
-        current_assemble_task = self._assemble_knowledgebase.get_assemble_task(self._agent_name)
+        current_assemble_task = self._task_knowledge_base.get_task(self._agent_name)
         if current_assemble_task is not None and current_assemble_task.id == assemble_stop.id:
-            self._assemble_knowledgebase.cancel_assemble_request(self._agent_name, assemble_stop.id)
+            self._task_knowledge_base.get_task(self._agent_name, assemble_stop.id)
             self._product_provider.stop_assembly()
 
-            rhbplog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, assemble_stop.id, assemble_stop.reason)
+            ettilog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, assemble_stop.id, assemble_stop.reason)

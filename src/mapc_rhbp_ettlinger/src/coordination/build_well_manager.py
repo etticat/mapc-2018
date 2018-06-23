@@ -1,8 +1,8 @@
 import time
+
 from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobAssignment
 
-from agent_knowledge.well import WellTaskKnowledgebase
 from common_utils import rhbp_logging
 from coordination.job_manager import JobManager
 from decisions.well_chooser import ChooseWellToBuild
@@ -15,7 +15,6 @@ class BuildWellManager(JobManager):
     def __init__(self):
         super(BuildWellManager, self).__init__()
 
-        self._well_task_knowledgebase = WellTaskKnowledgebase()
         self._well_chooser = ChooseWellToBuild()
 
     def well_request(self, well_type, pos):

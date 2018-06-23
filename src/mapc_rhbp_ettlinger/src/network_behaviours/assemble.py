@@ -1,117 +1,21 @@
-from agent_knowledge.assemble_task import AssembleKnowledgebase
-from behaviour_components.activators import ThresholdActivator, BooleanActivator
-from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
-from behaviour_components.network_behavior import NetworkBehaviour
-from behaviours.job import AssembleProductBehaviour, GoToWorkshopBehaviour
-
-from provider.product_provider import ProductProvider
-from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.movement import DestinationDistanceSensor
+from agent_knowledge.task import TaskKnowledgebase
+from behaviours.job import AssembleProductBehaviour
+from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
 
-class AssembleNetworkBehaviour(NetworkBehaviour):
+class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
 
-    def __init__(self, agent, name, msg, **kwargs):
+    def __init__(self, agent_name, name, sensor_map, **kwargs):
+        super(AssembleNetworkBehaviour, self).__init__(
+            agent_name=agent_name,
+            sensor_map=sensor_map,
+            name=name,
+            task_type=TaskKnowledgebase.TYPE_ASSEMBLE,
+            **kwargs)
 
-        proximity = msg.proximity
-        self._product_provider = ProductProvider(
-            agent_name=agent._agent_name)
-
-        super(AssembleNetworkBehaviour, self).__init__(name, **kwargs)
-        self.init_product_sensor(agent=agent)
-        self.init_go_to_workshop_behaviour(agent, proximity)
-        self.init_assembly_behaviour(agent)
-
-
-        self.goal = GoalBase(
-            name='job_fulfillment_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self.has_assemble_task_assigned_cond)])
-
-
-    def init_assembly_behaviour(self, agent):
-        ############### Assembling ##########################
-        self.assemble_product_behaviour = AssembleProductBehaviour(
-            name="assemble_product_behaviour",
-            agent_name=agent._agent_name,
-            plannerPrefix=self.get_manager_prefix(),
-            behaviour_name=self.go_to_workshop_behaviour._name
-        )
-        # Only assemble if we are at the intended resource node
-        self.assemble_product_behaviour.add_precondition(
-            precondition=self.at_workshop_condition)
-
-        # only assemble if we have chosen an item to assemble
-        self.assemble_product_behaviour.add_precondition(
-            precondition=self.has_assemble_task_assigned_cond
-        )
-
-        # TODO: Add a proper effect
-        self.assemble_product_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.assemble_organized_sensor.name,
-                indicator=-1.0,
-                sensor_type=float
-
-            )
-        )
-
-    def init_go_to_workshop_behaviour(self, agent, proximity):
-        ################ Going to Workshop #########################
-        self.go_to_workshop_behaviour = GoToWorkshopBehaviour(
-            agent=agent,
-            agent_name=agent._agent_name,
-            name="go_to_workshop",
+        assemble_behaviour = AssembleProductBehaviour(
+            name=self.get_manager_prefix() + "_assemble_product_behaviour",
+            agent_name=agent_name,
             plannerPrefix=self.get_manager_prefix()
-
         )
-        self.workshop_destination_sensor = DestinationDistanceSensor(
-            name='workshop_destination_sensor',
-            agent_name=agent._agent_name,
-            behaviour_name=self.go_to_workshop_behaviour._name)
-        self.at_workshop_condition = Condition(
-            sensor=self.workshop_destination_sensor,
-            activator=ThresholdActivator(
-                thresholdValue=proximity,
-                isMinimum=False))  # highest activation if the value is below threshold
-        # Only go to resource node if we aren't already there
-        self.go_to_workshop_behaviour.add_precondition(
-            precondition=Negation(self.at_workshop_condition))
-        # only go to resource node if we have chosen an item to gather
-        self.go_to_workshop_behaviour.add_precondition(
-            precondition=self.has_assemble_task_assigned_cond)
-
-        # Going to resource has the effect of decreasing the distance to go there
-        self.go_to_workshop_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.workshop_destination_sensor.name,
-                indicator=-1.0,
-                sensor_type=float
-
-            )
-        )
-
-    def stop(self):
-        """
-        Stoping all gather goals when leaving network
-        :return:
-        """
-        super(AssembleNetworkBehaviour, self).stop()
-
-    def init_product_sensor(self, agent):
-        self.assemble_organized_sensor = KnowledgeSensor(
-            name="assemble_organized_sensor",
-            pattern=AssembleKnowledgebase.generate_tuple(
-                agent_name=agent._agent_name,
-                active=True))
-
-        self.has_assemble_task_assigned_cond = Condition(
-            sensor=self.assemble_organized_sensor,
-            activator=BooleanActivator(
-                desiredValue=True
-            ))
-
-
+        self.init_do_behaviour(assemble_behaviour)
