@@ -8,7 +8,7 @@ from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import Task
 
 from agent_knowledge.task import TaskBaseKnowledge
-from behaviour_components.sensors import Sensor, RawTopicSensor
+from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
@@ -48,21 +48,3 @@ class ClosestChargingStationSensor(Sensor):
                 pos=newValue.pos,
                 task=''))
         super(ClosestChargingStationSensor, self).update(newValue)
-
-
-class ChargeFactorSensor(RawTopicSensor):
-
-    def __init__(self, agent_name, name):
-        agent_topic = AgentUtils.get_bridge_topic_agent(agent_name)
-        super(ChargeFactorSensor, self).__init__(topic=agent_topic, name=name, initial_value=0.0)
-
-    def subscription_callback(self, msg):
-        """
-
-        :param self:
-        :param msg:
-        :type msg: Agent
-        :return:
-        """
-
-        return msg.charge / msg.charge_max

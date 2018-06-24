@@ -125,8 +125,9 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        # if hasattr(self, "_action_network_behaviour"):
-        #     DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network)
+        # if hasattr(self, "_action_manager"):
+            # DebugUtils.print_precondition_states(self._action_manager.exploration_network)
+            # ettilog.logerr("CHARGE %f:", self._action_manager.sensor_map.charge_factor_sensor.sync())
 
 
         start_time = rospy.get_rostime()

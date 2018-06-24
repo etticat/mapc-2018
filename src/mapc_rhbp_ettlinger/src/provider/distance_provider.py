@@ -28,6 +28,10 @@ class DistanceProvider(object):
 
     def __init__(self):
         self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
+        self.cell_size = 0.01
+        self.can_fly = False
+        self.speed = 1
+        self._proximity = 0.01
 
     def callback_sim_start(self, sim_start):
         """

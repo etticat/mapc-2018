@@ -1,3 +1,6 @@
+import rospy
+from mac_ros_bridge.msg import Agent
+
 from agent_knowledge.task import TaskBaseKnowledge
 from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -5,7 +8,7 @@ from behaviour_components.conditions import Condition, Negation
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.battery import ClosestChargingStationSensor, ChargeFactorSensor
+from sensor.battery import ClosestChargingStationSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor
 from sensor.gather import SmallestGatherableItemSensor
 from sensor.general import FactorSensor, SubtractionSensor
@@ -22,6 +25,8 @@ class SensorAndConditionMap(object):
         self.init_battery_sensors()
         self.init_resource_sensor(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
+
+        rospy.Subscriber(AgentUtils.get_bridge_topic_agent(self.agent_name), Agent, self.callback_agent)
 
     def init_load_sensors(self):
         self.max_load_sensor = TopicSensor(
@@ -105,16 +110,11 @@ class SensorAndConditionMap(object):
             name="charge_sensor",
             message_attr='charge')
 
-        self.charge_factor_sensor = ChargeFactorSensor(
-            agent_name=self.agent_name,
-            name="charge_factor_sensor")
-
         # charging required condition: When closer to lower bound -> higher activation
+        self._require_charge_activator = LinearActivator(zeroActivationValue=15, fullActivationValue=4)
         self.require_charging_cond = Condition(
-            sensor=self.charge_factor_sensor,
-            activator=LinearActivator(
-                zeroActivationValue=1.0,
-                fullActivationValue=0.0))  # highest activation already before battery empty
+            sensor=self.charge_sensor,
+            activator=self._require_charge_activator)  # highest activation already before battery empty
 
         # Condition to check if we are at a charging station
         self.at_charging_station_cond = Condition(
@@ -218,3 +218,16 @@ class SensorAndConditionMap(object):
 
         self.has_no_task_assigned_cond = Negation(self.has_task_assigned_cond)
 
+    def callback_agent(self, msg):
+        """
+
+        :param msg:
+        :type msg: Agent
+        :return:
+        """
+        agent_charge_upper_bound = msg.charge_max # This can change on upgrade!
+
+        agent_charge_lower_bound = agent_charge_upper_bound * 0.2
+
+        self._require_charge_activator.fullActivationValue = agent_charge_lower_bound
+        self._require_charge_activator.zeroActivationValue = agent_charge_upper_bound
