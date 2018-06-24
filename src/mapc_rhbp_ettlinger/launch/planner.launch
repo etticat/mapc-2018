@@ -1,3 +1,14 @@
 <launch>
-  <node pkg="mapc_rhbp_ettlinger" type="planner.py" name ="planner" />
+
+    <arg name="agent_name" default="agentA1" />
+
+    <!-- Enable custom logger configuration-->
+    <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
+
+    <!--Infrastructure Nodes-->
+    <node pkg="mapc_rhbp_ettlinger" type="rhbp_agent.py" name ="planner_node" output="screen">
+        <param name="agent_name" value="planner" />
+        <param name="agent_name_fake" value="$(arg agent_name)" />
+    </node>
+
 </launch>

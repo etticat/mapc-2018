@@ -1,5 +1,4 @@
 import copy
-
 import itertools
 
 from common_utils import rhbp_logging
@@ -25,7 +24,7 @@ class ChooseBestJobCombination(object):
     def choose_best_agent_combination(self, job, bids):
 
         job_items = CalcUtil.get_list_from_items(job.items)
-        best_agent_subset = []
+        best_agent_subset = None
         best_value = -1000
 
         if len(bids) >= 2:

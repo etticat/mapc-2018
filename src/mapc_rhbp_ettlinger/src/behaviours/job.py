@@ -308,11 +308,11 @@ class DeliverJobBehaviour(BehaviourBase):
 
     def do_step(self):
         if self.current_task == None:
-            self.current_task = self._task_knowledge.get_task(self._agent_name)
+            self.current_task = self._task_knowledge.get_task(self._agent_name, type=TaskKnowledgebase.TYPE_DELIVER)
 
         if self.current_task != None:
-            ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.job_id)
-            self.action_deliver_job(self.current_task.job_id)
+            ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.task)
+            self.action_deliver_job(self.current_task.task)
             # TODO: Check what happens when the delivery fails ->
             # TODO: Pass an acnowledgement object into the mac ros bridge. Once it finishes/fails it notifies the application
 

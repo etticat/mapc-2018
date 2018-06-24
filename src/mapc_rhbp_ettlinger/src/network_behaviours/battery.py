@@ -32,7 +32,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         go_to_charging_station_behaviour = GotoLocationBehaviour2(
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + "/go_to_charging_station_behaviour",
-            identifier=TaskKnowledgebase.TYPE_CHARGING_STATION,
+            task_type=TaskKnowledgebase.TYPE_CHARGING_STATION,
             agent_name=self._agent_name)
         go_to_charging_station_behaviour.add_effect(
             effect=self.sensor_map.go_to_charging_station_effect

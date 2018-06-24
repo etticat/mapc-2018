@@ -37,7 +37,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             permanent=True,
             priority=100,
             plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self.sensor_map.load_fullnes_condition)])
+            conditions=[self.sensor_map.load_fullnes_condition])
 
 
     def init_gather_behaviour(self):
@@ -48,7 +48,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
-        self.go_to_resource_node_behaviour.add_precondition(
+        self.gather_behviour.add_precondition(
             precondition=self.has_gathering_task_cond)
         # Only gather if we are at the intended resource node
         self.gather_behviour.add_precondition(
@@ -57,7 +57,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.gather_behviour.add_effect(
             effect=Effect(
                 sensor_name=self.sensor_map.load_factor_sensor.name,
-                indicator=-1.0,
+                indicator=1.0,
                 sensor_type=bool
 
             )
@@ -75,7 +75,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         ################ Going to resource #########################
         self.go_to_resource_node_behaviour = GotoLocationBehaviour2(
             agent_name=self._agent_name,
-            identifier=TaskKnowledgebase.TYPE_GATHERING,
+            task_type=TaskKnowledgebase.TYPE_GATHERING,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix()
         )

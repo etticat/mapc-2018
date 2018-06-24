@@ -51,7 +51,6 @@ add_message_files(
   AssembleBid.msg
   AssembleAssignment.msg
   AssembleAcknowledgement.msg
-  AssembleTask.msg
   AssembleManagerStatus.msg
   AssembleTaskProgress.msg
   AssembleStop.msg

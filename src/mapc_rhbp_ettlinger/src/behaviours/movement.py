@@ -185,7 +185,7 @@ class GotoLocationBehaviour2(BehaviourBase):
     Behaviour that explores the environment by going to a randomly selected facility
     """
 
-    def __init__(self, agent_name, identifier, **kwargs):
+    def __init__(self, agent_name, task_type, **kwargs):
 
         super(GotoLocationBehaviour2, self) \
             .__init__(requires_execution_steps=True, **kwargs)
@@ -193,7 +193,7 @@ class GotoLocationBehaviour2(BehaviourBase):
         self._movement_knowledge = TaskKnowledgebase()
 
         self._agent_name = agent_name
-        self.identifier = identifier
+        self.task_type = task_type
 
         self._pub_generic_action = rospy.Publisher(AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action', GenericAction
                                                    , queue_size=10)
@@ -216,7 +216,7 @@ class GotoLocationBehaviour2(BehaviourBase):
         publisher.publish(action)
 
     def do_step(self):
-        destination = self._movement_knowledge.get_task(agent_name=self._agent_name, type=self.identifier)
+        destination = self._movement_knowledge.get_task(agent_name=self._agent_name, type=self.task_type)
 
         assert destination is not None
 

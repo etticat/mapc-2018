@@ -13,8 +13,8 @@ from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
-from common_utils.graphhopper import GraphhopperProcessHandler
 from common_utils.singleton import Singleton
+from graphhopper import GraphhopperProcessHandler
 
 ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.distance')
 
@@ -55,9 +55,8 @@ class DistanceProvider(object):
             ettilog.logwarn("DistanceProvider:: Using fallback approximation")
             return self.calculate_distance_air(startPosition, endPosition) * 2 # Fallback
 
-    def calculate_steps(self, pos1, pos2):
-        if self.calculate_positions_eucledian_distance(pos1,
-                                                                         pos2) < self._proximity:
+    def     calculate_steps(self, pos1, pos2):
+        if self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity:
             return 0
         size_ = self.calculate_distance(pos1, pos2) / (self.speed * self.cell_size)
         return math.ceil((size_ / 1000) - 0.002) # round up except when its really close

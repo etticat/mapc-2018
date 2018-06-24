@@ -70,10 +70,11 @@ class BuildWellBehaviour(BehaviourBase):
         :type agent: Agent
         :return:
         """
-        # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
-        if self.current_task != None and agent.last_action == "build":
-            ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result,
-                           agent.last_action_result)
+        if self.current_task != None:
+            if agent.last_action == "build":
+                if agent.last_action_result == "failed_resources":
+                    ettilog.logerr("GoToWellBehaviour:: Error: trying to build well but resources are not available")
+                    self._task_knowledge.finish_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_BUILD_WELL)
 
     def stop(self):
         self.current_task = None

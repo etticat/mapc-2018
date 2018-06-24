@@ -13,9 +13,9 @@ class ShouldBidForAssembly(object):
 
     WEIGHT_LOAD = 30
     WEIGHT_INGREDIENT_LOAD = 100
-    WEIGHT_STEPS = -7
+    WEIGHT_STEPS = -3 # In production this should be way smaller (Because close ones should be preferred)
 
-    ACTIVATION_THRESHOLD = 50
+    ACTIVATION_THRESHOLD = 0
 
     def __init__(self, agent_name, role):
 
@@ -54,7 +54,7 @@ class ShouldBidForAssembly(object):
     def choose(self, request):
 
         if self.initialized == False:
-            ettilog.logerr("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
+            ettilog.loginfo("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
             return
         ingredient_fullness = float(self.load_ingredients) / self.max_load
         general_fulness = float(self.load) / self.max_load
@@ -66,6 +66,17 @@ class ShouldBidForAssembly(object):
         activation = ingredient_fullness * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD \
                      + general_fulness * ShouldBidForAssembly.WEIGHT_LOAD \
                      + steps_to_destination * ShouldBidForAssembly.WEIGHT_STEPS
+
+        ettilog.loginfo("ShouldBidForAssembly:: Choosing to bid ....")
+        ettilog.loginfo("ShouldBidForAssembly:: ingredient_fullness (%f) * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD(%f) = %f",
+                       ingredient_fullness, ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD, ingredient_fullness * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD)
+        ettilog.loginfo("ShouldBidForAssembly:: general_fulness (%f) * ShouldBidForAssembly.WEIGHT_LOAD (%f) = %f",
+                       general_fulness, ShouldBidForAssembly.WEIGHT_LOAD, general_fulness * ShouldBidForAssembly.WEIGHT_LOAD
+                       )
+        ettilog.loginfo("ShouldBidForAssembly:: steps_to_destination (%f) * ShouldBidForAssembly.WEIGHT_STEPS (%f) = %f",
+                       steps_to_destination, ShouldBidForAssembly.WEIGHT_STEPS, steps_to_destination * ShouldBidForAssembly.WEIGHT_STEPS)
+        ettilog.loginfo("ShouldBidForAssembly:: activation (%f) > ShouldBidForAssembly.ACTIVATION_THRESHOLD (%f) = %s",
+                       activation, ShouldBidForAssembly.ACTIVATION_THRESHOLD, str(activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD))
 
         # TODO: Oportunity cost (certain roles could better do something else?
 

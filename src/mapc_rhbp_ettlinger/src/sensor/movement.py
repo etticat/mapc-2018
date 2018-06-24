@@ -71,6 +71,7 @@ class SelectedTargetPositionSensor(KnowledgeFactSensor):
         )
 
 
+
     def update(self, newValue):
         if len(newValue) > 0:
             movement = TaskKnowledgebase.generate_task_from_fact(newValue.pop())  # only getting the first fact
@@ -94,6 +95,7 @@ class StepDistanceSensor(AggregationSensor):
             func=None,
             initial_value=initial_value)
         self.distance_provider = DistanceProvider()
+        self.log = False
 
     def _aggregate(self, sensor_values):
         assert len(sensor_values) == 2
@@ -101,9 +103,10 @@ class StepDistanceSensor(AggregationSensor):
 
         pos1 = sensor_values[0]
         pos2 = sensor_values[1]
-
         if pos1 is None or pos2 is None:
-            rospy.logwarn("StepDistanceSensor(%s):: Cant get distance of %s and %s", self.name, str(pos1), str(pos2))
+            if self.log:
+                rospy.logerr("StepDistanceSensor(%s):: Cant get distance of %s and %s", self.name, str(pos1), str(pos2))
+
             return self._initial_value
 
         if not isinstance(pos1, Position):

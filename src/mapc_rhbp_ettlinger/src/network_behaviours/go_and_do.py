@@ -39,7 +39,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 effect=Effect(
                     sensor_name=self.sensor_map.has_task_sensor.name,
                     indicator=-1.0,
-                    sensor_type=float
+                    sensor_type=bool
                 )
             )
 
@@ -48,7 +48,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         ####################### GO TO DESTINATION BEHAVIOUR ###################
         self._go_behaviour = GotoLocationBehaviour2(
             agent_name=self._agent_name,
-            identifier=self.task_type,
+            task_type=self.task_type,
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix()  + '_go_behaviour',
         )

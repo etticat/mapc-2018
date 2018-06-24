@@ -91,7 +91,7 @@ class BuildWellManager(JobManager):
     def _process_bid_acknoledgements(self):
 
         if len(self.acknowledgements) == len(self.assignments):
-            ettilog.loginfo("BuildWellManager:: coordination successful. work can start with %d agents", len(self.assignments))
+            ettilog.logerr("BuildWellManager:: Build well: %s building %s", str([assignment.agent_name for assignment in self.assignments]), self.well_type)
         else:
             ettilog.loginfo("BuildWellManager:: coordination unsuccessful. cancelling... Received %d/%d from %s", len(self.acknowledgements), len(self.assignments), str([acknowledgement.agent_name for acknowledgement in self.acknowledgements]))
 

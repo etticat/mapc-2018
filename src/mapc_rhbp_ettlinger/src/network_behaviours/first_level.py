@@ -41,6 +41,7 @@ class ActionManager(Manager):
         self.exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/explore',
             plannerPrefix=self._agent_name,
+            priority=1,
             agent_name=self._agent_name,
             sensor_map=self.sensor_map,
             max_parallel_behaviours=1)
@@ -58,6 +59,7 @@ class ActionManager(Manager):
             name=self._agent_name + '/gathering',
             plannerPrefix=self._agent_name,
             agent_name=self._agent_name,
+            priority=2,
             sensor_map=self.sensor_map,
             max_parallel_behaviours=1)
 
@@ -84,6 +86,7 @@ class ActionManager(Manager):
             name=self._agent_name + '/assemble',
             plannerPrefix=self._agent_name,
             sensor_map=self.sensor_map,
+            priority=4,
             agent_name=self._agent_name,
             max_parallel_behaviours=1)
 
@@ -103,6 +106,7 @@ class ActionManager(Manager):
             name=self._agent_name + '/job',
             plannerPrefix=self._agent_name,
             sensor_map=self.sensor_map,
+            priority=5,
             agent_name=self._agent_name,
             max_parallel_behaviours=1)
 
@@ -123,6 +127,7 @@ class ActionManager(Manager):
             name=self._agent_name + '/well',
             plannerPrefix=self._agent_name,
             agent_name=self._agent_name,
+            priority=3,
             sensor_map=self.sensor_map,
             max_parallel_behaviours=1)
 

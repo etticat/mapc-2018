@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import time
 
 import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
@@ -6,10 +7,10 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, B
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import rhbp_logging
 from common_utils.agent_utils import AgentUtils
-from common_utils.debug import DebugUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
 from network_behaviours.first_level import ActionManager
+from planner import Planner
 from provider.provider_info_distributor import ProviderInfoDistributor
 
 ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
@@ -25,8 +26,6 @@ class RhbpAgent:
         :param agent_name:
         :type agent_name:  str
         """
-        rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
-
         # Take the name from the constructor parameter in case it was started from a development environment
         if agent_name != None:
             self._agent_name = agent_name
@@ -126,30 +125,26 @@ class RhbpAgent:
 
         self._received_action_response = False
 
-        if hasattr(self, "_action_network_behaviour"):
-            DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network)
+        # if hasattr(self, "_action_network_behaviour"):
+        #     DebugUtils.print_precondition_states(self._action_network_behaviour.exploration_network)
 
 
-        if self._initialized:
-            start_time = rospy.get_rostime()
-            steps = 0
-            # wait for generic action response (send by any behaviour)
-            while not self._received_action_response:
+        start_time = rospy.get_rostime()
+        steps = 0
+        # wait for generic action response (send by any behaviour)
+        while not self._received_action_response:
+            if self._initialized:
                 steps += 1
                 self._action_manager.step() # selected behaviours eventually trigger action
-                # Recharge if decision-making-time > 3.9 seconds
-                if (rospy.get_rostime() - start_time).to_sec() > 3.9:
-                    ettilog.logerr(
-                        "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging.",
-                        self._agent_name, steps)
-                    self.fallback_recharge()
-                    break
-
-        else:
-            ettilog.logerr(
-                "%s: Decision-making skipped. Not initialized yet. Recharging.",
-                self._agent_name)
-            self.fallback_recharge()
+            else:
+                time.sleep(0.2)
+            # Recharge if decision-making-time > 3.9 seconds
+            if (rospy.get_rostime() - start_time).to_sec() > 3.9:
+                ettilog.logerr(
+                    "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging. initialized: %s",
+                    self._agent_name, steps, str(self._initialized))
+                self.fallback_recharge()
+                break
 
         duration = rospy.get_rostime() - start_time
         ettilog.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
@@ -168,9 +163,16 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 3 and sys.argv[1] == "--agent-name":
         agent_name = sys.argv[2]
-
     try:
-        rhbp_agent = RhbpAgent(agent_name)
+        rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
+
+        agent_n = rospy.get_param('~agent_name', "agentA1")
+        if agent_n == "planner":
+            # TODO #86: It doesnt work to put the planner as seperate node. It always says the py file cant be found.
+            # TODO: Need to figure out what the problem is
+            planner = Planner(agent_name="agentA1")
+        else:
+            rhbp_agent = RhbpAgent(agent_name)
 
         rospy.spin()
 

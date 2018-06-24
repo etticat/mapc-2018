@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart
 
@@ -19,7 +20,6 @@ class Planner(object):
 
         self._job_decider = JobDecider()
         self._product_provider = ProductProvider(agent_name=agent_name)
-        rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
 
         self.all_jobs = []
         self.all_tasks = []
@@ -118,10 +118,10 @@ class Planner(object):
 
 if __name__ == '__main__':
 
+    rospy.init_node(name='planner', log_level=rospy.INFO)
     try:
-
         # Just take a random agent. doesn't really matter
-        job_planner = Planner(
+        planner = Planner(
             agent_name="agentA1")
 
         rospy.spin()

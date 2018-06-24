@@ -9,22 +9,21 @@
         <arg name="agent_name" value="agentA1" />
     </include>
 
-    <!-- Motorcycles -->
-        <!-- Bridges -->
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA2" />
+    </include>
+
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA3" />
+    </include>
+
+    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA4" />
+    </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA5" />
     </include>
-
-    <!-- Cars -->
-        <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA13" />
+        <arg name="agent_name" value="agentA6" />
     </include>
-
-    <!-- Trucks -->
-        <!-- Bridges -->
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA23" />
-    </include>
-
 </launch>

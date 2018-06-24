@@ -82,7 +82,7 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
         ####################### GO TO DESTINATION BEHAVIOUR ###################
         self._go_to_exploration_target_behaviour = GotoLocationBehaviour2(
             agent_name=self._agent_name,
-            identifier=TaskKnowledgebase.TYPE_EXPLORATION,
+            task_type=TaskKnowledgebase.TYPE_EXPLORATION,
             plannerPrefix=self.get_manager_prefix(),
             name='go_to_exploration_target',
         )
@@ -131,6 +131,9 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 thresholdValue=0,
                 isMinimum=False))
 
+    def stop(self):
+        self._movement_knowledge.finish_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_EXPLORATION)
+        super(ExplorationNetworkBehaviour, self).stop()
 
 class ChooseDestinationBehaviour(BehaviourBase):
     def __init__(self, name, agent_name, type, **kwargs):
