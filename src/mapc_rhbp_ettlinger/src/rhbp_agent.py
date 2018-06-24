@@ -55,6 +55,7 @@ class RhbpAgent:
 
         self._received_action_response = False
 
+        ettilog.logerr("RhbpAgent(%s):: Constructor finished", self._agent_name)
 
 
     def _sim_start_callback(self, sim_start):
@@ -71,7 +72,6 @@ class RhbpAgent:
 
             # init only once, even when run restarts
             if not self._initialized:
-                self._action_manager.init_behaviours(msg=sim_start)
 
                 self.assemble_contractor = AssembleContractor(
                     agent_name=self._agent_name,
@@ -79,7 +79,7 @@ class RhbpAgent:
                 self.assemble_contractor = JobContractor(
                     agent_name=self._agent_name)
 
-                ettilog.loginfo("RhbpAgent(%s):: Initialisation finished", self._agent_name)
+                ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
 
 
             self._initialized = True

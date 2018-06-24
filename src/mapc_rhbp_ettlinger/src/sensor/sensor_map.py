@@ -5,7 +5,7 @@ from behaviour_components.conditions import Condition, Negation
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.battery import ClosestChargingStationSensor
+from sensor.battery import ClosestChargingStationSensor, ChargeFactorSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor
 from sensor.gather import SmallestGatherableItemSensor
 from sensor.general import FactorSensor, SubtractionSensor
@@ -14,12 +14,12 @@ from sensor.movement import StepDistanceSensor
 
 class SensorAndConditionMap(object):
 
-    def __init__(self, msg, agent_name):
+    def __init__(self, agent_name):
         self.agent_name = agent_name
         self.agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
         self.init_load_sensors()
         self.init_agent_sensors()
-        self.init_battery_sensors(msg)
+        self.init_battery_sensors()
         self.init_resource_sensor(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
 
@@ -83,12 +83,7 @@ class SensorAndConditionMap(object):
             name="agent_position_sensor",
             message_attr='pos')
 
-    def init_battery_sensors(self, msg, recharge_lower_bound_percentage=0.2, recharge_critical_bound_percentage=0.2):
-        agent_recharge_upper_bound = msg.role.base_battery
-
-        agent_recharge_lower_bound = agent_recharge_upper_bound * recharge_lower_bound_percentage
-        self.agent_charge_critical = agent_recharge_upper_bound * recharge_critical_bound_percentage
-
+    def init_battery_sensors(self):
         agent_topic = AgentUtils.get_bridge_topic_agent(self.agent_name)
 
         self.closest_charging_station_sensor = ClosestChargingStationSensor(
@@ -110,12 +105,16 @@ class SensorAndConditionMap(object):
             name="charge_sensor",
             message_attr='charge')
 
+        self.charge_factor_sensor = ChargeFactorSensor(
+            agent_name=self.agent_name,
+            name="charge_factor_sensor")
+
         # charging required condition: When closer to lower bound -> higher activation
         self.require_charging_cond = Condition(
-            sensor=self.charge_sensor,
+            sensor=self.charge_factor_sensor,
             activator=LinearActivator(
-                zeroActivationValue=agent_recharge_upper_bound,
-                fullActivationValue=agent_recharge_lower_bound))  # highest activation already before battery empty
+                zeroActivationValue=1.0,
+                fullActivationValue=0.0))  # highest activation already before battery empty
 
         # Condition to check if we are at a charging station
         self.at_charging_station_cond = Condition(

@@ -17,7 +17,6 @@ class ActionManager(Manager):
         self._agent_name = agent_name
         super(ActionManager, self).__init__(prefix=self._agent_name, max_parallel_behaviours=1)
 
-    def init_behaviours(self, msg):
         self.massim_sensor = TopicSensor(
             topic="/team",
             name="massium_sensor",
@@ -27,7 +26,7 @@ class ActionManager(Manager):
             name="score_sensor",
             message_attr="score")
 
-        self.sensor_map = SensorAndConditionMap(agent_name=self._agent_name, msg=msg)
+        self.sensor_map = SensorAndConditionMap(agent_name=self._agent_name)
 
         self.init_behaviour_network()
         self.init_goals()
