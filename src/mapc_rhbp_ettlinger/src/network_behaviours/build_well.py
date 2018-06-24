@@ -1,8 +1,9 @@
-from agent_knowledge.task import TaskKnowledgebase
+from agent_knowledge.task import TaskBaseKnowledge
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor, FinishTaskBehaviour
+from behaviours.task import FinishTaskBehaviour
+from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
 
@@ -13,14 +14,13 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=agent_name,
             sensor_map=sensor_map,
             name=name,
-            task_type=TaskKnowledgebase.TYPE_BUILD_WELL,
+            task_type=TaskBaseKnowledge.TYPE_BUILD_WELL,
             **kwargs)
 
         self.init_well_sensors()
         self.init_build_behaviour()
         self.init_build_up_behaviour()
         self.init_finish_behaviour()
-
 
     def init_well_sensors(self):
         # Sensor that checks if agent has at least one assigned task
@@ -46,17 +46,18 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
                 isMinimum=True
             )
         )
+
     def init_build_behaviour(self):
-        self.build_well_bahviour = BuildWellBehaviour(
+        self.build_well_behaviour = BuildWellBehaviour(
             name="build_well_behaviour",
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
 
-        self.build_well_bahviour.add_precondition(
+        self.build_well_behaviour.add_precondition(
             precondition=Negation(self._target_well_exists_sensor)
         )
-        self.build_well_bahviour.add_effect(
+        self.build_well_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self.target_well_integrity_sensor.name,
                 indicator=1.0,
@@ -65,7 +66,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        self.init_do_behaviour(self.build_well_bahviour, effect_on_goal=False)
+        self.init_do_behaviour(self.build_well_behaviour, effect_on_goal=False)
 
     def init_build_up_behaviour(self):
         self.build_up_well_bahviour = BuildUpWellBehaviour(
@@ -81,7 +82,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             precondition=self._target_well_exists_sensor
         )
 
-        self.build_well_bahviour.add_effect(
+        self.build_well_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self.target_well_integrity_sensor.name,
                 indicator=1.0,
@@ -95,7 +96,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
     def init_finish_behaviour(self):
         self.finish_building_behaviour = FinishTaskBehaviour(
             name="finish_build_well_behaviour",
-            type=TaskKnowledgebase.TYPE_BUILD_WELL,
+            type=TaskBaseKnowledge.TYPE_BUILD_WELL,
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )

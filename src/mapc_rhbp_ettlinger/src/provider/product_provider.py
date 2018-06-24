@@ -4,13 +4,14 @@ import rospy
 from mac_ros_bridge.msg import SimStart, Agent, Item
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
-from agent_knowledge.item import StockItemKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.item import StockItemBaseKnowledge
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from common_utils.singleton import Singleton
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.product')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.product')
+
 
 class ProductProvider(object):
     __metaclass__ = Singleton
@@ -35,25 +36,24 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
-        self._stock_item_knowledgebase = StockItemKnowledgebase()
+        self._stock_item_knowledge_base = StockItemBaseKnowledge()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
     def _callback_agent(self, msg):
         """
-        Retreives the current state of stock items for use in other methods
+        Retrieves the current state of stock items for use in other methods
         :param msg:
         :type msg: Agent
         :return:
         """
-        items_in_stock_new  = {}
+        items_in_stock_new = {}
 
         for item in self.products.keys():
             items_in_stock_new[item] = 0
 
         for item in msg.items:
             items_in_stock_new[item.name] = items_in_stock_new.get(item.name, 0) + item.amount
-
 
         if items_in_stock_new != self._items_in_stock:
             self._items_in_stock = items_in_stock_new
@@ -65,7 +65,7 @@ class ProductProvider(object):
 
     def _callback_sim_start(self, msg):
         """
-        Retreives the products of the current simulation and their details
+        Retrieves the products of the current simulation and their details
         :param msg:
         :type msg: SimStart
         :return:
@@ -96,11 +96,10 @@ class ProductProvider(object):
         for index in self._items_in_stock.keys():
             item = StockItem(agent=self._agent_name, item=index, amount=self._items_in_stock[index],
                              goal=self._gather_goal.get(index, 0) + self._assemble_goal.get(index, 0))
-            self._stock_item_knowledgebase.update_stock(item)
+            self._stock_item_knowledge_base.update_stock(item)
             msg.stock_items.append(item)
 
     def start_gathering(self, item_to_focus):
-
 
         load_free = self.load_max - self.load
 
@@ -115,7 +114,7 @@ class ProductProvider(object):
         goal = {}
 
         for product in self.finished_products.keys():
-            goal[product] = items_to_assemble.get(product,0) + self._items_in_stock.get(product, 0)
+            goal[product] = items_to_assemble.get(product, 0) + self._items_in_stock.get(product, 0)
         self._assemble_goal = goal
         self.save_stock_and_sock_goals()
 
@@ -152,9 +151,9 @@ class ProductProvider(object):
             needed_amount = self._gather_goal.get(index, 0) - self._items_in_stock.get(index, 0)
 
             if needed_amount > 0:
-               res.append(index)
+                res.append(index)
 
-        ettilog.loginfo("All ingredients to gather: %s", str(res) )
+        ettilog.loginfo("All ingredients to gather: %s", str(res))
         return res
 
     def get_planned_finished_products(self):
@@ -172,7 +171,6 @@ class ProductProvider(object):
 
         return res
 
-
     def calculate_total_volume(self, product_dict):
         """
         Calculates the total volume that a dict of products will use
@@ -189,9 +187,9 @@ class ProductProvider(object):
         return v
 
     def total_items_in_stock(self):
-        return self._stock_item_knowledgebase.get_total_stock()
+        return self._stock_item_knowledge_base.get_total_stock()
 
-    def get_ingredients_of_product(self, product_name, amount = 1):
+    def get_ingredients_of_product(self, product_name, amount=1):
         product = self.products[product_name]
         res = {}
         for ingredient in product.consumed_items:
@@ -213,14 +211,14 @@ class ProductProvider(object):
                 ))
         return res
 
-    def get_base_ingredients_of_product_iteratively(self, product_name, amount = 1):
+    def get_base_ingredients_of_product_iteratively(self, product_name, amount=1):
         product = self.products[product_name]
 
         if len(product.consumed_items) == 0:
-            return {product_name:amount}
+            return {product_name: amount}
         else:
             res = {}
             for ingredient in product.consumed_items:
-                res = CalcUtil.dict_sum(res, self.get_base_ingredients_of_product_iteratively(ingredient.name, ingredient.amount * amount))
+                res = CalcUtil.dict_sum(res, self.get_base_ingredients_of_product_iteratively(ingredient.name,
+                                                                                              ingredient.amount * amount))
             return res
-

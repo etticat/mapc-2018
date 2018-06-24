@@ -3,11 +3,12 @@
 import rospy
 from mac_ros_bridge.msg import SimStart, WellMsg
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.well')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.well')
+
 
 class WellProvider(object):
     __metaclass__ = Singleton
@@ -20,9 +21,7 @@ class WellProvider(object):
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
 
-
         rospy.Subscriber(WellProvider.WELL_TOPIC, WellMsg, self._callback_well)
-
 
     def callback_sim_start(self, sim_start):
         """
@@ -33,7 +32,6 @@ class WellProvider(object):
         """
         for well in sim_start.wells:
             self.wells_to_build[well.name] = well
-
 
     def _callback_well(self, wellMsg):
         """
@@ -55,7 +53,6 @@ class WellProvider(object):
         """
 
         self.wells[well.name] = well
-
 
     def get_existing_wells(self):
         return self.wells

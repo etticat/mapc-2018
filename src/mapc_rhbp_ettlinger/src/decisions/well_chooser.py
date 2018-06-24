@@ -1,12 +1,12 @@
 import random
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.simulation_provider import SimulationProvider
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.well_chooser')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.well_chooser')
 
 class ChooseWellToBuild(object):
 

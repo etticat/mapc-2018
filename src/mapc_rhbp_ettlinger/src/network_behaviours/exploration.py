@@ -1,22 +1,19 @@
-from mapc_rhbp_ettlinger.msg import Task
-
-from agent_knowledge.task import TaskKnowledgebase
+from agent_knowledge.task import TaskBaseKnowledge
 from behaviour_components.activators import ThresholdActivator, GreedyActivator, BooleanActivator
-from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition, Disjunction
 from behaviour_components.goals import GoalBase
-from behaviours.movement import GotoLocationBehaviour2
+from behaviours.exploration import ChooseDestinationBehaviour
+from behaviours.movement import GoToTaskDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
-from provider.simulation_provider import SimulationProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.movement import StepDistanceSensor, SelectedTargetPositionSensor
 
 
 class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
     def __init__(self, agent_name, name, sensor_map, **kwargs):
-        super(ExplorationNetworkBehaviour, self).__init__(name=name, agent_name=agent_name, sensor_map=sensor_map, **kwargs)
-
+        super(ExplorationNetworkBehaviour, self).__init__(name=name, agent_name=agent_name, sensor_map=sensor_map,
+                                                          **kwargs)
 
         self.init_destination_step_sensor()
 
@@ -31,16 +28,15 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
             permanent=True,
             plannerPrefix=self.get_manager_prefix(),
             conditions=[Condition(
-                sensor=self.sensor_map.resource_discovery_progress_sensor,
+                sensor=self._sensor_map.resource_discovery_progress_sensor,
                 activator=GreedyActivator()
             )])
 
     def init_choose_destination_behaviour(self):
-        ####################### CHOOSE DESTINATION BEHAVIOUR ###################
         self.choose_destination_behaviour = ChooseDestinationBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name='choose_destination_behaviour',
-            type=TaskKnowledgebase.TYPE_EXPLORATION,
+            type=TaskBaseKnowledge.TYPE_EXPLORATION,
             agent_name=self._agent_name,
         )
         self.choose_destination_behaviour.add_effect(
@@ -51,16 +47,15 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.has_exploration_task_sensor = KnowledgeSensor(
             name="has_exploration_task_sensor",
-            pattern=TaskKnowledgebase.generate_tuple(
+            pattern=TaskBaseKnowledge.generate_tuple(
                 agent_name=self._agent_name,
-                type=TaskKnowledgebase.TYPE_EXPLORATION
+                type=TaskBaseKnowledge.TYPE_EXPLORATION
             )
         )
 
         self.has_exploration_task_cond = Condition(
             sensor=self.has_exploration_task_sensor,
             activator=BooleanActivator(desiredValue=True))
-
 
         self.choose_destination_behaviour.add_precondition(
             Disjunction(Negation(
@@ -69,27 +64,23 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         )
 
-
-
         self.choose_destination_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self.has_exploration_task_sensor.name,
                 indicator=1.0,
                 sensor_type=bool))
 
-
     def init_go_to_destination_behaviour(self):
-        ####################### GO TO DESTINATION BEHAVIOUR ###################
-        self._go_to_exploration_target_behaviour = GotoLocationBehaviour2(
+        self._go_to_exploration_target_behaviour = GoToTaskDestinationBehaviour(
             agent_name=self._agent_name,
-            task_type=TaskKnowledgebase.TYPE_EXPLORATION,
+            task_type=TaskBaseKnowledge.TYPE_EXPLORATION,
             plannerPrefix=self.get_manager_prefix(),
             name='go_to_exploration_target',
         )
         # exploration increases the nr of resources we know
         self._go_to_exploration_target_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.sensor_map.resource_discovery_progress_sensor.name,
+                sensor_name=self._sensor_map.resource_discovery_progress_sensor.name,
                 indicator=0.01,  # This should be less right? TODO #86
                 sensor_type=float))
 
@@ -109,10 +100,9 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
             precondition=self.has_exploration_task_cond
         )
 
-
     def init_destination_step_sensor(self):
         self.exploration_target_sensor = SelectedTargetPositionSensor(
-            type=TaskKnowledgebase.TYPE_EXPLORATION,
+            type=TaskBaseKnowledge.TYPE_EXPLORATION,
             name="exploration_target_sensor",
             agent_name=self._agent_name
         )
@@ -120,7 +110,7 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
         # Sensor to check distance to charging station
         self.target_step_sensor = StepDistanceSensor(
             name='target_step_sensor',
-            position_sensor_1=self.sensor_map.agent_position_sensor,
+            position_sensor_1=self._sensor_map.agent_position_sensor,
             position_sensor_2=self.exploration_target_sensor,
             initial_value=0
         )
@@ -132,22 +122,5 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 isMinimum=False))
 
     def stop(self):
-        self._movement_knowledge.finish_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_EXPLORATION)
+        self._movement_knowledge.finish_task(agent_name=self._agent_name, type=TaskBaseKnowledge.TYPE_EXPLORATION)
         super(ExplorationNetworkBehaviour, self).stop()
-
-class ChooseDestinationBehaviour(BehaviourBase):
-    def __init__(self, name, agent_name, type, **kwargs):
-        super(ChooseDestinationBehaviour, self).__init__(name, requires_execution_steps=True, **kwargs)
-        self.type = type
-        self._simulation_provider = SimulationProvider()
-        self._movement_knowledgebase = TaskKnowledgebase()
-
-        self.agent_name = agent_name
-
-    def do_step(self):
-        destination = self._simulation_provider.get_random_position()
-        self._movement_knowledgebase.create_task(Task(
-            type = self.type,
-            agent_name = self.agent_name,
-            pos = destination
-        ))

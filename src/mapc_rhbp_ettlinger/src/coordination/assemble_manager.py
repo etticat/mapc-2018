@@ -7,8 +7,8 @@ from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAssign
 
 import utils.rhbp_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.etti_logging import LOGGER_DEFAULT_NAME
 from common_utils.product_util import ProductUtil
-from common_utils.rhbp_logging import LOGGER_DEFAULT_NAME
 from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider

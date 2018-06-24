@@ -1,32 +1,33 @@
 import operator
 
-from agent_knowledge.item import StockItemKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.item import StockItemBaseKnowledge
+from common_utils import etti_logging
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.gathering')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.gathering')
+
 
 class ChooseIngredientToGather(object):
-
     WEIGHT_STEPS = -5
     WEIGHT_ALREADY_IN_STOCK = -5
     THRESHOLD = -999
 
     def __init__(self, agent_name):
         self.step_provider = DistanceProvider()
-        self._stock_item_knowledgebase = StockItemKnowledgebase()
+        self._stock_item_knowledgebase = StockItemBaseKnowledge()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
+        self.load_free = 0
 
     def update(self, msg):
         self.load_free = msg.load_max - msg.load
 
     def choose_resource(self):
-        choosen_resource  = None
+        choosen_resource = None
 
         resources = self._facility_provider.get_resources()
         gatherable_items = set([resource.item.name for resource in resources.values()])
@@ -40,7 +41,7 @@ class ChooseIngredientToGather(object):
             load_after_gathering = self.load_after_gathering(item)
             if load_after_gathering >= 0 and item in gatherable_items:
                 steps, resource = self.steps_to_closest_resource(resources, item)
-                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_ALREADY_IN_STOCK +\
+                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_ALREADY_IN_STOCK + \
                              steps * ChooseIngredientToGather.WEIGHT_STEPS
                 if activation > max_activation:
                     max_activation = activation

@@ -1,7 +1,7 @@
 from behaviours.generic_action import GenericActionBehaviour, Action
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.behaviours.battery')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.battery')
 
 
 class RechargeBehaviour(GenericActionBehaviour):
@@ -17,9 +17,10 @@ class RechargeBehaviour(GenericActionBehaviour):
         """
         super(RechargeBehaviour, self) \
             .__init__(name=name,
-                      agent_name = agent_name,
-                      action_type = Action.RECHARGE,
+                      agent_name=agent_name,
+                      action_type=Action.RECHARGE,
                       **kwargs)
+
 
 class ChargeBehaviour(GenericActionBehaviour):
     """
@@ -34,6 +35,6 @@ class ChargeBehaviour(GenericActionBehaviour):
         """
         super(ChargeBehaviour, self) \
             .__init__(name=name,
-                      agent_name = agent_name,
-                      action_type = Action.CHARGE,
+                      agent_name=agent_name,
+                      action_type=Action.CHARGE,
                       **kwargs)

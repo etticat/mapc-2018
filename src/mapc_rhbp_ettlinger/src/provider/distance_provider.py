@@ -11,17 +11,18 @@ import rospy
 from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
 from graphhopper import GraphhopperProcessHandler
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.distance')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.distance')
+
 
 class DistanceProvider(object):
     __metaclass__ = Singleton
 
-    RADIUS_EARTH_METERS = 6373000.0 # Using same approximation as server
+    RADIUS_EARTH_METERS = 6373000.0  # Using same approximation as server
     GRAPHHOPPER_URL_REQUEST_TIMEOUT = 1.0
     GRAPHHOPPER_DEFAULT_PORT = 8989
 
@@ -37,7 +38,7 @@ class DistanceProvider(object):
         """
         self.cell_size = sim_start.cell_size
         self.can_fly = "drone" == sim_start.role.name
-        self.speed = sim_start.role.base_speed # TODO: Update on upgrade
+        self.speed = sim_start.role.base_speed  # TODO: Update on upgrade
         self._proximity = sim_start.proximity
 
     def calculate_distance(self, startPosition, endPosition):
@@ -53,15 +54,14 @@ class DistanceProvider(object):
                 ettilog.logdebug(traceback.format_exc())
 
             ettilog.logwarn("DistanceProvider:: Using fallback approximation")
-            return self.calculate_distance_air(startPosition, endPosition) * 2 # Fallback
+            return self.calculate_distance_air(startPosition, endPosition) * 2  # Fallback
 
-    def     calculate_steps(self, pos1, pos2):
+    def calculate_steps(self, pos1, pos2):
         if self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity:
             return 0
         size_ = self.calculate_distance(pos1, pos2) / (self.speed * self.cell_size)
-        return math.ceil((size_ / 1000) - 0.002) # round up except when its really close
+        return math.ceil((size_ / 1000) - 0.002)  # round up except when its really close
         # TODO Maype this can be better approximated using proximity. But then need to conver from latlong eucliedian to meters
-
 
     def calculate_distance_air(self, pos1, pos2):
         """
@@ -79,11 +79,10 @@ class DistanceProvider(object):
         dlon = lon2 - lon1
         dlat = lat2 - lat1
 
-        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return DistanceProvider.RADIUS_EARTH_METERS * c
-
 
     def calculate_distance_street(self, a, b):
         """
@@ -98,7 +97,7 @@ class DistanceProvider(object):
         try:
             distance = self._cache[key]
         except KeyError:
-            distance = self._request_street_distance(a,b)
+            distance = self._request_street_distance(a, b)
             self._cache[key] = distance
             # ettilog.logdebug("Cache size increased to %d", len(self._cache))
         return distance
@@ -117,7 +116,7 @@ class DistanceProvider(object):
                   'points_encoded=false&point={},{}&point={},{}'.format(self.graphhopper_port,
                                                                         a.lat, a.long, b.lat, b.long)
         try:
-            connection = urllib2.urlopen(request, timeout = DistanceProvider.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
+            connection = urllib2.urlopen(request, timeout=DistanceProvider.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
             response = connection.read().decode()
             parsed = json.loads(response)
             connection.close()
@@ -126,14 +125,12 @@ class DistanceProvider(object):
                 # ettilog.loginfo("Successful route to '%s'", request)
                 return distance
             else:
-                raise LookupError('Graphhopper: Route not available for:'+request)
+                raise LookupError('Graphhopper: Route not available for:' + request)
 
         except URLError as e:
-            raise Exception("Graphhopper: URL error message for "+request+" :: " + str(e))
+            raise Exception("Graphhopper: URL error message for " + request + " :: " + str(e))
         except socket.timeout as e:
             raise Exception("Graphhopper socket timeout for: " + str(request))
-
-
 
     def set_map(self, map):
         """
@@ -143,7 +140,7 @@ class DistanceProvider(object):
         try:
             set_map = rospy.ServiceProxy(GraphhopperProcessHandler.MAP_SERVICE_NAME, SetGraphhopperMap)
             res = set_map(map)
-            if self._map != map: # reset cache on new map
+            if self._map != map:  # reset cache on new map
                 self._map = map
                 self.graphhopper_port = res.port
                 self._cache = {}

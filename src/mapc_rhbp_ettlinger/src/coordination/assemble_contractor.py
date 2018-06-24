@@ -5,7 +5,7 @@ from mapc_rhbp_ettlinger.msg import AssembleRequest, AssembleBid, AssembleAcknow
     AssembleStop, Task
 
 import utils.rhbp_logging
-from agent_knowledge.task import TaskKnowledgebase
+from agent_knowledge.task import TaskBaseKnowledge
 from common_utils.agent_utils import AgentUtils
 from decisions.assembly_bid import ShouldBidForAssembly
 from provider.product_provider import ProductProvider
@@ -21,7 +21,7 @@ class AssembleContractor(object):
         self._agent_name = agent_name
         self.role = role
         self.current_task = None
-        self._task_knowledge_base = TaskKnowledgebase()
+        self._task_knowledge_base = TaskBaseKnowledge()
         self.enabled = True
 
 
@@ -89,7 +89,7 @@ class AssembleContractor(object):
 
             accepted = self._task_knowledge_base.create_task(Task(
                 id=assembleAssignment.bid.id,
-                type=TaskKnowledgebase.TYPE_ASSEMBLE,
+                type=TaskBaseKnowledge.TYPE_ASSEMBLE,
                 agent_name=self._agent_name,
                 pos=assembleAssignment.bid.request.destination,
                 task=assembleAssignment.tasks
@@ -114,9 +114,9 @@ class AssembleContractor(object):
         :type assemble_stop: AssembleStop
         :return:
         """
-        current_assemble_task = self._task_knowledge_base.get_task(self._agent_name, type=TaskKnowledgebase.TYPE_ASSEMBLE)
+        current_assemble_task = self._task_knowledge_base.get_task(self._agent_name, type=TaskBaseKnowledge.TYPE_ASSEMBLE)
         if current_assemble_task is not None and current_assemble_task.id == assemble_stop.id:
-            self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=TaskKnowledgebase.TYPE_ASSEMBLE)
+            self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=TaskBaseKnowledge.TYPE_ASSEMBLE)
             self._product_provider.stop_assembly()
 
             ettilog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, assemble_stop.id, assemble_stop.reason)

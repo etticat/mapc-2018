@@ -3,12 +3,13 @@
 import rospy
 from mac_ros_bridge.msg import Team, RequestAction
 
-from agent_knowledge.task import TaskKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.task import TaskBaseKnowledge
+from common_utils import etti_logging
 from common_utils.singleton import Singleton
 from provider.well_provider import WellProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.stats')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.stats')
+
 
 class StatsProvider(object):
     __metaclass__ = Singleton
@@ -16,8 +17,7 @@ class StatsProvider(object):
     STATS_TOPIC = "/team"
 
     def __init__(self):
-
-        self._task_knowledgebase = TaskKnowledgebase()
+        self._task_knowledgebase = TaskBaseKnowledge()
         self.well_provider = WellProvider()
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
@@ -47,10 +47,9 @@ class StatsProvider(object):
         self.score = team.score
 
     def get_goal_massium(self):
-
         delayed_cost = 0
         for well in self._task_knowledgebase.get_tasks(
-                type=TaskKnowledgebase.TYPE_BUILD_WELL,
+                type=TaskBaseKnowledge.TYPE_BUILD_WELL,
                 task="build_up"):
             delayed_cost += self.well_provider.get_well(well.well_type).cost
 

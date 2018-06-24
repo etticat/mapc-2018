@@ -1,9 +1,10 @@
-from agent_knowledge.resource import ResourceKnowledgebase
+from agent_knowledge.resource import ResourceBaseKnowledgeBase
 from behaviour_components.sensors import Sensor
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.exploration')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.exploration')
+
 
 class ResourceDiscoveryProgressSensor(Sensor):
     """
@@ -13,7 +14,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
 
     def __init__(self, agent_name, optional=False, name=None, initial_value=0.0):
         super(ResourceDiscoveryProgressSensor, self).__init__(name=name, optional=optional, initial_value=initial_value)
-        self._resource_knowledge = ResourceKnowledgebase()
+        self._resource_knowledge = ResourceBaseKnowledgeBase()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def sync(self):
@@ -29,8 +30,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
         discovered_ingredients = total_ingredients - len(base_ingredients)
 
         res = float(discovered_ingredients) / total_ingredients
-        ettilog.loginfo("%s:: Discovery progress: %s",self.name, str(res))
+        ettilog.loginfo("%s:: Discovery progress: %s", self.name, str(res))
 
         self.update(res)
         super(ResourceDiscoveryProgressSensor, self).sync()
-

@@ -1,11 +1,11 @@
 from mac_ros_bridge.msg import Agent
 
 from behaviour_components.sensors import RawTopicSensor, TopicSensor
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from decisions.gathering import ChooseIngredientToGather
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.sensors.agent')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.agent')
 
 class StorageFitsMoreItemsSensor(RawTopicSensor):
 

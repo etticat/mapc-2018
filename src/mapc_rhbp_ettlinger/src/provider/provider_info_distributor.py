@@ -1,11 +1,12 @@
-from agent_knowledge.resource import ResourceKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.resource import ResourceBaseKnowledgeBase
+from common_utils import etti_logging
 from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.distributor')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.distributor')
+
 
 class ProviderInfoDistributor(object):
 
@@ -14,7 +15,7 @@ class ProviderInfoDistributor(object):
         self.well_provider = WellProvider()
         self.simulation_provider = SimulationProvider()
         self.stats_provider = StatsProvider()
-        self._resource_knowledgebase = ResourceKnowledgebase()
+        self._resource_knowledge_base = ResourceBaseKnowledgeBase()
 
     def callback_sim_start(self, sim_start):
         self.step_provider.callback_sim_start(sim_start=sim_start)
@@ -25,4 +26,4 @@ class ProviderInfoDistributor(object):
         self.stats_provider.callback_request_action(request_action=request_action)
 
         for resource in request_action.resources:
-            self._resource_knowledgebase.add_new_resource(resource)
+            self._resource_knowledge_base.add_new_resource(resource)

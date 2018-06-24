@@ -2,13 +2,13 @@ import rospy
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAcknowledgement, JobAssignment, \
     Task
 
-from agent_knowledge.task import TaskKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.task import TaskBaseKnowledge
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from decisions.job_bid import JobBidDecider
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.coordination.job_contractor')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.coordination.job_contractor')
 
 
 class JobContractor(object):
@@ -16,7 +16,7 @@ class JobContractor(object):
     def __init__(self, agent_name, product_provider=None):
 
         self._agent_name = agent_name
-        self._task_knowledgebase = TaskKnowledgebase()
+        self._task_knowledgebase = TaskBaseKnowledge()
         self.job_bid_decider = JobBidDecider(self._agent_name)
 
         if product_provider == None:

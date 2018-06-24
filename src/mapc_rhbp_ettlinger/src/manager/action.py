@@ -9,15 +9,13 @@ from network_behaviours.build_well import BuildWellNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.job_execution import DeliverJobNetworkBehaviour
-from network_behaviours.sensor_map import SensorAndConditionMap
+from sensor.sensor_map import SensorAndConditionMap
 
 
 class ActionManager(Manager):
     def __init__(self, agent_name):
         self._agent_name = agent_name
         super(ActionManager, self).__init__(prefix=self._agent_name, max_parallel_behaviours=1)
-
-
 
     def init_behaviours(self, msg):
         self.massim_sensor = TopicSensor(
@@ -66,7 +64,7 @@ class ActionManager(Manager):
         # Gather when there is space left in load
         # We want to gather till its full. so this doesn't really make sense
         # Maybe add some other condition to encourage it more when there is still a lot to gather
-        # self._gathering_network.add_precondition(Negation(self.sensor_map.load_fullnes_condition))
+        # self._gathering_network.add_precondition(Negation(self.sensor_map.load_fullness_condition))
 
         # Gather when we know some of the resource nodes already
         self._gathering_network.add_precondition(self.sensor_map.discovery_completeness_condition)
@@ -143,9 +141,7 @@ class ActionManager(Manager):
             )
         )
 
-
     def init_goals(self):
-
         self.task_fulfillment_goal = GoalBase(
             name='task_fulfillment_goal',
             permanent=True,
@@ -158,9 +154,7 @@ class ActionManager(Manager):
             permanent=True,
             priority=50,
             plannerPrefix=self._agent_name,
-            conditions=[self.sensor_map.load_fullnes_condition])
-
-
+            conditions=[self.sensor_map.load_fullness_condition])
 
     def init_coordination(self):
         # self.request_assembly = RequestAssemblyBehaviour(

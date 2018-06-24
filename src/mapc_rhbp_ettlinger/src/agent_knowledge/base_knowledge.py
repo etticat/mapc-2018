@@ -1,12 +1,12 @@
 from knowledge_base.knowledge_base_client import KnowledgeBaseClient
 from knowledge_base.knowledge_base_manager import KnowledgeBase
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.base')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledge_base.base')
 
-class BaseKnowledgebase(object):
 
+class BaseKnowledgeBase(object):
 
     def __init__(self, knowledge_base_name=KnowledgeBase.DEFAULT_NAME):
-        self._kb_client = BaseKnowledgebase.kb_instance = KnowledgeBaseClient(knowledge_base_name = knowledge_base_name)
+        self._kb_client = BaseKnowledgeBase.kb_instance = KnowledgeBaseClient(knowledge_base_name=knowledge_base_name)

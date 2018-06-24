@@ -3,19 +3,21 @@ import random
 import rospy
 from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg
 
-from agent_knowledge.resource import ResourceKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.resource import ResourceBaseKnowledgeBase
+from common_utils import etti_logging
 from common_utils.singleton import Singleton
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.facility')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.facility')
+
 
 class FacilityProvider(object):
     __metaclass__ = Singleton
     """
     Keeps a list of all Facilities readily available for various components to use
     """
+
     def __init__(self):
-        self._resource_knowledge = ResourceKnowledgebase()
+        self._resource_knowledge = ResourceBaseKnowledgeBase()
         self.charging_stations = {}
         self.storages = {}
         self.workshops = {}
@@ -23,8 +25,6 @@ class FacilityProvider(object):
         rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
         rospy.Subscriber("/workshop", WorkshopMsg, self.workshop_callback)
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
-
-
 
     def storage_callback(self, storageMsg):
         """
@@ -36,6 +36,7 @@ class FacilityProvider(object):
 
         for storage in storageMsg.facilities:
             self.storages[storage.name] = storage
+
     def workshop_callback(self, workshopMsg):
         """
 
@@ -45,6 +46,7 @@ class FacilityProvider(object):
         """
         for workshop in workshopMsg.facilities:
             self.workshops[workshop.name] = workshop
+
     def charging_station_callback(self, charging_station_msg):
         """
 

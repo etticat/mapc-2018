@@ -5,15 +5,15 @@ import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
 
 from behaviours.generic_action import GenericActionBehaviour, Action
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_contractor import AssembleContractor
 from coordination.job_contractor import JobContractor
-from network_behaviours.first_level import ActionManager
+from manager.action import ActionManager
 from planner import Planner
 from provider.provider_info_distributor import ProviderInfoDistributor
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
 
 class RhbpAgent:
     """

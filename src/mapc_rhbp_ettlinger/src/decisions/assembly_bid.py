@@ -2,12 +2,12 @@ import rospy
 from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import AssembleBid
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_bid')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_bid')
 
 class ShouldBidForAssembly(object):
 

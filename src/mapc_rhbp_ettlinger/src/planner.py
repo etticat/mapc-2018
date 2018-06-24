@@ -2,7 +2,7 @@
 import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from coordination.assemble_manager import AssembleManager
 from coordination.build_well_manager import BuildWellManager
@@ -12,7 +12,7 @@ from decisions.well_chooser import ChooseWellToBuild
 from provider.product_provider import ProductProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.planner')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.planner')
 
 class Planner(object):
 

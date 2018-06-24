@@ -2,13 +2,13 @@ import copy
 import itertools
 import operator
 
-from agent_knowledge.item import StockItemKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.item import StockItemBaseKnowledge
+from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from common_utils.product_util import ProductUtil
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
 class ChooseBestAssemblyCombination(object):
 
@@ -22,7 +22,7 @@ class ChooseBestAssemblyCombination(object):
 
     def __init__(self):
 
-        self._stock_item_knowledgebase = StockItemKnowledgebase()
+        self._stock_item_knowledgebase = StockItemBaseKnowledge()
         self._product_provider = ProductProvider(agent_name="agentA1") # TODO: make independent from agent
 
 

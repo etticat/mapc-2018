@@ -3,12 +3,12 @@ import time
 import rospy
 from mac_ros_bridge.msg import RequestAction
 
-from agent_knowledge.resource import ResourceKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.resource import ResourceBaseKnowledgeBase
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
 
 class DebugAgent(object):
@@ -17,7 +17,7 @@ class DebugAgent(object):
 
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
         time.sleep(1)
-        DebugUtils.instant_find_resources(ResourceKnowledgebase())
+        DebugUtils.instant_find_resources(ResourceBaseKnowledgeBase())
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")
         # DebugUtils.add_build_well_task()

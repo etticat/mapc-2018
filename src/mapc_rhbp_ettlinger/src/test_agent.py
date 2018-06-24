@@ -1,12 +1,12 @@
 import rospy
 from mac_ros_bridge.msg import Position, SimStart
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.well_provider import WellProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.agent.test')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.test')
 
 class TestAgent(object):
 

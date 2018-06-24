@@ -1,9 +1,9 @@
 import numpy as np
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from provider.product_provider import ProductProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.job_activation')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_activation')
 
 class JobDecider(object):
 

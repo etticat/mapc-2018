@@ -1,99 +1,104 @@
 #!/usr/bin/env python2
 
+from knowledge_base.knowledge_base_manager import KnowledgeBase
 from mapc_rhbp_ettlinger.msg import StockItem
 
-from agent_knowledge.base_knowledge import BaseKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.base_knowledge import BaseKnowledgeBase
+from common_utils import etti_logging
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.item')
-class StockItemKnowledgebase(BaseKnowledgebase):
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.item')
+
+
+class StockItemBaseKnowledge(BaseKnowledgeBase):
+
+    KNOWLEDGE_BASE_NAME = KnowledgeBase.DEFAULT_NAME
 
     INDEX_AGENT = 1
     INDEX_ITEM = 2
     INDEX_AMOUNT = 3
     INDEX_GOAL = 4
 
+    def __init__(self):
+        super(StockItemBaseKnowledge, self).__init__(
+            knowledge_base_name=StockItemBaseKnowledge.KNOWLEDGE_BASE_NAME)
 
     @staticmethod
-    def generate_tuple(agent_name="*", item="*", amount="*",goal="*"):
-        return 'stock', agent_name, item, str(amount),str(goal)
+    def generate_tuple(agent_name="*", item="*", amount="*", goal="*"):
+        return 'stock', agent_name, item, str(amount), str(goal)
 
     @staticmethod
     def generate_stock_item_from_fact(fact):
         """
-        Generates a StockItem from a Knowledgebase fact
+        Generates a StockItem from a KnowledgeBase fact
         :param fact: The fact
         :type fact: list
         :return: StockItem
         """
         task = StockItem(
-            agent=fact[StockItemKnowledgebase.INDEX_AGENT],
-            item=fact[StockItemKnowledgebase.INDEX_ITEM],
-            amount=int(fact[StockItemKnowledgebase.INDEX_AMOUNT]),
-            goal=int(fact[StockItemKnowledgebase.INDEX_GOAL])
+            agent=fact[StockItemBaseKnowledge.INDEX_AGENT],
+            item=fact[StockItemBaseKnowledge.INDEX_ITEM],
+            amount=int(fact[StockItemBaseKnowledge.INDEX_AMOUNT]),
+            goal=int(fact[StockItemBaseKnowledge.INDEX_GOAL])
         )
         return task
 
     @staticmethod
     def generate_fact_from_stock_item(stock_item):
         """
-        Generates a knowledgebase fact rom a StockItem
-        :param task: The hoarded item
-        :type task: StockItem
-        :return: list
+        :param stock_item:
+        :type stock_item: StockItem
+        :return:
         """
-        return StockItemKnowledgebase.generate_tuple(
+        return StockItemBaseKnowledge.generate_tuple(
             agent_name=stock_item.agent,
             item=stock_item.item,
             amount=stock_item.amount,
             goal=stock_item.goal
         )
 
-    def update_stock(self, stockItem):
+    def update_stock(self, stock_item):
         """
         Saves a new stock_item to the Knoledgebase
-        :param stockItem:
-        :type stockItem: StockItem
+        :param stock_item:
+        :type stock_item: StockItem
         :return:
         """
-        search = StockItemKnowledgebase.generate_tuple(
-            agent_name=stockItem.agent,
-            item=stockItem.item
+        search = StockItemBaseKnowledge.generate_tuple(
+            agent_name=stock_item.agent,
+            item=stock_item.item
         )
-        new = StockItemKnowledgebase.generate_fact_from_stock_item(stockItem)
-        self._kb_client.update(search, new, push_without_existing = True)
+        new = StockItemBaseKnowledge.generate_fact_from_stock_item(stock_item)
+        self._kb_client.update(search, new, push_without_existing=True)
 
     def get_total_stock(self):
-        all = self.generate_tuple()
+        all_tuple = self.generate_tuple()
         res = {}
 
-        facts = self._kb_client.all(all)
+        facts = self._kb_client.all(all_tuple)
 
         for fact in facts:
-            stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
-            res[stockItem.item] = res.get(stockItem.item,0) + max(stockItem.amount, stockItem.goal)
+            stock_item = StockItemBaseKnowledge.generate_stock_item_from_fact(fact)
+            res[stock_item.item] = res.get(stock_item.item, 0) + max(stock_item.amount, stock_item.goal)
         return res
 
     def get_total_stock_and_goals(self):
-        all = self.generate_tuple()
+        all_tuple = self.generate_tuple()
         res = {}
 
-        facts = self._kb_client.all(all)
+        facts = self._kb_client.all(all_tuple)
 
-        if facts != None:
+        if facts is not None:
             for fact in facts:
-                stockItem = StockItemKnowledgebase.generate_stock_item_from_fact(fact)
+                stock_item = StockItemBaseKnowledge.generate_stock_item_from_fact(fact)
 
-                if stockItem.item not in res.keys():
-                    res[stockItem.item] = {
+                if stock_item.item not in res.keys():
+                    res[stock_item.item] = {
                         "stock": 0,
                         "goal": 0
                     }
 
-
-
-                res[stockItem.item]["stock"] += stockItem.amount
-                res[stockItem.item]["goal"] += max(stockItem.goal, stockItem.amount)
+                res[stock_item.item]["stock"] += stock_item.amount
+                res[stock_item.item]["goal"] += max(stock_item.goal, stock_item.amount)
         else:
             ettilog.logerr("Error reading from db")
         return res

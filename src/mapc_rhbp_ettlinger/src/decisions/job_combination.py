@@ -1,11 +1,11 @@
 import copy
 import itertools
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from provider.stats_provider import StatsProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.decisions.job_combination')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_combination')
 
 class ChooseBestJobCombination(object):
 

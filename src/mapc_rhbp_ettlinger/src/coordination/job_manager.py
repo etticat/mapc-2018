@@ -4,14 +4,14 @@ import rospy
 from mac_ros_bridge.msg import Job
 from mapc_rhbp_ettlinger.msg import JobRequest, JobBid, JobAssignment, JobAcknowledgement
 
-from agent_knowledge.task import TaskKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.task import TaskBaseKnowledge
+from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.job_combination import ChooseBestJobCombination
 from provider.facility_provider import FacilityProvider
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.coordination.job_manager')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.coordination.job_manager')
 
 
 class JobManager(object):
@@ -118,7 +118,7 @@ class JobManager(object):
                 agent_name=bid.agent_name,
                 assigned=True,
                 deadline=0,
-                type=TaskKnowledgebase.TYPE_DELIVER,
+                type=TaskBaseKnowledge.TYPE_DELIVER,
                 pos = self._facility_provider.get_storage_by_name(self._job.storage_name).pos,
                 job_id = self._job.id)
             self.assignments.append(assignement)
@@ -156,7 +156,7 @@ class JobManager(object):
                     agent_name=bid.agent_name,
                     assigned=False,
                     deadline=0,
-                    type=TaskKnowledgebase.TYPE_DELIVER,
+                    type=TaskBaseKnowledge.TYPE_DELIVER,
                     pos=self._facility_provider.get_storage_by_name(self._job.storage_name).pos,
                     job_id=self._job.id)
 

@@ -2,15 +2,15 @@ import random
 
 from mac_ros_bridge.msg import Position
 
-from common_utils import rhbp_logging
+from common_utils import etti_logging
 from common_utils.singleton import Singleton
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.provider.simulation')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.simulation')
+
 
 class SimulationProvider(object):
     __metaclass__ = Singleton
-    
-    
+
     def __init__(self):
         self.min_lat = 0
         self.max_lat = 0

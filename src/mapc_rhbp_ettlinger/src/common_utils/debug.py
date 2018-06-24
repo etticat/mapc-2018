@@ -1,11 +1,11 @@
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import WellTask, Task
 
-from agent_knowledge.item import StockItemKnowledgebase
-from agent_knowledge.task import TaskKnowledgebase
-from common_utils import rhbp_logging
+from agent_knowledge.item import StockItemBaseKnowledge
+from agent_knowledge.task import TaskBaseKnowledge
+from common_utils import etti_logging
 
-ettilog = rhbp_logging.LogManager(logger_name=rhbp_logging.LOGGER_DEFAULT_NAME + '.utils.debug')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.utils.debug')
 
 class DebugUtils:
 
@@ -51,7 +51,7 @@ class DebugUtils:
 
     @staticmethod
     def show_total_stock_with_goals():
-        stock_item_knowledgebase = StockItemKnowledgebase()
+        stock_item_knowledgebase = StockItemBaseKnowledge()
         return stock_item_knowledgebase.get_total_stock_and_goals()
 
     @staticmethod
@@ -84,13 +84,13 @@ class DebugUtils:
     @staticmethod
     def assign_assembly_task():
 
-        assembly_knowledgebase= TaskKnowledgebase()
+        assembly_knowledgebase= TaskBaseKnowledge()
 
         assembly_knowledgebase.create_task(Task(
             id = 'edawd',
             agent_name = 'agentA1',
             pos = Position(long=2.31017, lat=48.82456),
             task = 'assemble:item8',
-            type = TaskKnowledgebase.TYPE_ASSEMBLE
+            type = TaskBaseKnowledge.TYPE_ASSEMBLE
         ))
 
