@@ -33,16 +33,18 @@ class DebugAgent(object):
         :type msg: RequestAction
         :return:
         """
+        self.show_items()
+
+    def show_items(self):
         ettilog.logerr("-----------------------------------")
         ettilog.logerr("Ingredients:")
         stock = DebugUtils.show_total_stock_with_goals()
-        for i in range(0,5):
+        for i in range(0, 5):
             item = "item" + str(i)
             if item in stock.keys():
                 ettilog.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])
-
         ettilog.logerr("Finished products:")
-        for i in range(5,11):
+        for i in range(5, 11):
             item = "item" + str(i)
             if item in stock.keys():
                 ettilog.logerr("%s: %d/%d", item, stock[item]["stock"], stock[item]["goal"])

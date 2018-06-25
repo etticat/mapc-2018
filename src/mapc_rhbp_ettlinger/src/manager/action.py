@@ -1,36 +1,26 @@
 #!/usr/bin/env python2
-from behaviour_components.behaviours import BehaviourBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
-from behaviour_components.sensors import TopicSensor
+from common_utils import etti_logging
 from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.job_execution import DeliverJobNetworkBehaviour
-from sensor.sensor_map import SensorAndConditionMap
 
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
 
 class ActionManager(Manager):
-    def __init__(self, agent_name):
+    def __init__(self, agent_name, sensor_map):
         self._agent_name = agent_name
         super(ActionManager, self).__init__(prefix=self._agent_name, max_parallel_behaviours=1)
 
-        self.massim_sensor = TopicSensor(
-            topic="/team",
-            name="massium_sensor",
-            message_attr="massium")
-        self.score_sensor = TopicSensor(
-            topic="/team",
-            name="score_sensor",
-            message_attr="score")
 
-        self.sensor_map = SensorAndConditionMap(agent_name=self._agent_name)
 
+        self.sensor_map = sensor_map
         self.init_behaviour_network()
         self.init_goals()
-        self.init_coordination()
         # TODO: Add goals for assembly, massim, score, battery
 
     def init_behaviour_network(self):
@@ -154,24 +144,3 @@ class ActionManager(Manager):
             priority=50,
             plannerPrefix=self._agent_name,
             conditions=[self.sensor_map.load_fullness_condition])
-
-    def init_coordination(self):
-        # self.request_assembly = RequestAssemblyBehaviour(
-        #     requires_execution_steps=False,
-        #     name="request_assembly",
-        #     plannerPrefix=self._agent_name)
-        #
-        # self.request_assembly.add_precondition(Negation(self._assembly_network.has_assemble_task_assigned_cond))
-        #
-        # self.request_assembly.add_effect(
-        #     effect=Effect(
-        #         sensor_name=self._assembly_network.assemble_organized_sensor.name,
-        #         indicator=1.0,
-        #         sensor_type=bool
-        #     )
-        # )
-        pass
-
-
-class RequestAssemblyBehaviour(BehaviourBase):
-    pass

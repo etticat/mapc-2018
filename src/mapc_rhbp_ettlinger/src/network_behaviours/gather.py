@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -21,7 +21,9 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self._product_provider = ProductProvider(
             agent_name=self._agent_name)
 
-        self._movement_knowledge = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
+
+        self._movement_knowledge = TaskKnowledgeBase()
         self._agent_name = self._agent_name
 
         self.init_choose_ingredient_behaviour()
@@ -72,13 +74,13 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         ################ Going to resource #########################
         self.go_to_resource_node_behaviour = GoToTaskDestinationBehaviour(
             agent_name=self._agent_name,
-            task_type=TaskBaseKnowledge.TYPE_GATHERING,
+            task_type=TaskKnowledgeBase.TYPE_GATHERING,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix()
         )
 
         self.gather_target_sensor = SelectedTargetPositionSensor(
-            type=TaskBaseKnowledge.TYPE_GATHERING,
+            type=TaskKnowledgeBase.TYPE_GATHERING,
             name="gather_target_sensor",
             agent_name=self._agent_name
         )
@@ -119,9 +121,9 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         )
         self.has_gathering_task_sensor = KnowledgeSensor(
             name="has_gathering_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(
+            pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,
-                type=TaskBaseKnowledge.TYPE_GATHERING
+                type=TaskKnowledgeBase.TYPE_GATHERING
             )
         )
         self.has_gathering_task_cond = Condition(
@@ -142,3 +144,9 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 sensor_type=bool
             )
         )
+
+    def stop(self):
+        super(GatheringNetworkBehaviour, self).stop()
+        # Deleting task and cleaning up goal KB
+        self._task_knowledge_base.finish_task(type=TaskKnowledgeBase.TYPE_GATHERING, agent_name=self._agent_name)
+        self._product_provider.stop_gathering()

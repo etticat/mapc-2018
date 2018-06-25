@@ -7,13 +7,14 @@ from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, B
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
-from coordination.assemble_contractor import AssembleContractor
-from coordination.job_contractor import JobContractor
 from manager.action import ActionManager
+from manager.coordination import CoordinationManager
 from planner import Planner
 from provider.provider_info_distributor import ProviderInfoDistributor
+from sensor.sensor_map import SensorAndConditionMap
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
+
 
 class RhbpAgent:
     """
@@ -36,7 +37,10 @@ class RhbpAgent:
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
         # ensure also max_parallel_behaviours during debugging
-        self._action_manager = ActionManager(agent_name=self._agent_name)
+
+        self.sensor_map = SensorAndConditionMap(agent_name=self._agent_name)
+        self._action_manager = ActionManager(agent_name=self._agent_name, sensor_map=self.sensor_map)
+
         self._provider_info_distributor = ProviderInfoDistributor()
 
         self._sim_started = False
@@ -57,7 +61,6 @@ class RhbpAgent:
 
         ettilog.logerr("RhbpAgent(%s):: Constructor finished", self._agent_name)
 
-
     def _sim_start_callback(self, sim_start):
         """
         here we could also evaluate the msg in order to initialize depending on the role etc.
@@ -72,15 +75,9 @@ class RhbpAgent:
 
             # init only once, even when run restarts
             if not self._initialized:
-
-                self.assemble_contractor = AssembleContractor(
-                    agent_name=self._agent_name,
-                    role=sim_start.role.name)
-                self.assemble_contractor = JobContractor(
-                    agent_name=self._agent_name)
-
+                self._coordination_manager = CoordinationManager(agent_name=self._agent_name,
+                                                                 sensor_map=self.sensor_map, role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
-
 
             self._initialized = True
 
@@ -122,21 +119,21 @@ class RhbpAgent:
 
         self.agent_info = request_action.agent
 
-
         self._received_action_response = False
 
         # if hasattr(self, "_action_manager"):
-            # DebugUtils.print_precondition_states(self._action_manager.exploration_network)
-            # ettilog.logerr("CHARGE %f:", self._action_manager.sensor_map.charge_factor_sensor.sync())
+        # DebugUtils.print_precondition_states(self._action_manager.exploration_network)
+        # ettilog.logerr("CHARGE %f:", self._action_manager.sensor_map.charge_factor_sensor.sync())
 
-
+        if self._initialized:
+            self._coordination_manager.step()
         start_time = rospy.get_rostime()
         steps = 0
         # wait for generic action response (send by any behaviour)
         while not self._received_action_response:
             if self._initialized:
                 steps += 1
-                self._action_manager.step() # selected behaviours eventually trigger action
+                self._action_manager.step()  # selected behaviours eventually trigger action
             else:
                 time.sleep(0.2)
             # Recharge if decision-making-time > 3.9 seconds
@@ -147,6 +144,8 @@ class RhbpAgent:
                 self.fallback_recharge()
                 break
 
+        if self._initialized:
+            self._coordination_manager.step()
         duration = rospy.get_rostime() - start_time
         ettilog.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 

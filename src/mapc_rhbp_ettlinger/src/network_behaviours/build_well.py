@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
@@ -14,7 +14,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=agent_name,
             sensor_map=sensor_map,
             name=name,
-            task_type=TaskBaseKnowledge.TYPE_BUILD_WELL,
+            task_type=TaskKnowledgeBase.TYPE_BUILD_WELL,
             **kwargs)
 
         self.init_well_sensors()
@@ -96,7 +96,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
     def init_finish_behaviour(self):
         self.finish_building_behaviour = FinishTaskBehaviour(
             name="finish_build_well_behaviour",
-            type=TaskBaseKnowledge.TYPE_BUILD_WELL,
+            type=TaskKnowledgeBase.TYPE_BUILD_WELL,
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )

@@ -47,17 +47,12 @@ catkin_python_setup()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  AssembleRequest.msg
-  AssembleBid.msg
-  AssembleAssignment.msg
-  AssembleAcknowledgement.msg
-  AssembleManagerStatus.msg
-  AssembleTaskProgress.msg
-  AssembleStop.msg
-  JobRequest.msg
-  JobBid.msg
-  JobAcknowledgement.msg
-  JobAssignment.msg
+  TaskRequest.msg
+  TaskBid.msg
+  TaskAssignment.msg
+  TaskAcknowledgement.msg
+  TaskProgress.msg
+  TaskStop.msg
   StockItem.msg
   StockItemMsg.msg
   Task.msg

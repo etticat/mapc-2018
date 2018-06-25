@@ -4,6 +4,7 @@ import math
 
 from mac_ros_bridge.msg import Position
 
+
 class AgentUtils:
 
     @staticmethod
@@ -22,7 +23,7 @@ class AgentUtils:
         :param agent_name: current agents name
         :return: prefix just before the topic name of the bridge
         """
-        return AgentUtils.get_bridge_topic_prefix(agent_name)+ 'agent'
+        return AgentUtils.get_bridge_topic_prefix(agent_name) + 'agent'
 
     @staticmethod
     def calculate_distance(pos1, pos2):
@@ -41,7 +42,7 @@ class AgentUtils:
     def calculate_closest_facility(pos, facilities):
         minDistance = 999999
         closest_facility = None
-        for facility in facilities: 
+        for facility in facilities:
             distance = AgentUtils.calculate_distance(pos, facility.pos)
             if distance < minDistance:
                 minDistance = distance
@@ -49,15 +50,5 @@ class AgentUtils:
         return closest_facility
 
     @classmethod
-    def get_internal_prefix(cls, agent_name):
-        return '/internal_' + agent_name + '/'
-
-    @classmethod
-    def get_assemble_prefix(cls):
-        return '/assemble/'
-
-    @classmethod
-    def get_job_prefix(cls):
-        return '/job/'
-        
-        
+    def get_coordination_prefix(cls, type):
+        return '/assemble/' + type + '/'

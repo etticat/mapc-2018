@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 
 
@@ -11,7 +11,7 @@ class FinishTaskBehaviour(BehaviourBase):
             **kwargs)
         self._type = type
         self._agent_name = agent_name
-        self._task_knowledge_base = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
 
     def do_step(self):
         self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=self._type)

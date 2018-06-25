@@ -1,6 +1,6 @@
 from mapc_rhbp_ettlinger.msg import Task
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from provider.simulation_provider import SimulationProvider
 
@@ -10,7 +10,7 @@ class ChooseDestinationBehaviour(BehaviourBase):
         super(ChooseDestinationBehaviour, self).__init__(name, requires_execution_steps=True, **kwargs)
         self.type = type
         self._simulation_provider = SimulationProvider()
-        self._movement_knowledge_base = TaskBaseKnowledge()
+        self._movement_knowledge_base = TaskKnowledgeBase()
 
         self.agent_name = agent_name
 

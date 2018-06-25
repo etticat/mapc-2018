@@ -2,7 +2,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import Action
 from common_utils import etti_logging
@@ -20,7 +20,7 @@ class DeliverJobBehaviour(BehaviourBase):
             **kwargs)
         self.current_task = None
         self._agent_name = agent_name
-        self._task_knowledge_base = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -47,7 +47,7 @@ class DeliverJobBehaviour(BehaviourBase):
         if self.current_task is not None and agent.last_action == "deliver_job":
             ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result,
                            agent.last_action_result)
-            self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=TaskBaseKnowledge.TYPE_DELIVER)
+            self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=TaskKnowledgeBase.TYPE_DELIVER)
             self.current_task = None
 
     def stop(self):
@@ -57,7 +57,7 @@ class DeliverJobBehaviour(BehaviourBase):
     def do_step(self):
         if self.current_task is None:
             self.current_task = self._task_knowledge_base.get_task(
-                agent_name=self._agent_name, type=TaskBaseKnowledge.TYPE_DELIVER)
+                agent_name=self._agent_name, type=TaskKnowledgeBase.TYPE_DELIVER)
 
         if self.current_task is not None:
             ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.task)

@@ -7,7 +7,7 @@ import rospy
 from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import Task
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -25,7 +25,7 @@ class ClosestChargingStationSensor(Sensor):
         self._agent_name = agent_name
         self._last_agent_position = None
 
-        self.movement_knowledge_base = TaskBaseKnowledge()
+        self.movement_knowledge_base = TaskKnowledgeBase()
         self.facility_provider = FacilityProvider()
         self.distance_provider = DistanceProvider()
 
@@ -43,7 +43,7 @@ class ClosestChargingStationSensor(Sensor):
     def update(self, newValue):
         if self._latestValue is not newValue:
             self.movement_knowledge_base.create_task(Task(
-                type=TaskBaseKnowledge.TYPE_CHARGING_STATION,
+                type=TaskKnowledgeBase.TYPE_CHARGING_STATION,
                 agent_name=self._agent_name,
                 pos=newValue.pos,
                 task=''))

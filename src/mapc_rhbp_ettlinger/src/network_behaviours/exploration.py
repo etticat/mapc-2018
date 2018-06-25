@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, GreedyActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Condition, Disjunction
@@ -36,7 +36,7 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.choose_destination_behaviour = ChooseDestinationBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name='choose_destination_behaviour',
-            type=TaskBaseKnowledge.TYPE_EXPLORATION,
+            type=TaskKnowledgeBase.TYPE_EXPLORATION,
             agent_name=self._agent_name,
         )
         self.choose_destination_behaviour.add_effect(
@@ -47,9 +47,9 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.has_exploration_task_sensor = KnowledgeSensor(
             name="has_exploration_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(
+            pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,
-                type=TaskBaseKnowledge.TYPE_EXPLORATION
+                type=TaskKnowledgeBase.TYPE_EXPLORATION
             )
         )
 
@@ -73,8 +73,9 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
     def init_go_to_destination_behaviour(self):
         self._go_to_exploration_target_behaviour = GoToTaskDestinationBehaviour(
             agent_name=self._agent_name,
-            task_type=TaskBaseKnowledge.TYPE_EXPLORATION,
+            task_type=TaskKnowledgeBase.TYPE_EXPLORATION,
             plannerPrefix=self.get_manager_prefix(),
+            cancel_task_on_no_route=True,
             name='go_to_exploration_target',
         )
         # exploration increases the nr of resources we know
@@ -102,7 +103,7 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
     def init_destination_step_sensor(self):
         self.exploration_target_sensor = SelectedTargetPositionSensor(
-            type=TaskBaseKnowledge.TYPE_EXPLORATION,
+            type=TaskKnowledgeBase.TYPE_EXPLORATION,
             name="exploration_target_sensor",
             agent_name=self._agent_name
         )
@@ -122,5 +123,5 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 isMinimum=False))
 
     def stop(self):
-        self._movement_knowledge.finish_task(agent_name=self._agent_name, type=TaskBaseKnowledge.TYPE_EXPLORATION)
+        self._movement_knowledge.finish_task(agent_name=self._agent_name, type=TaskKnowledgeBase.TYPE_EXPLORATION)
         super(ExplorationNetworkBehaviour, self).stop()

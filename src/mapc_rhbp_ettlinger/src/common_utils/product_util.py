@@ -9,6 +9,6 @@ class ProductUtil(object):
         roles = []
         for bid in subset:
             for item in bid.items:
-                item_dict[item.name] = item_dict.get(item.name, 0) + item.amount
+                item_dict[item] = item_dict.get(item, 0) + 1
             roles.append(bid.role)
         return item_dict, roles

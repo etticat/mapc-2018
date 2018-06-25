@@ -1,10 +1,10 @@
 import rospy
 from mac_ros_bridge.msg import Agent
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation
+from behaviour_components.conditions import Condition, Negation, Disjunction
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
@@ -177,7 +177,7 @@ class SensorAndConditionMap(object):
     def init_task_sensor(self, agent_name):
         self.assemble_task_sensor = KnowledgeSensor(
             name="assemble_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=TaskBaseKnowledge.TYPE_ASSEMBLE)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE)
         )
 
         self.has_assemble_task_assigned_cond = Condition(
@@ -188,7 +188,7 @@ class SensorAndConditionMap(object):
 
         self.well_task_sensor = KnowledgeSensor(
             name="well_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=TaskBaseKnowledge.TYPE_BUILD_WELL)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL)
         )
         self.has_build_well_task_assigned_cond = Condition(
             name="has_build_well_task_assigned_cond",
@@ -198,7 +198,7 @@ class SensorAndConditionMap(object):
 
         self.deliver_task_sensor = KnowledgeSensor(
             name="deliver_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=TaskBaseKnowledge.TYPE_DELIVER)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_DELIVER)
         )
         self.has_deliver_job_task_assigned_cond = Condition(
             name="has_deliver_job_task_assigned_cond",
@@ -208,7 +208,7 @@ class SensorAndConditionMap(object):
 
         self.has_task_sensor = KnowledgeSensor(
             name="has_task_sensor",
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name)
         )
 
         self.has_task_assigned_cond = Condition(
@@ -217,6 +217,15 @@ class SensorAndConditionMap(object):
             activator=BooleanActivator(desiredValue=True))
 
         self.has_no_task_assigned_cond = Negation(self.has_task_assigned_cond)
+
+        self.has_priority_task_assigned_cond = Disjunction(
+            self.has_assemble_task_assigned_cond,
+            self.has_deliver_job_task_assigned_cond,
+            self.has_build_well_task_assigned_cond
+        )
+        self.has_no_priority_task_assigned_cond = Negation(
+            self.has_priority_task_assigned_cond
+        )
 
     def callback_agent(self, msg):
         """

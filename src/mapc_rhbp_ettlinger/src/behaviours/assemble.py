@@ -1,9 +1,9 @@
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
-from mapc_rhbp_ettlinger.msg import AssembleTaskProgress, AssembleStop
+from mapc_rhbp_ettlinger.msg import TaskProgress, TaskStop
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import Action
 from common_utils import etti_logging
@@ -26,7 +26,7 @@ class AssembleProductBehaviour(BehaviourBase):
         self._agent_name = agent_name
         self._last_task = None
         self._last_goal = None
-        self._task_knowledge_base = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -34,28 +34,27 @@ class AssembleProductBehaviour(BehaviourBase):
 
         self._task_progress_dict = {}
 
-        self._pub_assemble_progress = rospy.Publisher(
-            AgentUtils.get_assemble_prefix() + "progress",
-            AssembleTaskProgress,
-            queue_size=10)
+        progress_topic = AgentUtils.get_coordination_prefix(TaskKnowledgeBase.TYPE_ASSEMBLE) + "progress"
+        self._pub_assemble_progress = rospy.Publisher(progress_topic, TaskProgress, queue_size=10)
 
-        rospy.Subscriber(AgentUtils.get_assemble_prefix() + "progress", AssembleTaskProgress,
+        rospy.Subscriber(progress_topic, TaskProgress,
                          self._callback_task_progress)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
 
-        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_assemble_prefix() + "stop", AssembleStop,
-                                                  queue_size=10)
+        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_coordination_prefix(TaskKnowledgeBase.TYPE_ASSEMBLE) + "stop",
+                                                  TaskStop, queue_size=10)
 
-    def _callback_task_progress(self, assembleTaskProgress):
+    def _callback_task_progress(self, task_progress):
         """
 
-        :param assembleTaskProgress:
-        :type assembleTaskProgress: AssembleTaskProgress
+        :param task_progress:
+        :type task_progress: TaskProgress
         :return:
         """
-        self._task_progress_dict[assembleTaskProgress.id] = assembleTaskProgress.step
+        if task_progress.type == TaskKnowledgeBase.TYPE_ASSEMBLE:
+            self._task_progress_dict[task_progress.id] = task_progress.step
 
     def _action_request_agent(self, agent):
         """
@@ -75,9 +74,10 @@ class AssembleProductBehaviour(BehaviourBase):
                     ettilog.logerr(
                         "AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....",
                         self._agent_name)
-                    assemble_task_coordination = AssembleTaskProgress(
+                    assemble_task_coordination = TaskProgress(
                         id=self._task.id,
-                        step=self._get_assemble_step()
+                        step=self._get_assemble_step(),
+                        type=TaskKnowledgeBase.TYPE_ASSEMBLE
                     )
                     self._pub_assemble_progress.publish(assemble_task_coordination)
                 else:
@@ -85,7 +85,7 @@ class AssembleProductBehaviour(BehaviourBase):
                     ettilog.logerr(
                         "AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly",
                         self._agent_name)
-                    self._pub_assemble_stop.publish(AssembleStop(id=self._task.id, reason="assembly finished"))
+                    self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
 
     def action_assemble(self, item):
         """
@@ -116,7 +116,7 @@ class AssembleProductBehaviour(BehaviourBase):
     def start(self):
 
         self._task = self._task_knowledge_base.get_task(agent_name=self._agent_name,
-                                                        type=TaskBaseKnowledge.TYPE_ASSEMBLE)
+                                                        type=TaskKnowledgeBase.TYPE_ASSEMBLE)
 
         super(AssembleProductBehaviour, self).start()
 

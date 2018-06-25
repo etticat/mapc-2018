@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import SimStart, Agent, Item
+from mac_ros_bridge.msg import SimStart, Agent
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
 from agent_knowledge.item import StockItemBaseKnowledge
@@ -110,7 +110,11 @@ class ProductProvider(object):
         }
         self.save_stock_and_sock_goals()
 
+        return items_to_carry
+
     def start_assembly(self, items_to_assemble):
+        # TODO: We could save in the KB, which items will be used, so this information can be used for other agents
+        # TODO: to gather
         goal = {}
 
         for product in self.finished_products.keys():
@@ -129,14 +133,14 @@ class ProductProvider(object):
     def get_base_ingredients_in_stock(self):
         res = {}
         for item in self.base_ingredients.keys():
-            res[item] = self._items_in_stock[item]
+            res[item] = self._items_in_stock.get(item,0)
 
         return res
 
     def get_finished_products_in_stock(self):
         res = {}
         for item in self.base_ingredients.keys():
-            res[item] = self._items_in_stock[item]
+            res[item] = self._items_in_stock.get(item,0)
 
         return res
 
@@ -201,15 +205,14 @@ class ProductProvider(object):
         product = self.products[product_name]
         return product.required_roles
 
-    def get_items(self):
+    def get_item_list(self):
+
         res = []
         for item, amount in self._items_in_stock.iteritems():
-            if amount > 0:
-                res.append(Item(
-                    name=item,
-                    amount=amount
-                ))
+            for i in range(amount):
+                res.append(item)
         return res
+
 
     def get_base_ingredients_of_product_iteratively(self, product_name, amount=1):
         product = self.products[product_name]

@@ -28,9 +28,9 @@ class ChooseBestAssemblyCombination(object):
 
     def choose(self, bids):
 
-        best_combination = []
+        best_combination = None
         best_value = 5
-        best_finished_products = {}
+        best_finished_products = None
 
         if len(bids) >= 2:
             # Go through all combinations

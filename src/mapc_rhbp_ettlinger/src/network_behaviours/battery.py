@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
@@ -22,7 +22,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         """
         super(BatteryChargingNetworkBehaviour, self).__init__(name=name, **kwargs)
         self._agent_name = agent_name
-        self._movement_knowledge = TaskBaseKnowledge()
+        self._movement_knowledge = TaskKnowledgeBase()
         self._facility_provider = FacilityProvider()
         self._distance_provider = DistanceProvider()
         self._agent_name = self._agent_name
@@ -32,7 +32,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         go_to_charging_station_behaviour = GoToTaskDestinationBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + "/go_to_charging_station_behaviour",
-            task_type=TaskBaseKnowledge.TYPE_CHARGING_STATION,
+            task_type=TaskKnowledgeBase.TYPE_CHARGING_STATION,
             agent_name=self._agent_name)
         go_to_charging_station_behaviour.add_effect(
             effect=self._sensor_map.go_to_charging_station_effect

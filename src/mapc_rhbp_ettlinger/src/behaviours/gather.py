@@ -2,7 +2,7 @@ import rospy
 from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import Task
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -17,7 +17,7 @@ class ChooseIngredientBehaviour(BehaviourBase):
     def __init__(self, agent_name, **kwargs):
         self.agent_name = agent_name
         super(ChooseIngredientBehaviour, self).__init__(**kwargs)
-        self._task_knowledge_base = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._choose_item = ChooseIngredientToGather(agent_name=agent_name)
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name=agent_name), Agent, callback=self.callback_agent)
@@ -39,7 +39,7 @@ class ChooseIngredientBehaviour(BehaviourBase):
         if resource.item is not None:
             self._product_provider.start_gathering(resource.item.name)
             self._task_knowledge_base.create_task(Task(
-                type=TaskBaseKnowledge.TYPE_GATHERING,
+                type=TaskKnowledgeBase.TYPE_GATHERING,
                 agent_name=self.agent_name,
                 pos=resource.pos
             ))

@@ -2,7 +2,7 @@ from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import WellTask, Task
 
 from agent_knowledge.item import StockItemBaseKnowledge
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from common_utils import etti_logging
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.utils.debug')
@@ -84,13 +84,13 @@ class DebugUtils:
     @staticmethod
     def assign_assembly_task():
 
-        assembly_knowledgebase= TaskBaseKnowledge()
+        assembly_knowledgebase= TaskKnowledgeBase()
 
         assembly_knowledgebase.create_task(Task(
             id = 'edawd',
             agent_name = 'agentA1',
             pos = Position(long=2.31017, lat=48.82456),
             task = 'assemble:item8',
-            type = TaskBaseKnowledge.TYPE_ASSEMBLE
+            type = TaskKnowledgeBase.TYPE_ASSEMBLE
         ))
 

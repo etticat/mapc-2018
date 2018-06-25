@@ -11,6 +11,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class ChooseIngredientToGather(object):
+
     WEIGHT_STEPS = -5
     WEIGHT_ALREADY_IN_STOCK = -5
     THRESHOLD = -999

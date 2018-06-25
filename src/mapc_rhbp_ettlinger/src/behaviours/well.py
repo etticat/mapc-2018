@@ -2,7 +2,7 @@ import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent, WellMsg
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import Action
 from common_utils import etti_logging
@@ -23,7 +23,7 @@ class BuildWellBehaviour(BehaviourBase):
             **kwargs)
         self._current_task = None
         self._agent_name = agent_name
-        self._task_knowledge_base = TaskBaseKnowledge()
+        self._task_knowledge_base = TaskKnowledgeBase()
         self._pub_generic_action = rospy.Publisher(
             name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
             data_class=GenericAction,
@@ -51,7 +51,7 @@ class BuildWellBehaviour(BehaviourBase):
                 if agent.last_action_result == "failed_resources":
                     ettilog.logerr("GoToWellBehaviour:: Error: trying to build well but resources are not available")
                     self._task_knowledge_base.finish_task(agent_name=self._agent_name,
-                                                          type=TaskBaseKnowledge.TYPE_BUILD_WELL)
+                                                          type=TaskKnowledgeBase.TYPE_BUILD_WELL)
 
     def stop(self):
         self._current_task = None
@@ -60,7 +60,7 @@ class BuildWellBehaviour(BehaviourBase):
     def do_step(self):
         if self._current_task is None:
             self._current_task = self._task_knowledge_base.get_task(self._agent_name,
-                                                                    type=TaskBaseKnowledge.TYPE_BUILD_WELL)
+                                                                    type=TaskKnowledgeBase.TYPE_BUILD_WELL)
 
         if self._current_task is not None:
             ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self._current_task.task)
@@ -80,10 +80,10 @@ class BuildUpWellBehaviour(BuildWellBehaviour):
 
 class WellIntegritySensor(KnowledgeFirstFactSensor):
 
-    def __init__(self, agent_name, name, optional=False, knowledge_base_name=TaskBaseKnowledge.KNOWLEDGE_BASE_NAME):
+    def __init__(self, agent_name, name, optional=False, knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME):
 
         super(WellIntegritySensor, self).__init__(
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=TaskBaseKnowledge.TYPE_BUILD_WELL),
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
             optional=optional, knowledge_base_name=knowledge_base_name,
             name=name, initial_value=-1)
         self._well_provider = WellProvider()
@@ -118,7 +118,7 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
             fact_tuple = facts.pop()  # only getting the first fact
 
             try:
-                well_task = TaskBaseKnowledge.generate_task_from_fact(fact_tuple)
+                well_task = TaskKnowledgeBase.generate_task_from_fact(fact_tuple)
                 for well in self._well_provider.get_existing_wells().values():
                     if self._distance_provider.at_same_location(well.pos, well_task.pos):
                         well_prototype = self._well_provider.get_well(well_task.task)

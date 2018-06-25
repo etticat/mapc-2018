@@ -1,4 +1,4 @@
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviours.assemble import AssembleProductBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
@@ -10,7 +10,7 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=agent_name,
             sensor_map=sensor_map,
             name=name,
-            task_type=TaskBaseKnowledge.TYPE_ASSEMBLE,
+            task_type=TaskKnowledgeBase.TYPE_ASSEMBLE,
             **kwargs)
 
         assemble_behaviour = AssembleProductBehaviour(

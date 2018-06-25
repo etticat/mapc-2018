@@ -4,9 +4,9 @@ from mac_ros_bridge.msg import RequestAction, SimStart
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
-from coordination.assemble_manager import AssembleManager
-from coordination.build_well_manager import BuildWellManager
-from coordination.job_manager import JobManager
+from contract_net.manager_assemble import AssembleManager
+from contract_net.manager_build_well import BuildWellManager
+from contract_net.manager_deliver import DeliverManager
 from decisions.job_activation import JobDecider
 from decisions.well_chooser import ChooseWellToBuild
 from provider.product_provider import ProductProvider
@@ -28,8 +28,8 @@ class Planner(object):
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 
-        self.job_manager = JobManager()
-        self.well_manager = BuildWellManager()
+        self._job_manager = DeliverManager()
+        self._build_well_manager = BuildWellManager()
         self._assemble_planner = AssembleManager(agent_name="agentA1")
         self._provider_info_distributor = ProviderInfoDistributor()
 
@@ -54,10 +54,6 @@ class Planner(object):
         :type msg: RequestAction
         :return:
         """
-        if self.job_manager.busy:
-            ettilog.loginfo("JobPlanner:: Job Manager busy. Skiping step ....")
-            return
-
         self._provider_info_distributor.callback_request_action(request_action=request_action)
 
         self.coordinate_wells(request_action)
@@ -80,7 +76,7 @@ class Planner(object):
                 if job_activation > self._job_decider.get_threshold():
                     ettilog.loginfo("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
                                   str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
-                    self.job_manager.job_request(job)
+                    self._job_manager.request_job(job)
         self.all_jobs = all_jobs_new
 
     def coordinate_wells(self, msg):
@@ -89,11 +85,11 @@ class Planner(object):
         if well_to_build == None:
             return
 
-        self.well_manager.well_request(well_to_build, self.well_chooser.choose_well_position())
+        self._build_well_manager.build_well(well_to_build, self.well_chooser.choose_well_position())
 
     def coordinate_assembly(self, requestAction):
 
-        self._assemble_planner.request_assist()
+        self._assemble_planner.request_assembly()
 
     def extract_jobs(self, msg):
         """

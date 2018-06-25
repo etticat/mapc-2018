@@ -1,6 +1,6 @@
 import rospy
 from mac_ros_bridge.msg import Agent
-from mapc_rhbp_ettlinger.msg import AssembleBid
+from mapc_rhbp_ettlinger.msg import TaskBid
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -81,11 +81,11 @@ class ShouldBidForAssembly(object):
         # TODO: Oportunity cost (certain roles could better do something else?
 
         if activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD:
-            return AssembleBid(
+            return TaskBid(
                 id=request.id,
                 bid = activation,
                 agent_name = self._agent_name,
-                items = self._product_provider.get_items(),
+                items = self._product_provider.get_item_list(),
                 role = self.role,
                 request = request,
                 expected_steps=steps_to_destination

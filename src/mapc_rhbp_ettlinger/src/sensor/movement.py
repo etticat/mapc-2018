@@ -6,7 +6,7 @@ from __future__ import division  # force floating point division when using plai
 import rospy
 from mac_ros_bridge.msg import Position
 
-from agent_knowledge.task import TaskBaseKnowledge
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import AggregationSensor
 from common_utils import etti_logging
 from provider.distance_provider import DistanceProvider
@@ -21,12 +21,12 @@ class SelectedTargetPositionSensor(KnowledgeFactSensor):
         super(SelectedTargetPositionSensor, self).__init__(
             name=name,
             initial_value=None,
-            pattern=TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=type)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=type)
         )
 
     def update(self, new_value):
         if len(new_value) > 0:
-            movement = TaskBaseKnowledge.generate_task_from_fact(new_value.pop())  # only getting the first fact
+            movement = TaskKnowledgeBase.generate_task_from_fact(new_value.pop())  # only getting the first fact
 
             if movement is not None:
                 destination = movement.pos

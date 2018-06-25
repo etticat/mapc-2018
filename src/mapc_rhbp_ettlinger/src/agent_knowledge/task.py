@@ -10,7 +10,7 @@ from common_utils import etti_logging
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.movement')
 
 
-class TaskBaseKnowledge(BaseKnowledgeBase):
+class TaskKnowledgeBase(BaseKnowledgeBase):
 
     KNOWLEDGE_BASE_NAME = KnowledgeBase.DEFAULT_NAME
 
@@ -31,8 +31,8 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
     PRIORITY_TASKS = [TYPE_BUILD_WELL, TYPE_DELIVER, TYPE_ASSEMBLE]
 
     def __init__(self):
-        super(TaskBaseKnowledge, self).__init__(
-            knowledge_base_name=TaskBaseKnowledge.KNOWLEDGE_BASE_NAME)
+        super(TaskKnowledgeBase, self).__init__(
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME)
 
     @staticmethod
     def generate_tuple(agent_name="*", type="*", id="*", lat="*", long="*", task="*"):
@@ -47,15 +47,20 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
         :return: Movement
         """
 
+        id_string = fact[TaskKnowledgeBase.INDEX_MOVEMENT_ID]
+        if id_string is not '':
+            id_int = int(id_string)
+        else:
+            id_int = 0
         movement = Task(
-            type=fact[TaskBaseKnowledge.INDEX_MOVEMENT_TYPE],
-            agent_name=fact[TaskBaseKnowledge.INDEX_MOVEMENT_AGENT_NAME],
+            type=fact[TaskKnowledgeBase.INDEX_MOVEMENT_TYPE],
+            agent_name=fact[TaskKnowledgeBase.INDEX_MOVEMENT_AGENT_NAME],
             pos=Position(
-                lat=float(fact[TaskBaseKnowledge.INDEX_MOVEMENT_LAT]),
-                long=float(fact[TaskBaseKnowledge.INDEX_MOVEMENT_LONG])
+                lat=float(fact[TaskKnowledgeBase.INDEX_MOVEMENT_LAT]),
+                long=float(fact[TaskKnowledgeBase.INDEX_MOVEMENT_LONG])
             ),
-            task=fact[TaskBaseKnowledge.INDEX_MOVEMENT_TASK],
-            id=fact[TaskBaseKnowledge.INDEX_MOVEMENT_ID],
+            task=fact[TaskKnowledgeBase.INDEX_MOVEMENT_TASK],
+            id=id_int,
         )
         return movement
 
@@ -68,7 +73,7 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
         :return:
         """
 
-        return TaskBaseKnowledge.generate_tuple(
+        return TaskKnowledgeBase.generate_tuple(
             agent_name=movement.agent_name,
             type=movement.type,
             lat=movement.pos.lat,
@@ -79,8 +84,8 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
 
     def create_task(self, task):
 
-        search = TaskBaseKnowledge.generate_tuple(agent_name=task.agent_name, type=task.type)
-        new = TaskBaseKnowledge.generate_fact_from_movement(task)
+        search = TaskKnowledgeBase.generate_tuple(agent_name=task.agent_name, type=task.type)
+        new = TaskKnowledgeBase.generate_fact_from_movement(task)
 
         ettilog.loginfo("MovementKnowledge(%s:%s):: Moving to %s ", task.agent_name, task.type,
                         task.task)
@@ -93,7 +98,7 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
         :param identifier_name:
         :return:
         """
-        search = TaskBaseKnowledge.generate_tuple(agent_name=agent_name, type=type, task=task)
+        search = TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=type, task=task)
         ettilog.loginfo("MovementKnowledge(%s:%s):: Stopping movement", agent_name, type)
 
         return self._kb_client.pop(search)
@@ -106,7 +111,7 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
         :return: Movement
         """
 
-        search = TaskBaseKnowledge.generate_tuple(
+        search = TaskKnowledgeBase.generate_tuple(
             agent_name=agent_name,
             type=type)
         fact = self._kb_client.peek(search)
@@ -114,13 +119,13 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
 
 
         if fact is not None:
-            return TaskBaseKnowledge.generate_task_from_fact(fact)
+            return TaskKnowledgeBase.generate_task_from_fact(fact)
         else:
             return None
 
     def get_tasks(self, type="*", task="*"):
 
-        search = TaskBaseKnowledge.generate_tuple(
+        search = TaskKnowledgeBase.generate_tuple(
             task=task,
             type=type)
         facts = self._kb_client.all(search)
@@ -128,17 +133,17 @@ class TaskBaseKnowledge(BaseKnowledgeBase):
         res = []
 
         for fact in facts:
-            res.append(TaskBaseKnowledge.generate_task_from_fact(fact))
+            res.append(TaskKnowledgeBase.generate_task_from_fact(fact))
 
         return res
 
     def has_priority_task(self, agent_name):
-        search = TaskBaseKnowledge.generate_tuple(
+        search = TaskKnowledgeBase.generate_tuple(
             agent_name=agent_name)
 
         has_priority_task = False
         for fact in self._kb_client.all(search):
-            if fact[TaskBaseKnowledge.INDEX_MOVEMENT_TYPE] in TaskBaseKnowledge.PRIORITY_TASKS:
+            if fact[TaskKnowledgeBase.INDEX_MOVEMENT_TYPE] in TaskKnowledgeBase.PRIORITY_TASKS:
                 has_priority_task = True
 
         return has_priority_task
