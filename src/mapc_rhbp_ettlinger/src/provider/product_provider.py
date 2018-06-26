@@ -139,7 +139,7 @@ class ProductProvider(object):
 
     def get_finished_products_in_stock(self):
         res = {}
-        for item in self.base_ingredients.keys():
+        for item in self.finished_products.keys():
             res[item] = self._items_in_stock.get(item,0)
 
         return res
@@ -225,3 +225,9 @@ class ProductProvider(object):
                 res = CalcUtil.dict_sum(res, self.get_base_ingredients_of_product_iteratively(ingredient.name,
                                                                                               ingredient.amount * amount))
             return res
+
+    def get_base_ingredients_of_dict(self, dict):
+        base_ingredients = {}
+        for item, count in dict.iteritems():
+            base_ingredients = CalcUtil.dict_sum(base_ingredients, self.get_base_ingredients_of_product_iteratively(product_name=item, amount=count))
+        return base_ingredients

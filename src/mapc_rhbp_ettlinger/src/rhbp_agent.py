@@ -2,7 +2,7 @@
 import time
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys
+from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
 
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import etti_logging
@@ -50,6 +50,8 @@ class RhbpAgent:
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
+
+        rospy.Subscriber(self._agent_topic_prefix + "agent", Agent, self._agent_callback)
 
         rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
 
@@ -105,6 +107,9 @@ class RhbpAgent:
         """
         ettilog.loginfo("Bye:" + str(msg))
 
+    def _agent_callback(self, agent):
+        self._provider_info_distributor.callback_agent(agent)
+
     def _action_request_callback(self, request_action):
         """
         here we just trigger the decision-making and plannig
@@ -122,8 +127,8 @@ class RhbpAgent:
         self._received_action_response = False
 
         # if hasattr(self, "_action_manager"):
-        # DebugUtils.print_precondition_states(self._action_manager.exploration_network)
-        # ettilog.logerr("CHARGE %f:", self._action_manager.sensor_map.charge_factor_sensor.sync())
+        #     ettilog.logerr("1 %s:", self._action_manager._assembly_network.target_sensor.sync())
+        #     ettilog.logerr("2 %f:", self._action_manager._assembly_network.target_step_sensor.sync())
 
         if self._initialized:
             self._coordination_manager.step()

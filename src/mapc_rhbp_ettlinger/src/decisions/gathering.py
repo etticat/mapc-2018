@@ -2,6 +2,7 @@ import operator
 
 from agent_knowledge.item import StockItemBaseKnowledge
 from common_utils import etti_logging
+from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
@@ -12,8 +13,8 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class ChooseIngredientToGather(object):
 
-    WEIGHT_STEPS = -5
-    WEIGHT_ALREADY_IN_STOCK = -5
+    WEIGHT_STEPS = 3
+    WEIGHT_PRIORITY = 5
     THRESHOLD = -999
 
     def __init__(self, agent_name):
@@ -23,6 +24,7 @@ class ChooseIngredientToGather(object):
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
         self.load_free = 0
+        self.choose_best_assembly_combination = ChooseBestAssemblyCombination()
 
     def update(self, msg):
         self.load_free = msg.load_max - msg.load
@@ -42,7 +44,7 @@ class ChooseIngredientToGather(object):
             load_after_gathering = self.load_after_gathering(item)
             if load_after_gathering >= 0 and item in gatherable_items:
                 steps, resource = self.steps_to_closest_resource(resources, item)
-                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_ALREADY_IN_STOCK + \
+                activation = already_in_stock_items * ChooseIngredientToGather.WEIGHT_PRIORITY + \
                              steps * ChooseIngredientToGather.WEIGHT_STEPS
                 if activation > max_activation:
                     max_activation = activation
@@ -56,11 +58,24 @@ class ChooseIngredientToGather(object):
         return load_after_gathering
 
     def ingredient_priority(self):
+        finished_stock_items = self.ingredient_priority_dict()
+
+        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
+
+    def ingredient_priority_dict(self):
+        # Get the desired finished product stock
+        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
+        # Check how many ingredients we need to build this stock
+        desired_ingredients = self._product_provider.get_base_ingredients_of_dict(finished_product_priority)
+        # Stock items that we currently have or are in the process of gathering
         stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
         finished_stock_items = {}
         for item in self._product_provider.base_ingredients.keys():
-            finished_stock_items[item] = stock_items[item]["stock"] + stock_items[item]["goal"]
-        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
+            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"])
+            finished_stock_items[item] = desired_ingredients.get(item, 0) - current_stock
+        # Desired ingredient stock minus current stock
+        return finished_stock_items
+
 
     def steps_to_closest_resource(self, resources, item):
         min_steps = 999

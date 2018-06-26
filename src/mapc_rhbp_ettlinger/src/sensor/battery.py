@@ -36,7 +36,7 @@ class ClosestChargingStationSensor(Sensor):
         if msg.pos != self._last_agent_position:
             self._last_agent_position = msg.pos
             charging_stations = self.facility_provider.get_charging_stations()
-            closest_facility = self.distance_provider.get_closest_facility(self._last_agent_position, charging_stations)
+            closest_facility = self.distance_provider.get_closest_facility(agent_position=self._last_agent_position, facilities=charging_stations)
 
             self.update(closest_facility)
 

@@ -32,6 +32,19 @@ class DistanceProvider(object):
         self.can_fly = False
         self.speed = 1
         self._proximity = 0.01
+        self.agent_pos = None
+
+
+    def callback_agent(self, msg):
+        """
+
+        :param self:
+        :param msg:
+        :type msg: Agent
+        :return:
+        """
+
+        self.agent_pos = msg.pos
 
     def callback_sim_start(self, sim_start):
         """
@@ -155,14 +168,17 @@ class DistanceProvider(object):
 
         return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
 
-    def get_closest_facility(self, agent_position, charging_stations):
+    def get_closest_facility(self, facilities, agent_position=None):
+        if agent_position is None:
+            agent_position = self.agent_pos
+
         closest_facility = None
         closest_facility_steps = 99
-        for charging_station in charging_stations:
-            steps = self.calculate_steps(agent_position, charging_station.pos)
+        for facility in facilities:
+            steps = self.calculate_steps(agent_position, facility.pos)
             if steps < closest_facility_steps:
                 closest_facility_steps = steps
-                closest_facility = charging_station
+                closest_facility = facility
         return closest_facility
 
     def at_same_location(self, pos1, pos2):

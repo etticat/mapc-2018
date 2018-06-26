@@ -14,6 +14,7 @@ class ProviderInfoDistributor(object):
         self.step_provider = DistanceProvider()
         self.well_provider = WellProvider()
         self.simulation_provider = SimulationProvider()
+        self.distance_provider = DistanceProvider()
         self.stats_provider = StatsProvider()
         self._resource_knowledge_base = ResourceBaseKnowledgeBase()
 
@@ -27,3 +28,6 @@ class ProviderInfoDistributor(object):
 
         for resource in request_action.resources:
             self._resource_knowledge_base.add_new_resource(resource)
+
+    def callback_agent(self, msg):
+        self.distance_provider.callback_agent(msg)

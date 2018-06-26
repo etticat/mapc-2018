@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from behaviour_components.condition_elements import Effect
+from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
@@ -7,6 +8,7 @@ from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
+from network_behaviours.hoarding import HoardingNetworkBehaviour
 from network_behaviours.job_execution import DeliverJobNetworkBehaviour
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
@@ -65,6 +67,25 @@ class ActionManager(Manager):
             Effect(
                 sensor_name=self.sensor_map.load_factor_sensor.name,
                 indicator=1.0,
+                sensor_type=float
+            ))
+
+        ######################## HOARDING Network Behaviour ########################
+        self._hoarding_network = HoardingNetworkBehaviour(
+            name=self._agent_name + '/hoarding',
+            plannerPrefix=self._agent_name,
+            agent_name=self._agent_name,
+            priority=2,
+            sensor_map=self.sensor_map,
+            max_parallel_behaviours=1)
+
+        # Only hoard when stock is full
+        self._hoarding_network.add_precondition(self.sensor_map.load_fullness_condition)
+
+        self._hoarding_network.add_effect(
+            Effect(
+                sensor_name=self.sensor_map.finished_product_load_factor_sensor.name,
+                indicator=-1.0,
                 sensor_type=float
             ))
 
@@ -144,3 +165,10 @@ class ActionManager(Manager):
             priority=50,
             plannerPrefix=self._agent_name,
             conditions=[self.sensor_map.load_fullness_condition])
+
+        self._gather_goal = GoalBase(
+            name='get_rid_of_finished_products',
+            permanent=True,
+            priority=50,
+            plannerPrefix=self._agent_name,
+            conditions=[Negation(self.sensor_map.finished_product_load_fullness_condition)])

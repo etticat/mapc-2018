@@ -1,5 +1,3 @@
-import time
-
 import rospy
 from mac_ros_bridge.msg import SimStart, RequestAction
 
@@ -50,17 +48,17 @@ class TestAgent(object):
 
         self._provider_info_distributor.callback_request_action(request_action)
 
-        if not self.initialied:
-            time.sleep(2)
-            self.initialied = True
-
-        else:
-            self.show_items()
-            choose_ingredient_to_gather = ChooseIngredientToGather(agent_name="agentA1")
-            choose_best_assembly_combination = ChooseBestAssemblyCombination()
-            items = choose_best_assembly_combination.finished_items_priority()
-            ettilog.logerr(items)
-            rospy.signal_shutdown("test over")
+        # if not self.initialied:
+        #     time.sleep(2)
+        #     self.initialied = True
+        #
+        # else:
+        self.show_items()
+        choose_ingredient_to_gather = ChooseIngredientToGather(agent_name="agentA1")
+        choose_best_assembly_combination = ChooseBestAssemblyCombination()
+        items = choose_ingredient_to_gather.ingredient_priority_dict()
+        ettilog.logerr(items)
+        rospy.signal_shutdown("test over")
 
 
     def show_items(self):

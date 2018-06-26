@@ -16,7 +16,7 @@ class ChooseIngredientBehaviour(BehaviourBase):
 
     def __init__(self, agent_name, **kwargs):
         self.agent_name = agent_name
-        super(ChooseIngredientBehaviour, self).__init__(**kwargs)
+        super(ChooseIngredientBehaviour, self).__init__(requires_execution_steps=True, **kwargs)
         self._task_knowledge_base = TaskKnowledgeBase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._choose_item = ChooseIngredientToGather(agent_name=agent_name)
@@ -36,13 +36,18 @@ class ChooseIngredientBehaviour(BehaviourBase):
     def do_step(self):
         resource = self._choose_item.choose_resource()
 
-        if resource.item is not None:
-            self._product_provider.start_gathering(resource.item.name)
-            self._task_knowledge_base.create_task(Task(
-                type=TaskKnowledgeBase.TYPE_GATHERING,
-                agent_name=self.agent_name,
-                pos=resource.pos
-            ))
-            ettilog.logerr("ChooseIngredientBehaviour:: Choosing item %s", resource.item)
+        if resource is not None:
+            if resource.item is not None:
+                self._product_provider.start_gathering(resource.item.name)
+                self._task_knowledge_base.create_task(Task(
+                    type=TaskKnowledgeBase.TYPE_GATHERING,
+                    agent_name=self.agent_name,
+                    pos=resource.pos,
+                    task=resource.item.name
+                ))
+                ettilog.logerr("ChooseIngredientBehaviour(%s):: Choosing item %s", self.agent_name, resource.item)
+            else:
+                ettilog.logerr("ChooseIngredientBehaviour(%s):: Trying to choose item, but none fit in stock", self.agent_name)
+
         else:
-            ettilog.logerr("ChooseIngredientBehaviour:: Trying to choose item, but none fit in stock")
+            ettilog.logerr("ChooseIngredientBehaviour(%s):: Trying to choose item, but resources no resource chosen", self.agent_name)

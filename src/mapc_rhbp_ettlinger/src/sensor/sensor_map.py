@@ -8,6 +8,7 @@ from behaviour_components.conditions import Condition, Negation, Disjunction
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
+from sensor.agent import FinishedProductLoadSensor
 from sensor.battery import ClosestChargingStationSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor
 from sensor.gather import SmallestGatherableItemSensor
@@ -38,6 +39,10 @@ class SensorAndConditionMap(object):
             name="load_sensor",
             message_attr='load')
 
+        self.finished_product_load_sensor = FinishedProductLoadSensor(
+            agent_name=self.agent_name,
+            name="load_sensor")
+
         self.free_load_sensor = SubtractionSensor(
             name="free_load_sensor",
             minuend_sensor=self.max_load_sensor,
@@ -63,6 +68,20 @@ class SensorAndConditionMap(object):
                 fullActivationValue=1.0
             )
         )
+        self.finished_product_load_factor_sensor = FactorSensor(
+            name="finished_product_load_factor_sensor",
+            dividend_sensor=self.finished_product_load_sensor,
+            divisor_sensor=self.max_load_sensor
+        )
+
+        self.finished_product_load_fullness_condition = Condition(
+            name="finished_product_load_fullness_condition",
+            sensor=self.finished_product_load_factor_sensor,
+            activator=LinearActivator(
+                zeroActivationValue=0.0,
+                fullActivationValue=1.0
+            )
+        )
         self.smallest_gatherable_item_sensor = SmallestGatherableItemSensor(
             name="smallest_gatherable_item_sensor",
             agent_name=self.agent_name
@@ -78,7 +97,7 @@ class SensorAndConditionMap(object):
             sensor=self.load_after_next_gathering_sensor,
             activator=ThresholdActivator(
                 isMinimum=True,
-                thresholdValue=-1
+                thresholdValue=0
             )
         )
 

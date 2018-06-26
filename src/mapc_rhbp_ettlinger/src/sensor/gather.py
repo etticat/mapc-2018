@@ -1,7 +1,9 @@
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
+from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.gather')
 
@@ -26,3 +28,22 @@ class SmallestGatherableItemSensor(Sensor):
                 smallest_item = volume
 
         return smallest_item
+
+
+class NextIngredientVolumeSensor(KnowledgeFirstFactSensor):
+
+    def __init__(self, name, agent_name):
+        self._agent_name = agent_name
+        self._product_provider = ProductProvider(agent_name=agent_name)
+        super(NextIngredientVolumeSensor, self).__init__(name=name, index=TaskKnowledgeBase.INDEX_MOVEMENT_TASK, pattern=TaskKnowledgeBase.generate_tuple(
+            agent_name=agent_name, type=TaskKnowledgeBase.TYPE_GATHERING))
+
+    def _reduce_facts(self, facts):
+        task = super(NextIngredientVolumeSensor, self)._reduce_facts(facts=facts)
+        if task is not None:
+            volume = self._product_provider.get_product_by_name(task).volume
+
+        else:
+            volume = 0
+        ettilog.logerr("NextIngredientVolumeSensor(%s):: Volume of next item: %d", self._agent_name, volume)
+        return volume

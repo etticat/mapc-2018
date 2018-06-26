@@ -27,6 +27,7 @@ class TaskKnowledgeBase(BaseKnowledgeBase):
     TYPE_ASSEMBLE = "assemble"
     TYPE_DELIVER = "deliver"
     TYPE_BUILD_WELL = "build_well"
+    TYPE_HOARDING = "hoarding"
 
     PRIORITY_TASKS = [TYPE_BUILD_WELL, TYPE_DELIVER, TYPE_ASSEMBLE]
 

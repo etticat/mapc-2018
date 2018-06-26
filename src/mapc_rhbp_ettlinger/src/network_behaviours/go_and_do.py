@@ -12,6 +12,8 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
     def __init__(self, agent_name, name, sensor_map, task_type, **kwargs):
         self.task_type = task_type
+        self._go_behaviour = None
+        self._do_behaviour = None
         super(GoAndDoNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             sensor_map=sensor_map,
@@ -29,11 +31,13 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
     def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
         # Only perform behaviour when at target destination
-        do_behaviour.add_precondition(
+
+        self._do_behaviour = do_behaviour
+        self._do_behaviour.add_precondition(
             precondition=self.at_destination_cond)
 
         if effect_on_goal:
-            do_behaviour.add_effect(
+            self._do_behaviour.add_effect(
                 effect=Effect(
                     sensor_name=self._sensor_map.has_task_sensor.name,
                     indicator=-1.0,

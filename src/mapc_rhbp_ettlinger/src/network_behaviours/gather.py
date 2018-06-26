@@ -1,7 +1,7 @@
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation
+from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.generic_action import Action, GenericActionBehaviour
@@ -9,6 +9,8 @@ from behaviours.movement import GoToTaskDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
+from sensor.gather import NextIngredientVolumeSensor
+from sensor.general import SubtractionSensor
 from sensor.movement import SelectedTargetPositionSensor, StepDistanceSensor
 
 
@@ -48,10 +50,13 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             plannerPrefix=self.get_manager_prefix()
         )
         self.gather_behviour.add_precondition(
-            precondition=self.has_gathering_task_cond)
+            precondition=self.can_fulfill_next_gathering_action)
         # Only gather if we are at the intended resource node
         self.gather_behviour.add_precondition(
             precondition=self.at_resource_node_condition)
+
+        self.gather_behviour.add_precondition(
+            precondition=self.next_item_fits_in_storage_cond)
 
         self.gather_behviour.add_effect(
             effect=Effect(
@@ -85,7 +90,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name
         )
         self.go_to_resource_node_behaviour.add_precondition(
-            precondition=self.has_gathering_task_cond)
+            precondition=self.can_fulfill_next_gathering_action)
         # Sensor to check distance to charging station
         self.target_step_sensor = StepDistanceSensor(
             name='gather_target_step_sensor',
@@ -126,14 +131,34 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 type=TaskKnowledgeBase.TYPE_GATHERING
             )
         )
+
+        self.next_ingredient_volume_sensor = NextIngredientVolumeSensor(
+            agent_name=self._agent_name,
+            name="next_ingredient_volume_sensor"
+        )
+
+        self.load_after_next_ingredient_sensor = SubtractionSensor(
+            minuend_sensor=self._sensor_map.load_sensor,
+            subtrahend_sensor=self.next_ingredient_volume_sensor,
+            name="load_after_next_ingredient_sensor"
+        )
+        self.next_item_fits_in_storage_cond = Condition(
+            sensor=self.load_after_next_ingredient_sensor,
+            activator=ThresholdActivator(thresholdValue=0, isMinimum=True)
+        )
+
         self.has_gathering_task_cond = Condition(
             sensor=self.has_gathering_task_sensor,
             activator=BooleanActivator(desiredValue=True)
         )
+        self.can_fulfill_next_gathering_action = Conjunction(
+            self.has_gathering_task_cond,
+            self.next_item_fits_in_storage_cond
+        )
 
         # only chose an item if we currently don't have a goal
         self.choose_ingredient_behaviour.add_precondition(
-            precondition=Negation(self.has_gathering_task_cond)
+            precondition=Negation(self.can_fulfill_next_gathering_action)
         )
 
         # Chosing an ingredient has the effect, that we have more ingredients to gather

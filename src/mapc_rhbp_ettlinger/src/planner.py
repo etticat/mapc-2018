@@ -56,8 +56,8 @@ class Planner(object):
         """
         self._provider_info_distributor.callback_request_action(request_action=request_action)
 
-        self.coordinate_wells(request_action)
-        self.coordinate_jobs(request_action)
+        # self.coordinate_wells(request_action)
+        # self.coordinate_jobs(request_action)
         self.coordinate_assembly(request_action)
 
 

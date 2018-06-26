@@ -13,8 +13,8 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class ChooseBestAssemblyCombination(object):
 
     WEIGHT_NUMBER_OF_AGENTS = -10
-    WEIGHT_VOLUME = 25
-    WEIGHT_PRIORITISATION_ACTIVATION = 20
+    WEIGHT_VOLUME = 10
+    WEIGHT_PRIORITISATION_ACTIVATION = 30
     WEIGHT_IDLE_STEPS = -3
     WEIGHT_MAX_STEP_COUNT = -10
 
@@ -74,7 +74,7 @@ class ChooseBestAssemblyCombination(object):
         item_dict = copy.copy(item_dict)
         combination = {}
 
-        finished_items_to_build = self.finished_items_priority()
+        finished_items_to_build = self.finished_items_priority_tuple_list()
         # TODO: This can be done better: We are looking for the combination which is most needed (Priority)
         # TODO: And using the most items
         for item, count in finished_items_to_build:
@@ -96,27 +96,33 @@ class ChooseBestAssemblyCombination(object):
 
         value = 0
 
-        max_priority = 0
-
-        finished_items_priority_list = self.finished_items_priority()
-        priority_dict = {}
-        for item, count in finished_items_priority_list:
-            if count > max_priority:
-                max_priority = count
-            priority_dict[item] = count
-
+        finished_items_priority_list = self.finished_items_priority_dict()
         for item, count in combination.iteritems():
-            value += (1+(max_priority - priority_dict[item]))  * count
+            value += finished_items_priority_list[item]
+            finished_items_priority_list[item] = max(finished_items_priority_list[item]-1, 1)
+            # For each item we make decrease value by one -> reflects prioritisation
 
         return value
 
 
-    def finished_items_priority(self):
+    def finished_items_priority_tuple_list(self):
+        """
+        Value of item is defined by base ingredient count. Therefore as priority we only use the ones we have the fewest
+        of currently.
+        :return:
+        """
+        finished_stock_items = self.finished_items_priority_dict()
+        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1), reverse=True)
+
+    def finished_items_priority_dict(self):
         stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
         finished_stock_items = {}
         for item in self._product_provider.finished_products.keys():
-            finished_stock_items[item] = stock_items[item]["stock"] + stock_items[item]["goal"]
-        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
+            finished_stock_items[item] = max(stock_items[item]["stock"], stock_items[item]["goal"])
+        max_value = max(finished_stock_items.values())
+        for key, count in finished_stock_items.iteritems():
+            finished_stock_items[key] = max_value - count + 1
+        return finished_stock_items
 
     def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, volume, number_of_agents):
         return max_step_count * ChooseBestAssemblyCombination.WEIGHT_MAX_STEP_COUNT + \
