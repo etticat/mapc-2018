@@ -89,7 +89,7 @@ class RhbpAgent:
         :param msg: ros message
         :type msg: GenericAction
         """
-        # ettilog.logerr("action response %s", str(msg))
+        ettilog.loginfo("action response %s", str(msg))
         self._received_action_response = True
 
     def _sim_end_callback(self, msg):

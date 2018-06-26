@@ -4,7 +4,7 @@ import rospy
 from mac_ros_bridge.msg import SimStart, Agent
 from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
 
-from agent_knowledge.item import StockItemBaseKnowledge
+from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
@@ -36,7 +36,7 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
-        self._stock_item_knowledge_base = StockItemBaseKnowledge()
+        self._stock_item_knowledge_base = StockItemKnowledgeBase()
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
 
@@ -214,7 +214,7 @@ class ProductProvider(object):
         return res
 
 
-    def get_base_ingredients_of_product_iteratively(self, product_name, amount=1):
+    def get_ingredients_of_product_iteratively(self, product_name, amount=1, consider_intermediate_ingredients=False):
         product = self.products[product_name]
 
         if len(product.consumed_items) == 0:
@@ -222,12 +222,17 @@ class ProductProvider(object):
         else:
             res = {}
             for ingredient in product.consumed_items:
-                res = CalcUtil.dict_sum(res, self.get_base_ingredients_of_product_iteratively(ingredient.name,
-                                                                                              ingredient.amount * amount))
+                res = CalcUtil.dict_sum(res, self.get_ingredients_of_product_iteratively(ingredient.name,
+                                                                                         ingredient.amount * amount, consider_intermediate_ingredients=consider_intermediate_ingredients))
+
+                if consider_intermediate_ingredients:
+                    res = CalcUtil.dict_sum(res, {ingredient.name: ingredient.amount * amount})
             return res
 
-    def get_base_ingredients_of_dict(self, dict):
+    def get_ingredients_of_dict(self, dict, consider_intermediate_ingredients=False):
         base_ingredients = {}
         for item, count in dict.iteritems():
-            base_ingredients = CalcUtil.dict_sum(base_ingredients, self.get_base_ingredients_of_product_iteratively(product_name=item, amount=count))
+            base_ingredients = CalcUtil.dict_sum(base_ingredients, self.get_ingredients_of_product_iteratively(
+                product_name=item, amount=count, consider_intermediate_ingredients=consider_intermediate_ingredients))
+
         return base_ingredients

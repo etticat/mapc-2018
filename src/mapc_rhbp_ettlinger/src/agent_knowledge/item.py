@@ -10,7 +10,7 @@ from common_utils.singleton import Singleton
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.item')
 
 
-class StockItemBaseKnowledge(BaseKnowledgeBase):
+class StockItemKnowledgeBase(BaseKnowledgeBase):
     __metaclass__ = Singleton
 
     KNOWLEDGE_BASE_NAME = KnowledgeBase.DEFAULT_NAME
@@ -21,8 +21,8 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
     INDEX_GOAL = 4
 
     def __init__(self):
-        super(StockItemBaseKnowledge, self).__init__(
-            knowledge_base_name=StockItemBaseKnowledge.KNOWLEDGE_BASE_NAME)
+        super(StockItemKnowledgeBase, self).__init__(
+            knowledge_base_name=StockItemKnowledgeBase.KNOWLEDGE_BASE_NAME)
 
     @staticmethod
     def generate_tuple(agent_name="*", item="*", amount="*", goal="*"):
@@ -37,10 +37,10 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
         :return: StockItem
         """
         task = StockItem(
-            agent=fact[StockItemBaseKnowledge.INDEX_AGENT],
-            item=fact[StockItemBaseKnowledge.INDEX_ITEM],
-            amount=int(fact[StockItemBaseKnowledge.INDEX_AMOUNT]),
-            goal=int(fact[StockItemBaseKnowledge.INDEX_GOAL])
+            agent=fact[StockItemKnowledgeBase.INDEX_AGENT],
+            item=fact[StockItemKnowledgeBase.INDEX_ITEM],
+            amount=int(fact[StockItemKnowledgeBase.INDEX_AMOUNT]),
+            goal=int(fact[StockItemKnowledgeBase.INDEX_GOAL])
         )
         return task
 
@@ -51,7 +51,7 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
         :type stock_item: StockItem
         :return:
         """
-        return StockItemBaseKnowledge.generate_tuple(
+        return StockItemKnowledgeBase.generate_tuple(
             agent_name=stock_item.agent,
             item=stock_item.item,
             amount=stock_item.amount,
@@ -65,11 +65,11 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
         :type stock_item: StockItem
         :return:
         """
-        search = StockItemBaseKnowledge.generate_tuple(
+        search = StockItemKnowledgeBase.generate_tuple(
             agent_name=stock_item.agent,
             item=stock_item.item
         )
-        new = StockItemBaseKnowledge.generate_fact_from_stock_item(stock_item)
+        new = StockItemKnowledgeBase.generate_fact_from_stock_item(stock_item)
         self._kb_client.update(search, new, push_without_existing=True)
 
     def get_total_stock(self):
@@ -79,7 +79,7 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
         facts = self._kb_client.all(all_tuple)
 
         for fact in facts:
-            stock_item = StockItemBaseKnowledge.generate_stock_item_from_fact(fact)
+            stock_item = StockItemKnowledgeBase.generate_stock_item_from_fact(fact)
             res[stock_item.item] = res.get(stock_item.item, 0) + max(stock_item.amount, stock_item.goal)
         return res
 
@@ -91,7 +91,7 @@ class StockItemBaseKnowledge(BaseKnowledgeBase):
 
         if facts is not None:
             for fact in facts:
-                stock_item = StockItemBaseKnowledge.generate_stock_item_from_fact(fact)
+                stock_item = StockItemKnowledgeBase.generate_stock_item_from_fact(fact)
 
                 if stock_item.item not in res.keys():
                     res[stock_item.item] = {

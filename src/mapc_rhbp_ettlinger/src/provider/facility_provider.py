@@ -77,3 +77,12 @@ class FacilityProvider(object):
             res[resource.name] = resource
 
         return res
+
+    def get_all_stored_items(self):
+        items = {}
+
+        storages = self.storages.values()
+        for storage in storages:
+            for item in storage.items:
+                items[item.name] = items.get(item.name, 0) + item.stored
+        return items

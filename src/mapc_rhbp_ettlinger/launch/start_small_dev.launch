@@ -29,7 +29,7 @@
 
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
+        <arg name="agent_name" value="agentA1" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA3" />
@@ -38,7 +38,7 @@
         <arg name="agent_name" value="agentA4" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
+        <arg name="agent_name" value="agentA5" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA6" />

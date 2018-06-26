@@ -2,10 +2,11 @@ import copy
 import itertools
 import operator
 
-from agent_knowledge.item import StockItemBaseKnowledge
+from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from common_utils.product_util import ProductUtil
+from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
@@ -22,7 +23,8 @@ class ChooseBestAssemblyCombination(object):
 
     def __init__(self):
 
-        self._stock_item_knowledgebase = StockItemBaseKnowledge()
+        self.facility_provider = FacilityProvider()
+        self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._product_provider = ProductProvider(agent_name="agentA1") # TODO: make independent from agent
 
 
@@ -75,9 +77,21 @@ class ChooseBestAssemblyCombination(object):
         combination = {}
 
         finished_items_to_build = self.finished_items_priority_tuple_list()
+
+        max_priority = 0
+
         # TODO: This can be done better: We are looking for the combination which is most needed (Priority)
         # TODO: And using the most items
-        for item, count in finished_items_to_build:
+        for item, priority in finished_items_to_build:
+
+            if priority > max_priority:
+                max_priority = priority
+
+            if priority < max_priority - 10:
+                # Ignore items where we have 10 more than other items
+                continue
+
+
             required_roles = self._product_provider.get_roles_of_product(item)
             if set(required_roles).issubset(roles):
                 ingredients = self._product_provider.get_ingredients_of_product(item)
@@ -116,9 +130,10 @@ class ChooseBestAssemblyCombination(object):
 
     def finished_items_priority_dict(self):
         stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
+        stored_items = self.facility_provider.get_all_stored_items()
         finished_stock_items = {}
         for item in self._product_provider.finished_products.keys():
-            finished_stock_items[item] = max(stock_items[item]["stock"], stock_items[item]["goal"])
+            finished_stock_items[item] = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
         max_value = max(finished_stock_items.values())
         for key, count in finished_stock_items.iteritems():
             finished_stock_items[key] = max_value - count + 1

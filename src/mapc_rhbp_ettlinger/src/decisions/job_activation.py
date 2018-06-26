@@ -18,7 +18,7 @@ class JobDecider(object):
         i = 0
         for item in items:
             i += sum(
-                self._product_provider.get_base_ingredients_of_product_iteratively(item.name, item.amount).values())
+                self._product_provider.get_ingredients_of_product_iteratively(item.name, item.amount).values())
         return i
 
     def get_threshold(self):

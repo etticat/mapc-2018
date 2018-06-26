@@ -1,6 +1,9 @@
+#!/usr/bin/env python2
+from __future__ import division  # force floating point division when using plain /
+
 import operator
 
-from agent_knowledge.item import StockItemBaseKnowledge
+from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 from decisions.assembly_combination import ChooseBestAssemblyCombination
 from provider.agent_info_provider import AgentInfoProvider
@@ -18,8 +21,9 @@ class ChooseIngredientToGather(object):
     THRESHOLD = -999
 
     def __init__(self, agent_name):
+        self.facility_provider = FacilityProvider()
         self.step_provider = DistanceProvider()
-        self._stock_item_knowledgebase = StockItemBaseKnowledge()
+        self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
@@ -63,19 +67,36 @@ class ChooseIngredientToGather(object):
         return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1))
 
     def ingredient_priority_dict(self):
+        desired_ingredients = self.get_desired_ingredients(consider_intermediate_ingredients=False)
+        # Stock items that we currently have or are in the process of gathering
+        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
+        stored_items = self.facility_provider.get_all_stored_items()
+        finished_stock_items = {}
+        max_ingredient_count = 0
+        max_ingredient_divisor = 1
+
+        for item in desired_ingredients.keys():
+            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
+            finished_stock_items[item] = desired_ingredients.get(item, 0)
+
+            if current_stock > max_ingredient_count:
+                max_ingredient_count = current_stock
+                max_ingredient_divisor = float(finished_stock_items[item])/max_ingredient_count
+
+        priority_dict = {}
+        for item in finished_stock_items.keys():
+            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
+            priority_dict[item] = (finished_stock_items[item] / max_ingredient_divisor) - current_stock
+
+        return priority_dict
+
+    def get_desired_ingredients(self, consider_intermediate_ingredients):
         # Get the desired finished product stock
         finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
         # Check how many ingredients we need to build this stock
-        desired_ingredients = self._product_provider.get_base_ingredients_of_dict(finished_product_priority)
-        # Stock items that we currently have or are in the process of gathering
-        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
-        finished_stock_items = {}
-        for item in self._product_provider.base_ingredients.keys():
-            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"])
-            finished_stock_items[item] = desired_ingredients.get(item, 0) - current_stock
-        # Desired ingredient stock minus current stock
-        return finished_stock_items
-
+        desired_ingredients = self._product_provider.get_ingredients_of_dict(finished_product_priority,
+                                                                             consider_intermediate_ingredients=consider_intermediate_ingredients)
+        return desired_ingredients
 
     def steps_to_closest_resource(self, resources, item):
         min_steps = 999

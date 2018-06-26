@@ -1,7 +1,7 @@
 from mac_ros_bridge.msg import Position
 from mapc_rhbp_ettlinger.msg import WellTask, Task
 
-from agent_knowledge.item import StockItemBaseKnowledge
+from agent_knowledge.item import StockItemKnowledgeBase
 from agent_knowledge.task import TaskKnowledgeBase
 from common_utils import etti_logging
 
@@ -51,7 +51,7 @@ class DebugUtils:
 
     @staticmethod
     def show_total_stock_with_goals():
-        stock_item_knowledgebase = StockItemBaseKnowledge()
+        stock_item_knowledgebase = StockItemKnowledgeBase()
         return stock_item_knowledgebase.get_total_stock_and_goals()
 
     @staticmethod

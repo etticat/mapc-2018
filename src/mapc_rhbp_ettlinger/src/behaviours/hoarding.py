@@ -5,6 +5,8 @@ from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import etti_logging
+from common_utils.calc import CalcUtil
+from decisions.gathering import ChooseIngredientToGather
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -51,13 +53,20 @@ class StoreBehaviour(GenericActionBehaviour):
                       agent_name=agent_name,
                       action_type=Action.STORE,
                       **kwargs)
+        self.choose_ingredient_to_gather = ChooseIngredientToGather(agent_name=agent_name)
         self._task = None
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def generate_params(self):
-        finished_product_dict = self._product_provider.get_finished_products_in_stock()
+        # Check all the products we have in stock
+        finished_product_stock = self._product_provider.get_finished_products_in_stock()
+        # Check all the products we have, that can be used to make another item
+        desired_ingredients = self.choose_ingredient_to_gather.get_desired_ingredients(
+            consider_intermediate_ingredients=True)
 
-        for item, count in finished_product_dict.iteritems():
+        finished_products_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients)
+
+        for item, count in finished_products_to_store.iteritems():
             if count > 0:
                 ettilog.logerr("StoreBehaviour:: Storing %s(%d)", item, count)
                 return [KeyValue(key="Item", value=item),KeyValue(key="Value", value=str(count))]
