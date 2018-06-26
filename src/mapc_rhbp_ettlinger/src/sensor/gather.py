@@ -36,7 +36,8 @@ class NextIngredientVolumeSensor(KnowledgeFirstFactSensor):
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
         super(NextIngredientVolumeSensor, self).__init__(name=name, index=TaskKnowledgeBase.INDEX_MOVEMENT_TASK, pattern=TaskKnowledgeBase.generate_tuple(
-            agent_name=agent_name, type=TaskKnowledgeBase.TYPE_GATHERING))
+            agent_name=agent_name, type=TaskKnowledgeBase.TYPE_GATHERING),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME)
 
     def _reduce_facts(self, facts):
         task = super(NextIngredientVolumeSensor, self)._reduce_facts(facts=facts)
@@ -45,5 +46,5 @@ class NextIngredientVolumeSensor(KnowledgeFirstFactSensor):
 
         else:
             volume = 0
-        ettilog.logerr("NextIngredientVolumeSensor(%s):: Volume of next item: %d", self._agent_name, volume)
+        ettilog.logerr("NextIngredientVolumeSensor(%s):: Volume of next item: %d %s", self._agent_name, volume, str(task))
         return volume

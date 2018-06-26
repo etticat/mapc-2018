@@ -42,7 +42,8 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,
                 type=TaskKnowledgeBase.TYPE_HOARDING
-            )
+            ),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
         self.has_hoarding_task_cond = Condition(
             sensor=self.has_hoarding_task_sensor,

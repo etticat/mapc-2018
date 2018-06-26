@@ -37,6 +37,7 @@ class SensorAndConditionMap(object):
         self.load_sensor = TopicSensor(
             topic=self.agent_topic,
             name="load_sensor",
+            log=True,
             message_attr='load')
 
         self.finished_product_load_sensor = FinishedProductLoadSensor(
@@ -196,7 +197,8 @@ class SensorAndConditionMap(object):
     def init_task_sensor(self, agent_name):
         self.assemble_task_sensor = KnowledgeSensor(
             name="assemble_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
         self.has_assemble_task_assigned_cond = Condition(
@@ -207,7 +209,8 @@ class SensorAndConditionMap(object):
 
         self.well_task_sensor = KnowledgeSensor(
             name="well_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
         self.has_build_well_task_assigned_cond = Condition(
             name="has_build_well_task_assigned_cond",
@@ -217,7 +220,8 @@ class SensorAndConditionMap(object):
 
         self.deliver_task_sensor = KnowledgeSensor(
             name="deliver_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_DELIVER)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_DELIVER),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
         self.has_deliver_job_task_assigned_cond = Condition(
             name="has_deliver_job_task_assigned_cond",
@@ -227,7 +231,8 @@ class SensorAndConditionMap(object):
 
         self.has_task_sensor = KnowledgeSensor(
             name="has_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
         self.has_task_assigned_cond = Condition(

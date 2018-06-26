@@ -4,11 +4,13 @@ from mac_ros_bridge.msg import Resource, Position, Item
 
 from agent_knowledge.base_knowledge import BaseKnowledgeBase
 from common_utils import etti_logging
+from common_utils.singleton import Singleton
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledge_base.resource')
 
 
 class ResourceBaseKnowledgeBase(BaseKnowledgeBase):
+    __metaclass__ = Singleton
     """
     Keeps a list of all Facilities
     """

@@ -6,11 +6,13 @@ from mapc_rhbp_ettlinger.msg import Task
 
 from agent_knowledge.base_knowledge import BaseKnowledgeBase
 from common_utils import etti_logging
+from common_utils.singleton import Singleton
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.knowledgebase.movement')
 
 
 class TaskKnowledgeBase(BaseKnowledgeBase):
+    __metaclass__ = Singleton
 
     KNOWLEDGE_BASE_NAME = KnowledgeBase.DEFAULT_NAME
 

@@ -50,7 +50,8 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,
                 type=TaskKnowledgeBase.TYPE_EXPLORATION
-            )
+            ),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
         self.has_exploration_task_cond = Condition(

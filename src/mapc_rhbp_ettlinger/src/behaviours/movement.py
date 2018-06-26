@@ -64,5 +64,8 @@ class GoToTaskDestinationBehaviour(BehaviourBase):
 
         destination = destination.pos
 
+        if self._name == "go_to_resource_node_behaviour":
+                ettilog.logerr("(%s) Go to location: %s", self._agent_name, str(destination))
+
         GoToTaskDestinationBehaviour.action_go_to_location(lat=destination.lat, lon=destination.long,
                                                            publisher=self._pub_generic_action)

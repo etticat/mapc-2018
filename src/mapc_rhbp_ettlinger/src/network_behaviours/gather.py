@@ -81,7 +81,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name,
             task_type=TaskKnowledgeBase.TYPE_GATHERING,
             name="go_to_resource_node_behaviour",
-            plannerPrefix=self.get_manager_prefix()
+            plannerPrefix=self.get_manager_prefix(),
         )
 
         self.gather_target_sensor = SelectedTargetPositionSensor(
@@ -96,7 +96,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             name='gather_target_step_sensor',
             position_sensor_1=self._sensor_map.agent_position_sensor,
             position_sensor_2=self.gather_target_sensor,
-            initial_value=0
+            initial_value=10 # TODO: Find out when initial value is used (When target sensor fails?)
         )
         self.at_resource_node_condition = Condition(
             sensor=self.target_step_sensor,
@@ -129,7 +129,8 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,
                 type=TaskKnowledgeBase.TYPE_GATHERING
-            )
+            ),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
         self.next_ingredient_volume_sensor = NextIngredientVolumeSensor(
@@ -138,7 +139,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         )
 
         self.load_after_next_ingredient_sensor = SubtractionSensor(
-            minuend_sensor=self._sensor_map.load_sensor,
+            minuend_sensor=self._sensor_map.free_load_sensor,
             subtrahend_sensor=self.next_ingredient_volume_sensor,
             name="load_after_next_ingredient_sensor"
         )

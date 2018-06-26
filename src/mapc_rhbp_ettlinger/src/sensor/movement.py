@@ -21,7 +21,8 @@ class SelectedTargetPositionSensor(KnowledgeFactSensor):
         super(SelectedTargetPositionSensor, self).__init__(
             name=name,
             initial_value=None,
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=type)
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=type),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
     def update(self, new_value):
