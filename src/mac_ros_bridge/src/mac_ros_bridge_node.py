@@ -3,22 +3,18 @@
 # Thanks to Python-DTU for inspiration!
 # Parts of code taken from Communicator class
 
-import rospy
-
+import errno
+import socket
+import threading
+import time
 import traceback
+import xml.etree.cElementTree as eT
 
+import rospy
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
     ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg, Team, \
     Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, \
     Product, Well, WellMsg, Upgrade
-
-
-import socket
-import threading
-import time
-import errno
-
-import xml.etree.cElementTree as eT
 
 
 class MacRosBridge(threading.Thread):
@@ -57,7 +53,7 @@ class MacRosBridge(threading.Thread):
         self._agent_pw = rospy.get_param('~password', '1')
 
         # configure if also general information available for all agents should be handled
-        self._only_agent_specific = rospy.get_param('~only_agent_specific', False)
+        self._only_agent_specific = rospy.get_param('~only_agent_specific', True)
 
         rospy.logdebug("Server: %s Port: %d Agent: %s Password: %s", server_ip, server_port, self._agent_name,
                        self._agent_pw)
