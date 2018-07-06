@@ -10,13 +10,15 @@ from common_utils.agent_utils import AgentUtils
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import FinishedProductLoadSensor
 from sensor.battery import ClosestChargingStationSensor
-from sensor.exploration import ResourceDiscoveryProgressSensor
+from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor
 from sensor.gather import SmallestGatherableItemSensor
 from sensor.general import FactorSensor, SubtractionSensor
 from sensor.movement import StepDistanceSensor
 
 
 class SensorAndConditionMap(object):
+
+    DISCOVERY_AGE_FULL_ACTIVATION = 100
 
     def __init__(self, agent_name):
         self.agent_name = agent_name
@@ -26,6 +28,7 @@ class SensorAndConditionMap(object):
         self.init_battery_sensors()
         self.init_resource_sensor(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
+        self.init_exploration_sensor(agent_name=agent_name)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(self.agent_name), Agent, self.callback_agent)
 
@@ -42,7 +45,7 @@ class SensorAndConditionMap(object):
 
         self.finished_product_load_sensor = FinishedProductLoadSensor(
             agent_name=self.agent_name,
-            name="load_sensor")
+            name="finished_product_load_sensor")
 
         self.free_load_sensor = SubtractionSensor(
             name="free_load_sensor",
@@ -182,7 +185,7 @@ class SensorAndConditionMap(object):
             agent_name=agent_name
 
         )
-        self.discovery_completeness_condition = Condition(
+        self.resource_discovery_completeness_cond = Condition(
             sensor=self.resource_discovery_progress_sensor,
             activator=LinearActivator(
                 zeroActivationValue=0.0,
@@ -264,3 +267,40 @@ class SensorAndConditionMap(object):
 
         self._require_charge_activator.fullActivationValue = agent_charge_lower_bound
         self._require_charge_activator.zeroActivationValue = agent_charge_upper_bound
+
+    def init_exploration_sensor(self, agent_name):
+        self.discovery_progress_sensor = DiscoveryProgressSensor(
+            agent_name=agent_name,
+            name="discovery_completeness_condition")
+
+
+        self.discovery_completeness_cond = Condition(
+            sensor=self.discovery_progress_sensor,
+            activator=LinearActivator(
+                zeroActivationValue=0.0,
+                fullActivationValue=1.0
+            ))
+
+        self.oldest_cell_last_seen_sensor = OldestCellLastSeenSensor(
+            agent_name=agent_name,
+            initial_value=-SensorAndConditionMap.DISCOVERY_AGE_FULL_ACTIVATION,
+            name="discovery_completeness_condition")
+
+        self.simulation_step_sensor = TopicSensor(
+            topic=AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"),
+            name="simulation_step_sensor",
+            message_attr='simulation_step')
+
+        self.oldest_cell_age_sensor = SubtractionSensor(
+            minuend_sensor=self.simulation_step_sensor,
+            subtrahend_sensor=self.oldest_cell_last_seen_sensor,
+            name="oldest_cell_age_sensor"
+        )
+
+        self.oldest_cell_requires_exploration = Condition(
+            sensor=self.oldest_cell_age_sensor,
+            activator=LinearActivator(
+                zeroActivationValue=0,
+                fullActivationValue=SensorAndConditionMap.DISCOVERY_AGE_FULL_ACTIVATION
+            )
+        )

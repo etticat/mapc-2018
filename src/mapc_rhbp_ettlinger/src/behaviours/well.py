@@ -91,24 +91,8 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
             pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
             optional=optional, knowledge_base_name=knowledge_base_name,
             name=name, initial_value=-1)
-        self._well_provider = WellProvider()
+        self._well_provider = WellProvider(agent_name=agent_name)
         self._distance_provider = DistanceProvider()
-
-        rospy.Subscriber(WellProvider.WELL_TOPIC, WellMsg, self._callback_well)
-
-    def _callback_well(self, well_msg):
-        """
-
-        :param well_msg:
-        :type well_msg: WellMsg
-        :return:
-        """
-        try:
-            self._cache_update_callback()
-        except Exception:
-            # KB not loaded first well callback is  called.
-            # Can be ignored as it is called immediately after Knowledge base is loaded again.
-            pass
 
     def _reduce_facts(self, facts):
         """
@@ -134,3 +118,38 @@ class WellIntegritySensor(KnowledgeFirstFactSensor):
                 ettilog.logwarn("Couldn't get last tuple element of: %s. Resetting to initial_value", str(fact_tuple))
 
         return val
+
+
+class ChooseWellPositionBehaviour(DecisionBehaviour):
+
+    def __init__(self, name, agent_name, **kwargs):
+
+        self.agent_name = agent_name
+        self._task_knowledge_base = TaskKnowledgeBase()
+        self.destination_provider = DistanceProvider()
+        self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
+
+        self.well_position_decision = WellPositionDecision(self.self_organisation_provider.buffer)
+
+        super(ChooseWellPositionBehaviour, self).__init__(self.well_position_decision, name=name, **kwargs)
+
+    def do_step(self):
+        try:
+            xy = super(ChooseWellPositionBehaviour, self).do_step()
+            if xy is not None:
+                x, y = xy
+                destination = self.destination_provider.position_from_xy(x, y)
+                task = self._task_knowledge_base.get_task(agent_name=self.agent_name,
+                                                          type=TaskKnowledgeBase.TYPE_BUILD_WELL)
+                new_task = copy.copy(task)
+                new_task.pos = destination
+
+                update_successful = self._task_knowledge_base.update_task(task, new_task)
+                ettilog.logerr("ChooseDestinationBehaviour:: Build well behaviour updated %s", str(update_successful))
+            else:
+                ettilog.logerr("ChooseDestinationBehaviour:: could not choose position. ")
+
+
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())

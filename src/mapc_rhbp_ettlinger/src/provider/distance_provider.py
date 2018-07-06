@@ -183,3 +183,51 @@ class DistanceProvider(object):
 
     def at_same_location(self, pos1, pos2):
         return AgentUtils.calculate_distance(pos1, pos2) < self._proximity
+
+
+    def lat_to_x(self, lat):
+        distance_from_left_side = lat - self.min_lat
+        percentage_on_screen = distance_from_left_side / self.lat_spread
+
+        x = percentage_on_screen * self.total_distance_x
+
+        return x
+
+    def lon_to_y(self, lon):
+        distance_from_top = lon - self.min_lon
+        percentage_on_screen = distance_from_top / self.lon_spread
+
+        y = percentage_on_screen * self.total_distance_y
+
+        return y
+
+    def position_to_xy(self, pos):
+        """
+
+        :param pos:
+        :type pos: Position
+        :return:
+        """
+        return self.lat_to_x(pos.lat), self.lon_to_y(pos.long)
+
+    def y_to_lon(self, y):
+        percentage_on_screen = float(y) / self.total_distance_y
+
+        distance_from_top = self.lon_spread * percentage_on_screen
+
+        lon = distance_from_top + self.min_lon
+
+        return max(min(lon, self.max_lon), self.min_lon)
+
+    def x_to_lat(self, x):
+        percentage_on_screen = float(x) / self.total_distance_x
+
+        distance_from_left = self.lat_spread * percentage_on_screen
+
+        lat = distance_from_left + self.min_lat
+
+        return max(min(lat, self.max_lat), self.min_lat)
+
+    def position_from_xy(self, x,y):
+
+        return Position(lat=self.x_to_lat(x), long=self.y_to_lon(y))

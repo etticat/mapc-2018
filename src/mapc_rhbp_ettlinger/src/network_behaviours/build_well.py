@@ -1,15 +1,21 @@
 from agent_knowledge.task import TaskKnowledgeBase
-from behaviour_components.activators import ThresholdActivator
+from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
 from behaviours.task import FinishTaskBehaviour
-from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor
+from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor, ChooseWellPositionBehaviour
+from common_utils import etti_logging
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.network.well')
 
 class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
 
     def __init__(self, agent_name, name, sensor_map, **kwargs):
+
+        self._agent_name = agent_name
+        self.init_well_sensors()
+
         super(BuildWellNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             sensor_map=sensor_map,
@@ -17,13 +23,25 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             task_type=TaskKnowledgeBase.TYPE_BUILD_WELL,
             **kwargs)
 
-        self.init_well_sensors()
         self.init_build_behaviour()
+        self.init_choose_position_behaviour()
         self.init_build_up_behaviour()
         self.init_finish_behaviour()
 
     def init_well_sensors(self):
         # Sensor that checks if agent has at least one assigned task
+
+        self.destination_undecided_sensor = LocalKnowledgeSensor(
+            name="destination_chosen_sensor",
+            pattern=TaskKnowledgeBase.generate_tuple(agent_name=self._agent_name, lat=0.0, long=0.0, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
+            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
+        )
+        self.destination_undecided_cond = Condition(
+            sensor=self.destination_undecided_sensor,
+            activator=BooleanActivator(desiredValue=True)
+        )
+        self.destination_decided_cond = Negation(self.destination_undecided_cond)
+
 
         self.target_well_integrity_sensor = WellIntegritySensor(
             agent_name=self._agent_name,
@@ -110,3 +128,22 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
         )
 
         self.init_do_behaviour(self.finish_building_behaviour)
+
+    def init_choose_position_behaviour(self):
+        self.choose_well_position_behaviour = ChooseWellPositionBehaviour(
+            name="choose_well_position_behaviour",
+            plannerPrefix=self.get_manager_prefix(),
+            agent_name=self._agent_name
+        )
+        self.choose_well_position_behaviour.add_precondition(
+            precondition=self.destination_undecided_cond)
+        self.choose_well_position_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self.destination_undecided_sensor.name,
+                indicator=-1.0,
+                sensor_type=bool
+            )
+        )
+    def init_go_behaviour(self):
+        super(BuildWellNetworkBehaviour, self).init_go_behaviour()
+        self._go_behaviour.add_precondition(self.destination_decided_cond)
