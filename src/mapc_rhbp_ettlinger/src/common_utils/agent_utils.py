@@ -50,5 +50,5 @@ class AgentUtils:
         return closest_facility
 
     @classmethod
-    def get_coordination_prefix(cls, type):
-        return '/assemble/' + type + '/'
+    def get_coordination_topic(cls):
+        return '/coordination'

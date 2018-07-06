@@ -1,15 +1,14 @@
 import time
 from abc import abstractmethod
 
-import rospy
-from mapc_rhbp_ettlinger.msg import TaskRequest, TaskBid, TaskAcknowledgement, TaskAssignment, \
-    TaskStop, Task
+from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task
 
 import utils.rhbp_logging
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
+from rospy.my_publish_subscribe import MySubscriber, MyPublisher
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.contractor')
 
@@ -26,13 +25,13 @@ class ContractNetContractorBehaviour(BehaviourBase):
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
-        prefix = AgentUtils.get_coordination_prefix(self._task_type)
+        prefix = AgentUtils.get_coordination_topic()
 
-        rospy.Subscriber(prefix + "request", TaskRequest, self._callback_request)
-        self._pub_bid = rospy.Publisher(prefix + "bid", TaskBid, queue_size=10)
-        rospy.Subscriber(prefix + "assign", TaskAssignment, self._callback_assign)
-        self._pub_acknowledge = rospy.Publisher(prefix + "acknowledge", TaskAcknowledgement, queue_size=10)
-        rospy.Subscriber(prefix + "stop", TaskStop, self._on_task_finished)
+        MySubscriber(prefix, message_type="request", task_type=self._task_type, callback=self._callback_request)
+        self._pub_bid = MyPublisher(prefix, message_type="bid", task_type=self._task_type, queue_size=10)
+        MySubscriber(prefix, message_type="assign", task_type=self._task_type, callback=self._callback_assign)
+        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledge", task_type=self._task_type, queue_size=10)
+        MySubscriber(prefix, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
     def _callback_request(self, request):
         """

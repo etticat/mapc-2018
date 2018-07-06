@@ -2,13 +2,12 @@ import random
 import time
 from abc import abstractmethod
 
-import rospy
-from mapc_rhbp_ettlinger.msg import TaskRequest, TaskBid, TaskAssignment, TaskAcknowledgement, \
-    TaskStop
+from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.facility_provider import FacilityProvider
+from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.coordination.manager')
 
@@ -30,13 +29,13 @@ class ContractNetManager(object):
 
         self._facility_provider = FacilityProvider()
 
-        topic_prefix = AgentUtils.get_coordination_prefix(self._task_type)
+        topic = AgentUtils.get_coordination_topic()
 
-        self._pub_task_request = rospy.Publisher(topic_prefix + "request", TaskRequest, queue_size=10)
-        rospy.Subscriber(topic_prefix + "bid", TaskBid, self._callback_bid)
-        self._pub_task_assignment = rospy.Publisher(topic_prefix + "assign", TaskAssignment, queue_size=10)
-        rospy.Subscriber(topic_prefix + "acknowledge", TaskAcknowledgement, self._callback_acknowledgement)
-        self._pub_task_stop = rospy.Publisher(topic_prefix + "stop", TaskStop, queue_size=10)
+        self._pub_task_request = MyPublisher(topic, message_type="request", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="bid", task_type=self._task_type, callback=self._callback_bid)
+        self._pub_task_assignment = MyPublisher(topic, message_type="assign", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="acknowledge", task_type=self._task_type, callback=self._callback_acknowledgement)
+        self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
 
     def reset_manager(self):
         self._bids = []
