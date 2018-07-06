@@ -1,9 +1,8 @@
 import random
 
 import rospy
-from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg
+from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg, ResourceMsg
 
-from agent_knowledge.resource import ResourceBaseKnowledgeBase
 from common_utils import etti_logging
 from common_utils.singleton import Singleton
 
@@ -17,14 +16,15 @@ class FacilityProvider(object):
     """
 
     def __init__(self):
-        self._resource_knowledge = ResourceBaseKnowledgeBase()
         self.charging_stations = {}
         self.storages = {}
         self.workshops = {}
+        self.resources = {}
 
         rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
         rospy.Subscriber("/workshop", WorkshopMsg, self.workshop_callback)
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
+        rospy.Subscriber("/resources", ResourceMsg, self.resources_callback)
 
     def storage_callback(self, storageMsg):
         """
@@ -64,19 +64,18 @@ class FacilityProvider(object):
         return self.storages
 
     def get_random_workshop(self):
-        return random.choice(self.workshops.values())
+        values = self.workshops.values()
+        if len(values) > 0:
+            return random.choice(values)
+        else:
+            ettilog.logerr("FacilityProvider:: Could not pick workshops. None available")
+            return None
 
     def get_charging_stations(self):
         return self.charging_stations.values()
 
     def get_resources(self):
-        resources = self._resource_knowledge.get_resources_for_item(item="*")
-        res = {}
-
-        for resource in resources:
-            res[resource.name] = resource
-
-        return res
+        return self.resources
 
     def get_all_stored_items(self):
         items = {}
