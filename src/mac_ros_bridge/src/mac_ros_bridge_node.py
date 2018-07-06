@@ -71,8 +71,8 @@ class MacRosBridge(threading.Thread):
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
         self._pub_local_wells = rospy.Publisher('~well', WellMsg, queue_size=1, latch=True)
         self._pub_local_entity = rospy.Publisher('~entity', EntityMsg, queue_size=1, latch=True)
-        self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
-        self._pub_global_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
+        # self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
+        # self._pub_global_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
         self._pub_global_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
         self._pub_local_resource = rospy.Publisher('~resource', ResourceMsg, queue_size=1, latch=True)
 
@@ -696,9 +696,9 @@ class MacRosBridge(threading.Thread):
         :type perception: eT  ElementTree
         """
         has_local_subscribers = self._pub_local_wells.get_num_connections() > 0
-        has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
+        # has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
 
-        if has_local_subscribers or has_global_subscribers:
+        if has_local_subscribers:
             well_msg = WellMsg()
             well_msg.facilities = self._parse_wells(perception)
             well_msg.timestamp = timestamp
@@ -707,8 +707,8 @@ class MacRosBridge(threading.Thread):
             self._pub_local_wells.publish(well_msg)
 
         # publish only on the global topic if we have information
-        if has_global_subscribers and len(well_msg.facilities) > 0:
-            self._pub_global_wells.publish(well_msg)
+        # if has_global_subscribers and len(well_msg.facilities) > 0:
+        #     self._pub_global_wells.publish(well_msg)
 
     def _publish_entity(self, timestamp, perception):
         """
@@ -718,9 +718,9 @@ class MacRosBridge(threading.Thread):
         :type perception: eT  ElementTree
         """
         has_local_subscribers = self._pub_local_entity.get_num_connections() > 0
-        has_global_subscribers = self._pub_global_entity.get_num_connections() > 0
+        # has_global_subscribers = self._pub_global_entity.get_num_connections() > 0
 
-        if has_local_subscribers or has_global_subscribers:
+        if has_local_subscribers:
             entity_msg = EntityMsg()
             entity_msg.entities = self._parse_entities(perception)
             entity_msg.timestamp = timestamp
@@ -729,8 +729,8 @@ class MacRosBridge(threading.Thread):
             self._pub_local_entity.publish(entity_msg)
 
         # publish only on the global topic if we have information
-        if has_global_subscribers and len(entity_msg.entities) > 0:
-            self._pub_global_entity.publish(entity_msg)
+        # if has_global_subscribers and len(entity_msg.entities) > 0:
+        #     self._pub_global_entity.publish(entity_msg)
 
     def _publish_resources(self, timestamp, perception):
         """
