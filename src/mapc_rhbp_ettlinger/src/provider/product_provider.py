@@ -92,12 +92,12 @@ class ProductProvider(object):
         return self.finished_products
 
     def save_stock_and_sock_goals(self):
-        msg = StockItemMsg()
-        for index in self._items_in_stock.keys():
-            item = StockItem(agent=self._agent_name, item=index, amount=self._items_in_stock[index],
-                             goal=self._gather_goal.get(index, 0) + self._assemble_goal.get(index, 0))
-            self._stock_item_knowledge_base.update_stock(item)
-            msg.stock_items.append(item)
+        item = StockItem(agent=self._agent_name, amounts={}, goals={})
+        for index in self.products.keys():
+            item.amounts[index] = self._items_in_stock.get(index, 0)
+            item.goals[index] = self._gather_goal.get(index, 0) + self._assemble_goal.get(index, 0)
+
+        self._stock_item_knowledge_base.update_stock(item)
 
     def start_gathering(self, item_to_focus):
 

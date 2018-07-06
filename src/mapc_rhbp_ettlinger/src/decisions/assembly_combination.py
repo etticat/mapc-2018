@@ -133,8 +133,12 @@ class ChooseBestAssemblyCombination(object):
         stored_items = self.facility_provider.get_all_stored_items()
         finished_stock_items = {}
         for item in self._product_provider.finished_products.keys():
-            finished_stock_items[item] = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
-        max_value = max(finished_stock_items.values())
+            finished_stock_items[item] = max(stock_items.amounts.get(item, 0), stock_items.goals.get(item, 0)) + stored_items.get(item, 0)
+        values = finished_stock_items.values()
+        if len(values) == 0:
+            ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")
+            return {}
+        max_value = max(values)
         for key, count in finished_stock_items.iteritems():
             finished_stock_items[key] = max_value - count + 1
         return finished_stock_items

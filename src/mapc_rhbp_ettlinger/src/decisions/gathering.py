@@ -76,7 +76,7 @@ class ChooseIngredientToGather(object):
         max_ingredient_divisor = 1
 
         for item in desired_ingredients.keys():
-            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
+            current_stock = max(stock_items.amounts.get(item,0), stock_items.goals.get(item,0)) + stored_items.get(item, 0)
             finished_stock_items[item] = desired_ingredients.get(item, 0)
 
             if current_stock > max_ingredient_count:
@@ -85,7 +85,7 @@ class ChooseIngredientToGather(object):
 
         priority_dict = {}
         for item in finished_stock_items.keys():
-            current_stock = max(stock_items[item]["stock"], stock_items[item]["goal"]) + stored_items.get(item, 0)
+            current_stock = max(stock_items.amounts.get(item,0), stock_items.goals.get(item,0)) + stored_items.get(item, 0)
             priority_dict[item] = (finished_stock_items[item] / max_ingredient_divisor) - current_stock
 
         return priority_dict
