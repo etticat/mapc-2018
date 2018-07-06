@@ -4,7 +4,7 @@
     <arg name="server_ip"           default="localhost"/>
     <arg name="server_port"         default="12300"/>
     <arg name="password"            default="1"/>
-    <arg name="only_agent_specific" default="false"/>
+    <arg name="only_agent_specific" default="true"/>
 
     <node pkg="mac_ros_bridge" type="mac_ros_bridge_node.py"
         name="bridge_node_$(arg agent_name)" output="screen"
