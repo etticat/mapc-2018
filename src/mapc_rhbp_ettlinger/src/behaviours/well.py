@@ -83,7 +83,7 @@ class BuildUpWellBehaviour(BuildWellBehaviour):
         self._pub_generic_action.publish(action)
 
 
-class WellIntegritySensor(KnowledgeFirstFactSensor):
+class WellIntegritySensor(LocalKnowledgeFirstFactSensor):
 
     def __init__(self, agent_name, name, optional=False, knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME):
 

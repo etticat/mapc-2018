@@ -1,6 +1,7 @@
 import rospy
 from mac_ros_bridge.msg import Agent
 
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -85,6 +86,13 @@ class SensorAndConditionMap(object):
                 zeroActivationValue=0.0,
                 fullActivationValue=1.0
             )
+        )
+        self.has_finished_products_cond = Condition(
+            name="has_finished_products_cond",
+            sensor=self.finished_product_load_sensor,
+            activator=ThresholdActivator(
+                isMinimum=True,
+                thresholdValue=1)
         )
         self.smallest_gatherable_item_sensor = SmallestGatherableItemSensor(
             name="smallest_gatherable_item_sensor",

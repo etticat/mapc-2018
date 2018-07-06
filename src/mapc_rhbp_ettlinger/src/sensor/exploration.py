@@ -1,6 +1,7 @@
-from agent_knowledge.resource import ResourceBaseKnowledgeBase
+from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
+from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
@@ -17,16 +18,16 @@ class ResourceDiscoveryProgressSensor(Sensor):
 
     def __init__(self, agent_name, optional=False, name=None, initial_value=0.0):
         super(ResourceDiscoveryProgressSensor, self).__init__(name=name, optional=optional, initial_value=initial_value)
-        self._resource_knowledge = ResourceBaseKnowledgeBase()
+        self.facility_provider = FacilityProvider()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def sync(self):
-        resources = self._resource_knowledge.get_resources_for_item(item="*")
+        resources = self.facility_provider.get_resources()
         base_ingredients = self._product_provider.get_base_ingredients().keys()
 
         total_ingredients = len(base_ingredients)
 
-        for resource in resources:
+        for resource in resources.values():
             if resource.item.name in base_ingredients:
                 base_ingredients.remove(resource.item.name)
 

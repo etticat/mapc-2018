@@ -6,6 +6,7 @@ from __future__ import division  # force floating point division when using plai
 import rospy
 from mac_ros_bridge.msg import Position
 
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeFactSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import AggregationSensor
 from common_utils import etti_logging

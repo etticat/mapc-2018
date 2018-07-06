@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation
+from behaviour_components.conditions import Negation, Disjunction, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
@@ -10,15 +10,21 @@ from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.hoarding import HoardingNetworkBehaviour
 from network_behaviours.job_execution import DeliverJobNetworkBehaviour
+from sensor.sensor_map import SensorAndConditionMap
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
 
 class ActionManager(Manager):
     def __init__(self, agent_name, sensor_map):
+        """
+
+        :param agent_name:
+        :param sensor_map:
+        :type sensor_map: SensorAndConditionMap
+        """
+
         self._agent_name = agent_name
         super(ActionManager, self).__init__(prefix=self._agent_name, max_parallel_behaviours=1)
-
-
 
         self.sensor_map = sensor_map
         self.init_behaviour_network()
@@ -34,6 +40,18 @@ class ActionManager(Manager):
             agent_name=self._agent_name,
             sensor_map=self.sensor_map,
             max_parallel_behaviours=1)
+
+        self.exploration_network.add_precondition(
+            Disjunction(
+                Negation(self.sensor_map.resources_of_all_items_discovered_condition),
+                Conjunction(
+                    Negation(self.sensor_map.can_fit_more_ingredients_cond),
+                    Negation(self.sensor_map.has_finished_products_cond)
+                )
+            )
+        )
+
+        self.exploration_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
 
         self.exploration_network.add_effect(
             Effect(
@@ -58,10 +76,12 @@ class ActionManager(Manager):
         # self._gathering_network.add_precondition(Negation(self.sensor_map.load_fullness_condition))
 
         # Gather when we know some of the resource nodes already
-        self._gathering_network.add_precondition(self.sensor_map.discovery_completeness_condition)
+        self._gathering_network.add_precondition(self.sensor_map.resources_of_all_items_discovered_condition)
 
         # Gather only when next item fits in storage
         self._gathering_network.add_precondition(self.sensor_map.can_fit_more_ingredients_cond)
+
+        self._gathering_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
 
         self._gathering_network.add_effect(
             Effect(
@@ -80,12 +100,17 @@ class ActionManager(Manager):
             max_parallel_behaviours=1)
 
         # Only hoard when stock is full
-        self._hoarding_network.add_precondition(self.sensor_map.load_fullness_condition)
+        self._hoarding_network.add_precondition(Negation(self.sensor_map.can_fit_more_ingredients_cond))
+
+        self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_cond)
+
+        self._hoarding_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
+
 
         self._hoarding_network.add_effect(
             Effect(
-                sensor_name=self.sensor_map.finished_product_load_factor_sensor.name,
-                indicator=-1.0,
+                sensor_name=self.sensor_map.load_factor_sensor.name, # TODO: Take a proper one
+                indicator=1.0,
                 sensor_type=float
             ))
 
@@ -165,10 +190,3 @@ class ActionManager(Manager):
             priority=50,
             plannerPrefix=self._agent_name,
             conditions=[self.sensor_map.load_fullness_condition])
-
-        self._gather_goal = GoalBase(
-            name='get_rid_of_finished_products',
-            permanent=True,
-            priority=50,
-            plannerPrefix=self._agent_name,
-            conditions=[Negation(self.sensor_map.finished_product_load_fullness_condition)])

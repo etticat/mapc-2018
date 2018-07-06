@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 import rospy
-from mac_ros_bridge.msg import RequestAction, SimStart
+from mac_ros_bridge.msg import RequestAction, SimStart, Position
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -58,7 +58,7 @@ class Planner(object):
 
         # self.coordinate_wells(request_action)
         # self.coordinate_jobs(request_action)
-        self.coordinate_assembly(request_action)
+        # self.coordinate_assembly(request_action)
 
 
         ettilog.loginfo("JobPlanner:: Jobs processed")
@@ -85,7 +85,8 @@ class Planner(object):
         if well_to_build == None:
             return
 
-        self._build_well_manager.build_well(well_to_build, self.well_chooser.choose_well_position())
+        pos = Position(lat=0.0, long=0.0)
+        self._build_well_manager.build_well(well_to_build, pos)
 
     def coordinate_assembly(self, requestAction):
 

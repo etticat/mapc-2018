@@ -57,6 +57,16 @@ class FacilityProvider(object):
         for charging_station in charging_station_msg.facilities:
             self.charging_stations[charging_station.name] = charging_station
 
+    def resources_callback(self, resource_msg):
+        """
+
+        :param resource_msg:
+        :type resource_msg: ResourceMsg
+        :return:
+        """
+        for resource in resource_msg.facilities:
+            self.resources[resource.name] = resource
+
     def get_storage_by_name(self, name):
         return self.storages[name]
 

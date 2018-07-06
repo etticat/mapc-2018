@@ -1,3 +1,4 @@
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, GreedyActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -45,7 +46,7 @@ class ExplorationNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 indicator=1.0,  # Choosing a new destination increases the distance to the target
                 sensor_type=float))
 
-        self.has_exploration_task_sensor = KnowledgeSensor(
+        self.has_exploration_task_sensor = LocalKnowledgeSensor(
             name="has_exploration_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,

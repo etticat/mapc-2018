@@ -1,6 +1,9 @@
-from mac_ros_bridge.msg import Position
-from mapc_rhbp_ettlinger.msg import WellTask, Task
+import time
 
+from mac_ros_bridge.msg import Position
+from mapc_rhbp_ettlinger.msg import Task
+
+import rospy
 from agent_knowledge.item import StockItemKnowledgeBase
 from agent_knowledge.task import TaskKnowledgeBase
 from common_utils import etti_logging
@@ -8,6 +11,9 @@ from common_utils import etti_logging
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.utils.debug')
 
 class DebugUtils:
+
+    FILE_HANDLER_TIME = None
+    FILE_HANDLER_STEP = None
 
     @staticmethod
     def instant_find_resources(resource_knowledgebase):
@@ -68,15 +74,15 @@ class DebugUtils:
 
 
     @staticmethod
-    def add_build_well_task():
+    def add_build_well_task(agent_name="agentA1"):
 
         ettilog.logerr("------------------------------ Building well: ------------------------------------")
-        well_task_knowledebase = WellTaskKnowledgebase()
-        well_task_knowledebase.save_task(WellTask(
-            agent_name = 'agentA1',
-            pos = Position(lat="48.84778", long="2.33733"),
-            well_type = "wellType1",
-            built=False
+        well_task_knowledebase = TaskKnowledgeBase()
+        well_task_knowledebase.create_task(Task(
+            agent_name = agent_name,
+            pos = Position(lat=0.0, long=0.0),
+            task = "wellType2",
+            type = TaskKnowledgeBase.TYPE_BUILD_WELL
         ))
 
         ettilog.logerr("----------------------------------------------------------------------------------")
@@ -94,3 +100,27 @@ class DebugUtils:
             type = TaskKnowledgeBase.TYPE_ASSEMBLE
         ))
 
+
+    @staticmethod
+    def start_thread_counter():
+        import threading
+        t = threading.Thread(target=DebugUtils.write_each_sec)
+        t.start()
+        pass
+
+    @staticmethod
+    def write_each_sec():
+        i = 0
+        while True:
+            i = i + 1
+            import threading
+
+            import os
+            import psutil
+            process = psutil.Process(os.getpid())
+            ram = process.memory_info().rss
+
+            all_threads = threading.Thread.count_ttt
+            count = threading.activeCount()
+            rospy.logerr(str(count) + "," + str(i) + "," + str(all_threads) + "   Ram: " + str(ram / 1024 / 1024 ))
+            time.sleep(1.0)

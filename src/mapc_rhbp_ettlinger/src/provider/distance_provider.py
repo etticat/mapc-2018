@@ -5,10 +5,11 @@ import socket
 import traceback
 import urllib2
 from math import sin, cos, sqrt, atan2, radians
+from numpy import mean
 from urllib2 import URLError
 
 import rospy
-from mac_ros_bridge.msg import SimStart
+from mac_ros_bridge.msg import SimStart, Position, Agent
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import etti_logging
@@ -33,6 +34,7 @@ class DistanceProvider(object):
         self.speed = 1
         self._proximity = 0.01
         self.agent_pos = None
+        self.agent_vision = 300
 
 
     def callback_agent(self, msg):
@@ -43,8 +45,8 @@ class DistanceProvider(object):
         :type msg: Agent
         :return:
         """
-
         self.agent_pos = msg.pos
+        self.agent_vision = msg.vision
 
     def callback_sim_start(self, sim_start):
         """
@@ -58,6 +60,27 @@ class DistanceProvider(object):
         self.speed = sim_start.role.base_speed  # TODO: Update on upgrade
         self._proximity = sim_start.proximity
 
+
+        # TODO: Make sure this works around the 0 meridian
+        self.min_lat = sim_start.min_lat + 0.001 # TODO: The agents always get stuck as the min lat is not reachable
+        self.max_lat = sim_start.max_lat - 0.001 # TODO: Find a better way
+        self.min_lon = sim_start.min_lon + 0.001
+        self.max_lon = sim_start.max_lon - 0.001
+
+        self.lat_spread = self.max_lat - self.min_lat
+        self.lon_spread = self.max_lon - self.min_lon
+
+        mean_long = mean([self.min_lon, self.max_lon])
+        self.total_distance_x = self.calculate_distance_air(
+            Position(lat=self.min_lat, long=mean_long),
+            Position(lat=self.max_lat, long=mean_long)
+        )
+
+        mean_lat = mean([self.min_lat, self.max_lat])
+        self.total_distance_y = self.calculate_distance_air(
+            Position(long=self.min_lon, lat=mean_lat),
+            Position(long=self.max_lon, lat=mean_lat)
+        )
     def calculate_distance(self, startPosition, endPosition):
         if self.can_fly:
             return self.calculate_distance_air(startPosition, endPosition)

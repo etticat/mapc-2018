@@ -1,3 +1,4 @@
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -37,7 +38,7 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
-        self.has_hoarding_task_sensor = KnowledgeSensor(
+        self.has_hoarding_task_sensor = LocalKnowledgeSensor(
             name="has_hoarding_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,

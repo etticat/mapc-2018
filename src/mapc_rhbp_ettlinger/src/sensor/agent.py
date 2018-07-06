@@ -26,7 +26,7 @@ class FinishedProductLoadSensor(RawTopicSensor):
         # Check all the products we have, that can be used to make another item
         desired_ingredients = self.choose_ingredient_to_gather.get_desired_ingredients(consider_intermediate_ingredients=True)
 
-        items_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients)
+        items_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients, normalize_to_zero=True)
 
         finished_product_volume = self._product_provider.calculate_total_volume(items_to_store)
         ettilog.loginfo("FinishedProductLoadSensor(%s):: Volume: %d", self._agent_name, finished_product_volume)

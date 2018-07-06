@@ -9,7 +9,7 @@ from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.action_provider import ActionProvider
-from temp.MyPublisher import MyPublisher, MySubscriber
+from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 

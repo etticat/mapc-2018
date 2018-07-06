@@ -1,3 +1,4 @@
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
@@ -6,6 +7,7 @@ from behaviours.task import FinishTaskBehaviour
 from behaviours.well import BuildWellBehaviour, BuildUpWellBehaviour, WellIntegritySensor, ChooseWellPositionBehaviour
 from common_utils import etti_logging
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
+from rhbp_utils.knowledge_sensors import KnowledgeSensor
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.network.well')
 

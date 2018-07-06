@@ -15,13 +15,14 @@ class WellProvider(object):
 
     WELL_TOPIC = "/well"
 
-    def __init__(self):
+    def __init__(self, agent_name=None):
         self.wells = {}
         self.wells_to_build = {}
 
-        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
 
-        rospy.Subscriber(WellProvider.WELL_TOPIC, WellMsg, self._callback_well)
+        if agent_name is not None:
+            self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
+            rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "well", WellMsg, self._callback_well)
 
     def callback_sim_start(self, sim_start):
         """

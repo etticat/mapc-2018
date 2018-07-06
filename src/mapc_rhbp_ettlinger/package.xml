@@ -45,12 +45,16 @@
   <build_depend>rhbp_core</build_depend>
   <build_depend>rhbp_utils</build_depend>
   <build_depend>mac_ros_bridge</build_depend>
+  <build_depend>so_data</build_depend>
+  <build_depend>rhbp_selforga</build_depend>
   <run_depend>rospy</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>rhbp_core</run_depend>
   <run_depend>rhbp_utils</run_depend>
   <run_depend>mac_ros_bridge</run_depend>
+  <run_depend>so_data</run_depend>
+  <run_depend>rhbp_selforga</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

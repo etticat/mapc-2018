@@ -3,7 +3,6 @@ import time
 import rospy
 from mac_ros_bridge.msg import RequestAction
 
-from agent_knowledge.resource import ResourceBaseKnowledgeBase
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
@@ -24,11 +23,18 @@ class DebugAgent(object):
 
         self.choose_ingredient_to_gather = ChooseIngredientToGather(agent_name="agentA1")
         self.choose_best_assembly_combination= ChooseBestAssemblyCombination()
-        DebugUtils.instant_find_resources(ResourceBaseKnowledgeBase())
+        # DebugUtils.instant_find_resources(ResourceBaseKnowledgeBase())
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")
         # DebugUtils.add_build_well_task()
         # DebugUtils.assign_assembly_task()
+        # DebugUtils.add_build_well_task(agent_name="agentA1")
+        # DebugUtils.add_build_well_task(agent_name="agentA2")
+        # DebugUtils.add_build_well_task(agent_name="agentA3")
+        # DebugUtils.add_build_well_task(agent_name="agentA4")
+        # DebugUtils.add_build_well_task(agent_name="agentA5")
+        # DebugUtils.add_build_well_task(agent_name="agentA6")
+
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
@@ -54,13 +60,15 @@ class DebugAgent(object):
         for i in range(0, 5):
             item = "item" + str(i)
             if item in stock.keys():
-                ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %d finished_product_prio: %d, desired ingredients: %d", item, stock[item]["stock"], stock[item]["goal"], storage_stock.get(item, 0), ingredient_priority.get(item, 0), finished_product_priority.get(item, 0), desired_ingredients.get(item, 0))
+                ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %d finished_product_prio: %d, desired ingredients: %d",
+                               item, stock.amounts.get(item,0), storage_stock.goals.get(item, 0), ingredient_priority.get(item, 0), finished_product_priority.get(item, 0), desired_ingredients.get(item, 0))
 
         ettilog.logerr("Finished products:")
         for i in range(5, 11):
             item = "item" + str(i)
             if item in stock.keys():
-                ettilog.logerr("%s: %d/%d - stored: %d  ingredient_prio: %d finished_product_prio: %d, desired ingredients: %d", item, stock[item]["stock"], stock[item]["goal"], storage_stock.get(item, 0), ingredient_priority.get(item, 0), finished_product_priority.get(item, 0), desired_ingredients.get(item, 0))
+                ettilog.logerr("%s: %d/%d - stored: %d  ingredient_prio: %d finished_product_prio: %d, desired ingredients: %d", item,
+                               stock.amounts.get(item, 0), storage_stock.goals.get(item, 0), storage_stock.get(item, 0), ingredient_priority.get(item, 0), finished_product_priority.get(item, 0), desired_ingredients.get(item, 0))
 
 
 if __name__ == '__main__':

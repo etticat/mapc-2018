@@ -1,12 +1,14 @@
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviours.gather import ChooseIngredientBehaviour
-from behaviours.generic_action import Action, GenericActionBehaviour
+from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToTaskDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
+from provider.action_provider import Action
 from provider.product_provider import ProductProvider
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.gather import NextIngredientVolumeSensor
@@ -124,7 +126,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
-        self.has_gathering_task_sensor = KnowledgeSensor(
+        self.has_gathering_task_sensor = LocalKnowledgeSensor(
             name="has_gathering_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(
                 agent_name=self._agent_name,

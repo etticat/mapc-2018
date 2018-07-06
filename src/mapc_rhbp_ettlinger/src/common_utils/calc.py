@@ -10,8 +10,11 @@ class CalcUtil:
         return {k: dict1.get(k, 0) + dict2.get(k, 0) for k in set(dict1) | set(dict2)}
 
     @staticmethod
-    def dict_diff(dict1, dict2):
-        return {k: dict1.get(k, 0) - dict2.get(k, 0) for k in set(dict1) | set(dict2)}
+    def dict_diff(dict1, dict2, normalize_to_zero=False):
+        if normalize_to_zero:
+            return {k: max(dict1.get(k, 0) - dict2.get(k, 0), 0) for k in set(dict1) | set(dict2)}
+        else:
+            return {k: dict1.get(k, 0) - dict2.get(k, 0) for k in set(dict1) | set(dict2)}
 
     @staticmethod
     def dict_max_diff(finished_product_dict, ingredient_dict):

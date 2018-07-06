@@ -5,3 +5,11 @@
 [submodule "third-party/graphhopper"]
 	path = third-party/graphhopper
 	url = https://github.com/graphhopper/graphhopper.git
+[submodule "src/so_data"]
+	path = src/so_data
+	url = https://gitlab.tubit.tu-berlin.de/tanja.kaiser/so_data.git
+	branch = master
+[submodule "src/rhbp_selforga"]
+	path = src/rhbp_selforga
+	url = https://gitlab.tubit.tu-berlin.de/tanja.kaiser/rhbp_selforga.git
+	branch = master

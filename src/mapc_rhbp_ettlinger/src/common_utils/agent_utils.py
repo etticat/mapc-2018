@@ -23,7 +23,12 @@ class AgentUtils:
         :param agent_name: current agents name
         :return: prefix just before the topic name of the bridge
         """
-        return AgentUtils.get_bridge_topic_prefix(agent_name) + 'agent'
+        return AgentUtils.get_bridge_topic(agent_name, "agent")
+
+    @classmethod
+    def get_bridge_topic(cls, agent_name, postfix):
+        return AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + postfix
+
 
     @staticmethod
     def calculate_distance(pos1, pos2):

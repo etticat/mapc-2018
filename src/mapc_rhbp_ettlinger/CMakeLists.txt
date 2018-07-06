@@ -7,9 +7,11 @@ project(mapc_rhbp_ettlinger)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
+  geometry_msgs
   std_msgs
   diagnostic_msgs
   mac_ros_bridge
+  so_data
 )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -53,8 +55,8 @@ add_message_files(
   TaskAcknowledgement.msg
   TaskProgress.msg
   TaskStop.msg
+  TaskCoordinationMessage.msg
   StockItem.msg
-  StockItemMsg.msg
   Task.msg
 )
 ## Generate services in the 'srv' folder
@@ -73,9 +75,11 @@ add_service_files(
 #Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  geometry_msgs
   std_msgs
   diagnostic_msgs
   mac_ros_bridge
+  so_data
 )
 
 ###################################
