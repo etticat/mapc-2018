@@ -164,7 +164,9 @@ class PickClosestDestinationWithLowestValue(MapDecision):
 
         res = tuple([i * self.granulariy for i in res])
 
-        return [res, self.state]
+        destination = self.distance_provider.position_from_xy(res[0], res[1])
+
+        return [destination, self.state]
 
 
 class ExplorationDecision(PickClosestDestinationWithLowestValue):

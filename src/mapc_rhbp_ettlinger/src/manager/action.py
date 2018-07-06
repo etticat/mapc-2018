@@ -51,7 +51,7 @@ class ActionManager(Manager):
             )
         )
 
-        self.exploration_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
+        self.exploration_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
 
         self.exploration_network.add_effect(
             Effect(
@@ -81,7 +81,7 @@ class ActionManager(Manager):
         # Gather only when next item fits in storage
         self._gathering_network.add_precondition(self.sensor_map.can_fit_more_ingredients_cond)
 
-        self._gathering_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
+        self._gathering_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
 
         self._gathering_network.add_effect(
             Effect(
@@ -104,7 +104,7 @@ class ActionManager(Manager):
 
         self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_cond)
 
-        self._hoarding_network.add_precondition(self.sensor_map.has_no_priority_task_assigned_cond)
+        self._hoarding_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
 
 
         self._hoarding_network.add_effect(
@@ -129,7 +129,7 @@ class ActionManager(Manager):
 
         self._assembly_network.add_effect(
             Effect(
-                sensor_name=self.sensor_map.has_task_sensor.name,
+                sensor_name=self.sensor_map.has_assemble_task_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
             )
@@ -149,7 +149,7 @@ class ActionManager(Manager):
 
         self._job_execution_network.add_effect(
             Effect(
-                sensor_name=self.sensor_map.has_task_sensor.name,
+                sensor_name=self.sensor_map.has_deliver_task_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
             )
@@ -170,7 +170,7 @@ class ActionManager(Manager):
 
         self.build_well_network.add_effect(
             Effect(
-                sensor_name=self.sensor_map.has_task_sensor.name,
+                sensor_name=self.sensor_map.has_well_task_sensor.name,
                 indicator=-1.0,
                 sensor_type=bool
             )

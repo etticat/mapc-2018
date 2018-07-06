@@ -15,7 +15,7 @@ class FinishedProductLoadSensor(RawTopicSensor):
         self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._agent_name = agent_name
         agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
-        super(FinishedProductLoadSensor, self).__init__(name, topic=agent_topic)
+        super(FinishedProductLoadSensor, self).__init__(name, topic=agent_topic, initial_value=0)
         self._product_provider = ProductProvider(agent_name=agent_name)
 
         self.choose_ingredient_to_gather= ChooseIngredientToGather(agent_name=agent_name)

@@ -1,19 +1,19 @@
-from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
-from agent_knowledge.task import TaskKnowledgeBase
+
 from behaviour_components.activators import ThresholdActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Conjunction
 from behaviour_components.goals import GoalBase
-from behaviours.gather import ChooseIngredientBehaviour
 from behaviours.generic_action import GenericActionBehaviour
-from behaviours.movement import GoToTaskDestinationBehaviour
+from behaviours.movement import GoToDestinationBehaviour
+from decisions.p_task_decision import CurrentTaskDecision
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from provider.action_provider import Action
 from provider.product_provider import ProductProvider
+from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.gather import NextIngredientVolumeSensor
+from sensor.gather import NextVolumeSensor
 from sensor.general import SubtractionSensor
-from sensor.movement import SelectedTargetPositionSensor, StepDistanceSensor
+from sensor.movement import StepDistanceSensor
 
 
 class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
@@ -25,13 +25,10 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self._product_provider = ProductProvider(
             agent_name=self._agent_name)
 
-        self._task_knowledge_base = TaskKnowledgeBase()
-
-        self._movement_knowledge = TaskKnowledgeBase()
         self._agent_name = self._agent_name
 
-        self.init_choose_ingredient_behaviour()
-        self.init_go_to_resource_behaviour()
+        self.init_sensors(sensor_map=sensor_map)
+        self.init_go_to_resource_behaviour(sensor_map)
         self.init_gather_behaviour()
 
         self.apply_charging_restrictions(self.go_to_resource_node_behaviour)
@@ -51,8 +48,6 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
-        self.gather_behviour.add_precondition(
-            precondition=self.can_fulfill_next_gathering_action)
         # Only gather if we are at the intended resource node
         self.gather_behviour.add_precondition(
             precondition=self.at_resource_node_condition)
@@ -68,31 +63,21 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
             )
         )
-        # Gathering will eventually lead to finishing the gathering task
-        self.gather_behviour.add_effect(
-            effect=Effect(
-                sensor_name=self.has_gathering_task_sensor.name,
-                indicator=-1.0,
-                sensor_type=bool
-            )
-        )
 
-    def init_go_to_resource_behaviour(self):
+    def init_go_to_resource_behaviour(self, sensor_map):
         ################ Going to resource #########################
-        self.go_to_resource_node_behaviour = GoToTaskDestinationBehaviour(
+        self.go_to_resource_node_behaviour = GoToDestinationBehaviour(
             agent_name=self._agent_name,
-            task_type=TaskKnowledgeBase.TYPE_GATHERING,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix(),
+            mechanism=sensor_map.choose_resource_mechanism
         )
 
-        self.gather_target_sensor = SelectedTargetPositionSensor(
-            type=TaskKnowledgeBase.TYPE_GATHERING,
+        self.gather_target_sensor = GradientSensor(
+            mechanism=self._sensor_map.choose_resource_mechanism,
             name="gather_target_sensor",
-            agent_name=self._agent_name
+            sensor_type=SENSOR.VALUE
         )
-        self.go_to_resource_node_behaviour.add_precondition(
-            precondition=self.can_fulfill_next_gathering_action)
         # Sensor to check distance to charging station
         self.target_step_sensor = StepDistanceSensor(
             name='gather_target_step_sensor',
@@ -120,23 +105,14 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             )
         )
 
-    def init_choose_ingredient_behaviour(self):
-        self.choose_ingredient_behaviour = ChooseIngredientBehaviour(
-            name="choose_ingredient_behaviour",
-            agent_name=self._agent_name,
-            plannerPrefix=self.get_manager_prefix()
-        )
-        self.has_gathering_task_sensor = LocalKnowledgeSensor(
-            name="has_gathering_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(
-                agent_name=self._agent_name,
-                type=TaskKnowledgeBase.TYPE_GATHERING
-            ),
-            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
-        )
 
-        self.next_ingredient_volume_sensor = NextIngredientVolumeSensor(
-            agent_name=self._agent_name,
+    def init_sensors(self, sensor_map):
+
+        self.next_ingredient_volume_sensor = GradientSensor(
+            mechanism=sensor_map.choose_resource_mechanism,
+            sensor_type=SENSOR.VALUE_ATTRIBUTE,
+            attr_name="item.volume",
+            initial_value=0,
             name="next_ingredient_volume_sensor"
         )
 
@@ -150,31 +126,8 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             activator=ThresholdActivator(thresholdValue=0, isMinimum=True)
         )
 
-        self.has_gathering_task_cond = Condition(
-            sensor=self.has_gathering_task_sensor,
-            activator=BooleanActivator(desiredValue=True)
-        )
-        self.can_fulfill_next_gathering_action = Conjunction(
-            self.has_gathering_task_cond,
-            self.next_item_fits_in_storage_cond
-        )
-
-        # only chose an item if we currently don't have a goal
-        self.choose_ingredient_behaviour.add_precondition(
-            precondition=Negation(self.can_fulfill_next_gathering_action)
-        )
-
-        # Chosing an ingredient has the effect, that we have more ingredients to gather
-        self.choose_ingredient_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self.has_gathering_task_sensor.name,
-                indicator=1.0,
-                sensor_type=bool
-            )
-        )
 
     def stop(self):
         super(GatheringNetworkBehaviour, self).stop()
         # Deleting task and cleaning up goal KB
-        self._task_knowledge_base.finish_task(type=TaskKnowledgeBase.TYPE_GATHERING, agent_name=self._agent_name)
         self._product_provider.stop_gathering()

@@ -1,14 +1,14 @@
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
-from agent_knowledge.task import TaskKnowledgeBase
 from contract_net.manager import ContractNetManager
+from decisions.p_task_decision import CurrentTaskDecision
 from decisions.well_chooser import ChooseWellToBuild
 
 
 class BuildWellManager(ContractNetManager):
 
     def __init__(self):
-        super(BuildWellManager, self).__init__(task_type=TaskKnowledgeBase.TYPE_BUILD_WELL)
+        super(BuildWellManager, self).__init__(task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
 
         self._well_chooser = ChooseWellToBuild()
 

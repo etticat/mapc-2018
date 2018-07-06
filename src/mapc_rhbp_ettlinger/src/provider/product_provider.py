@@ -236,3 +236,6 @@ class ProductProvider(object):
                 product_name=item, amount=count, consider_intermediate_ingredients=consider_intermediate_ingredients))
 
         return base_ingredients
+
+    def fits_in_store(self, name):
+        return self.products[name].volume <= self.load_free

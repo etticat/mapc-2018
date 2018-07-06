@@ -1,16 +1,18 @@
 import rospy
 from mac_ros_bridge.msg import Agent
 
-from agent_knowledge.local_knowledge_sensors import LocalKnowledgeSensor
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Disjunction
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
+from decisions.battery import ClosestChargingStationDecision
+from decisions.choose_stroage_for_hoarding import ChooseStorageMechanism
+from decisions.gather import ChooseResourceMechanism
+from decisions.p_task_decision import CurrentTaskDecision
+from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import FinishedProductLoadSensor
-from sensor.battery import ClosestChargingStationSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor
 from sensor.gather import SmallestGatherableItemSensor
 from sensor.general import FactorSensor, SubtractionSensor
@@ -122,10 +124,12 @@ class SensorAndConditionMap(object):
     def init_battery_sensors(self):
         agent_topic = AgentUtils.get_bridge_topic_agent(self.agent_name)
 
-        self.closest_charging_station_sensor = ClosestChargingStationSensor(
+        self.closest_charging_station_decision = ClosestChargingStationDecision(agent_name=self.agent_name)
+
+        self.closest_charging_station_sensor = GradientSensor(
             name="closest_charging_station_sensor",
-            agent_name=self.agent_name
-        )
+            mechanism=self.closest_charging_station_decision,
+            sensor_type=SENSOR.VALUE)
 
         # Sensor to check distance to charging station
         self.charging_station_step_sensor = StepDistanceSensor(
@@ -206,60 +210,73 @@ class SensorAndConditionMap(object):
                 isMinimum=True))
 
     def init_task_sensor(self, agent_name):
-        self.assemble_task_sensor = LocalKnowledgeSensor(
+
+        self.assemble_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
+        self.deliver_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER)
+        self.well_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
+        # TODO: GATHER
+        self.choose_resource_mechanism = ChooseResourceMechanism(agent_name=agent_name)
+        self.choose_hoarding_mechanism = ChooseStorageMechanism(agent_name=agent_name)
+
+        self.assemble_task_sensor = GradientSensor(
             name="assemble_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE),
-            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
+            sensor_type=SENSOR.VALUE,
+            mechanism=self.assemble_task_mechanism
+        )
+
+        self.has_assemble_task_sensor = GradientSensor(
+            name="assemble_task_sensor",
+            sensor_type=SENSOR.VALUE_EXISTS,
+            mechanism=self.assemble_task_mechanism
         )
 
         self.has_assemble_task_assigned_cond = Condition(
             name="has_assemble_task_assigned_cond",
-            sensor=self.assemble_task_sensor,
+            sensor=self.has_assemble_task_sensor,
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.well_task_sensor = LocalKnowledgeSensor(
+        self.well_task_sensor = GradientSensor(
             name="well_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
-            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
+            sensor_type=SENSOR.VALUE,
+            mechanism=self.well_task_mechanism
         )
+
+        self.has_well_task_sensor = GradientSensor(
+            name="well_task_sensor",
+            sensor_type=SENSOR.VALUE_EXISTS,
+            mechanism=self.well_task_mechanism
+        )
+
         self.has_build_well_task_assigned_cond = Condition(
             name="has_build_well_task_assigned_cond",
-            sensor=self.well_task_sensor,
+            sensor=self.has_well_task_sensor,
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.deliver_task_sensor = LocalKnowledgeSensor(
+        self.deliver_task_sensor = GradientSensor(
             name="deliver_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_DELIVER),
-            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
+            sensor_type=SENSOR.VALUE,
+            mechanism=self.deliver_task_mechanism
+        )
+        self.has_deliver_task_sensor = GradientSensor(
+            name="deliver_task_sensor",
+            sensor_type=SENSOR.VALUE_EXISTS,
+            mechanism=self.deliver_task_mechanism
         )
         self.has_deliver_job_task_assigned_cond = Condition(
             name="has_deliver_job_task_assigned_cond",
-            sensor=self.deliver_task_sensor,
+            sensor=self.has_deliver_task_sensor,
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.has_task_sensor = LocalKnowledgeSensor(
-            name="has_task_sensor",
-            pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name),
-            knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
-        )
-
-        self.has_task_assigned_cond = Condition(
-            name="has_task_assigned_condition",
-            sensor=self.has_task_sensor,
-            activator=BooleanActivator(desiredValue=True))
-
-        self.has_no_task_assigned_cond = Negation(self.has_task_assigned_cond)
-
-        self.has_priority_task_assigned_cond = Disjunction(
+        self.has_task_assigned_cond = Disjunction(
             self.has_assemble_task_assigned_cond,
             self.has_deliver_job_task_assigned_cond,
             self.has_build_well_task_assigned_cond
         )
-        self.has_no_priority_task_assigned_cond = Negation(
-            self.has_priority_task_assigned_cond
+        self.has_no_task_assigned_cond = Negation(
+            self.has_task_assigned_cond
         )
 
     def callback_agent(self, msg):

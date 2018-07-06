@@ -1,7 +1,6 @@
 from diagnostic_msgs.msg import KeyValue
 from mapc_rhbp_ettlinger.msg import Task
 
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour
 from common_utils import etti_logging
@@ -13,30 +12,6 @@ from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.hoarding')
-
-
-class ChooseStorageBehaviour(BehaviourBase):
-
-    def __init__(self, agent_name, **kwargs):
-        self.agent_name = agent_name
-        super(ChooseStorageBehaviour, self).__init__(**kwargs)
-        self._task_knowledge_base = TaskKnowledgeBase()
-        self._facility_provider = FacilityProvider()
-        self._distance_provider = DistanceProvider()
-
-    def do_step(self):
-        storages = self._facility_provider.get_storages().values()
-        # TODO: Look at where is a good place to store
-        facility = self._distance_provider.get_closest_facility(storages)
-
-        # self._product_provider.start_gathering(resource.item.name)
-        self._task_knowledge_base.create_task(Task(
-            type=TaskKnowledgeBase.TYPE_HOARDING,
-            agent_name=self.agent_name,
-            pos=facility.pos
-        ))
-        ettilog.loginfo("ChooseStorageBehaviour:: Choosing storage %s", facility.name)
-
 
 class StoreBehaviour(GenericActionBehaviour):
     """

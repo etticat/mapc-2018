@@ -1,4 +1,3 @@
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
 
 

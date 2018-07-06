@@ -24,7 +24,7 @@ class FacilityProvider(object):
         rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
         rospy.Subscriber("/workshop", WorkshopMsg, self.workshop_callback)
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
-        rospy.Subscriber("/resources", ResourceMsg, self.resources_callback)
+        rospy.Subscriber("/resource", ResourceMsg, self.resources_callback)
 
     def storage_callback(self, storageMsg):
         """

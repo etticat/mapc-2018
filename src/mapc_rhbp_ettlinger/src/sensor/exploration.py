@@ -1,4 +1,3 @@
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
 from provider.facility_provider import FacilityProvider
@@ -44,8 +43,6 @@ class DiscoveryProgressSensor(GradientSensor):
 
     def __init__(self, agent_name, name, thread=False, time=5, initial_value=None, sensor_type=SENSOR.VALUE):
 
-        self._task_knowledge_base  = TaskKnowledgeBase()
-
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
         self.discovery_progress_decision = DiscoverProgressDecision(self.self_organisation_provider.buffer)
@@ -55,8 +52,6 @@ class DiscoveryProgressSensor(GradientSensor):
 class OldestCellLastSeenSensor(GradientSensor):
 
     def __init__(self, agent_name, name, initial_value, thread=False, time=5, sensor_type=SENSOR.VALUE):
-
-        self._task_knowledge_base  = TaskKnowledgeBase()
 
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 

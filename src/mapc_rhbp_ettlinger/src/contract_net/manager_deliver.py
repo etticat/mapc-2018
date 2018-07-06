@@ -1,6 +1,5 @@
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
-from agent_knowledge.task import TaskKnowledgeBase
 from common_utils.calc import CalcUtil
 from contract_net.manager import ContractNetManager
 from decisions.job_combination import ChooseBestJobCombination
@@ -9,7 +8,7 @@ from decisions.job_combination import ChooseBestJobCombination
 class DeliverManager(ContractNetManager):
 
     def __init__(self):
-        super(DeliverManager, self).__init__(task_type=TaskKnowledgeBase.TYPE_DELIVER)
+        super(DeliverManager, self).__init__(task_type=CurrentTaskDecision.TYPE_DELIVER)
 
         self._job_combination = ChooseBestJobCombination()
         self._job = None

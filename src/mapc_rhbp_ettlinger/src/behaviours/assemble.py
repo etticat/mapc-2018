@@ -3,25 +3,26 @@ from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent
 from mapc_rhbp_ettlinger.msg import TaskProgress, TaskStop
 
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
+from decisions.p_task_decision import CurrentTaskDecision
 from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.action_provider import ActionProvider
+from rhbp_selforga.behaviours import DecisionBehaviour
 from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 
 
-class AssembleProductBehaviour(BehaviourBase):
+class AssembleProductBehaviour(DecisionBehaviour):
     """
     Behaviour for the assembly of a product
     """
 
-    def __init__(self, agent_name, **kwargs):
+    def __init__(self, mechanism, name, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \
-            .__init__(
+            .__init__(mechanism=mechanism, name=name,
             requires_execution_steps=True,
             **kwargs)
         self._task = None
@@ -29,16 +30,15 @@ class AssembleProductBehaviour(BehaviourBase):
         self._last_task = None
         self._last_goal = None
         self.action_provider = ActionProvider(agent_name=agent_name)
-        self._task_knowledge_base = TaskKnowledgeBase()
 
         self._task_progress_dict = {}
 
         topic = AgentUtils.get_coordination_topic()
-        self._pub_assemble_progress = MyPublisher(topic, message_type="progress", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, queue_size=10)
+        self._pub_assemble_progress = MyPublisher(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
 
-        MySubscriber(topic, message_type="progress", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, callback=self._callback_task_progress)
+        MySubscriber(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, callback=self._callback_task_progress)
 
-        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, queue_size=10)
+        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
@@ -50,7 +50,7 @@ class AssembleProductBehaviour(BehaviourBase):
         :type task_progress: TaskProgress
         :return:
         """
-        if task_progress.type == TaskKnowledgeBase.TYPE_ASSEMBLE:
+        if task_progress.type == CurrentTaskDecision.TYPE_ASSEMBLE:
             self._task_progress_dict[task_progress.id] = task_progress.step
 
     def _action_request_agent(self, agent):
@@ -74,7 +74,7 @@ class AssembleProductBehaviour(BehaviourBase):
                     assemble_task_coordination = TaskProgress(
                         id=self._task.id,
                         step=self._get_assemble_step(),
-                        type=TaskKnowledgeBase.TYPE_ASSEMBLE
+                        type=CurrentTaskDecision.TYPE_ASSEMBLE
                     )
                     self._pub_assemble_progress.publish(assemble_task_coordination)
                 else:
@@ -110,14 +110,8 @@ class AssembleProductBehaviour(BehaviourBase):
 
         self.action_provider.send_action(action)
 
-    def start(self):
-
-        self._task = self._task_knowledge_base.get_task(agent_name=self._agent_name,
-                                                        type=TaskKnowledgeBase.TYPE_ASSEMBLE)
-
-        super(AssembleProductBehaviour, self).start()
-
     def do_step(self):
+        self._task = super(AssembleProductBehaviour, self).do_step()
         assert self._task != None
         products = self._task.task.split(",")
         if len(products) > 0 and self._get_assemble_step() < len(products):

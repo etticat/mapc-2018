@@ -38,11 +38,11 @@ class CoordinationManager(Manager):
             role=role
         )
         assemble_contractor_behaviour.add_precondition(
-            precondition=self.sensor_map.has_no_priority_task_assigned_cond
+            precondition=self.sensor_map.has_no_task_assigned_cond
         )
         assemble_contractor_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.sensor_map.assemble_task_sensor.name,
+                sensor_name=self.sensor_map.has_assemble_task_sensor.name,
                 sensor_type=bool,
                 indicator=1.0
             )
@@ -60,11 +60,11 @@ class CoordinationManager(Manager):
             plannerPrefix=self.planner_prefix
         )
         deliver_contractor_behaviour.add_precondition(
-            precondition=self.sensor_map.has_no_priority_task_assigned_cond
+            precondition=self.sensor_map.has_no_task_assigned_cond
         )
         deliver_contractor_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.sensor_map.deliver_task_sensor.name,
+                sensor_name=self.sensor_map.has_deliver_task_sensor.name,
                 sensor_type=bool,
                 indicator=1.0
             )
@@ -82,11 +82,11 @@ class CoordinationManager(Manager):
             plannerPrefix=self.planner_prefix
         )
         build_well_contractor_behaviour.add_precondition(
-            precondition=self.sensor_map.has_no_priority_task_assigned_cond
+            precondition=self.sensor_map.has_no_task_assigned_cond
         )
         build_well_contractor_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self.sensor_map.well_task_sensor.name,
+                sensor_name=self.sensor_map.has_well_task_sensor.name,
                 sensor_type=bool,
                 indicator=1.0
             )

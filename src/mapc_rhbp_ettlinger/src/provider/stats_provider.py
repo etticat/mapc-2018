@@ -3,7 +3,6 @@
 import rospy
 from mac_ros_bridge.msg import Team, RequestAction
 
-from agent_knowledge.task import TaskKnowledgeBase
 from common_utils import etti_logging
 from common_utils.singleton import Singleton
 from provider.well_provider import WellProvider
@@ -17,7 +16,6 @@ class StatsProvider(object):
     STATS_TOPIC = "/team"
 
     def __init__(self):
-        self._task_knowledgebase = TaskKnowledgeBase()
         self.well_provider = WellProvider()
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
@@ -47,12 +45,5 @@ class StatsProvider(object):
         self.score = team.score
 
     def get_goal_massium(self):
-        delayed_cost = 0
-        for well in self._task_knowledgebase.get_tasks(
-                type=TaskKnowledgeBase.TYPE_BUILD_WELL,
-                task="build_up"):
-            delayed_cost += self.well_provider.get_well(well.well_type).cost
-
-        future_massimum = self.massium - delayed_cost
-
-        return future_massimum
+        # TODO: Subtract all already promised massium
+        return self.massium

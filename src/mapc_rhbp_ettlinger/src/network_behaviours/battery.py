@@ -1,10 +1,10 @@
-from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.battery import ChargeBehaviour, RechargeBehaviour
-from behaviours.movement import GoToTaskDestinationBehaviour
+from behaviours.movement import GoToDestinationBehaviour
+from decisions.battery import ClosestChargingStationDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from sensor.sensor_map import SensorAndConditionMap
@@ -22,17 +22,16 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         """
         super(BatteryChargingNetworkBehaviour, self).__init__(name=name, **kwargs)
         self._agent_name = agent_name
-        self._movement_knowledge = TaskKnowledgeBase()
         self._facility_provider = FacilityProvider()
         self._distance_provider = DistanceProvider()
         self._agent_name = self._agent_name
         self._sensor_map = sensor_map
 
         # Behaviour to go to the closest Charging station
-        go_to_charging_station_behaviour = GoToTaskDestinationBehaviour(
+        go_to_charging_station_behaviour = GoToDestinationBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + "/go_to_charging_station_behaviour",
-            task_type=TaskKnowledgeBase.TYPE_CHARGING_STATION,
+            mechanism=self._sensor_map.closest_charging_station_decision,
             agent_name=self._agent_name)
         go_to_charging_station_behaviour.add_effect(
             effect=self._sensor_map.go_to_charging_station_effect

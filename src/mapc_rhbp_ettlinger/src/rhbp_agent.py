@@ -90,6 +90,7 @@ class RhbpAgent:
                 #                                                  sensor_map=self.sensor_map, role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
                 DebugUtils.start_thread_counter()
+                DebugUtils.instant_find_resources()
 
                 self.self_organisation_provider.init_entity_listener()
             self._initialized = True

@@ -12,7 +12,11 @@ class SubtractionSensor(AggregationSensor):
                                                 initial_value=initial_value)
 
     def _aggregate(self, sensor_values):
-        return float(sensor_values[0]) - sensor_values[1]
+        v1 = sensor_values[0]
+        v2 = sensor_values[1]
+        if v1 is None or v2 is None or isinstance(v1, str) or isinstance(v2, str):
+            ettilog.logerr("SubtractionSensor(%s):: Errror processing values: %s, %s", self.name, str(v1), str(v2))
+        return float(v1) - v2
 
 
 class FactorSensor(AggregationSensor):

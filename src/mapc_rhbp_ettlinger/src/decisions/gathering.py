@@ -27,11 +27,7 @@ class ChooseIngredientToGather(object):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
-        self.load_free = 0
         self.choose_best_assembly_combination = ChooseBestAssemblyCombination()
-
-    def update(self, msg):
-        self.load_free = msg.load_max - msg.load
 
     def choose_resource(self):
         choosen_resource = None
@@ -58,7 +54,7 @@ class ChooseIngredientToGather(object):
 
     def load_after_gathering(self, item):
         product = self._product_provider.get_product_by_name(item)
-        load_after_gathering = self.load_free - product.volume
+        load_after_gathering = self._product_provider.load_free - product.volume
         return load_after_gathering
 
     def ingredient_priority(self):

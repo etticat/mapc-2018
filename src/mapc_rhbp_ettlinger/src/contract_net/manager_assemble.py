@@ -2,9 +2,9 @@ import random
 
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
-from agent_knowledge.task import TaskKnowledgeBase
 from contract_net.manager import ContractNetManager
 from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.p_task_decision import CurrentTaskDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
@@ -12,7 +12,7 @@ from provider.product_provider import ProductProvider
 class AssembleManager(ContractNetManager):
 
     def __init__(self, agent_name):
-        super(AssembleManager, self).__init__(task_type=TaskKnowledgeBase.TYPE_ASSEMBLE)
+        super(AssembleManager, self).__init__(task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
 
         self._facility_provider = FacilityProvider()
         self._assembly_combination = ChooseBestAssemblyCombination()

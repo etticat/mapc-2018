@@ -1,14 +1,18 @@
 import random
 
 from provider.facility_provider import FacilityProvider
+from so_data.patterns import DecisionPattern
 
 
-class ChooseStorageForHoarding(object):
+class ChooseStorageMechanism(DecisionPattern):
 
-    def __init__(self):
+    def __init__(self, agent_name):
+
         self.facility_provider = FacilityProvider()
 
-    def choose(self):
-        # TODO: Look which storage has fewest of the ones we can offer
-        # TODO: Take distance into account
-        return random.choice(self.facility_provider.get_storages().values())
+        super(ChooseStorageMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
+
+    def calc_value(self):
+        if self.value is None:
+            return random.choice(self.facility_provider.get_storages().values())
+        return [self.value, self.state]

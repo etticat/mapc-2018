@@ -77,3 +77,9 @@ class ActionProvider(object):
             KeyValue("latitude", str(pos.lat)),
             KeyValue("longitude", str(pos.long))
         ])
+
+    def action_go_to_destination(self, destination):
+        if isinstance(destination, Position):
+            self.action_go_to_location(lat=destination.lat, lon=destination.long)
+        else:
+            self.action_go_to_location(lat=destination.pos.lat, lon=destination.pos.long)
