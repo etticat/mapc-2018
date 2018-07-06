@@ -30,7 +30,7 @@ class SmallestGatherableItemSensor(Sensor):
         return smallest_item
 
 
-class NextIngredientVolumeSensor(KnowledgeFirstFactSensor):
+class NextIngredientVolumeSensor(LocalKnowledgeFirstFactSensor):
 
     def __init__(self, name, agent_name):
         self._agent_name = agent_name

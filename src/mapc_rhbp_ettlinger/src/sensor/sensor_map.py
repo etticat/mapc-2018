@@ -195,7 +195,7 @@ class SensorAndConditionMap(object):
                 isMinimum=True))
 
     def init_task_sensor(self, agent_name):
-        self.assemble_task_sensor = KnowledgeSensor(
+        self.assemble_task_sensor = LocalKnowledgeSensor(
             name="assemble_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE),
             knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
@@ -207,7 +207,7 @@ class SensorAndConditionMap(object):
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.well_task_sensor = KnowledgeSensor(
+        self.well_task_sensor = LocalKnowledgeSensor(
             name="well_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_BUILD_WELL),
             knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
@@ -218,7 +218,7 @@ class SensorAndConditionMap(object):
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.deliver_task_sensor = KnowledgeSensor(
+        self.deliver_task_sensor = LocalKnowledgeSensor(
             name="deliver_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name, type=TaskKnowledgeBase.TYPE_DELIVER),
             knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
@@ -229,7 +229,7 @@ class SensorAndConditionMap(object):
             activator=BooleanActivator(desiredValue=True)
         )
 
-        self.has_task_sensor = KnowledgeSensor(
+        self.has_task_sensor = LocalKnowledgeSensor(
             name="has_task_sensor",
             pattern=TaskKnowledgeBase.generate_tuple(agent_name=agent_name),
             knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME

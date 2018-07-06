@@ -15,7 +15,7 @@ from rhbp_utils.knowledge_sensors import KnowledgeFactSensor
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.movement')
 
 
-class SelectedTargetPositionSensor(KnowledgeFactSensor):
+class SelectedTargetPositionSensor(LocalKnowledgeFactSensor):
 
     def __init__(self, type, agent_name, name=None):
         super(SelectedTargetPositionSensor, self).__init__(
@@ -25,7 +25,7 @@ class SelectedTargetPositionSensor(KnowledgeFactSensor):
             knowledge_base_name=TaskKnowledgeBase.KNOWLEDGE_BASE_NAME
         )
 
-    def update(self, new_value):
+    def _reduce_facts(self, new_value):
         if len(new_value) > 0:
             movement = TaskKnowledgeBase.generate_task_from_fact(new_value.pop())  # only getting the first fact
 
@@ -34,9 +34,9 @@ class SelectedTargetPositionSensor(KnowledgeFactSensor):
             else:
                 destination = None
 
-            super(SelectedTargetPositionSensor, self).update(destination)
+            return destination
         else:
-            super(SelectedTargetPositionSensor, self).update(None)
+            return None
 
 
 class StepDistanceSensor(AggregationSensor):
