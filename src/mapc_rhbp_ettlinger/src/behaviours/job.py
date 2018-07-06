@@ -4,9 +4,10 @@ from mac_ros_bridge.msg import GenericAction, Agent
 
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import Action
+from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.action_provider import ActionProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 
@@ -18,13 +19,10 @@ class DeliverJobBehaviour(BehaviourBase):
             .__init__(
             requires_execution_steps=True,
             **kwargs)
+        self.action_provider = ActionProvider(agent_name=agent_name)
         self.current_task = None
         self._agent_name = agent_name
         self._task_knowledge_base = TaskKnowledgeBase()
-        self._pub_generic_action = rospy.Publisher(
-            name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
-            data_class=GenericAction,
-            queue_size=10)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
 
@@ -34,7 +32,7 @@ class DeliverJobBehaviour(BehaviourBase):
         action.params = [
             KeyValue("Job", str(job))]
 
-        self._pub_generic_action.publish(action)
+        self.action_provider.send_action(action)
 
     def _action_request_agent(self, agent):
         """

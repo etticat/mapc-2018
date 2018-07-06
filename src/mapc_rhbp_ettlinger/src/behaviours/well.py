@@ -1,15 +1,23 @@
+import copy
+import traceback
+
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent, WellMsg
 
+from agent_knowledge.local_knowledge_sensors import LocalKnowledgeFirstFactSensor
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import Action
+from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.action_provider import ActionProvider
 from provider.distance_provider import DistanceProvider
+from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.well_provider import WellProvider
+from rhbp_selforga.behaviours import DecisionBehaviour
 from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
+from self_organisation.decisions import WellPositionDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.well')
 
@@ -24,10 +32,7 @@ class BuildWellBehaviour(BehaviourBase):
         self._current_task = None
         self._agent_name = agent_name
         self._task_knowledge_base = TaskKnowledgeBase()
-        self._pub_generic_action = rospy.Publisher(
-            name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
-            data_class=GenericAction,
-            queue_size=10)
+        self._action_provider = ActionProvider(agent_name=agent_name)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
 
@@ -37,7 +42,7 @@ class BuildWellBehaviour(BehaviourBase):
         action.params = [
             KeyValue("WellType", str(type))]
 
-        self._pub_generic_action.publish(action)
+        self._action_provider.send_action(action)
 
     def _action_request_agent(self, agent):
         """

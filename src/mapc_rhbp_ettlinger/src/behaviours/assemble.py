@@ -5,9 +5,11 @@ from mapc_rhbp_ettlinger.msg import TaskProgress, TaskStop
 
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import Action
+from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.action_provider import ActionProvider
+from temp.MyPublisher import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 
@@ -26,25 +28,20 @@ class AssembleProductBehaviour(BehaviourBase):
         self._agent_name = agent_name
         self._last_task = None
         self._last_goal = None
+        self.action_provider = ActionProvider(agent_name=agent_name)
         self._task_knowledge_base = TaskKnowledgeBase()
-        self._pub_generic_action = rospy.Publisher(
-            name=AgentUtils.get_bridge_topic_prefix(agent_name) + 'generic_action',
-            data_class=GenericAction,
-            queue_size=10)
 
         self._task_progress_dict = {}
 
-        progress_topic = AgentUtils.get_coordination_prefix(TaskKnowledgeBase.TYPE_ASSEMBLE) + "progress"
-        self._pub_assemble_progress = rospy.Publisher(progress_topic, TaskProgress, queue_size=10)
+        topic = AgentUtils.get_coordination_topic()
+        self._pub_assemble_progress = MyPublisher(topic, message_type="progress", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, queue_size=10)
 
-        rospy.Subscriber(progress_topic, TaskProgress,
-                         self._callback_task_progress)
+        MySubscriber(topic, message_type="progress", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, callback=self._callback_task_progress)
+
+        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, queue_size=10)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
-
-        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_coordination_prefix(TaskKnowledgeBase.TYPE_ASSEMBLE) + "stop",
-                                                  TaskStop, queue_size=10)
 
     def _callback_task_progress(self, task_progress):
         """
@@ -98,7 +95,7 @@ class AssembleProductBehaviour(BehaviourBase):
         action.params = [
             KeyValue("item", str(item))]
 
-        self._pub_generic_action.publish(action)
+        self.action_provider.send_action(action)
 
     def action_assist_assemble(self, agent):
         """
@@ -111,7 +108,7 @@ class AssembleProductBehaviour(BehaviourBase):
         action.params = [
             KeyValue("Agent", str(agent))]
 
-        self._pub_generic_action.publish(action)
+        self.action_provider.send_action(action)
 
     def start(self):
 

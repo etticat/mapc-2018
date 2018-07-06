@@ -1,5 +1,6 @@
-from behaviours.generic_action import GenericActionBehaviour, Action
+from behaviours.generic_action import GenericActionBehaviour
 from common_utils import etti_logging
+from provider.action_provider import Action
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.battery')
 

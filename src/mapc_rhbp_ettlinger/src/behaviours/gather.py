@@ -7,6 +7,7 @@ from behaviour_components.behaviours import BehaviourBase
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from decisions.gathering import ChooseIngredientToGather
+from provider.action_provider import ActionProvider
 from provider.product_provider import ProductProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.gather')
@@ -15,6 +16,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class ChooseIngredientBehaviour(BehaviourBase):
 
     def __init__(self, agent_name, **kwargs):
+        self.action_provider = ActionProvider(agent_name=agent_name)
         self.agent_name = agent_name
         super(ChooseIngredientBehaviour, self).__init__(requires_execution_steps=True, **kwargs)
         self._task_knowledge_base = TaskKnowledgeBase()
@@ -45,6 +47,7 @@ class ChooseIngredientBehaviour(BehaviourBase):
                     pos=resource.pos,
                     task=resource.item.name
                 ))
+                self.action_provider.action_go_to_location(resource.pos)
                 ettilog.logerr("ChooseIngredientBehaviour(%s):: Choosing item %s", self.agent_name, resource.item)
             else:
                 ettilog.logerr("ChooseIngredientBehaviour(%s):: Trying to choose item, but none fit in stock", self.agent_name)

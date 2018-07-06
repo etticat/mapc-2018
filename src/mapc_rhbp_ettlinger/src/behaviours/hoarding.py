@@ -3,10 +3,11 @@ from mapc_rhbp_ettlinger.msg import Task
 
 from agent_knowledge.task import TaskKnowledgeBase
 from behaviour_components.behaviours import BehaviourBase
-from behaviours.generic_action import GenericActionBehaviour, Action
+from behaviours.generic_action import GenericActionBehaviour
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from decisions.gathering import ChooseIngredientToGather
+from provider.action_provider import Action
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider

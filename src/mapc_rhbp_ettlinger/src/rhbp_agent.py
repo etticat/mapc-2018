@@ -2,14 +2,12 @@
 import time
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
-
-from behaviours.generic_action import GenericActionBehaviour, Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from manager.action import ActionManager
 from manager.coordination import CoordinationManager
 from planner import Planner
+from provider.action_provider import ActionProvider, Action
 from provider.provider_info_distributor import ProviderInfoDistributor
 from sensor.sensor_map import SensorAndConditionMap
 
@@ -40,6 +38,8 @@ class RhbpAgent:
 
         self.sensor_map = SensorAndConditionMap(agent_name=self._agent_name)
         self._action_manager = ActionManager(agent_name=self._agent_name, sensor_map=self.sensor_map)
+        self.action_provider = ActionProvider(agent_name=self._agent_name)
+        ettilog.logerr("RhbpAgent(%s):: Behaviours initialized", self._agent_name)
 
         self._provider_info_distributor = ProviderInfoDistributor()
 
@@ -56,10 +56,6 @@ class RhbpAgent:
         rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
 
         rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
-
-        rospy.Subscriber(self._agent_topic_prefix + "generic_action", GenericAction, self._callback_generic_action)
-
-        self._received_action_response = False
 
         ettilog.logerr("RhbpAgent(%s):: Constructor finished", self._agent_name)
 
@@ -124,7 +120,7 @@ class RhbpAgent:
 
         self.agent_info = request_action.agent
 
-        self._received_action_response = False
+        self.action_provider.current_action_sent = False
 
         # if hasattr(self, "_action_manager"):
         #     ettilog.logerr("1 %s:", self._action_manager._assembly_network.target_sensor.sync())
@@ -135,7 +131,7 @@ class RhbpAgent:
         start_time = rospy.get_rostime()
         steps = 0
         # wait for generic action response (send by any behaviour)
-        while not self._received_action_response:
+        while not self.action_provider.current_action_sent:
             if self._initialized:
                 steps += 1
                 self._action_manager.step()  # selected behaviours eventually trigger action
@@ -158,8 +154,7 @@ class RhbpAgent:
         pub_generic_action = rospy.Publisher(
             self._agent_topic_prefix + 'generic_action',
             GenericAction, queue_size=10)
-        GenericActionBehaviour.action_generic(publisher=pub_generic_action,
-                                              action_type=Action.RECHARGE)
+        self.action_provider.send_action(action_type=Action.RECHARGE)
 
 
 if __name__ == '__main__':
