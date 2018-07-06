@@ -7,12 +7,11 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
 
     def __init__(self, agent_name, name, sensor_map, **kwargs):
 
-        assemble_task_decision = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
         super(AssembleNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             sensor_map=sensor_map,
             name=name,
-            mechanism=assemble_task_decision,
+            mechanism=sensor_map.assemble_task_mechanism,
             **kwargs)
 
         assemble_behaviour = AssembleProductBehaviour(

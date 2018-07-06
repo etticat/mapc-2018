@@ -3,6 +3,7 @@ from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 from common_utils.calc import CalcUtil
 from contract_net.manager import ContractNetManager
 from decisions.job_combination import ChooseBestJobCombination
+from decisions.p_task_decision import CurrentTaskDecision
 
 
 class DeliverManager(ContractNetManager):

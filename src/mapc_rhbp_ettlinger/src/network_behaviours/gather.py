@@ -20,7 +20,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
     def __init__(self, agent_name, name, sensor_map, **kwargs):
         super(GatheringNetworkBehaviour, self).__init__(name=name, agent_name=agent_name, sensor_map=sensor_map,
-                                                        **kwargs)
+                                                         **kwargs)
 
         self._product_provider = ProductProvider(
             agent_name=self._agent_name)

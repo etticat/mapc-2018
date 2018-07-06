@@ -90,12 +90,9 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :param facility_name: name of the facility we want to go to
         :param publisher: publisher to use
         """
-        action = GenericAction()
-        action.action_type = Action.ASSEMBLE
-        action.params = [
-            KeyValue("item", str(item))]
+        self.action_provider.send_action(action_type = Action.ASSEMBLE, params=[
+            KeyValue("item", str(item))])
 
-        self.action_provider.send_action(action)
 
     def action_assist_assemble(self, agent):
         """
@@ -103,12 +100,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :param agent: str
         :return:
         """
-        action = GenericAction()
-        action.action_type = Action.ASSIST_ASSEMBLE
-        action.params = [
-            KeyValue("Agent", str(agent))]
-
-        self.action_provider.send_action(action)
+        self.action_provider.send_action(action_type = Action.ASSIST_ASSEMBLE, params=[
+            KeyValue("Agent", str(agent))])
 
     def do_step(self):
         self._task = super(AssembleProductBehaviour, self).do_step()

@@ -4,8 +4,6 @@ from abc import abstractmethod
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task
 
 import utils.rhbp_logging
-from agent_knowledge.task import TaskKnowledgeBase
-from behaviour_components.behaviours import BehaviourBase
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
 from rospy.my_publish_subscribe import MySubscriber, MyPublisher
@@ -13,15 +11,15 @@ from rospy.my_publish_subscribe import MySubscriber, MyPublisher
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.contractor')
 
 
-class ContractNetContractorBehaviour(BehaviourBase):
+class ContractNetContractorBehaviour(object):
 
-    def __init__(self, agent_name, name, task_type, **kwargs):
+    def __init__(self, agent_name, task_type, mechanism, ready_for_bid_condition):
 
-        super(ContractNetContractorBehaviour, self).__init__(name, **kwargs)
-        self._task_knowledge_base = TaskKnowledgeBase()
+        self.mechanism = mechanism
         self._agent_name = agent_name
         self._current_task = None
         self._task_type = task_type
+        self.ready_for_bid_condition = ready_for_bid_condition
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
@@ -29,8 +27,8 @@ class ContractNetContractorBehaviour(BehaviourBase):
 
         MySubscriber(prefix, message_type="request", task_type=self._task_type, callback=self._callback_request)
         self._pub_bid = MyPublisher(prefix, message_type="bid", task_type=self._task_type, queue_size=10)
-        MySubscriber(prefix, message_type="assign", task_type=self._task_type, callback=self._callback_assign)
-        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledge", task_type=self._task_type, queue_size=10)
+        MySubscriber(prefix, message_type="assignment", task_type=self._task_type, callback=self._callback_assign)
+        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledgement", task_type=self._task_type, queue_size=10)
         MySubscriber(prefix, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
     def _callback_request(self, request):
@@ -40,16 +38,16 @@ class ContractNetContractorBehaviour(BehaviourBase):
         :type request: TaskRequest
         :return:
         """
-        ettilog.loginfo("Contractor(%s-%s):: Got request: active:  %s", self._agent_name, self._task_type, str(self._active))
-        if self.computeSatisfaction() < 0.8: # TODO: #86 Workaround: I can't seem to get multiple behaviours running
-            return
 
         current_time = time.time()
         if request.deadline < current_time:
             ettilog.logerr("Contractor(%s-%s):: Deadline over %f - %f", self._agent_name, self._task_type, request.deadline, current_time)
             return
 
-        self.send_bid(request)
+        self.ready_for_bid_condition.sync()
+        self.ready_for_bid_condition.updateComputation()
+        if self.ready_for_bid_condition.satisfaction > 0.8:
+            self.send_bid(request)
 
     def send_bid(self, request):
 
@@ -78,20 +76,20 @@ class ContractNetContractorBehaviour(BehaviourBase):
 
         if is_still_possible:
 
-            accepted = self._task_knowledge_base.create_task(Task(
+            task = Task(
                 id=assignment.bid.id,
                 type=self._task_type,
                 agent_name=self._agent_name,
                 pos=assignment.bid.request.destination,
                 task=assignment.tasks
-            ))
-            if accepted:
-                self._on_assignment_confirmed(assignment)
-                acknowledgement = TaskAcknowledgement(
-                    id=assignment.id,
-                    assignment=assignment
-                )
-                self._pub_acknowledge.publish(acknowledgement)
+            )
+            self.mechanism.start_task(task)
+            self._on_assignment_confirmed(assignment)
+            acknowledgement = TaskAcknowledgement(
+                id=assignment.id,
+                assignment=assignment
+            )
+            self._pub_acknowledge.publish(acknowledgement)
 
     @abstractmethod
     def generate_bid(self, request):
@@ -107,9 +105,8 @@ class ContractNetContractorBehaviour(BehaviourBase):
     def _on_assignment_confirmed(self, assignment):
         pass
 
-    @abstractmethod
     def _on_task_finished(self, finish):
-        pass
+        self.mechanism.end_task()
 
     @abstractmethod
     def bid_possible(self, bid):

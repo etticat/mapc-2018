@@ -41,6 +41,9 @@ class ActionManager(Manager):
             sensor_map=self.sensor_map,
             max_parallel_behaviours=1)
 
+
+        self.exploration_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
+
         self.exploration_network.add_precondition(
             Disjunction(
                 Negation(self.sensor_map.resources_of_all_items_discovered_condition),
@@ -50,8 +53,6 @@ class ActionManager(Manager):
                 )
             )
         )
-
-        self.exploration_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
 
         self.exploration_network.add_effect(
             Effect(

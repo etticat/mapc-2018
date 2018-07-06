@@ -4,7 +4,6 @@
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 
     <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
-        <arg name="knowledge_base_name" value="knowledgeBaseNode" />
     </include>
 
 </launch>

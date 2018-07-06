@@ -58,7 +58,7 @@ class Planner(object):
 
         # self.coordinate_wells(request_action)
         # self.coordinate_jobs(request_action)
-        # self.coordinate_assembly(request_action)
+        self.coordinate_assembly(request_action)
 
 
         ettilog.loginfo("JobPlanner:: Jobs processed")

@@ -20,7 +20,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         :param sensor_map:
         :type sensor_map: SensorAndConditionMap
         """
-        super(BatteryChargingNetworkBehaviour, self).__init__(name=name, **kwargs)
+        super(BatteryChargingNetworkBehaviour, self).__init__(name=name, guarantee_decision=True, **kwargs)
         self._agent_name = agent_name
         self._facility_provider = FacilityProvider()
         self._distance_provider = DistanceProvider()

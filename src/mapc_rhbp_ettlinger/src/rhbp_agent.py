@@ -10,6 +10,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from manager.action import ActionManager
+from manager.coordination import CoordinationManager
 from planner import Planner
 from provider.action_provider import ActionProvider, Action
 from provider.provider_info_distributor import ProviderInfoDistributor
@@ -40,8 +41,8 @@ class RhbpAgent:
         ettilog.logerr("RhbpAgent(%s):: Starting", self._agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
-        self.pr = profile.Profile()
-        self.pr.disable()
+        # self.pr = profile.Profile()
+        # self.pr.disable()
 
         # ensure also max_parallel_behaviours during debugging
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback_before_sensors)
@@ -86,10 +87,10 @@ class RhbpAgent:
 
             # init only once, even when run restarts
             if not self._initialized:
-                # self._coordination_manager = CoordinationManager(agent_name=self._agent_name,
-                #                                                  sensor_map=self.sensor_map, role=sim_start.role.name)
+                self._coordination_manager = CoordinationManager(agent_name=self._agent_name,
+                                                                 sensor_map=self.sensor_map, role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
-                DebugUtils.start_thread_counter()
+                # DebugUtils.start_thread_counter()
                 DebugUtils.instant_find_resources()
 
                 self.self_organisation_provider.init_entity_listener()
@@ -121,7 +122,7 @@ class RhbpAgent:
         :return:
         """
         self.request_time = time.time()
-        self.pr.enable()
+        # self.pr.enable()
 
 
     def _action_request_callback_after_sensors(self, request_action):
@@ -132,6 +133,7 @@ class RhbpAgent:
         :return:
         """
         sensor_finished_time = time.time()
+        request_action.simulation_step
 
         self._provider_info_distributor.callback_request_action(request_action)
 
@@ -153,7 +155,7 @@ class RhbpAgent:
                 steps += 1
 
 
-                self._action_manager.step()  # selected behaviours eventually trigger action
+                self._action_manager.step(guarantee_decision=True)  # selected behaviours eventually trigger action
 
             else:
                 time.sleep(0.2)
@@ -165,8 +167,8 @@ class RhbpAgent:
                 self.fallback_recharge()
                 break
 
-        # if self._initialized:
-        #     self._coordination_manager.step()
+        if self._initialized:
+            self._coordination_manager.step()
         duration = rospy.get_rostime() - start_time
         ettilog.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
@@ -174,18 +176,18 @@ class RhbpAgent:
         manager_time = manager_finished_time - provider_info_distributor_finished_time
         sensor_time = sensor_finished_time - self.request_time
 
-        time_tuple = (sensor_time, manager_time, steps, manager_time /steps)
+        time_tuple = (manager_time, steps, manager_time /steps)
         self.time_storage.append(time_tuple)
-        rospy.logerr("--------------------------------------")
-        rospy.logerr("curr: sensor: %f, step: %f, steps:%f, duration/step: %f" , time_tuple[0], time_tuple[1], time_tuple[2], time_tuple[3])
-        a = np.mean(np.array(self.time_storage), axis=0)
-        rospy.logerr("mean: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
-        a = np.median(np.array(self.time_storage), axis=0)
-        rospy.logerr("medi: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
+        # rospy.logerr("--------------------------------------")
+        rospy.logerr("%d:::: curr: manager: %f, steps:%f, duration/step: %f" , request_action.simulation_step, time_tuple[0], time_tuple[1], time_tuple[2])
+        # a = np.mean(np.array(self.time_storage), axis=0)
+        # rospy.logerr("mean: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
+        # a = np.median(np.array(self.time_storage), axis=0)
+        # rospy.logerr("medi: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
+        #
 
-
-        self.pr.disable()
-        self.pr.dump_stats("stats" + str(request_action.simulation_step) + ".pstat")
+        # self.pr.disable()
+        # self.pr.dump_stats("stats" + str(request_action.simulation_step) + ".pstat")
 
     def fallback_recharge(self):
         pub_generic_action = rospy.Publisher(

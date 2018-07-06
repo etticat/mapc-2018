@@ -21,14 +21,6 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
             name=name, **kwargs)
         self.init_destination_step_sensor()
         self.init_go_behaviour()
-        self.init_task_goal()
-
-    def init_task_goal(self):
-        self.goal = GoalBase(
-            name='job_fulfillment_goal',
-            permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Negation(self._sensor_map.has_task_assigned_cond)])
 
     def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
         # Only perform behaviour when at target destination
@@ -75,7 +67,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
             name=self.get_manager_prefix() + "_target_step_sensor",
             position_sensor_1=self._sensor_map.agent_position_sensor,
             position_sensor_2=self.target_sensor,
-            initial_value=0
+            initial_value=10
         )
 
         self.at_destination_cond = Condition(

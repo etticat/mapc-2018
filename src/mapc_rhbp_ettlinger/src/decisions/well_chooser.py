@@ -11,6 +11,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class ChooseWellToBuild(object):
 
     def __init__(self):
+        self.task_prices = {}
         self.stats_provider = StatsProvider()
         self.well_provider = WellProvider()
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
@@ -21,8 +22,10 @@ class ChooseWellToBuild(object):
         res_type = None
         res_cost = 99999
         # TODO: Choose it more elegantly
+        massium = self.stats_provider.get_massium()
+        massium -= self.get_massium_for_current_well_tasks()
         for type, well in self.well_provider.get_wells_to_build().iteritems():
-            if well.cost < self.stats_provider.get_goal_massium() and well.cost < res_cost:
+            if well.cost < massium and well.cost < res_cost:
                 res_type = type
                 res_cost = well.cost
 
@@ -40,3 +43,12 @@ class ChooseWellToBuild(object):
         # TODO: Select it more elegantly
         # Could also be done by multiple (to build up faster)
         return [random.choice(bids)]
+
+    def get_massium_for_current_well_tasks(self):
+        return sum(self.task_prices.values())
+
+    def start_task(self, _id, well_type):
+        self.task_prices[id] = self.well_provider.get_well_price(well_type)
+
+    def end_task(self, well_task_id):
+        self.task_prices.pop(well_task_id, None)

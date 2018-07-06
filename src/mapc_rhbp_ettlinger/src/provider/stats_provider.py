@@ -44,6 +44,6 @@ class StatsProvider(object):
         self.massium = team.massium
         self.score = team.score
 
-    def get_goal_massium(self):
+    def get_massium(self):
         # TODO: Subtract all already promised massium
         return self.massium

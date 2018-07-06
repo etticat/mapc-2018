@@ -33,9 +33,10 @@ class ContractNetManager(object):
 
         self._pub_task_request = MyPublisher(topic, message_type="request", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="bid", task_type=self._task_type, callback=self._callback_bid)
-        self._pub_task_assignment = MyPublisher(topic, message_type="assign", task_type=self._task_type, queue_size=10)
-        MySubscriber(topic, message_type="acknowledge", task_type=self._task_type, callback=self._callback_acknowledgement)
+        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="acknowledgement", task_type=self._task_type, callback=self._callback_acknowledgement)
         self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
     def reset_manager(self):
         self._bids = []
@@ -112,6 +113,8 @@ class ContractNetManager(object):
         if len(self._acknowledgements) == len(self._assignments):
             ettilog.logerr("ContractNetManager(%s):: Task (%d) starting with %s", self._task_type,
                            self._id, str([assignment.bid.agent_name for assignment in self._assignments]))
+
+            self._on_task_acknowledged()
         else:
             ettilog.loginfo("ContractNetManager(%s):: coordination unsuccessful. cancelling... Received %d/%d from %s", self._task_type,
                             len(self._acknowledgements), len(self._assignments),
@@ -126,3 +129,9 @@ class ContractNetManager(object):
     @abstractmethod
     def get_assignments(self, _bids):
         return []
+
+    def _on_task_acknowledged(self):
+        pass
+
+    def _on_task_finished(self, task_stop):
+        pass

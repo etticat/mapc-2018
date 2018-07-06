@@ -63,3 +63,6 @@ class WellProvider(object):
 
     def get_wells_to_build(self):
         return self.wells_to_build
+
+    def get_well_price(self, well_type):
+        return self.wells_to_build[well_type].cost

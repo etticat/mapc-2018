@@ -43,7 +43,6 @@ class SensorAndConditionMap(object):
         self.load_sensor = TopicSensor(
             topic=self.agent_topic,
             name="load_sensor",
-            log=True,
             message_attr='load')
 
         self.finished_product_load_sensor = FinishedProductLoadSensor(
@@ -225,7 +224,7 @@ class SensorAndConditionMap(object):
         )
 
         self.has_assemble_task_sensor = GradientSensor(
-            name="assemble_task_sensor",
+            name="has_assemble_task_sensor",
             sensor_type=SENSOR.VALUE_EXISTS,
             mechanism=self.assemble_task_mechanism
         )
@@ -243,7 +242,7 @@ class SensorAndConditionMap(object):
         )
 
         self.has_well_task_sensor = GradientSensor(
-            name="well_task_sensor",
+            name="has_well_task_sensor",
             sensor_type=SENSOR.VALUE_EXISTS,
             mechanism=self.well_task_mechanism
         )
@@ -260,7 +259,7 @@ class SensorAndConditionMap(object):
             mechanism=self.deliver_task_mechanism
         )
         self.has_deliver_task_sensor = GradientSensor(
-            name="deliver_task_sensor",
+            name="has_deliver_task_sensor",
             sensor_type=SENSOR.VALUE_EXISTS,
             mechanism=self.deliver_task_mechanism
         )

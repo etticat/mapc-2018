@@ -39,6 +39,6 @@ class MySubscriber(Subscriber):
 
         if msg.task_type == self.my_task_type and msg.message_type == self.my_message_type:
             client_msg =  getattr(msg, self.my_message_type, None)
-            self.callback(client_msg)
+            self.client_callback(client_msg)
         else:
             return None

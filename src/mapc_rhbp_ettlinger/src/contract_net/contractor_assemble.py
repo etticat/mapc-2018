@@ -1,23 +1,12 @@
-from agent_knowledge.task import TaskKnowledgeBase
 from common_utils import etti_logging
 from contract_net.contractor import ContractNetContractorBehaviour
 from decisions.assembly_bid import ShouldBidForAssembly
+from decisions.p_task_decision import CurrentTaskDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.contractor.assemble')
 
 
-class AssembleContractorBehaviour(ContractNetContractorBehaviour):
-
-    def _on_task_finished(self, finish):
-
-        current_assemble_task = self._task_knowledge_base.get_task(self._agent_name,
-                                                                   type=TaskKnowledgeBase.TYPE_ASSEMBLE)
-        if current_assemble_task is not None and current_assemble_task.id == finish.id:
-            self._task_knowledge_base.finish_task(agent_name=self._agent_name, type=TaskKnowledgeBase.TYPE_ASSEMBLE)
-            self._product_provider.stop_assembly()
-
-            ettilog.logerr("AssembleContractor(%s):: Stopping task %s because %s", self._agent_name, finish.id,
-                           finish.reason)
+class AssembleContractor(ContractNetContractorBehaviour):
 
     def _on_assignment_confirmed(self, assignment):
         items_to_assemble = {}
@@ -30,11 +19,8 @@ class AssembleContractorBehaviour(ContractNetContractorBehaviour):
     def bid_possible(self, bid):
         return True
 
-    def __init__(self, agent_name, role, name, **kwargs):
-
-        super(AssembleContractorBehaviour, self).__init__(
-            agent_name=agent_name, name=name, task_type=TaskKnowledgeBase.TYPE_ASSEMBLE, **kwargs)
-
+    def __init__(self, agent_name, role, mechanism, ready_for_bid_condition):
+        super(AssembleContractor, self).__init__(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE, mechanism=mechanism, ready_for_bid_condition=ready_for_bid_condition)
         self._assembly_bid_chooser = ShouldBidForAssembly(agent_name=agent_name, role=role)
 
     def generate_bid(self, request):
