@@ -30,6 +30,8 @@ class ProductProvider(object):
         self.load_max = 0
         self.load_free = 0
         self.load = 0
+        self.role = None
+        self.useful_items_for_assembly = []
 
         rospy.Subscriber(
             AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start",
@@ -70,12 +72,20 @@ class ProductProvider(object):
         :type msg: SimStart
         :return:
         """
+        self.role = msg.role.name
+        self.useful_items_for_assembly = []
+
         for product in msg.products:
             self.products[product.name] = product
             if len(product.consumed_items) > 0:
                 self.finished_products[product.name] = product
+
+                if self.role in product.required_roles:
+                    for ingredient in product.consumed_items:
+                        self.useful_items_for_assembly.append(ingredient.name)
             else:
                 self.base_ingredients[product.name] = product
+
 
     def get_product_by_name(self, product):
         """
@@ -239,3 +249,6 @@ class ProductProvider(object):
 
     def fits_in_store(self, name):
         return self.products[name].volume <= self.load_free
+
+    def usages_for_assembly(self, item):
+        return self.useful_items_for_assembly.count(item)

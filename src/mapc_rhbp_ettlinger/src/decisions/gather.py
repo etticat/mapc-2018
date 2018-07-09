@@ -23,6 +23,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class GatherDecisionMechanism(DecisionPattern):
 
     WEIGHT_STEPS = 1
+    WEIGHT_ASSEMBLY_ROLE_MATCH = 20
     WEIGHT_PRIORITY = 35
     THRESHOLD = -999
 
@@ -88,10 +89,12 @@ class GatherDecisionMechanism(DecisionPattern):
         item_priority = self.ingredient_priority_sorted()
         for item, already_in_stock_items in item_priority:
             load_after_gathering = self.load_after_gathering(item)
+            usefulness_for_assembly = self._product_provider.usages_for_assembly(item)
             if load_after_gathering >= 0 and item in gatherable_items:
                 steps, resource = self.steps_to_closest_resource(resources, item)
                 activation = already_in_stock_items * GatherDecisionMechanism.WEIGHT_PRIORITY + \
-                             steps * GatherDecisionMechanism.WEIGHT_STEPS
+                             steps * GatherDecisionMechanism.WEIGHT_STEPS + \
+                             usefulness_for_assembly * GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH
                 if activation > max_activation:
                     max_activation = activation
                     choosen_resource = resource
