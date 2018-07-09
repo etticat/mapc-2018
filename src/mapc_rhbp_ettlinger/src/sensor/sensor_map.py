@@ -8,7 +8,7 @@ from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
 from decisions.battery import ClosestChargingStationDecision
 from decisions.choose_stroage_for_hoarding import ChooseStorageMechanism
-from decisions.gather import ChooseResourceMechanism
+from decisions.gather import GatherDecisionMechanism
 from decisions.p_task_decision import CurrentTaskDecision
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
@@ -26,6 +26,7 @@ class SensorAndConditionMap(object):
     def __init__(self, agent_name):
         self.agent_name = agent_name
         self.agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
+        self.init_mechanism(agent_name=agent_name)
         self.init_load_sensors()
         self.init_agent_sensors()
         self.init_battery_sensors()
@@ -47,7 +48,9 @@ class SensorAndConditionMap(object):
 
         self.finished_product_load_sensor = FinishedProductLoadSensor(
             agent_name=self.agent_name,
-            name="finished_product_load_sensor")
+            name="finished_product_load_sensor",
+            gather_decision_mechanism=self.gather_decision_mechanism
+        )
 
         self.free_load_sensor = SubtractionSensor(
             name="free_load_sensor",
@@ -214,7 +217,6 @@ class SensorAndConditionMap(object):
         self.deliver_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER)
         self.well_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
         # TODO: GATHER
-        self.choose_resource_mechanism = ChooseResourceMechanism(agent_name=agent_name)
         self.choose_hoarding_mechanism = ChooseStorageMechanism(agent_name=agent_name)
 
         self.assemble_task_sensor = GradientSensor(
@@ -328,3 +330,6 @@ class SensorAndConditionMap(object):
                 fullActivationValue=SensorAndConditionMap.DISCOVERY_AGE_FULL_ACTIVATION
             )
         )
+
+    def init_mechanism(self, agent_name):
+        self.gather_decision_mechanism = GatherDecisionMechanism(agent_name=agent_name)

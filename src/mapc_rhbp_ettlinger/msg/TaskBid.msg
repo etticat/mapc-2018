@@ -4,4 +4,4 @@ string                              role
 float32                             bid
 string[]                            items
 uint32                              expected_steps
-mapc_rhbp_ettlinger/TaskRequest request
+mapc_rhbp_ettlinger/TaskRequest     request

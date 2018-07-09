@@ -233,7 +233,7 @@ class ProductProvider(object):
         base_ingredients = {}
         for item, count in dict.iteritems():
             base_ingredients = CalcUtil.dict_sum(base_ingredients, self.get_ingredients_of_product_iteratively(
-                product_name=item, amount=count, consider_intermediate_ingredients=consider_intermediate_ingredients))
+                product_name=item, amount=count * 15, consider_intermediate_ingredients=consider_intermediate_ingredients))
 
         return base_ingredients
 

@@ -5,7 +5,6 @@ from behaviour_components.behaviours import BehaviourBase
 from behaviours.generic_action import GenericActionBehaviour
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
-from decisions.gathering import ChooseIngredientToGather
 from provider.action_provider import Action
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
@@ -18,7 +17,7 @@ class StoreBehaviour(GenericActionBehaviour):
     A behaviour for triggering recharge actions which can be executed everywhere
     """
 
-    def __init__(self, name, agent_name, **kwargs):
+    def __init__(self, name, agent_name, gather_decision_mechanism,  **kwargs):
         """
         :param name: name of the behaviour
         :param agent_name: name of the agent for determining the correct topic prefix
@@ -29,7 +28,7 @@ class StoreBehaviour(GenericActionBehaviour):
                       agent_name=agent_name,
                       action_type=Action.STORE,
                       **kwargs)
-        self.choose_ingredient_to_gather = ChooseIngredientToGather(agent_name=agent_name)
+        self.gather_decision_mechanism = gather_decision_mechanism
         self._task = None
         self._product_provider = ProductProvider(agent_name=agent_name)
 
@@ -37,7 +36,7 @@ class StoreBehaviour(GenericActionBehaviour):
         # Check all the products we have in stock
         finished_product_stock = self._product_provider.get_finished_products_in_stock()
         # Check all the products we have, that can be used to make another item
-        desired_ingredients = self.choose_ingredient_to_gather.get_desired_ingredients(
+        desired_ingredients = self.gather_decision_mechanism.get_desired_ingredients(
             consider_intermediate_ingredients=True)
 
         finished_products_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients)

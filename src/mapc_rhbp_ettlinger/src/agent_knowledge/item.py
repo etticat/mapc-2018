@@ -110,7 +110,7 @@ class StockItemKnowledgeBase(BaseKnowledgeBase):
 
                 for item in set(stock_item.goals) | set(stock_item.amounts):
                     res.amounts[item] = res.amounts.get(item, 0) + stock_item.amounts.get(item,0)
-                    res.goals[item] = res.goals.get(item, 0) + stock_item.goals.get(item,0)
+                    res.goals[item] = res.goals.get(item, 0) + max(stock_item.goals.get(item,0), stock_item.amounts.get(item,0))
         else:
             ettilog.logerr("Error reading from db")
         return res

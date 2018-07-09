@@ -14,5 +14,5 @@ class ChooseStorageMechanism(DecisionPattern):
 
     def calc_value(self):
         if self.value is None:
-            return random.choice(self.facility_provider.get_storages().values())
+            return [random.choice(self.facility_provider.get_storages().values()), self.state]
         return [self.value, self.state]

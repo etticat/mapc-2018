@@ -34,7 +34,7 @@ class AssembleManager(ContractNetManager):
     def get_assignments(self, bids):
         accepted_bids, finished_products = self._assembly_combination.choose(bids)
 
-        if accepted_bids is None:
+        if finished_products is None:
             return None
 
         assembly_instructions = self.generate_assembly_instructions(accepted_bids, finished_products)
@@ -59,18 +59,17 @@ class AssembleManager(ContractNetManager):
             agents.append(bid.agent_name)
 
         # Distributing tasks: TODO: currently manager builds everything. in future others may build
-        for item, count in finished_products.iteritems():
-            for i in range(count):
-                selected_agent = random.choice(agents)
-                # TODO: Every agent could be selected at different points
-                # For now let this be done randomly. In future this has to be selected better
-                for agent in agents:
-                    if res[agent] is not "":
-                        res[agent] = res[agent] + ","
+        for item in finished_products:
+            selected_agent = random.choice(agents)
+            # TODO: Every agent could be selected at different points
+            # For now let this be done randomly. In future this has to be selected better
+            for agent in agents:
+                if res[agent] is not "":
+                    res[agent] = res[agent] + ","
 
-                    if agent == selected_agent:
-                        res[agent] = res[agent] + "assemble:" + item
-                    else:
-                        res[agent] = res[agent] + "assist:" + selected_agent
+                if agent == selected_agent:
+                    res[agent] = res[agent] + "assemble:" + item
+                else:
+                    res[agent] = res[agent] + "assist:" + selected_agent
 
         return res

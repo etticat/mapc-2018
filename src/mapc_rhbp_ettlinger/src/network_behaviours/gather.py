@@ -70,11 +70,11 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             agent_name=self._agent_name,
             name="go_to_resource_node_behaviour",
             plannerPrefix=self.get_manager_prefix(),
-            mechanism=sensor_map.choose_resource_mechanism
+            mechanism=sensor_map.gather_decision_mechanism
         )
 
         self.gather_target_sensor = GradientSensor(
-            mechanism=self._sensor_map.choose_resource_mechanism,
+            mechanism=self._sensor_map.gather_decision_mechanism,
             name="gather_target_sensor",
             sensor_type=SENSOR.VALUE
         )
@@ -109,7 +109,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
     def init_sensors(self, sensor_map):
 
         self.next_ingredient_volume_sensor = GradientSensor(
-            mechanism=sensor_map.choose_resource_mechanism,
+            mechanism=sensor_map.gather_decision_mechanism,
             sensor_type=SENSOR.VALUE_ATTRIBUTE,
             attr_name="item.volume",
             initial_value=0,

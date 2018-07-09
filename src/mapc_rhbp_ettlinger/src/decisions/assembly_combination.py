@@ -2,6 +2,14 @@ import copy
 import itertools
 import operator
 
+import numpy as np
+import re
+from sets import Set
+
+import rospy
+from mac_ros_bridge.msg import Product
+from mapc_rhbp_ettlinger.msg import TaskBid
+
 from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
@@ -9,17 +17,22 @@ from common_utils.product_util import ProductUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
+MAX_AGENTS = 7
+
+MIN_AGENTS = 1
+
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
 class ChooseBestAssemblyCombination(object):
 
+    WEIGHT_PRODUCT_COUNT = -1
+    WEIGHT_PRIORITY = 10
     WEIGHT_NUMBER_OF_AGENTS = -10
-    WEIGHT_VOLUME = 10
     WEIGHT_PRIORITISATION_ACTIVATION = 30
     WEIGHT_IDLE_STEPS = -3
     WEIGHT_MAX_STEP_COUNT = -10
 
-    ACTIVATION_THRESHOLD = 77
+    ACTIVATION_THRESHOLD = 10
 
     def __init__(self):
 
@@ -28,109 +41,138 @@ class ChooseBestAssemblyCombination(object):
         self._product_provider = ProductProvider(agent_name="agentA1") # TODO: make independent from agent
 
 
-    def choose(self, bids):
+        self.roles = ["car", "motorcycle", "drone", "truck"]
+        self.finished_products = None
+        self.finished_item_list = None
 
-        best_combination = None
-        best_value = 5
+
+    def choose(self, bids):
+        """
+
+        :param bids:
+        :type bids: TaskBid[]
+        :return:
+        """
+        if self.finished_products == None:
+            self.init_finished_products()
+
+
+        best_combination = []
+        best_value = -np.inf
         best_finished_products = None
 
-        if len(bids) >= 2:
-            # Go through all combinations
-            for number_of_agents in range(2, min(len(bids) + 1, 7)): # We try all combinations using 2-7 agents
-                for subset in itertools.combinations(bids, number_of_agents):
-                    stringi = ""
-                    for item in subset:
-                        stringi = stringi + item.agent_name + "(" + item.role + ")" + " - "
+        priorities = self.finished_items_priority_dict()
 
-                    combination = self.generate_best_combination(subset)
+        total_bid_array = np.zeros(len(self.products) + len(self.roles))
+        bid_with_array = []
+        for bid in bids:
+            bid_array = self.bid_to_array(bid)
+            bid_with_array.append((bid, bid_array))
+
+            total_bid_array += bid_array
+
+        rospy.logerr("Bid array: " + str(total_bid_array))
+        rospy.logerr("Roles: " + str(Set([a.role for a in bids])))
+
+        if len(bid_with_array) >= MIN_AGENTS:
+            # Go through all combinations
+            for number_of_agents in range(MIN_AGENTS, min(len(bid_with_array) + 1, MAX_AGENTS)): # We try all combinations using 2-7 agents
+                for subset in itertools.combinations(bid_with_array, number_of_agents):
+                    array_bid_subset = np.zeros(len(self.products) + len(self.roles))
+                    bid_subset = []
+
+                    for bid, array_bid in subset:
+                        bid_subset.append(bid)
+                        array_bid_subset += array_bid
+
+                    # rospy.logerr("--------")
+                    # rospy.logerr([a.agent_name for a in bid_subset])
+                    # rospy.logerr(array_bid_subset)
+
+                    prioritisation_activation, combination = self.try_build_item(array_bid_subset, priorities=priorities)
+                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * ChooseBestAssemblyCombination.WEIGHT_PRODUCT_COUNT
+
+                    # rospy.logerr(prioritisation_activation)
+                    # rospy.logerr(combination)
 
                     # The number of step until all agents can be at the workshop
-                    max_step_count = max([bid.expected_steps for bid in subset])
+                    max_step_count = max([bid.expected_steps for bid in bid_subset])
 
                     # Number of steps agents will have to wait at storage until the last agent arrives
-                    idle_steps = sum([max_step_count - bid.expected_steps for bid in subset])
+                    idle_steps = sum([max_step_count - bid.expected_steps for bid in bid_subset])
 
-                    # Value represents how imporatant the items are to us right now. Rare items are more imporant
-                    prioritisation_activation = self.get_prioritisation_activation(combination)
+                    value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation, number_of_agents)
 
-                    # Volume of ingredients. The more item we can build at once, the better
-                    volume = self._product_provider.calculate_total_volume(combination)
-
-                    value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation, volume, number_of_agents)
-
+                    # rospy.logerr("v:"+ str(value))
 
 
                     if value > best_value:
                         best_value = value
-                        best_combination = subset
+                        best_combination = bid_subset
                         best_finished_products = combination
-                if number_of_agents >= 4 and best_value > ChooseBestAssemblyCombination.ACTIVATION_THRESHOLD:
+                if number_of_agents >= 3 and best_value > ChooseBestAssemblyCombination.ACTIVATION_THRESHOLD:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
 
-        return (best_combination, best_finished_products)
+        if best_value > ChooseBestAssemblyCombination.ACTIVATION_THRESHOLD:
+            return (best_combination, best_finished_products)
+        else:
+            rospy.logerr("No bid found. best: %f: %s with %d agents", best_value, str(best_finished_products), len(best_combination))
 
-    def generate_best_combination(self, subset):
-        item_dict, roles = ProductUtil.get_items_and_roles_from_bids(subset)
+            return (None, None)
 
-        item_dict = copy.copy(item_dict)
-        combination = {}
+    def init_finished_products(self):
+        finished_products = self._product_provider.finished_products
+        self.finished_item_list = finished_products.keys()
+        self.finished_item_list.sort(key=self.natural_keys)
+        self.finished_products = {}
+        self.products = self._product_provider.products.keys()
+        self.products.sort(key=self.natural_keys)
 
-        finished_items_to_build = self.finished_items_priority_tuple_list()
+        for finished_product in finished_products.values():
+            self.finished_products[finished_product.name] = np.zeros(len(self.products) + len(self.roles))
 
-        max_priority = 0
+            for item in finished_product.consumed_items:
+                index = self.products.index(item.name)
+                self.finished_products[finished_product.name][index] += item.amount
 
-        # TODO: This can be done better: We are looking for the combination which is most needed (Priority)
-        # TODO: And using the most items
-        for item, priority in finished_items_to_build:
+            for role in finished_product.required_roles:
+                self.finished_products[finished_product.name][len(self.products) + self.roles.index(role)] = 1
 
-            if priority > max_priority:
-                max_priority = priority
+            self.finished_products[finished_product.name][self.products.index(finished_product.name)] += -1
 
-            if priority < max_priority - 10:
-                # Ignore items where we have 10 more than other items
-                continue
+    def try_build_item(self, products, priorities, item=None):
+        res = []
+        best_value = -np.inf
+        try_items = self.finished_item_list
 
+        if item is not None:
+            products = products - self.finished_products[item]
 
-            required_roles = self._product_provider.get_roles_of_product(item)
-            if set(required_roles).issubset(roles):
-                ingredients = self._product_provider.get_ingredients_of_product(item)
-                item_count = CalcUtil.dict_max_diff(ingredients, item_dict)
+            if min(products) < 0:
+                return np.inf, None
 
-                if item_count > 0:
-                    combination[item] = item_count
+            res = [item]
+            best_value = sum(products[0:-len(self.roles)]) * ChooseBestAssemblyCombination.WEIGHT_PRODUCT_COUNT + priorities[item] * \
+                         ChooseBestAssemblyCombination.WEIGHT_PRIORITY
+            try_items = self.finished_item_list[self.finished_item_list.index(item):]
 
-                item_dict = CalcUtil.dict_diff(item_dict, self._product_provider.get_ingredients_of_product(item, item_count))
+        best_item_list = None
+        for i in try_items:
+            value, item_list = self.try_build_item(products, priorities, i)
+            if item_list:
+                if value > best_value:
+                    best_value = value
+                    best_item_list = item_list
+        if best_item_list is not None:
+            res = res + best_item_list
 
-        return combination
-
-
-    def get_prioritisation_activation(self, combination):
-        # TODO: There needs to be a better logic behind this
-
-        value = 0
-
-        finished_items_priority_list = self.finished_items_priority_dict()
-        for item, count in combination.iteritems():
-            value += finished_items_priority_list[item]
-            finished_items_priority_list[item] = max(finished_items_priority_list[item]-1, 1)
-            # For each item we make decrease value by one -> reflects prioritisation
-
-        return value
-
-
-    def finished_items_priority_tuple_list(self):
-        """
-        Value of item is defined by base ingredient count. Therefore as priority we only use the ones we have the fewest
-        of currently.
-        :return:
-        """
-        finished_stock_items = self.finished_items_priority_dict()
-        return sorted(finished_stock_items.iteritems(), key=operator.itemgetter(1), reverse=True)
+        return best_value, res
 
     def finished_items_priority_dict(self):
         stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
         stored_items = self.facility_provider.get_all_stored_items()
+
         finished_stock_items = {}
         for item in self._product_provider.finished_products.keys():
             finished_stock_items[item] = max(stock_items.amounts.get(item, 0), stock_items.goals.get(item, 0)) + stored_items.get(item, 0)
@@ -138,15 +180,45 @@ class ChooseBestAssemblyCombination(object):
         if len(values) == 0:
             ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")
             return {}
-        max_value = max(values)
+        max_value = max(values) + 1
         for key, count in finished_stock_items.iteritems():
-            finished_stock_items[key] = max_value - count + 1
+            finished_stock_items[key] =  1.0 - (float(count) / max_value)
         return finished_stock_items
 
-    def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, volume, number_of_agents):
+    def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):
         return max_step_count * ChooseBestAssemblyCombination.WEIGHT_MAX_STEP_COUNT + \
                 idle_steps *  ChooseBestAssemblyCombination.WEIGHT_IDLE_STEPS + \
                 prioritisation_activation * ChooseBestAssemblyCombination.WEIGHT_PRIORITISATION_ACTIVATION + \
-                volume * ChooseBestAssemblyCombination.WEIGHT_VOLUME + \
                 number_of_agents * ChooseBestAssemblyCombination.WEIGHT_NUMBER_OF_AGENTS
 
+    def bid_to_array(self, bid):
+        """
+
+        :param bid:
+        :param bid: TaskBid
+        :return:
+        """
+        bid_array = np.zeros(len(self.products) + len(self.roles))
+
+        for item in bid.items:
+            bid_array[self.products.index(item)] += 1
+
+        bid_array[len(self.products) + self.roles.index(bid.role)] = 999
+
+        return bid_array
+
+    def atof(self, text):
+        try:
+            retval = float(text)
+        except ValueError:
+            retval = text
+        return retval
+
+    def natural_keys(self, text):
+        '''
+        alist.sort(key=natural_keys) sorts in human order
+        http://nedbatchelder.com/blog/200712/human_sorting.html
+        (See Toothy's implementation in the comments)
+        float regex comes from https://stackoverflow.com/a/12643073/190597
+        '''
+        return [self.atof(c) for c in re.split(r'[+-]?([0-9]+(?:[.][0-9]*)?|[.][0-9]+)', text)]

@@ -17,6 +17,7 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
         store_behaviour = StoreBehaviour(
             name="store_behaviour",
             agent_name=agent_name,
-            plannerPrefix=self.get_manager_prefix()
+            plannerPrefix=self.get_manager_prefix(),
+            gather_decision_mechanism=sensor_map.gather_decision_mechanism
         )
         self.init_do_behaviour(store_behaviour)
