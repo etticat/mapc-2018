@@ -3,12 +3,13 @@ import time
 from mapc_rhbp_ettlinger.msg import TaskBid
 
 import rospy
-from mac_ros_bridge.msg import SimStart, RequestAction
+from mac_ros_bridge.msg import SimStart, RequestAction, Position
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from decisions.assembly_combination import AssemblyCombinationDecision
+from provider.distance_provider import DistanceProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
 from provider.well_provider import WellProvider
 from sensor.sensor_map import SensorAndConditionMap

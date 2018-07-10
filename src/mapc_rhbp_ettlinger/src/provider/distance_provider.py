@@ -36,6 +36,8 @@ class DistanceProvider(object):
         self.agent_pos = None
         self.agent_vision = 300
 
+        self._cache = {}
+
 
     def callback_agent(self, msg):
         """
@@ -88,12 +90,12 @@ class DistanceProvider(object):
             try:
                 return self.calculate_distance_street(startPosition, endPosition)
             except LookupError as e:
-                ettilog.logwarn(e)
+                ettilog.logerr(e)
             except Exception as e:
-                ettilog.logwarn("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                ettilog.logdebug(traceback.format_exc())
+                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+                ettilog.logerr(traceback.format_exc())
 
-            ettilog.logwarn("DistanceProvider:: Using fallback approximation")
+            ettilog.logerr("DistanceProvider:: Using fallback approximation")
             return self.calculate_distance_air(startPosition, endPosition) * 2  # Fallback
 
     def calculate_steps(self, pos1, pos2):
@@ -134,13 +136,9 @@ class DistanceProvider(object):
 
         key = str(a) + str(b)
 
-        try:
-            distance = self._cache[key]
-        except KeyError:
-            distance = self._request_street_distance(a, b)
-            self._cache[key] = distance
-            # ettilog.logdebug("Cache size increased to %d", len(self._cache))
-        return distance
+        if key not in self._cache.keys():
+            self._cache[key] = self._request_street_distance(a, b)
+        return self._cache[key]
 
     def _request_street_distance(self, a, b):
         """"

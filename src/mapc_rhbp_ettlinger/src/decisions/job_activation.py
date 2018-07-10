@@ -17,6 +17,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class JobDecider(object):
     
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
+    BID_PERCENTILE = 50
 
     def __init__(self):
         self.all_jobs = []
@@ -26,8 +27,11 @@ class JobDecider(object):
 
         self._pub_desired_finished_products = Publisher(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10)
 
-    def get_job_activation(self, job):
-        return float(job.reward + job.fine) / self.get_base_ingredient_count(job.items)
+    def get_job_activation(self, job, include_fine=True):
+        if include_fine:
+            return float(job.reward + job.fine) / self.get_base_ingredient_count(job.items)
+        else:
+            return float(job.reward) / self.get_base_ingredient_count(job.items)
 
     def get_base_ingredient_count(self, items):
         i = 0
@@ -131,3 +135,11 @@ class JobDecider(object):
         for product in self._product_provider.finished_products.keys():
             desired_finished_product_stock[product] = 5
         return desired_finished_product_stock
+
+    def get_bid(self, job):
+        factor = np.percentile(self.factors, JobDecider.BID_PERCENTILE)
+
+        ingredient_count = self.get_base_ingredient_count(job.items)
+        return job.reward - factor * ingredient_count
+
+

@@ -1,8 +1,11 @@
 #!/usr/bin/env python2
+import time
 from threading import Thread
 
+from diagnostic_msgs.msg import KeyValue
+
 import rospy
-from mac_ros_bridge.msg import RequestAction, SimStart, Position
+from mac_ros_bridge.msg import RequestAction, SimStart, Position, AuctionJob
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -11,8 +14,10 @@ from contract_net.manager_build_well import BuildWellManager
 from contract_net.manager_deliver import DeliverManager
 from decisions.job_activation import JobDecider
 from decisions.well_chooser import ChooseWellToBuild
+from provider.action_provider import ActionProvider, Action
 from provider.product_provider import ProductProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
+from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.planner')
 
@@ -20,6 +25,8 @@ class Planner(object):
 
     def __init__(self, agent_name):
 
+        self.action_provider = ActionProvider(agent_name="agentA1")
+        self.simulation_provider = SimulationProvider()
         self._job_decider = JobDecider()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
@@ -69,12 +76,43 @@ class Planner(object):
         while self.coordination_thread is not None:
             # self.coordinate_wells()
             self.coordinate_jobs()
-            self.coordinate_assembly()
+            time.sleep(10)
+            # self.coordinate_assembly()
 
     def save_jobs(self, requestAction):
         # get all jobs from request
         all_jobs_new = self.extract_jobs(requestAction)
         self._job_decider.save_jobs(all_jobs_new)
+
+        self.process_auction_jobs(requestAction.auction_jobs)
+
+    def process_auction_jobs(self, auction_jobs):
+        for auction in auction_jobs:
+            # Only handle the not assigned auctions
+            if auction.job.start + auction.auction_time -1 ==self.simulation_provider.step:
+                bid = self._job_decider.get_bid(auction.job)
+                # rospy.logerr("job: %s", auction.job.id)
+                # rospy.logerr("job activation(after acceptance): %f",
+                #              self._job_decider.get_job_activation(auction.job, include_fine=True))
+                # rospy.logerr("job activation(before acceptance): %f",
+                #              self._job_decider.get_job_activation(auction.job, include_fine=False))
+                # rospy.logerr("job_reward: %f", auction.job.reward)
+                # rospy.logerr("bid: %f", bid)
+                # rospy.logerr("job.start: %s", auction.job.start)
+                # rospy.logerr("lowest bid: %d", auction.lowest_bid)
+                # rospy.logerr("auction time: %d", auction.auction_time)
+                # rospy.logerr("max bid: %d", auction.max_bid)
+                # rospy.logerr("simulation_step: %d", self.simulation_provider.step)
+
+
+                # TODO: Move this into agent somehow
+                if bid > 0:
+                    rospy.logerr("Bidding: %d !!!!!!!!!!!!!!!!!!", bid)
+                    self.action_provider.send_action(action_type=Action.BID_FOR_JOB, params=[
+                        KeyValue("Job", str(auction.job.id)),
+                        KeyValue("Bid", str(int(bid)))])
+                else:
+                    rospy.logerr("Not Bidding: %d !!!!!!!!!!!!!!!!!!", bid)
 
     def coordinate_jobs(self):
         job = self._job_decider.job_to_do()
@@ -107,10 +145,11 @@ class Planner(object):
 
         for mission in msg.mission_jobs:
             extracted_jobs += [mission]
-        #for auction in msg.auction_jobs:
-        #    all_jobs_new.add(auction.job)
         for priced in msg.priced_jobs:
             extracted_jobs += [priced]
+        for auction in msg.auction_jobs:
+            if auction.job.start + auction.auction_time <= self.simulation_provider.step:
+                extracted_jobs += [auction.job]
 
         return extracted_jobs
 
