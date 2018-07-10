@@ -7,7 +7,7 @@ from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 
 from common_utils.agent_utils import AgentUtils
-from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.assembly_combination import AssemblyCombinationDecision
 from provider.action_provider import ActionProvider
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
@@ -46,7 +46,7 @@ class GatherDecisionMechanism(DecisionPattern):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
-        self.choose_best_assembly_combination = ChooseBestAssemblyCombination()
+        self.choose_best_assembly_combination = AssemblyCombinationDecision()
 
         super(GatherDecisionMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
 

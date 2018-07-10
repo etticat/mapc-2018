@@ -1,29 +1,19 @@
-import copy
 import itertools
-import operator
-
 import numpy as np
 import re
-from sets import Set
+
+from mapc_rhbp_ettlinger.msg import StockItem
 
 import rospy
-from mac_ros_bridge.msg import Product
-from mapc_rhbp_ettlinger.msg import TaskBid
-
 from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
-from common_utils.calc import CalcUtil
-from common_utils.product_util import ProductUtil
+from decisions.job_activation import JobDecider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
-MAX_AGENTS = 7
-
-MIN_AGENTS = 1
-
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
-class ChooseBestAssemblyCombination(object):
+class AssemblyCombinationDecision(object):
 
     WEIGHT_PRODUCT_COUNT = -1
     WEIGHT_PRIORITY = 10
@@ -31,6 +21,9 @@ class ChooseBestAssemblyCombination(object):
     WEIGHT_PRIORITISATION_ACTIVATION = 30
     WEIGHT_IDLE_STEPS = -3
     WEIGHT_MAX_STEP_COUNT = -10
+
+    MAX_AGENTS = 7
+    MIN_AGENTS = 1
 
     ACTIVATION_THRESHOLD = 10
 
@@ -44,6 +37,21 @@ class ChooseBestAssemblyCombination(object):
         self.roles = ["car", "motorcycle", "drone", "truck"]
         self.finished_products = None
         self.finished_item_list = None
+
+        self.finished_product_goals = {}
+
+        rospy.Subscriber(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10, callback=self._planner_goal_callback)
+
+    def _planner_goal_callback(self, stock_item):
+        """
+
+        :param stock_item:
+        :type stock_item: StockItem
+        :return:
+        """
+        self.finished_product_goals = {}
+        for goal in stock_item.goals:
+            self.finished_product_goals[goal.key] = float(goal.value)
 
 
     def choose(self, bids):
@@ -71,12 +79,12 @@ class ChooseBestAssemblyCombination(object):
 
             total_bid_array += bid_array
 
-        rospy.logerr("Bid array: " + str(total_bid_array))
-        rospy.logerr("Roles: " + str(Set([a.role for a in bids])))
+        # rospy.logerr("Bid array: " + str(total_bid_array))
+        # rospy.logerr("Roles: " + str(Set([a.role for a in bids])))
 
-        if len(bid_with_array) >= MIN_AGENTS:
+        if len(bid_with_array) >= AssemblyCombinationDecision.MIN_AGENTS:
             # Go through all combinations
-            for number_of_agents in range(MIN_AGENTS, min(len(bid_with_array) + 1, MAX_AGENTS)): # We try all combinations using 2-7 agents
+            for number_of_agents in range(AssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1, AssemblyCombinationDecision.MAX_AGENTS)): # We try all combinations using 2-7 agents
                 for subset in itertools.combinations(bid_with_array, number_of_agents):
                     array_bid_subset = np.zeros(len(self.products) + len(self.roles))
                     bid_subset = []
@@ -90,7 +98,7 @@ class ChooseBestAssemblyCombination(object):
                     # rospy.logerr(array_bid_subset)
 
                     prioritisation_activation, combination = self.try_build_item(array_bid_subset, priorities=priorities)
-                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * ChooseBestAssemblyCombination.WEIGHT_PRODUCT_COUNT
+                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_PRODUCT_COUNT
 
                     # rospy.logerr(prioritisation_activation)
                     # rospy.logerr(combination)
@@ -110,14 +118,14 @@ class ChooseBestAssemblyCombination(object):
                         best_value = value
                         best_combination = bid_subset
                         best_finished_products = combination
-                if number_of_agents >= 3 and best_value > ChooseBestAssemblyCombination.ACTIVATION_THRESHOLD:
+                if number_of_agents >= 3 and best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
 
-        if best_value > ChooseBestAssemblyCombination.ACTIVATION_THRESHOLD:
+        if best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
             return (best_combination, best_finished_products)
         else:
-            rospy.logerr("No bid found. best: %f: %s with %d agents", best_value, str(best_finished_products), len(best_combination))
+            # rospy.logerr("No bid found. best: %f: %s with %d agents", best_value, str(best_finished_products), len(best_combination))
 
             return (None, None)
 
@@ -153,8 +161,8 @@ class ChooseBestAssemblyCombination(object):
                 return np.inf, None
 
             res = [item]
-            best_value = sum(products[0:-len(self.roles)]) * ChooseBestAssemblyCombination.WEIGHT_PRODUCT_COUNT + priorities[item] * \
-                         ChooseBestAssemblyCombination.WEIGHT_PRIORITY
+            best_value = sum(products[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_PRODUCT_COUNT + priorities[item] * \
+                         AssemblyCombinationDecision.WEIGHT_PRIORITY
             try_items = self.finished_item_list[self.finished_item_list.index(item):]
 
         best_item_list = None
@@ -180,16 +188,16 @@ class ChooseBestAssemblyCombination(object):
         if len(values) == 0:
             ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")
             return {}
-        max_value = max(values) + 1
+
         for key, count in finished_stock_items.iteritems():
-            finished_stock_items[key] =  1.0 - (float(count) / max_value)
+            finished_stock_items[key] =  1.0 - (float(count) / self.finished_product_goals.get(key, 1))
         return finished_stock_items
 
     def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):
-        return max_step_count * ChooseBestAssemblyCombination.WEIGHT_MAX_STEP_COUNT + \
-                idle_steps *  ChooseBestAssemblyCombination.WEIGHT_IDLE_STEPS + \
-                prioritisation_activation * ChooseBestAssemblyCombination.WEIGHT_PRIORITISATION_ACTIVATION + \
-                number_of_agents * ChooseBestAssemblyCombination.WEIGHT_NUMBER_OF_AGENTS
+        return max_step_count * AssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT + \
+               idle_steps * AssemblyCombinationDecision.WEIGHT_IDLE_STEPS + \
+               prioritisation_activation * AssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION + \
+               number_of_agents * AssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS
 
     def bid_to_array(self, bid):
         """

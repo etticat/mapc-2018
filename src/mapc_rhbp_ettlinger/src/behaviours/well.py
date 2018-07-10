@@ -34,12 +34,8 @@ class BuildWellBehaviour(DecisionBehaviour):
                          self._action_request_agent)
 
     def action_build_well(self, type):
-        action = GenericAction()
-        action.action_type = Action.BUILD
-        action.params = [
-            KeyValue("WellType", str(type))]
-
-        self._action_provider.send_action(action)
+        self._action_provider.send_action(action_type=Action.BUILD, params=[
+            KeyValue("WellType", str(type))])
 
     def _action_request_agent(self, agent):
         """

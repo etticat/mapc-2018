@@ -49,6 +49,7 @@ catkin_python_setup()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  StockItem.msg
   TaskRequest.msg
   TaskBid.msg
   TaskAssignment.msg
@@ -56,7 +57,6 @@ add_message_files(
   TaskProgress.msg
   TaskStop.msg
   TaskCoordinationMessage.msg
-  StockItem.msg
   Task.msg
 )
 ## Generate services in the 'srv' folder

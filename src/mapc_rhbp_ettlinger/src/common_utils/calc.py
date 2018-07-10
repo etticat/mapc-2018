@@ -69,3 +69,11 @@ class CalcUtil:
             for i in range(item.amount):
                 res.append(item.name)
         return res
+
+    @classmethod
+    def contains_items(cls, container, items):
+        for key in items.keys():
+            if container.get(key, 0) < items[key]:
+                return False
+
+        return True

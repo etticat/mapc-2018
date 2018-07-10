@@ -3,7 +3,7 @@ import random
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
 from contract_net.manager import ContractNetManager
-from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.assembly_combination import AssemblyCombinationDecision
 from decisions.p_task_decision import CurrentTaskDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -15,7 +15,7 @@ class AssembleManager(ContractNetManager):
         super(AssembleManager, self).__init__(task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
 
         self._facility_provider = FacilityProvider()
-        self._assembly_combination = ChooseBestAssemblyCombination()
+        self._assembly_combination = AssemblyCombinationDecision()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def reset_manager(self):

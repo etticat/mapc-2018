@@ -86,7 +86,7 @@ class StockItemKnowledgeBase(BaseKnowledgeBase):
         new = StockItemKnowledgeBase.generate_fact_from_stock_item(stock_item)
         self._kb_client.update(search, new, push_without_existing=True)
 
-    def get_total_stock(self):
+    def get_total_stock(self, include_goal=True):
         all_tuple = self.generate_tuple()
         res = {}
 
@@ -94,8 +94,12 @@ class StockItemKnowledgeBase(BaseKnowledgeBase):
 
         for fact in facts:
             stock_item = StockItemKnowledgeBase.generate_stock_item_from_fact(fact)
-            for item in set(stock_item.goals) | set(stock_item.amounts):
-                res[item] = res.get(item, 0) + max(stock_item.amounts[item], stock_item.goals[item])
+            if include_goal:
+                for item in set(stock_item.goals) | set(stock_item.amounts):
+                    res[item] = res.get(item, 0) + max(stock_item.amounts[item], stock_item.goals[item])
+            else:
+                for item in set(stock_item.amounts):
+                    res[item] = res.get(item, 0) + stock_item.amounts[item]
         return res
 
     def get_total_stock_and_goals(self):

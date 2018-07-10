@@ -11,7 +11,6 @@ from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from manager.action import ActionManager
 from manager.coordination import CoordinationManager
-from planner import Planner
 from provider.action_provider import ActionProvider, Action
 from provider.provider_info_distributor import ProviderInfoDistributor
 from provider.self_organisation_provider import SelfOrganisationProvider
@@ -206,13 +205,7 @@ if __name__ == '__main__':
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
 
-        agent_n = rospy.get_param('~agent_name', "agentA1")
-        if agent_n == "planner":
-            # TODO #86: It doesnt work to put the planner as seperate node. It always says the py file cant be found.
-            # TODO: Need to figure out what the problem is
-            planner = Planner(agent_name="agentA1")
-        else:
-            rhbp_agent = RhbpAgent(agent_name)
+        rhbp_agent = RhbpAgent(agent_name)
 
         rospy.spin()
 

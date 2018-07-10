@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+from threading import Thread
+
 import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart, Position
 
@@ -21,9 +23,6 @@ class Planner(object):
         self._job_decider = JobDecider()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
-        self.all_jobs = []
-        self.all_tasks = []
-
         self.well_chooser = ChooseWellToBuild()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
@@ -33,9 +32,12 @@ class Planner(object):
         self._assemble_planner = AssembleManager(agent_name="agentA1")
         self._provider_info_distributor = ProviderInfoDistributor()
 
+        self.coordination_thread = None
+
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
+
 
 
     def _sim_start_callback(self, sim_start):
@@ -47,6 +49,10 @@ class Planner(object):
 
         self._provider_info_distributor.callback_sim_start(sim_start)
 
+        if self.coordination_thread is None:
+            self.coordination_thread = Thread(target=self.coordinate, name="coordination")
+            self.coordination_thread.start()
+
     def _action_request_callback(self, request_action):
         """
         here we just trigger the decision-making and plannig
@@ -56,30 +62,27 @@ class Planner(object):
         """
         self._provider_info_distributor.callback_request_action(request_action=request_action)
 
-        # self.coordinate_wells(request_action)
-        # self.coordinate_jobs(request_action)
-        self.coordinate_assembly(request_action)
+        self.save_jobs(request_action)
 
+    def coordinate(self):
 
-        ettilog.loginfo("JobPlanner:: Jobs processed")
+        while self.coordination_thread is not None:
+            # self.coordinate_wells()
+            self.coordinate_jobs()
+            self.coordinate_assembly()
 
-    def coordinate_jobs(self, requestAction):
+    def save_jobs(self, requestAction):
         # get all jobs from request
         all_jobs_new = self.extract_jobs(requestAction)
-        for job in all_jobs_new:
-            # if job has not been seen before -> process it
-            if job not in self.all_jobs:
-                # ettilog.logerr("JobPlanner:: processing new job %s, %d: %d factor: %f", job.id, interna_value, job.reward, (job.reward/float(interna_value)))
+        self._job_decider.save_jobs(all_jobs_new)
 
-                self._job_decider.train_decider(job)
-                job_activation = self._job_decider.get_job_activation(job)
-                if job_activation > self._job_decider.get_threshold():
-                    ettilog.loginfo("job: %s, activation: %f, type: %s, items: %s", job.id, job_activation, job.type,
-                                  str([item.name + " (" + str(item.amount) + ") " for item in job.items]))
-                    self._job_manager.request_job(job)
-        self.all_jobs = all_jobs_new
+    def coordinate_jobs(self):
+        job = self._job_decider.job_to_do()
 
-    def coordinate_wells(self, msg):
+        if job is not None:
+            self._job_manager.request_job(job)
+
+    def coordinate_wells(self):
         well_to_build = self.well_chooser.choose_well_type()
 
         if well_to_build == None:
@@ -88,7 +91,7 @@ class Planner(object):
         pos = Position(lat=0.0, long=0.0)
         self._build_well_manager.build_well(well_to_build, pos)
 
-    def coordinate_assembly(self, requestAction):
+    def coordinate_assembly(self):
 
         self._assemble_planner.request_assembly()
 

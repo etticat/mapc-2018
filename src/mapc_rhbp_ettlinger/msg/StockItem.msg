@@ -1,3 +1,3 @@
 string agent
-uint32[] amounts
-uint32[] goals
+diagnostic_msgs/KeyValue[] amounts
+diagnostic_msgs/KeyValue[] goals

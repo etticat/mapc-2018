@@ -92,28 +92,28 @@ class ActionManager(Manager):
             ))
 
         ######################## HOARDING Network Behaviour ########################
-        self._hoarding_network = HoardingNetworkBehaviour(
-            name=self._agent_name + '/hoarding',
-            plannerPrefix=self._agent_name,
-            agent_name=self._agent_name,
-            priority=2,
-            sensor_map=self.sensor_map,
-            max_parallel_behaviours=1)
-
+        # self._hoarding_network = HoardingNetworkBehaviour(
+        #     name=self._agent_name + '/hoarding',
+        #     plannerPrefix=self._agent_name,
+        #     agent_name=self._agent_name,
+        #     priority=2,
+        #     sensor_map=self.sensor_map,
+        #     max_parallel_behaviours=1)
+        #
         # Only hoard when stock is full
-        self._hoarding_network.add_precondition(Negation(self.sensor_map.can_fit_more_ingredients_cond))
-
-        self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_cond)
-
-        self._hoarding_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
-
-
-        self._hoarding_network.add_effect(
-            Effect(
-                sensor_name=self.sensor_map.load_factor_sensor.name, # TODO: Take a proper one
-                indicator=1.0,
-                sensor_type=float
-            ))
+        # self._hoarding_network.add_precondition(Negation(self.sensor_map.can_fit_more_ingredients_cond))
+        #
+        # self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_cond)
+        #
+        # self._hoarding_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
+        #
+        #
+        # self._hoarding_network.add_effect(
+        #     Effect(
+        #         sensor_name=self.sensor_map.load_factor_sensor.name, # TODO: Take a proper one
+        #         indicator=1.0,
+        #         sensor_type=float
+        #     ))
 
         ####################### Assembly Network Behaviour ########################
         self._assembly_network = AssembleNetworkBehaviour(

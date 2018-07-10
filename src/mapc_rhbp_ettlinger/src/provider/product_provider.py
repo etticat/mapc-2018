@@ -200,7 +200,7 @@ class ProductProvider(object):
 
         return v
 
-    def total_items_in_stock(self):
+    def total_items_in_stock(self, include_goal=True):
         return self._stock_item_knowledge_base.get_total_stock()
 
     def get_ingredients_of_product(self, product_name, amount=1):

@@ -8,7 +8,7 @@ from mac_ros_bridge.msg import SimStart, RequestAction
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.assembly_combination import AssemblyCombinationDecision
 from provider.provider_info_distributor import ProviderInfoDistributor
 from provider.well_provider import WellProvider
 from sensor.sensor_map import SensorAndConditionMap
@@ -26,7 +26,7 @@ class TestAgent(object):
 
         self._provider_info_distributor = ProviderInfoDistributor()
         self.sensor_map = SensorAndConditionMap(agent_name="agentA1")
-        self.choose_best_assembly_combination = ChooseBestAssemblyCombination()
+        self.choose_best_assembly_combination = AssemblyCombinationDecision()
 
         self.initialied = False
 

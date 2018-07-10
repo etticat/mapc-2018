@@ -6,7 +6,7 @@ from mac_ros_bridge.msg import RequestAction
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
-from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.assembly_combination import AssemblyCombinationDecision
 from provider.facility_provider import FacilityProvider
 from sensor.sensor_map import SensorAndConditionMap
 
@@ -22,7 +22,7 @@ class DebugAgent(object):
         self.sensor_map = SensorAndConditionMap(agent_name="agentA1")
         time.sleep(1)
 
-        self.choose_best_assembly_combination= ChooseBestAssemblyCombination()
+        self.choose_best_assembly_combination= AssemblyCombinationDecision()
         # DebugUtils.instant_find_resources(ResourceBaseKnowledgeBase())
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")

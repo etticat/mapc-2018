@@ -24,12 +24,8 @@ class DeliverJobBehaviour(DecisionBehaviour):
                          self._action_request_agent)
 
     def action_deliver_job(self, job):
-        action = GenericAction()
-        action.action_type = Action.DELIVER_JOB
-        action.params = [
-            KeyValue("Job", str(job))]
-
-        self.action_provider.send_action(action)
+        self.action_provider.send_action(action_type=Action.DELIVER_JOB, params=[
+            KeyValue("Job", str(job))])
 
     def _action_request_agent(self, agent):
         """
@@ -50,6 +46,6 @@ class DeliverJobBehaviour(DecisionBehaviour):
         super(DeliverJobBehaviour, self).stop()
 
     def do_step(self):
-        task = super(DeliverJobBehaviour, self).do_step()
+        self.current_task = super(DeliverJobBehaviour, self).do_step()
         ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.task)
         self.action_deliver_job(self.current_task.task)

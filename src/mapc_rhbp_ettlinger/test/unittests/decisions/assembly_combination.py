@@ -1,7 +1,7 @@
 """
 @author: krakowczyk
 """
-from decisions.assembly_combination import ChooseBestAssemblyCombination
+from decisions.assembly_combination import AssemblyCombinationDecision
 
 PKG="group1_ws17"
 import roslib; roslib.load_manifest(PKG)
@@ -13,7 +13,7 @@ from agent_utils.name_helpers import get_agent_id, get_agent_team
 class NameHelpersTestSuite(unittest.TestCase):
 
     def test_team_agentA1(self):
-        choose_best_assembly_combination = ChooseBestAssemblyCombination()
+        choose_best_assembly_combination = AssemblyCombinationDecision()
 
         finished_products = {}
 
