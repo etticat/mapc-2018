@@ -55,30 +55,34 @@ class DebugAgent(object):
         ingredient_priority = self.sensor_map.gather_decision_mechanism.ingredient_priority_dict()
         desired_ingredients = self.sensor_map.gather_decision_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
         finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
+        desired_finished_products = self.choose_best_assembly_combination.finished_product_goals
+
         stock = DebugUtils.show_total_stock_with_goals()
         storage_stock = self.facility_provider.get_all_stored_items()
         for i in range(0, 5):
             item = "item" + str(i)
-            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired ingredients: %d",
+            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
                                item,
                            stock.amounts.get(item,0),
                            stock.goals.get(item,0),
                            storage_stock.get(item, 0),
                            ingredient_priority.get(item, 0),
                            finished_product_priority.get(item, 0),
-                           desired_ingredients.get(item, 0))
+                           desired_ingredients.get(item, 0),
+                           desired_finished_products.get(item, 0))
 
         ettilog.logerr("Finished products:")
         for i in range(5, 11):
             item = "item" + str(i)
-            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired ingredients: %d",
+            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
                                item,
                            stock.amounts.get(item,0),
                            stock.goals.get(item,0),
                            storage_stock.get(item, 0),
                            ingredient_priority.get(item, 0),
                            finished_product_priority.get(item, 0),
-                           desired_ingredients.get(item, 0))
+                           desired_ingredients.get(item, 0),
+                           desired_finished_products.get(item, 0))
 
 if __name__ == '__main__':
 

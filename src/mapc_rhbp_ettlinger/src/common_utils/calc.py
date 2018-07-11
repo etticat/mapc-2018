@@ -57,10 +57,15 @@ class CalcUtil:
         return a
 
     @staticmethod
-    def get_dict_from_items(items):
+    def get_dict_from_items(items, attrs=None):
+
+        if attrs is None:
+            attrs = ["amount"]
+
         res = {}
         for item in items:
-            res[item.name] = res.get(item.name, 0) + item.amount
+            for attr in attrs:
+                res[item.name] = res.get(item.name, 0) + getattr(item, attr)
         return res
     @staticmethod
     def get_list_from_items(items):
@@ -77,3 +82,23 @@ class CalcUtil:
                 return False
 
         return True
+
+    @classmethod
+    def get_list_from_dict(cls, items_to_pickup):
+        res = []
+        for item, count in items_to_pickup.iteritems():
+            for i in range(count):
+                res += [item]
+        return res
+
+    @classmethod
+    def dict_from_strings(cls, items):
+        res = {}
+        for item in items:
+            res[item] = res.get(item, 0) + 1
+
+        return res
+
+    @classmethod
+    def dict_intersect(cls, dict1, dict2):
+        return {k: min(dict1.get(k, 0), dict2.get(k, 0)) for k in set(dict1) | set(dict2)}

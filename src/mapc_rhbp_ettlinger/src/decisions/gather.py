@@ -1,5 +1,6 @@
 import operator
 
+import numpy as np
 from mac_ros_bridge.msg import Agent
 
 import rospy
@@ -23,9 +24,10 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class GatherDecisionMechanism(DecisionPattern):
 
     WEIGHT_STEPS = 1
-    WEIGHT_ASSEMBLY_ROLE_MATCH = 20
-    WEIGHT_PRIORITY = 35
-    THRESHOLD = -999
+    WEIGHT_ASSEMBLY_ROLE_MATCH = 2.5
+    WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT = 0.5
+    WEIGHT_PRIORITY = 200
+    THRESHOLD = -np.inf
 
     def __init__(self, agent_name):
 
@@ -64,11 +66,13 @@ class GatherDecisionMechanism(DecisionPattern):
                 else:
                     ettilog.logerr("ChooseResourceMechanism(%s):: Trying to choose item, but none fit in stock",
                                    self.agent_name)
+                    return [None, self.state]
 
             else:
                 ettilog.logerr(
                     "ChooseResourceMechanism(%s):: Trying to choose item, but no resource chosen",
                     self.agent_name)
+                return [None, self.state]
         else:
             return [self.chosen_resource, self.state]
 
@@ -82,8 +86,6 @@ class GatherDecisionMechanism(DecisionPattern):
         resources = self._facility_provider.get_resources()
         gatherable_items = set([resource.item.name for resource in resources.values()])
 
-        # TODO: Take distance into account
-
         max_activation = GatherDecisionMechanism.THRESHOLD
 
         item_priority = self.ingredient_priority_sorted()
@@ -94,7 +96,8 @@ class GatherDecisionMechanism(DecisionPattern):
                 steps, resource = self.steps_to_closest_resource(resources, item)
                 activation = already_in_stock_items * GatherDecisionMechanism.WEIGHT_PRIORITY + \
                              steps * GatherDecisionMechanism.WEIGHT_STEPS + \
-                             usefulness_for_assembly * GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH
+                             int(usefulness_for_assembly > 0) * GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH + \
+                             usefulness_for_assembly * GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT
                 if activation > max_activation:
                     max_activation = activation
                     choosen_resource = resource
@@ -116,11 +119,20 @@ class GatherDecisionMechanism(DecisionPattern):
         # Stock items that we currently have or are in the process of gathering
         stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
         stored_items = self.facility_provider.get_all_stored_items()
+        current_stock = {}
+
+        max_percentage = 0
+        for item in desired_ingredients.keys():
+            current_stock[item] = max(stock_items.amounts.get(item,0), stock_items.goals.get(item,0)) + stored_items.get(item, 0)
+            percentage = (current_stock[item] + 1)/ (desired_ingredients.get(item, 0) + 1)
+            if percentage  > max_percentage:
+                max_percentage = percentage
+
+
 
         priority_dict = {}
         for item in desired_ingredients.keys():
-            current_stock = max(stock_items.amounts.get(item,0), stock_items.goals.get(item,0)) + stored_items.get(item, 0)
-            priority_dict[item] = 1.0 - (float(current_stock) / desired_ingredients.get(item, 0))
+            priority_dict[item] = 1.0 - (float(current_stock[item]) / (desired_ingredients.get(item, 0) * max_percentage))
         return priority_dict
 
     def get_desired_ingredients(self, consider_intermediate_ingredients):

@@ -4,6 +4,7 @@ import rospy
 from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg, ResourceMsg
 
 from common_utils import etti_logging
+from common_utils.calc import CalcUtil
 from common_utils.singleton import Singleton
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.facility')
@@ -95,3 +96,7 @@ class FacilityProvider(object):
             for item in storage.items:
                 items[item.name] = items.get(item.name, 0) + item.stored
         return items
+
+    def items_in_storage(self, storage_name):
+        items = self.storages[storage_name].items
+        return CalcUtil.get_dict_from_items(items, attrs=["stored", "delivered"])

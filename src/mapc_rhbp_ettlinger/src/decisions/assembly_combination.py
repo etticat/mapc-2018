@@ -25,7 +25,7 @@ class AssemblyCombinationDecision(object):
     MAX_AGENTS = 7
     MIN_AGENTS = 1
 
-    ACTIVATION_THRESHOLD = 10
+    ACTIVATION_THRESHOLD = -100
 
     def __init__(self):
 
@@ -79,9 +79,6 @@ class AssemblyCombinationDecision(object):
 
             total_bid_array += bid_array
 
-        # rospy.logerr("Bid array: " + str(total_bid_array))
-        # rospy.logerr("Roles: " + str(Set([a.role for a in bids])))
-
         if len(bid_with_array) >= AssemblyCombinationDecision.MIN_AGENTS:
             # Go through all combinations
             for number_of_agents in range(AssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1, AssemblyCombinationDecision.MAX_AGENTS)): # We try all combinations using 2-7 agents
@@ -93,15 +90,8 @@ class AssemblyCombinationDecision(object):
                         bid_subset.append(bid)
                         array_bid_subset += array_bid
 
-                    # rospy.logerr("--------")
-                    # rospy.logerr([a.agent_name for a in bid_subset])
-                    # rospy.logerr(array_bid_subset)
-
                     prioritisation_activation, combination = self.try_build_item(array_bid_subset, priorities=priorities)
                     prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_PRODUCT_COUNT
-
-                    # rospy.logerr(prioritisation_activation)
-                    # rospy.logerr(combination)
 
                     # The number of step until all agents can be at the workshop
                     max_step_count = max([bid.expected_steps for bid in bid_subset])
@@ -111,9 +101,6 @@ class AssemblyCombinationDecision(object):
 
                     value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation, number_of_agents)
 
-                    # rospy.logerr("v:"+ str(value))
-
-
                     if value > best_value:
                         best_value = value
                         best_combination = bid_subset
@@ -121,7 +108,7 @@ class AssemblyCombinationDecision(object):
                 if number_of_agents >= 3 and best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
-
+        ettilog.logerr("AssembleContractNetManager:: best bid: %f: %s Starting: %s", best_value, str(best_finished_products), best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD)
         if best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
             return (best_combination, best_finished_products)
         else:
@@ -190,7 +177,11 @@ class AssemblyCombinationDecision(object):
             return {}
 
         for key, count in finished_stock_items.iteritems():
-            finished_stock_items[key] =  1.0 - (float(count) / self.finished_product_goals.get(key, 1))
+            # Priority value is the percentage of items still needed to reach finished product goal
+            priority = 1.0 - (float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
+            # priority can not be lower than 0 -> this would mean we want to destroy finished products
+            priority = max(priority, 0.0)
+            finished_stock_items[key] = priority
         return finished_stock_items
 
     def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):

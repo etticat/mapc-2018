@@ -33,7 +33,7 @@ class RhbpAgent:
         """
         # Take the name from the constructor parameter in case it was started from a development environment
         self.time_storage = []
-        if agent_name != None:
+        if agent_name is not None:
             self._agent_name = agent_name
         else:
             self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
@@ -125,7 +125,7 @@ class RhbpAgent:
         :type request_action: RequestAction
         :return:
         """
-        self.request_time = time.time()
+        self.request_time = rospy.get_rostime()
 
 
     def _action_request_callback_after_sensors(self, request_action):

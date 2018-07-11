@@ -22,24 +22,40 @@ class DeliverManager(ContractNetManager):
 
         request = TaskRequest(
             items=CalcUtil.get_list_from_items(job.items),
-            destination=self._facility_provider.get_storage_by_name(self._job.storage_name).pos
+            destination=self._facility_provider.get_storage_by_name(self._job.storage_name).pos,
+            destination_name=job.storage_name,
         )
         self.request_help(request)
 
     def get_assignments(self, bids):
-        bids = self._job_combination.choose_best_agent_combination(self._job, bids=bids)  # TODO
+        bids, item_needed_from_storage = self._job_combination.choose_best_agent_combination(self._job, bids=bids)  # TODO
 
-        if bids is None:
+        if bids is None or len(bids) == 0:
             return None
 
         assignments = []
+        from operator import attrgetter
+
+
+        # bid_attach_storage_retrival = min(bids, key=attrgetter('expected_steps'))
+        agentA1InList = False
         for bid in bids:
+            # if bid_attach_storage_retrival == bid:
+            if bid.agent_name == "agentA1":
+                agentA1InList = True
+                items = item_needed_from_storage
+            else:
+                items =[]
+
             assignment = TaskAssignment(
                 id=bid.id,
                 bid=bid,
-                items=bid.items,  # TODO: Filter out the ones we don't need
+                items=items,
                 tasks=self._job.id
             )
             assignments.append(assignment)
 
-        return assignments
+        if not agentA1InList:
+            return None
+        else:
+            return assignments

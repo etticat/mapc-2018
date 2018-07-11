@@ -1,7 +1,5 @@
 <launch>
 
-    <arg name="agent_name" default="agentA1" />
-
     <!-- Enable custom logger configuration-->
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 

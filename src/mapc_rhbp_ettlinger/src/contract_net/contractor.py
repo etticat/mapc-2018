@@ -80,7 +80,9 @@ class ContractNetContractorBehaviour(object):
                 id=assignment.bid.id,
                 type=self._task_type,
                 agent_name=self._agent_name,
+                items=assignment.items,
                 pos=assignment.bid.request.destination,
+                destination_name=assignment.bid.request.destination_name,
                 task=assignment.tasks
             )
             self.mechanism.start_task(task)

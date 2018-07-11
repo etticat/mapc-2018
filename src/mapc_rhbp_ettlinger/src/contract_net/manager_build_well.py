@@ -45,7 +45,7 @@ class BuildWellManager(ContractNetManager):
 
         return assignments
 
-    def _on_task_acknowledged(self):
+    def _on_task_acknowledged(self, task_id):
         self._well_chooser.start_task(self._id, self.well_type)
 
     def _on_task_finished(self, task_stop):

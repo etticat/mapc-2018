@@ -6,10 +6,10 @@ from mapc_rhbp_ettlinger.msg import StockItem
 import rospy
 from mac_ros_bridge.msg import Job
 
-from agent_behaviours.generic_action_behaviour import Action
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
-from provider.action_provider import ActionProvider
+from provider.action_provider import ActionProvider, Action
+from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
 from rospy import Publisher
@@ -18,11 +18,24 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class JobDecider(object):
     
+    DEFAULT_FINISHED_PRODUCT_GOAL = 5
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
     BID_PERCENTILE = 50
 
+    ACTIVATION_THRESHOLD = 0
+    ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = 0.2
+
+    WEIGHT_PERCENTILE = 10
+    WEIGHT_TIME_PASSED = -0.3
+
+    TIME_LEFT_WEIGHT_START = 30  # Steps
+
+    WEIGHT_TIME_OVER = -0.4
+
     def __init__(self, agent_name="agentA1"):
-        self.all_jobs = []
+        self.facility_provider = FacilityProvider()
+        self.coordinated_jobs = []
+        self.active_jobs = []
         self._product_provider = ProductProvider(agent_name=agent_name) # TODO: Make independent from agent
         self.action_provider = ActionProvider(agent_name=agent_name)
         self.simulation_provider = SimulationProvider()
@@ -49,31 +62,35 @@ class JobDecider(object):
 
     def train_decider(self, job):
         # Ignore fee for training
-        self.factors.append(float(job.reward) / self.get_base_ingredient_count(job.items))
-        # TODO: Here we could train a smarter algorithm to learn rm and rs which could later be used for decision making
+        self.factors.append(self.get_job_activation(job, include_fine=False))
 
     def job_to_do(self):
         all_available_items = self._product_provider.total_items_in_stock(include_goal=False)
 
         desired_finished_product_stock = self.generate_default_desired_finished_product_stock()
 
-        ACTIVATION_THRESHOLD = 0
-        ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = 0.2
-
         job_to_try = None
-        best_activation = ACTIVATION_THRESHOLD
+        items_to_take_from_storage = []
+        best_activation = JobDecider.ACTIVATION_THRESHOLD
 
 
-        ettilog.logerr("------------------------------------------------")
-        for job in self.all_jobs:
-            ettilog.loginfo("------------------------------------------------")
+        for job in self.active_jobs:
+
+            if job.id in self.coordinated_jobs:
+                # Already successfully coordinated job execution  -> ignore
+                continue
+
             job_items = CalcUtil.get_dict_from_items(job.items)
+
+            items_in_destination_storage = self.facility_provider.items_in_storage(job.storage_name)
+            job_items_from_agents = CalcUtil.dict_diff(job_items, items_in_destination_storage, normalize_to_zero=True)
+            job_items_from_storage = CalcUtil.dict_diff(job_items, job_items_from_agents)
 
             reward_quality = self.get_job_activation(job=job)
 
             percentile = float(sum(i <= reward_quality for i in self.factors)) / len(self.factors)
 
-            has_all_items = CalcUtil.contains_items(all_available_items, job_items)
+            has_all_items = CalcUtil.contains_items(all_available_items, job_items_from_agents)
 
             time_left = job.end - self.simulation_provider.step
             time_passed = self.simulation_provider.step - job.start
@@ -85,50 +102,42 @@ class JobDecider(object):
             ettilog.loginfo("->time_left: %f, ", time_left)
             ettilog.loginfo("->time_passed: %f, ", time_passed)
 
-            WEIGHT_PERCENTILE = 10
-            WEIGHT_TIME_PASSED = -0.3
 
-            TIME_LEFT_WEIGHT_START = 30 # Steps
-
-            WEIGHT_TIME_OVER = -0.4
-
-            activation = percentile * WEIGHT_PERCENTILE
+            activation = percentile * JobDecider.WEIGHT_PERCENTILE
 
             if job.type == "job":
                 # The opponent might already do this job, therefore we bias against old jobs
-                activation += time_passed * WEIGHT_TIME_PASSED
+                activation += time_passed * JobDecider.WEIGHT_TIME_PASSED
 
-            if time_left <= TIME_LEFT_WEIGHT_START:
+            if time_left <= JobDecider.TIME_LEFT_WEIGHT_START:
                 # If less than 30 steps are available start biasing against this job as it will get harder and harder to finish it
-                activation += (TIME_LEFT_WEIGHT_START - time_left) * WEIGHT_TIME_OVER
+                activation += (JobDecider.TIME_LEFT_WEIGHT_START - time_left) * JobDecider.WEIGHT_TIME_OVER
 
             ettilog.loginfo("activation: %f, ", activation)
 
             if has_all_items and activation > best_activation:
                 best_activation = activation
                 job_to_try = job
+                items_to_take_from_storage = job_items_from_storage
 
-            if not has_all_items and activation > ACTIVATION_THRESHOLD:
-                activation_surpluss = activation - ACTIVATION_THRESHOLD
+            if not has_all_items and activation > JobDecider.ACTIVATION_THRESHOLD:
+                activation_surpluss = activation - JobDecider.ACTIVATION_THRESHOLD
                 for item in job.items:
                     desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + \
-                                                                (activation_surpluss * item.amount* ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
+                                                                (activation_surpluss * item.amount* JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
 
-
-        ettilog.loginfo("------------ %s", str(desired_finished_product_stock))
-        ettilog.loginfo("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
         desired_stock = StockItem(agent="planner")
         for key, value in desired_finished_product_stock.iteritems():
             desired_stock.goals.append(KeyValue(key=key, value=str(value)))
 
         self._pub_desired_finished_products.publish(desired_stock)
-        return job_to_try
+        return job_to_try, items_to_take_from_storage
 
     def generate_default_desired_finished_product_stock(self):
         desired_finished_product_stock = {}
         for product in self._product_provider.finished_products.keys():
-            desired_finished_product_stock[product] = 5
+            desired_finished_product_stock[product] = JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL
         return desired_finished_product_stock
 
     def get_bid(self, job):
@@ -163,35 +172,21 @@ class JobDecider(object):
 
         for job in all_jobs_new:
             # if job has not been seen before -> process it
-            if job not in self.all_jobs:
+            if job not in self.active_jobs:
                 self.train_decider(job)
-        self.all_jobs = all_jobs_new
+        self.active_jobs = all_jobs_new
 
     def process_auction_jobs(self, auction_jobs):
         for auction in auction_jobs:
             # Only handle the not assigned auctions
-            if auction.job.start + auction.auction_time -1 ==self.simulation_provider.step:
+            if auction.job.start + auction.auction_time -1 == self.simulation_provider.step:
                 bid = self.get_bid(auction.job)
-                # rospy.logerr("job: %s", auction.job.id)
-                # rospy.logerr("job activation(after acceptance): %f",
-                #              self._job_decider.get_job_activation(auction.job, include_fine=True))
-                # rospy.logerr("job activation(before acceptance): %f",
-                #              self._job_decider.get_job_activation(auction.job, include_fine=False))
-                # rospy.logerr("job_reward: %f", auction.job.reward)
-                # rospy.logerr("bid: %f", bid)
-                # rospy.logerr("job.start: %s", auction.job.start)
-                # rospy.logerr("lowest bid: %d", auction.lowest_bid)
-                # rospy.logerr("auction time: %d", auction.auction_time)
-                # rospy.logerr("max bid: %d", auction.max_bid)
-                # rospy.logerr("simulation_step: %d", self.simulation_provider.step)
-
 
                 if bid > 0:
                     rospy.logerr("Bidding: %d !!!!!!!!!!!!!!!!!!", bid)
                     self.action_provider.send_action(action_type=Action.BID_FOR_JOB, params=[
                         KeyValue("Job", str(auction.job.id)),
                         KeyValue("Bid", str(int(bid)))])
+                    # We can only bid on one auction each round. Return ...
                     return
-                else:
-                    rospy.logerr("Not Bidding: %d !!!!!!!!!!!!!!!!!!", bid)
 

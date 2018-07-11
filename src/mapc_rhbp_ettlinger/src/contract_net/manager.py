@@ -56,7 +56,7 @@ class ContractNetManager(object):
 
         sleep_time = request.deadline - time.time()
         time.sleep(sleep_time)
-        self.process_bids()
+        return self.process_bids()
 
     def _callback_bid(self, bid):
 
@@ -80,7 +80,7 @@ class ContractNetManager(object):
 
         if assignments is None or len(assignments) == 0:
             ettilog.loginfo("ContractNetManager(%s):: No useful bid combination found in %d bids", self._task_type, len(self._bids))
-            return
+            return False
 
         ettilog.loginfo("ContractNetManager(%s):: Bids processed: Accepted bids from %s", self._task_type,
                         ", ".join([assignment.bid.agent_name for assignment in assignments]))
@@ -97,13 +97,13 @@ class ContractNetManager(object):
 
         time.sleep(acknowledgement_deadline - time.time())
 
-        self._process_bid_acknowledgements()
+        return self._process_bid_acknowledgements()
 
     def _callback_acknowledgement(self, acknowledgement):
 
         if acknowledgement.id != self._id:
             ettilog.loginfo("ContractNetManager(%s):: Received Acknowledgement with wrong id by %s (id:%d, bid-id:%d)", self._task_type, acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
-            return
+            return False
         else:
             ettilog.loginfo("ContractNetManager(%s):: Received Acknowledgement from %s", self._task_type,
                             acknowledgement.assignment.bid.agent_name)
@@ -115,6 +115,8 @@ class ContractNetManager(object):
                            self._id, str([assignment.bid.agent_name for assignment in self._assignments]))
 
             self._on_task_acknowledged(self._acknowledgements[0].id)
+            ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager stop---------------------------", self._task_type)
+            return True
         else:
             ettilog.loginfo("ContractNetManager(%s):: coordination unsuccessful. cancelling... Received %d/%d from %s", self._task_type,
                             len(self._acknowledgements), len(self._assignments),
@@ -123,8 +125,9 @@ class ContractNetManager(object):
             self._pub_task_stop.publish(TaskStop(
                 id=self._id,
                 reason='acknowledgements failed'))
+            ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager stop---------------------------", self._task_type)
+            return False
 
-        ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager stop---------------------------", self._task_type)
 
     @abstractmethod
     def get_assignments(self, _bids):

@@ -90,7 +90,9 @@ class WellIntegritySensor(GradientSensor):
                     max_integrity = well_prototype.integrity
                     val = integrity / max_integrity
 
-        return val
+                    return val
+
+        return 0
 
 
 class ChooseWellPositionBehaviour(DecisionBehaviour):

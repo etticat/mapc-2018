@@ -9,6 +9,7 @@ from mac_ros_bridge.msg import RequestAction, SimStart, Position, AuctionJob
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 from contract_net.manager_assemble import AssembleManager
 from contract_net.manager_build_well import BuildWellManager
 from contract_net.manager_deliver import DeliverManager
@@ -75,14 +76,16 @@ class Planner(object):
         while self.coordination_thread is not None:
             # self.coordinate_wells()
             self.coordinate_jobs()
-            time.sleep(10)
-            # self.coordinate_assembly()
+            self.coordinate_assembly()
 
     def coordinate_jobs(self):
-        job = self._job_decider.job_to_do()
+        job, items_to_pickup = self._job_decider.job_to_do()
 
         if job is not None:
-            self._job_manager.request_job(job)
+            ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s", job.id, CalcUtil.get_dict_from_items(job.items), items_to_pickup)
+            succesful = self._job_manager.request_job(job)
+            if succesful:
+                self._job_decider.coordinated_jobs.append(job.id)
 
     def coordinate_wells(self):
         well_to_build = self.well_chooser.choose_well_type()

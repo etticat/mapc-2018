@@ -44,6 +44,6 @@ class StoreBehaviour(GenericActionBehaviour):
         for item, count in finished_products_to_store.iteritems():
             if count > 0:
                 ettilog.logerr("StoreBehaviour:: Storing %s(%d)", item, count)
-                return [KeyValue(key="Item", value=item),KeyValue(key="Value", value=str(count))]
+                return [KeyValue(key="Item", value=item),KeyValue(key="Value", value=str(int(count)))]
 
         ettilog.logerr("StoreBehaviour:: ERROR: Trying to store, but no finished products available")

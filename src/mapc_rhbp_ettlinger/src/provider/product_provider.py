@@ -252,3 +252,6 @@ class ProductProvider(object):
 
     def usages_for_assembly(self, item):
         return self.useful_items_for_assembly.count(item)
+
+    def get_volume_of_item(self, item):
+        return self.products[item].volume
