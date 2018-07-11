@@ -114,7 +114,7 @@ class ContractNetManager(object):
             ettilog.logerr("ContractNetManager(%s):: Task (%d) starting with %s", self._task_type,
                            self._id, str([assignment.bid.agent_name for assignment in self._assignments]))
 
-            self._on_task_acknowledged()
+            self._on_task_acknowledged(self._acknowledgements[0].id)
         else:
             ettilog.loginfo("ContractNetManager(%s):: coordination unsuccessful. cancelling... Received %d/%d from %s", self._task_type,
                             len(self._acknowledgements), len(self._assignments),
@@ -130,8 +130,14 @@ class ContractNetManager(object):
     def get_assignments(self, _bids):
         return []
 
-    def _on_task_acknowledged(self):
+    def _on_task_acknowledged(self, task_id):
         pass
 
-    def _on_task_finished(self, task_stop):
+    def _on_task_finished(self, task_id):
+        """
+
+        :param task_stop:
+        :type task_stop: TaskStop
+        :return:
+        """
         pass

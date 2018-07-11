@@ -106,7 +106,8 @@ class ContractNetContractorBehaviour(object):
         pass
 
     def _on_task_finished(self, finish):
-        self.mechanism.end_task()
+        if self.mechanism.current_task is not None and self.mechanism.current_task.id == finish.id:
+            self.mechanism.end_task()
 
     @abstractmethod
     def bid_possible(self, bid):

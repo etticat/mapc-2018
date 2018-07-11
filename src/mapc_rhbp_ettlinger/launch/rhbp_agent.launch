@@ -1,10 +1,12 @@
 <launch>
     <arg name="agent_name" default="a1" />
+    <arg name="bid_for_auctions" default="False"  />
 
     <node pkg="mapc_rhbp_ettlinger" type="rhbp_agent.py"
         name="rhbp_agent_$(arg agent_name)" output="screen"
         >
             <param name="agent_name" value="$(arg agent_name)" />
+            <param name="bid_for_auctions" value="$(arg bid_for_auctions)" type="bool" />
             <param name="situationBias" type="double" value="0.7" />
             <param name="predecessorBias" type="double" value="1.0" />
             <param name="successorBias" type="double" value="1.0" />

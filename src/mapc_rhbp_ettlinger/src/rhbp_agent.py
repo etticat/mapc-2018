@@ -9,6 +9,7 @@ import rospy
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
+from decisions.job_activation import JobDecider
 from manager.action import ActionManager
 from manager.coordination import CoordinationManager
 from provider.action_provider import ActionProvider, Action
@@ -37,6 +38,7 @@ class RhbpAgent:
         else:
             self._agent_name = rospy.get_param('~agent_name', "agentA1")  # default for debugging 'agentA1'
 
+        self.bid_for_auctions = rospy.get_param('~bid_for_auctions', False)
         ettilog.logerr("RhbpAgent(%s):: Starting", self._agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
@@ -54,6 +56,9 @@ class RhbpAgent:
 
         self._provider_info_distributor = ProviderInfoDistributor()
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
+
+        if self.bid_for_auctions:
+            self._job_decider = JobDecider(agent_name=self._agent_name)
 
         self._sim_started = False
         self._initialized = False
@@ -121,7 +126,6 @@ class RhbpAgent:
         :return:
         """
         self.request_time = time.time()
-        # self.pr.enable()
 
 
     def _action_request_callback_after_sensors(self, request_action):
@@ -131,62 +135,38 @@ class RhbpAgent:
         :type request_action: RequestAction
         :return:
         """
-        sensor_finished_time = time.time()
-        request_action.simulation_step
 
         self._provider_info_distributor.callback_request_action(request_action)
-
-        provider_info_distributor_finished_time = time.time()
-
-        start_time = rospy.get_rostime()
-        # ettilog.logerr("-------------------------------------- Step %d (action_request) --------------------------------------", msg.simulation_step)
 
         self.agent_info = request_action.agent
 
         self.action_provider.current_action_sent = False
 
+        if self.bid_for_auctions:
+            self._job_decider.save_jobs(request_action)
+            self._job_decider.process_auction_jobs(request_action.auction_jobs)
 
-        start_time = rospy.get_rostime()
         steps = 0
         # wait for generic action response (send by any behaviour)
         while not self.action_provider.current_action_sent:
             if self._initialized:
                 steps += 1
-
-
                 self._action_manager.step(guarantee_decision=True)  # selected behaviours eventually trigger action
 
             else:
                 time.sleep(0.2)
             # Recharge if decision-making-time > 3.9 seconds
-            if (rospy.get_rostime() - start_time).to_sec() > 3.9:
+            time_passed = (rospy.get_rostime() - self.request_time).to_sec()
+            if time_passed > 3.9:
                 ettilog.logerr(
-                    "%s: 3.9 seconds (%d steps). Decision-making duration exceeded. Recharging. initialized: %s",
-                    self._agent_name, steps, str(self._initialized))
+                    "RhbpAgent(%s): No action within %.2fs and %d manager steps initialized: %s",
+                    self._agent_name, time_passed, steps, str(self._initialized))
                 self.fallback_recharge()
                 break
 
         if self._initialized:
             self._coordination_manager.step()
-        duration = rospy.get_rostime() - start_time
-        ettilog.loginfo("%s: Decision-making duration %f", self._agent_name, duration.to_sec())
 
-        manager_finished_time = time.time()
-        manager_time = manager_finished_time - provider_info_distributor_finished_time
-        sensor_time = sensor_finished_time - self.request_time
-
-        time_tuple = (manager_time, steps, manager_time /steps)
-        self.time_storage.append(time_tuple)
-        # rospy.logerr("--------------------------------------")
-        rospy.logerr("%d:::: curr: manager: %f, steps:%f, duration/step: %f" , request_action.simulation_step, time_tuple[0], time_tuple[1], time_tuple[2])
-        # a = np.mean(np.array(self.time_storage), axis=0)
-        # rospy.logerr("mean: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
-        # a = np.median(np.array(self.time_storage), axis=0)
-        # rospy.logerr("medi: sensor: %f, step: %f, steps:%f, duration/step: %f", a[0], a[1], a[2], a[3])
-        #
-
-        # self.pr.disable()
-        # self.pr.dump_stats("stats" + str(request_action.simulation_step) + ".pstat")
 
     def fallback_recharge(self):
         pub_generic_action = rospy.Publisher(
