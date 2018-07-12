@@ -174,7 +174,7 @@ class ExplorationDecision(PickClosestDestinationWithLowestValue):
     def __init__(self, buffer):
         super(ExplorationDecision, self).__init__(buffer, mode=MapDecision.MODE_OLDEST_VISITED,
                                                   frame='exploration_goal', key='destination',
-                                                  target_frames=["agent", "exploration_goal"])
+                                                  target_frames=["agent", "exploration_goal", "no_route"])
 
     def create_message(self, val):
         msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)
@@ -191,7 +191,7 @@ class ExplorationDecision(PickClosestDestinationWithLowestValue):
 class WellPositionDecision(PickClosestDestinationWithLowestValue):
 
     def __init__(self, buffer):
-        super(WellPositionDecision, self).__init__(buffer, frame="build_well", key="destination", target_frames=["build_well", "opponent"],
+        super(WellPositionDecision, self).__init__(buffer, frame="build_well", key="destination", target_frames=["build_well", "opponent", "no_route"],
                                                   mode=MapDecision.MODE_SEEN_COUNT)
 
     def create_message(self, val):
@@ -211,7 +211,7 @@ class OldestCellAgeDecision(MapDecision):
 
     def __init__(self, buffer, init_value):
         super(OldestCellAgeDecision, self).__init__(buffer, frame='noneTODOremove', key='destination',
-                                                    target_frames=["agent", "exploration_goal"],
+                                                    target_frames=["agent", "exploration_goal", "no_route"],
                                                     mode=MapDecision.MODE_OLDEST_VISITED)
         self.init_value = init_value
 
@@ -236,7 +236,7 @@ class DiscoverProgressDecision(MapDecision):
 
     def __init__(self, buffer):
         super(DiscoverProgressDecision, self).__init__(buffer, frame='noneTODOremove', key='destination',
-                                                  target_frames=["agent", "exploration_goal"],
+                                                  target_frames=["agent", "exploration_goal", "no_route"],
                                                   mode=MapDecision.MODE_OLDEST_VISITED)
 
     def calc_value(self):
