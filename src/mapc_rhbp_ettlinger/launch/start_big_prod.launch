@@ -20,7 +20,7 @@
         <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA1" />
-        <arg name="only_agent_specific" value="false" />
+        <arg name="only_agent_specific" value="False" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
@@ -133,7 +133,6 @@
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA3" />
-        <arg name="bid_for_auctions" value="True" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA4" />
@@ -164,6 +163,7 @@
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA13" />
+        <arg name="bid_for_auctions" value="True" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA14" />

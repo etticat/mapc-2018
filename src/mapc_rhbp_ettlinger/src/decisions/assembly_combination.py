@@ -7,7 +7,7 @@ from mapc_rhbp_ettlinger.msg import StockItem
 import rospy
 from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
-from map_decisions.job_activation import JobDecider
+from decisions.job_activation import JobDecider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 

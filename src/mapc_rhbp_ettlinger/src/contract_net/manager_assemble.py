@@ -24,12 +24,15 @@ class AssembleManager(ContractNetManager):
 
     def request_assembly(self):
 
-        request = TaskRequest(
-            destination=self._facility_provider.get_random_workshop().pos,
-            items=[]
-        )
-
-        self.request_help(request)
+        workshop = self._facility_provider.get_random_workshop()
+        if workshop is not None:
+            request = TaskRequest(
+                destination=workshop.pos,
+                items=[]
+            )
+            return self.request_help(request)
+        else:
+            return False
 
     def get_assignments(self, bids):
         accepted_bids, finished_products = self._assembly_combination.choose(bids)

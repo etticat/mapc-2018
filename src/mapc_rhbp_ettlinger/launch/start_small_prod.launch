@@ -13,7 +13,6 @@
 
     <!--Planner Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/planner.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
     </include>
 
 
