@@ -127,6 +127,9 @@ class ActionManager(Manager):
         self._assembly_network.add_precondition(
             self.sensor_map.has_assemble_task_assigned_cond
         )
+        self._assembly_network.add_precondition(
+            Negation(self.sensor_map.has_deliver_job_task_assigned_cond)
+        )
 
         self._assembly_network.add_effect(
             Effect(

@@ -28,6 +28,7 @@ class CurrentTaskDecision(DecisionPattern):
         return [self.current_task, self.state]
 
     def start_task(self, task):
+        assert self.current_task is None
         rospy.logerr("CurrentTaskDecision(%s)::starting task %s current state: %s", self.task_type, task.id, self.current_task)
         self.current_task = task
 

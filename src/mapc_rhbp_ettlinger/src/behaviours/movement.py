@@ -40,9 +40,10 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         :type agent: Agent
         :return:
         """
-        # Sometimes movement doesnt work (e.g. when navigating into a building. just cancel ..
+        # Sometimes movement doesnt work (e.g. when navigating into a building.)
         if agent.last_action == "goto" and agent.last_action_result == "failed_no_route":
             self.destination = None
+
             ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination, picking new one ...", self.name)
 
     def start(self):

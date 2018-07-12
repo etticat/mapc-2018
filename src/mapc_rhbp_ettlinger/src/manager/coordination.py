@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from behaviour_components.condition_elements import Effect
+from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
@@ -34,7 +35,7 @@ class CoordinationManager(object):
 
     def init_deliver_contractor(self):
         self.deliver_contractor_behaviour = DeliverContractor(agent_name=self._agent_name, mechanism=self.sensor_map.deliver_task_mechanism,
-                                                                ready_for_bid_condition=self.sensor_map.has_no_task_assigned_cond)
+                                                                ready_for_bid_condition=Negation(self.sensor_map.has_deliver_job_task_assigned_cond))
 
     def init_build_well_contractor(self):
         self.build_well_contractor_behaviour = BuildWellContractor(agent_name=self._agent_name, mechanism=self.sensor_map.well_task_mechanism,

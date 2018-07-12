@@ -13,13 +13,12 @@ ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DE
 
 class ContractNetContractorBehaviour(object):
 
-    def __init__(self, agent_name, task_type, mechanism, ready_for_bid_condition):
+    def __init__(self, agent_name, task_type, mechanism):
 
         self.mechanism = mechanism
         self._agent_name = agent_name
         self._current_task = None
         self._task_type = task_type
-        self.ready_for_bid_condition = ready_for_bid_condition
 
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
@@ -44,10 +43,15 @@ class ContractNetContractorBehaviour(object):
             ettilog.logerr("Contractor(%s-%s):: Deadline over %f - %f", self._agent_name, self._task_type, request.deadline, current_time)
             return
 
+        should_bid = self.should_bid_for_request(request)
+        if should_bid:
+            self.send_bid(request)
+
+    def should_bid_for_request(self, request):
         self.ready_for_bid_condition.sync()
         self.ready_for_bid_condition.updateComputation()
-        if self.ready_for_bid_condition.satisfaction > 0.8:
-            self.send_bid(request)
+        should_bid = self.ready_for_bid_condition.satisfaction > 0.8
+        return should_bid
 
     def send_bid(self, request):
 

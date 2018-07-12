@@ -15,7 +15,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class AssemblyCombinationDecision(object):
 
-    WEIGHT_PRODUCT_COUNT = -1
+    WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
     WEIGHT_PRIORITY = 10
     WEIGHT_NUMBER_OF_AGENTS = -10
     WEIGHT_PRIORITISATION_ACTIVATION = 30
@@ -91,7 +91,7 @@ class AssemblyCombinationDecision(object):
                         array_bid_subset += array_bid
 
                     prioritisation_activation, combination = self.try_build_item(array_bid_subset, priorities=priorities)
-                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_PRODUCT_COUNT
+                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT
 
                     # The number of step until all agents can be at the workshop
                     max_step_count = max([bid.expected_steps for bid in bid_subset])
@@ -148,7 +148,7 @@ class AssemblyCombinationDecision(object):
                 return np.inf, None
 
             res = [item]
-            best_value = sum(products[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_PRODUCT_COUNT + priorities[item] * \
+            best_value = sum(products[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT + priorities[item] * \
                          AssemblyCombinationDecision.WEIGHT_PRIORITY
             try_items = self.finished_item_list[self.finished_item_list.index(item):]
 
