@@ -108,7 +108,7 @@ class PickClosestDestinationWithLowestValue(MapDecision):
     def __init__(self, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=500,
                  value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
-                 ev_factor=0.0, ev_time=5):
+                 ev_factor=0.0, ev_time=5, pick_random_of_lowest_values=False):
 
         super(PickClosestDestinationWithLowestValue, self).__init__(buffer, frame, key, target_frames, mode,
                                                                     granulariy=granulariy,
@@ -117,6 +117,7 @@ class PickClosestDestinationWithLowestValue(MapDecision):
                                                                     diffusion=diffusion,
                                                                     goal_radius=goal_radius,
                                                                     ev_factor=ev_factor, ev_time=ev_time)
+        self.pick_random_of_lowest_values = pick_random_of_lowest_values
 
     def calc_value(self):
 
@@ -155,7 +156,11 @@ class PickClosestDestinationWithLowestValue(MapDecision):
                 break
 
         array2 = np.zeros([simple_size_x, simple_size_y, ])
-        array2[environment_array == min_val] = 1
+        if min_val == 0 or self.pick_random_of_lowest_values == False:
+            array2[environment_array == min_val] = 1
+        else:
+
+            array2[environment_array < np.percentile(environment_array, 10)] = 1
         array2[mask == False] *= 0
 
         ii = np.where(array2 == 1)
@@ -174,7 +179,7 @@ class ExplorationDecision(PickClosestDestinationWithLowestValue):
     def __init__(self, buffer):
         super(ExplorationDecision, self).__init__(buffer, mode=MapDecision.MODE_OLDEST_VISITED,
                                                   frame='exploration_goal', key='destination',
-                                                  target_frames=["agent", "exploration_goal", "no_route"])
+                                                  target_frames=["agent", "exploration_goal", "no_route"], pick_random_of_lowest_values=True)
 
     def create_message(self, val):
         msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)

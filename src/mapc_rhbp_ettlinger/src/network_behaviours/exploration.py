@@ -5,7 +5,7 @@ from behaviour_components.goals import GoalBase
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 from provider.self_organisation_provider import SelfOrganisationProvider
-from self_organisation.decisions import ExplorationDecision
+from decisions.map_decisions import ExplorationDecision
 
 
 class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):

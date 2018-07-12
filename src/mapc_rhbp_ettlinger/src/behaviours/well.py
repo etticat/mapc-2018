@@ -1,11 +1,9 @@
-import copy
 import traceback
 
 import rospy
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import GenericAction, Agent, WellMsg
+from mac_ros_bridge.msg import Agent
 
-from behaviour_components.behaviours import BehaviourBase
 from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -15,8 +13,7 @@ from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.well_provider import WellProvider
 from rhbp_selforga.behaviours import DecisionBehaviour
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
-from rhbp_utils.knowledge_sensors import KnowledgeFirstFactSensor
-from self_organisation.decisions import WellPositionDecision
+from decisions.map_decisions import WellPositionDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.well')
 

@@ -4,7 +4,7 @@ from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
-from self_organisation.decisions import DiscoverProgressDecision, OldestCellAgeDecision
+from decisions.map_decisions import DiscoverProgressDecision, OldestCellAgeDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.exploration')
 

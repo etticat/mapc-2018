@@ -8,7 +8,7 @@ from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 
 from common_utils.agent_utils import AgentUtils
-from decisions.assembly_combination import AssemblyCombinationDecision
+from map_decisions.assembly_combination import AssemblyCombinationDecision
 from provider.action_provider import ActionProvider
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
