@@ -10,6 +10,7 @@ from provider.action_provider import Action
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.action_provider import ActionProvider
+from provider.product_provider import ProductProvider
 from rhbp_selforga.behaviours import DecisionBehaviour
 from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
@@ -26,6 +27,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
             .__init__(mechanism=mechanism, name=name,
             requires_execution_steps=True,
             **kwargs)
+        self._product_provider = ProductProvider(agent_name=agent_name)
         self._task = None
         self._agent_name = agent_name
         self._last_task = None
@@ -66,6 +68,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
             ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name,
                            agent.last_action_result)
             if agent.last_action_result in ["successful", "failed_capacity"]:
+                if agent.last_action_result == "failed_capacity":
+                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", self._agent_name)
                 self._task_progress_dict[self._task.id] = self._task_progress_dict.get(self._task.id, 0) + 1
                 if self._get_assemble_step() < len(self._task.task.split(",")):
                     # If there are still tasks to do, inform all others that the next task will be performed
@@ -108,6 +112,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         self._task = super(AssembleProductBehaviour, self).do_step()
         assert self._task != None
         products = self._task.task.split(",")
+        self._product_provider.update_assembly_goal(self._task.task, self._get_assemble_step())
         if len(products) > 0 and self._get_assemble_step() < len(products):
             (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
             if self._last_task == "assemble":
@@ -122,9 +127,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
         else:
             ettilog.logerr("This should never happen. Assembly is executed after all tasks are finished")
 
-    def stop(self):
-        self._task = None
-        super(AssembleProductBehaviour, self).stop()
+    def start(self):
+        super(AssembleProductBehaviour, self).start()
 
     def _get_assemble_step(self):
         return self._task_progress_dict.get(self._task.id, 0)

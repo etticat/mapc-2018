@@ -1,18 +1,21 @@
 import numpy as np
 
 from diagnostic_msgs.msg import KeyValue
-from mapc_rhbp_ettlinger.msg import StockItem
+from mapc_rhbp_ettlinger.msg import StockItem, KeyIntValue, TaskStop
 
 import rospy
 from mac_ros_bridge.msg import Job
 
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
+from decisions.p_task_decision import CurrentTaskDecision
 from provider.action_provider import ActionProvider, Action
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
 from rospy import Publisher
+from rospy.my_publish_subscribe import MyPublisher
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_activation')
 
@@ -43,6 +46,8 @@ class JobDecider(object):
 
         self._pub_desired_finished_products = Publisher(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10)
 
+        self._pub_job_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=CurrentTaskDecision.TYPE_DELIVER, queue_size=10)
+
     def get_job_activation(self, job, include_fine=True):
         if include_fine:
             return float(job.reward + job.fine) / self.get_base_ingredient_count(job.items)
@@ -65,7 +70,7 @@ class JobDecider(object):
         self.factors.append(self.get_job_activation(job, include_fine=False))
 
     def job_to_do(self):
-        all_available_items = self._product_provider.total_items_in_stock(include_goal=False)
+        all_available_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
 
         desired_finished_product_stock = self.generate_default_desired_finished_product_stock()
 
@@ -82,7 +87,7 @@ class JobDecider(object):
 
             job_items = CalcUtil.get_dict_from_items(job.items)
 
-            items_in_destination_storage = self.facility_provider.items_in_storage(job.storage_name)
+            items_in_destination_storage = self._product_provider.get_stored_items(storage_name=job.storage_name)
             job_items_from_agents = CalcUtil.dict_diff(job_items, items_in_destination_storage, normalize_to_zero=True)
             job_items_from_storage = CalcUtil.dict_diff(job_items, job_items_from_agents)
 
@@ -127,9 +132,9 @@ class JobDecider(object):
                                                                 (activation_surpluss * item.amount* JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
 
 
-        desired_stock = StockItem(agent="planner")
+        desired_stock = StockItem(entity="planner")
         for key, value in desired_finished_product_stock.iteritems():
-            desired_stock.goals.append(KeyValue(key=key, value=str(value)))
+            desired_stock.amounts.append(KeyIntValue(key=key, value=value))
 
         self._pub_desired_finished_products.publish(desired_stock)
         return job_to_try, items_to_take_from_storage
@@ -173,7 +178,15 @@ class JobDecider(object):
         for job in all_jobs_new:
             # if job has not been seen before -> process it
             if job not in self.active_jobs:
+                # Job is new
                 self.train_decider(job)
+
+        for job in self.active_jobs:
+            if job not in all_jobs_new:
+                # Job got deleted
+                # If job was removed (oponent was quicker, time is up, ...) -> Notify everyone to stop persuing it
+                self._pub_job_stop.publish(TaskStop(job_id=job.id, reason="Job was removed"))
+
         self.active_jobs = all_jobs_new
 
     def process_auction_jobs(self, auction_jobs):

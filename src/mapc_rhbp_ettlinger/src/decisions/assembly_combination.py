@@ -5,7 +5,6 @@ import re
 from mapc_rhbp_ettlinger.msg import StockItem
 
 import rospy
-from agent_knowledge.item import StockItemKnowledgeBase
 from common_utils import etti_logging
 from decisions.job_activation import JobDecider
 from provider.facility_provider import FacilityProvider
@@ -30,7 +29,6 @@ class AssemblyCombinationDecision(object):
     def __init__(self):
 
         self.facility_provider = FacilityProvider()
-        self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._product_provider = ProductProvider(agent_name="agentA1") # TODO: make independent from agent
 
 
@@ -50,8 +48,8 @@ class AssemblyCombinationDecision(object):
         :return:
         """
         self.finished_product_goals = {}
-        for goal in stock_item.goals:
-            self.finished_product_goals[goal.key] = float(goal.value)
+        for goal in stock_item.amounts:
+            self.finished_product_goals[goal.key] = goal.value
 
 
     def choose(self, bids):
@@ -105,7 +103,7 @@ class AssemblyCombinationDecision(object):
                         best_value = value
                         best_combination = bid_subset
                         best_finished_products = combination
-                if number_of_agents >= 3 and best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
+                if number_of_agents >= 4 and best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
         ettilog.logerr("AssembleContractNetManager:: best bid: %f: %s Starting: %s", best_value, str(best_finished_products), best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD)
@@ -165,12 +163,12 @@ class AssemblyCombinationDecision(object):
         return best_value, res
 
     def finished_items_priority_dict(self):
-        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
-        stored_items = self.facility_provider.get_all_stored_items()
+        stock_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
+        stored_items = self._product_provider.get_stored_items()
 
         finished_stock_items = {}
         for item in self._product_provider.finished_products.keys():
-            finished_stock_items[item] = max(stock_items.amounts.get(item, 0), stock_items.goals.get(item, 0)) + stored_items.get(item, 0)
+            finished_stock_items[item] = stock_items.get(item, 0) + stored_items.get(item, 0)
         values = finished_stock_items.values()
         if len(values) == 0:
             ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")

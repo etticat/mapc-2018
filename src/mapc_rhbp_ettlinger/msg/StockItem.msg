@@ -1,3 +1,3 @@
-string agent
-diagnostic_msgs/KeyValue[] amounts
-diagnostic_msgs/KeyValue[] goals
+string                              entity
+string                              type
+mapc_rhbp_ettlinger/KeyIntValue[]   amounts

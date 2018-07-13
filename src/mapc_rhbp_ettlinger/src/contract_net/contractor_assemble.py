@@ -9,12 +9,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class AssembleContractor(ContractNetContractorBehaviour):
 
     def _on_assignment_confirmed(self, assignment):
-        items_to_assemble = {}
-        for task in assignment.tasks.split(","):
-            task_split = task.split(":")
-            if task_split[0] == "assemble":
-                items_to_assemble[task_split[1]] = items_to_assemble.get(task_split[1], 0) + 1
-        self._product_provider.start_assembly(items_to_assemble=items_to_assemble)
+        self._product_provider.update_assembly_goal(task_string=assignment.tasks)
 
     def bid_possible(self, bid):
         return True

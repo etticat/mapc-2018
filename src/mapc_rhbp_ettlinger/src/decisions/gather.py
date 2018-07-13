@@ -4,7 +4,7 @@ import numpy as np
 from mac_ros_bridge.msg import Agent
 
 import rospy
-from agent_knowledge.item import StockItemKnowledgeBase
+
 from common_utils import etti_logging
 
 from common_utils.agent_utils import AgentUtils
@@ -44,7 +44,6 @@ class GatherDecisionMechanism(DecisionPattern):
 
         self.facility_provider = FacilityProvider()
         self.step_provider = DistanceProvider()
-        self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
@@ -60,24 +59,26 @@ class GatherDecisionMechanism(DecisionPattern):
             if resource is not None:
                 if resource.item is not None:
                     self.chosen_resource = resource
-                    self._product_provider.start_gathering(resource.item.name)
                     ettilog.logerr("ChooseResourceMechanism(%s):: Choosing item %s", self.agent_name, resource.item)
-                    return [resource, self.state]
+                    self.chosen_resource = resource
                 else:
                     ettilog.logerr("ChooseResourceMechanism(%s):: Trying to choose item, but none fit in stock",
                                    self.agent_name)
-                    return [None, self.state]
+                    self.chosen_resource = None
 
             else:
                 ettilog.logerr(
                     "ChooseResourceMechanism(%s):: Trying to choose item, but no resource chosen",
                     self.agent_name)
-                return [None, self.state]
+                self.chosen_resource = None
+        if self.chosen_resource is not None:
+            self._product_provider.update_gathering_goal(self.chosen_resource.item.name)
         else:
-            return [self.chosen_resource, self.state]
+            self._product_provider.remove_gathering_goal()
+        return [self.chosen_resource, self.state]
 
     def end_gathering(self):
-        self._product_provider.stop_gathering()
+        self._product_provider.remove_gathering_goal()
         self.chosen_resource = None
 
     def choose_resource(self):
@@ -88,8 +89,8 @@ class GatherDecisionMechanism(DecisionPattern):
 
         max_activation = GatherDecisionMechanism.THRESHOLD
 
-        item_priority = self.ingredient_priority_sorted()
-        for item, already_in_stock_items in item_priority:
+        item_priority = self.ingredient_priority_dict()
+        for item, already_in_stock_items in item_priority.iteritems():
             load_after_gathering = self.load_after_gathering(item)
             usefulness_for_assembly = self._product_provider.usages_for_assembly(item)
             if load_after_gathering >= 0 and item in gatherable_items:
@@ -117,13 +118,13 @@ class GatherDecisionMechanism(DecisionPattern):
     def ingredient_priority_dict(self):
         desired_ingredients = self.get_desired_ingredients(consider_intermediate_ingredients=False)
         # Stock items that we currently have or are in the process of gathering
-        stock_items = self._stock_item_knowledgebase.get_total_stock_and_goals()
-        stored_items = self.facility_provider.get_all_stored_items()
+        stock_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
+        stored_items = self._product_provider.get_stored_items()
         current_stock = {}
 
         max_percentage = 0
         for item in desired_ingredients.keys():
-            current_stock[item] = max(stock_items.amounts.get(item,0), stock_items.goals.get(item,0)) + stored_items.get(item, 0)
+            current_stock[item] = stock_items.get(item,0) + stored_items.get(item, 0)
             percentage = (current_stock[item] + 1)/ (desired_ingredients.get(item, 0) + 1)
             if percentage  > max_percentage:
                 max_percentage = percentage

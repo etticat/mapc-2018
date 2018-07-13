@@ -130,4 +130,4 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
     def stop(self):
         super(GatheringNetworkBehaviour, self).stop()
         # Deleting task and cleaning up goal KB
-        self._product_provider.stop_gathering()
+        self._sensor_map.gather_decision_mechanism.end_gathering()

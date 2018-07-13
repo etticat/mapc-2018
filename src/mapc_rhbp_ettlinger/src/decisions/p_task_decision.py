@@ -2,6 +2,7 @@ import rospy
 from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils.agent_utils import AgentUtils
+from provider.product_provider import ProductProvider
 from rospy.my_publish_subscribe import MyPublisher
 from so_data.patterns import DecisionPattern
 
@@ -42,3 +43,34 @@ class CurrentTaskDecision(DecisionPattern):
 
 
         self.current_task = None
+
+
+class AssembleTaskDecision(CurrentTaskDecision):
+
+    def __init__(self, agent_name, task_type):
+        super(AssembleTaskDecision, self).__init__(agent_name, task_type)
+        self._product_provider = ProductProvider(agent_name=agent_name)
+
+    def end_task(self):
+        super(AssembleTaskDecision, self).end_task()
+
+        if self.current_task is None:
+            self._product_provider.stop_assembly()
+
+
+class DeliveryTaskDecision(CurrentTaskDecision):
+
+    def __init__(self, agent_name, task_type):
+        super(DeliveryTaskDecision, self).__init__(agent_name, task_type)
+        self._product_provider = ProductProvider(agent_name=agent_name)
+
+    def end_task(self):
+
+        if self.current_task is not None:
+            self._product_provider.stop_delivery(job_id=self.current_task.task, storage=self.current_task.destination_name)
+        super(DeliveryTaskDecision, self).end_task()
+
+
+    def start_task(self, task):
+        super(DeliveryTaskDecision, self).start_task(task)
+        self._product_provider.update_delivery_goal(item_list=self.current_task.items, job_id=self.current_task.task, storage=self.current_task.destination_name)

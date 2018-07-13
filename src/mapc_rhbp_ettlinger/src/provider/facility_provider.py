@@ -87,16 +87,3 @@ class FacilityProvider(object):
 
     def get_resources(self):
         return self.resources
-
-    def get_all_stored_items(self):
-        items = {}
-
-        storages = self.storages.values()
-        for storage in storages:
-            for item in storage.items:
-                items[item.name] = items.get(item.name, 0) + item.stored
-        return items
-
-    def items_in_storage(self, storage_name):
-        items = self.storages[storage_name].items
-        return CalcUtil.get_dict_from_items(items, attrs=["stored", "delivered"])

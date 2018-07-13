@@ -4,7 +4,7 @@ from mac_ros_bridge.msg import Position, ResourceMsg, Resource
 from mapc_rhbp_ettlinger.msg import Task
 
 import rospy
-from agent_knowledge.item import StockItemKnowledgeBase
+
 from common_utils import etti_logging
 from provider.facility_provider import FacilityProvider
 
@@ -38,10 +38,6 @@ class DebugUtils:
 
         facility_provider = FacilityProvider()
         facility_provider.resources_callback(rsMsg)
-    @staticmethod
-    def show_total_stock_with_goals():
-        stock_item_knowledgebase = StockItemKnowledgeBase()
-        return stock_item_knowledgebase.get_total_stock_and_goals()
 
     @staticmethod
     def print_precondition_states(behaviour):

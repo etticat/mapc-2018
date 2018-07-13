@@ -9,7 +9,7 @@ from common_utils.agent_utils import AgentUtils
 from decisions.battery import ClosestChargingStationDecision
 from decisions.choose_stroage_for_hoarding import ChooseStorageMechanism
 from decisions.gather import GatherDecisionMechanism
-from decisions.p_task_decision import CurrentTaskDecision
+from decisions.p_task_decision import CurrentTaskDecision, AssembleTaskDecision
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import FinishedProductLoadSensor
@@ -153,6 +153,12 @@ class SensorAndConditionMap(object):
             sensor=self.charge_sensor,
             activator=self._require_charge_activator)  # highest activation already before battery empty
 
+
+        self._charge_full_activator = ThresholdActivator(thresholdValue=10, isMinimum=True)
+        self.battery_full_cond = Condition(
+            sensor=self.charge_sensor,
+            activator=self._charge_full_activator
+        )
         # Condition to check if we are at a charging station
         self.at_charging_station_cond = Condition(
             sensor=self.charging_station_step_sensor,
@@ -213,7 +219,7 @@ class SensorAndConditionMap(object):
 
     def init_task_sensor(self, agent_name):
 
-        self.assemble_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
+        self.assemble_task_mechanism = AssembleTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
         self.deliver_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER)
         self.well_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
         # TODO: GATHER
@@ -293,6 +299,7 @@ class SensorAndConditionMap(object):
 
         self._require_charge_activator.fullActivationValue = agent_charge_lower_bound
         self._require_charge_activator.zeroActivationValue = agent_charge_upper_bound
+        self._charge_full_activator.threshold = agent_charge_upper_bound
 
     def init_exploration_sensor(self, agent_name):
         self.discovery_progress_sensor = DiscoveryProgressSensor(

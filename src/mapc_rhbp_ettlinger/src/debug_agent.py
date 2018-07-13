@@ -8,6 +8,7 @@ from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from decisions.assembly_combination import AssemblyCombinationDecision
 from provider.facility_provider import FacilityProvider
+from provider.product_provider import ProductProvider
 from sensor.sensor_map import SensorAndConditionMap
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
@@ -16,9 +17,10 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class DebugAgent(object):
 
     def __init__(self):
-
-        self.facility_provider = FacilityProvider()
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
+
+        self.product_provider = ProductProvider(agent_name="agentA1")
+        self.facility_provider = FacilityProvider()
         self.sensor_map = SensorAndConditionMap(agent_name="agentA1")
         time.sleep(1)
 
@@ -57,14 +59,18 @@ class DebugAgent(object):
         finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
         desired_finished_products = self.choose_best_assembly_combination.finished_product_goals
 
-        stock = DebugUtils.show_total_stock_with_goals()
-        storage_stock = self.facility_provider.get_all_stored_items()
+        stock_amount = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_STOCK])
+        stock_goals = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
+                                                            ProductProvider.STOCK_ITEM_TYPE_GATHER_GOAL,
+                                                                        ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
+                                                                        ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
+        storage_stock = self.product_provider.get_stored_items()
         for i in range(0, 5):
             item = "item" + str(i)
             ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
                                item,
-                           stock.amounts.get(item,0),
-                           stock.goals.get(item,0),
+                           stock_amount.get(item,0),
+                           stock_goals.get(item,0),
                            storage_stock.get(item, 0),
                            ingredient_priority.get(item, 0),
                            finished_product_priority.get(item, 0),
@@ -76,8 +82,8 @@ class DebugAgent(object):
             item = "item" + str(i)
             ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
                                item,
-                           stock.amounts.get(item,0),
-                           stock.goals.get(item,0),
+                           stock_amount.get(item,0),
+                           stock_goals.get(item,0),
                            storage_stock.get(item, 0),
                            ingredient_priority.get(item, 0),
                            finished_product_priority.get(item, 0),

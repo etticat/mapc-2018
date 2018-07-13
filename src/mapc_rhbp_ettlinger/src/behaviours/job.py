@@ -22,7 +22,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
     def __init__(self, name, agent_name, mechanism, **kwargs):
         super(DeliverJobBehaviour, self) \
             .__init__(name=name, mechanism=mechanism, requires_execution_steps=True, **kwargs)
-        self.product_provider = ProductProvider(agent_name=agent_name)
+        self._product_provider = ProductProvider(agent_name=agent_name)
         self.action_provider = ActionProvider(agent_name=agent_name)
         self.current_task = None
         self.items_to_retrive = None
@@ -43,14 +43,18 @@ class DeliverJobBehaviour(DecisionBehaviour):
         :return:
         """
         if self.current_task is not None and agent.last_action == "deliver_job":
-            if sum(self.current_task.items.values()) == 0:
-                ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", agent.last_action_result,
-                               agent.last_action_result)
+            if sum(self.storage_items.values()) == 0:
+                ettilog.logerr("DeliverJobBehaviour(%s):: Deleting own task. Status: %s", self._agent_name, agent.last_action_result)
                 self.mechanism.end_task()
                 self.current_task = None
-        if self.current_task is not None and agent.last_action in [Action.RETRIEVE, Action.RETRIEVE_DELIVERED]:
-            self.current_task.items[self.items_to_retrive] = self.current_task.items.get(self.items_to_retrive,
+
+        if self.current_task is not None and agent.last_action in [Action.RETRIEVE, Action.RETRIEVE_DELIVERED] :
+            ettilog.logerr("DeliverJobBehaviour(%s):: Retreived %dx%s status:", self._agent_name, self.items_to_retrive_count, self.items_to_retrive, agent.last_action_result)
+            ettilog.logerr("DeliverJobBehaviour(%s):: Storage items before update: %s", str(self.storage_items))
+            self.storage_items[self.items_to_retrive] = self.storage_items.get(self.items_to_retrive,
                                                          self.items_to_retrive_count) - self.items_to_retrive_count
+            ettilog.logerr("DeliverJobBehaviour(%s):: Storage items after update: %s", str(self.storage_items))
+
 
     def stop(self):
         self.current_task = None
@@ -60,8 +64,18 @@ class DeliverJobBehaviour(DecisionBehaviour):
         if self.current_task is None:
             self.current_task = super(DeliverJobBehaviour, self).do_step()
             self.current_task.items = CalcUtil.dict_from_strings(self.current_task.items)
+            ettilog.logerr("DeliverJobBehaviour(%s):: Starting doing job %s items: %s", self._agent_name,self.current_task.task, self.current_task.items)
+            ettilog.logerr("DeliverJobBehaviour(%s):: From own stock: %s", self._agent_name, self._product_provider.get_my_stock_items())
 
-        if sum(self.current_task.items.values()) > 0:
+        self._product_provider.update_delivery_goal(
+            item_list=self.current_task.items,
+            job_id=self.current_task.task,
+            storage=self.current_task.destination_name)
+
+        self.storage_items = CalcUtil.dict_diff(self.current_task.items, self._product_provider.get_my_stock_items(), normalize_to_zero=True)
+        ettilog.logerr("DeliverJobBehaviour(%s):: From storage still needed: %s", self._agent_name, self.storage_items)
+
+        if sum(self.storage_items.values()) > 0:
             item_to_pick_up, count = self.get_item_to_pickup()
             if item_to_pick_up is not None:
                 self.pick_up_item(item_to_pick_up, count)
@@ -71,12 +85,13 @@ class DeliverJobBehaviour(DecisionBehaviour):
         self.deliver()
 
     def deliver(self):
-        ettilog.loginfo("DeliverJobBehaviour:: delivering for job %s", self.current_task.task)
+        ettilog.logerr("DeliverJobBehaviour(%s):: delivering for job %s", self._agent_name, self.current_task.task)
         self.action_deliver_job(self.current_task.task)
 
     def pick_up_item(self, item_to_pick_up, count):
         self.facility_provider = FacilityProvider()
         storage = self.facility_provider.get_storage_by_name(self.current_task.destination_name)
+
 
         for item in storage.items:
             if item.name == item_to_pick_up:
@@ -95,9 +110,10 @@ class DeliverJobBehaviour(DecisionBehaviour):
                 return
 
         # TODO: Handle this? cancel job?
-        ettilog.logerr("DeliverJobBehaviour(%s):: Items to retrive from storage not available", self._agent_name)
+        ettilog.logerr("DeliverJobBehaviour(%s):: Items to retrive from storage not available tryig to pick up %s from storage %s", self._agent_name, str(item_to_pick_up), self.current_task.destination_name)
 
     def retrive_action(self, action_type, count, item_to_pick_up):
+        ettilog.logerr("DeliverJobBehaviour(%s):: Going to pick up %dx%s using %s",self._agent_name, count, item_to_pick_up, action_type)
         self.items_to_retrive = item_to_pick_up
         self.items_to_retrive_count = count
         self.action_provider.send_action(action_type=action_type,
@@ -107,16 +123,19 @@ class DeliverJobBehaviour(DecisionBehaviour):
     def get_item_to_pickup(self):
         item_to_pick_up = (None, 0)
         # Try to pick up all items of a certain type
-        for item, count in self.current_task.items.iteritems():
-            total_item_volume = self.product_provider.get_volume_of_item(item) * count
-            if total_item_volume <= self.product_provider.load_free:
-                item_to_pick_up = (item, count)
-                break
+        for item, count in self.storage_items.iteritems():
+            # Only pick up items where we need more than 0 -> Dict will have a lot of zero values
+            if count > 0:
+                total_item_volume = self._product_provider.get_volume_of_item(item) * count
+                if total_item_volume <= self._product_provider.load_free:
+                    item_to_pick_up = (item, count)
+                    break
         # If we can't pick up all items at once we try to pick them up partly
         if item_to_pick_up is None:
-            for item, count in self.current_task.items.iteritems():
-                volume = self.product_provider.get_volume_of_item(item)
-                items_to_retrive = self.product_provider.load_free / volume
-                item_to_pick_up = (item, count)
-                break
+            if count > 0:
+                for item, count in self.storage_items.iteritems():
+                    volume = self._product_provider.get_volume_of_item(item)
+                    items_to_retrive = self._product_provider.load_free / volume
+                    item_to_pick_up = (item, count)
+                    break
         return item_to_pick_up

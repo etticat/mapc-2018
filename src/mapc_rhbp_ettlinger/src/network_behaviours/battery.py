@@ -1,5 +1,5 @@
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation
+from behaviour_components.conditions import Negation, Disjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.battery import ChargeBehaviour, RechargeBehaviour
@@ -57,6 +57,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
         # only charge_behaviour when at charging station
         charge_behaviour.add_precondition(self._sensor_map.at_charging_station_cond)
+        charge_behaviour.add_precondition(Negation(self._sensor_map.battery_full_cond))
         charge_behaviour.add_effect(self._sensor_map.charge_behaviour_effect)
 
         self._charge_behaviour = charge_behaviour
@@ -78,7 +79,6 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         go_to_charging_station_behaviour.add_precondition(
             Negation(self._sensor_map.battery_empty_cond))
 
-        charge_behaviour.add_precondition(self._sensor_map.require_charging_cond)
         recharge_behaviour.add_precondition(self._sensor_map.battery_empty_cond)
         go_to_charging_station_behaviour.add_precondition(self._sensor_map.require_charging_cond)
 
@@ -96,7 +96,14 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
                 sensor_name=self._sensor_map.charge_sensor.name,
                 indicator=-1.0,
                 sensor_type=float))
-        # TODO #86: Is this sufficient to tell the planner, that even in 5 steps thi has to be met?
+        # TODO #86: Is this sufficient to tell the planner, that even in 5 steps it has to be met?
         movement_behaviour.add_precondition(
             precondition=self._sensor_map.enough_battery_to_move_cond
+        )
+
+        movement_behaviour.add_precondition(
+            precondition=Disjunction(
+                Negation(self._sensor_map.at_charging_station_cond),
+                self._sensor_map.battery_full_cond
+            )
         )

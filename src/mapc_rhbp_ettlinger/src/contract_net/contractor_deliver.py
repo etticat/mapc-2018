@@ -29,3 +29,8 @@ class DeliverContractor(ContractNetContractorBehaviour):
 
     def generate_bid(self, request):
         return self.job_bid_decider.generate_bid(request)
+
+
+    def _on_task_finished(self, finish):
+        if self.mechanism.current_task is not None and self.mechanism.current_task.task == finish.job_id:
+            self.mechanism.end_task()

@@ -1,6 +1,8 @@
 import copy
 
+from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import Item
+from mapc_rhbp_ettlinger.msg import KeyIntValue
 
 
 class CalcUtil:
@@ -102,3 +104,32 @@ class CalcUtil:
     @classmethod
     def dict_intersect(cls, dict1, dict2):
         return {k: min(dict1.get(k, 0), dict2.get(k, 0)) for k in set(dict1) | set(dict2)}
+
+    @classmethod
+    def dict_from_key_int_values(cls, amounts):
+        """
+
+        :param amounts:
+        :type amounts: KeyIntValue[]
+        :return:
+        """
+        res = {}
+
+        for key_values in amounts:
+            res[key_values.key] = key_values.value
+
+        return res
+
+    @classmethod
+    def key_int_values_from_dict(cls, dict_inst):
+        res = []
+
+        for key, value in dict_inst.iteritems():
+            res.append(KeyIntValue(key=key,value=value))
+
+        return res
+
+    @classmethod
+    def negate_dict(cls, item_dict):
+        return {key: {key_: -val_ for key_, val_ in val.items()}
+         for key, val in item_dict.iteritems()}

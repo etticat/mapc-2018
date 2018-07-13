@@ -175,12 +175,12 @@ class MacRosBridge(threading.Thread):
         self._publish_agent(timestamp=timestamp, perception=perception)
         self._publish_entity(timestamp=timestamp, perception=perception)
         self._publish_well(timestamp=timestamp, perception=perception)
+        self._publish_resources(timestamp=timestamp, perception=perception)
 
         if not self._only_agent_specific:
             self._publish_team(timestamp=timestamp, perception=perception)
             self._publish_facilities(timestamp=timestamp, perception=perception)
             self._publish_jobs(timestamp=timestamp, perception=perception)
-            self._publish_resources(timestamp=timestamp, perception=perception)
         # self.send(action_type="recharge") # can be enabled for dummy answers
 
         # first send all updates before requesting the action

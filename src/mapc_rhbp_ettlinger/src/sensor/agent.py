@@ -1,4 +1,4 @@
-from agent_knowledge.item import StockItemKnowledgeBase
+
 from behaviour_components.sensors import RawTopicSensor
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -12,7 +12,6 @@ class FinishedProductLoadSensor(RawTopicSensor):
 
     def __init__(self, name, agent_name, gather_decision_mechanism):
         self.gather_decision_mechanism = gather_decision_mechanism
-        self._stock_item_knowledgebase = StockItemKnowledgeBase()
         self._agent_name = agent_name
         agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
         super(FinishedProductLoadSensor, self).__init__(name, topic=agent_topic, initial_value=0)
