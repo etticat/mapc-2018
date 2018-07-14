@@ -99,8 +99,6 @@ class ShouldBidForAssembly(object):
                         activation, ShouldBidForAssembly.ACTIVATION_THRESHOLD,
                         str(activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD))
 
-        # TODO: Oportunity cost (certain roles could better do something else?
-
         if activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD:
             return TaskBid(
                 id=request.id,

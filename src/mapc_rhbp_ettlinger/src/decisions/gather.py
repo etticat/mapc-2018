@@ -23,7 +23,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class GatherDecisionMechanism(DecisionPattern):
 
-    WEIGHT_STEPS = 1
+    WEIGHT_STEPS = -1
     WEIGHT_ASSEMBLY_ROLE_MATCH = 2.5
     WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT = 0.5
     WEIGHT_PRIORITY = 200
