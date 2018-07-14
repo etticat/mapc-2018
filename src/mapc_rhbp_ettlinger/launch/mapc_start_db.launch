@@ -6,10 +6,5 @@
     <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
     </include>
 
-    <!--Infrastructure Nodes-->
-    <include file="$(find mapc_rhbp_ettlinger)/launch/graphhopper.launch">
-        <arg name="initial_port" value="8989" />
-    </include>
-
 
 </launch>

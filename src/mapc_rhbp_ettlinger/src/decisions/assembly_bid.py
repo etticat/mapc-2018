@@ -4,8 +4,10 @@ from mapc_rhbp_ettlinger.msg import TaskBid
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.product_provider import ProductProvider
+from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_bid')
 
@@ -19,6 +21,7 @@ class ShouldBidForAssembly(object):
 
     def __init__(self, agent_name, role):
 
+        self.agent_info_provider = AgentInfoProvider(agent_name=agent_name)
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
         self.distance_provider = DistanceProvider()
@@ -44,8 +47,8 @@ class ShouldBidForAssembly(object):
 
         self.max_load = agent.load_max
         self.load = agent.load
-        self.load_ingredients = self._product_provider.calculate_total_volume(self._product_provider.get_base_ingredients_in_stock())
-        self.load_finished_products = self._product_provider.calculate_total_volume(self._product_provider.get_finished_products_in_stock())
+        self.load_ingredients = self._product_provider.calculate_total_volume_dict(self._product_provider.get_base_ingredients_in_stock())
+        self.load_finished_products = self._product_provider.calculate_total_volume_dict(self._product_provider.get_finished_products_in_stock())
         self.items = {}
         self.pos = agent.pos
 
@@ -53,7 +56,7 @@ class ShouldBidForAssembly(object):
 
     def choose(self, request):
 
-        if self.initialized == False:
+        if not self.initialized:
             ettilog.loginfo("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
             return
         ingredient_fullness = float(self.load_ingredients) / self.max_load
@@ -87,6 +90,10 @@ class ShouldBidForAssembly(object):
                 agent_name = self._agent_name,
                 items = self._product_provider.get_item_list(),
                 role = self.role,
+                capacity = self._product_provider.load_free,
+                skill = self.agent_info_provider.skill,
+                speed = self.distance_provider.speed,
+                finished_product_factor = self._product_provider.finished_product_load_factor(),
                 request = request,
                 expected_steps=steps_to_destination
             )

@@ -6,14 +6,15 @@ from mapc_rhbp_ettlinger.msg import StockItem
 
 import rospy
 from common_utils import etti_logging
+from common_utils.calc import CalcUtil
 from decisions.job_activation import JobDecider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
-class AssemblyCombinationDecision(object):
 
+class AssemblyCombinationDecision(object):
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
     WEIGHT_PRIORITY = 10
     WEIGHT_NUMBER_OF_AGENTS = -10
@@ -29,8 +30,7 @@ class AssemblyCombinationDecision(object):
     def __init__(self):
 
         self.facility_provider = FacilityProvider()
-        self._product_provider = ProductProvider(agent_name="agentA1") # TODO: make independent from agent
-
+        self._product_provider = ProductProvider(agent_name="agentA1")  # TODO: make independent from agent
 
         self.roles = ["car", "motorcycle", "drone", "truck"]
         self.finished_products = None
@@ -38,7 +38,8 @@ class AssemblyCombinationDecision(object):
 
         self.finished_product_goals = {}
 
-        rospy.Subscriber(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10, callback=self._planner_goal_callback)
+        rospy.Subscriber(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,
+                         callback=self._planner_goal_callback)
 
     def _planner_goal_callback(self, stock_item):
         """
@@ -51,8 +52,7 @@ class AssemblyCombinationDecision(object):
         for goal in stock_item.amounts:
             self.finished_product_goals[goal.key] = goal.value
 
-
-    def choose(self, bids):
+    def choose_best_combinations(self, bids):
         """
 
         :param bids:
@@ -62,10 +62,8 @@ class AssemblyCombinationDecision(object):
         if self.finished_products == None:
             self.init_finished_products()
 
-
-        best_combination = []
+        best_combinations = []
         best_value = -np.inf
-        best_finished_products = None
 
         priorities = self.finished_items_priority_dict()
 
@@ -79,7 +77,8 @@ class AssemblyCombinationDecision(object):
 
         if len(bid_with_array) >= AssemblyCombinationDecision.MIN_AGENTS:
             # Go through all combinations
-            for number_of_agents in range(AssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1, AssemblyCombinationDecision.MAX_AGENTS)): # We try all combinations using 2-7 agents
+            for number_of_agents in range(AssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1,
+                                                                                      AssemblyCombinationDecision.MAX_AGENTS)):  # We try all combinations using 2-7 agents
                 for subset in itertools.combinations(bid_with_array, number_of_agents):
                     array_bid_subset = np.zeros(len(self.products) + len(self.roles))
                     bid_subset = []
@@ -88,8 +87,10 @@ class AssemblyCombinationDecision(object):
                         bid_subset.append(bid)
                         array_bid_subset += array_bid
 
-                    prioritisation_activation, combination = self.try_build_item(array_bid_subset, priorities=priorities)
-                    prioritisation_activation -= sum(array_bid_subset[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT
+                    prioritisation_activation, combination = self.try_build_item(array_bid_subset,
+                                                                                 priorities=priorities)
+                    prioritisation_activation -= sum(array_bid_subset[0:-len(
+                        self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT
 
                     # The number of step until all agents can be at the workshop
                     max_step_count = max([bid.expected_steps for bid in bid_subset])
@@ -97,30 +98,25 @@ class AssemblyCombinationDecision(object):
                     # Number of steps agents will have to wait at storage until the last agent arrives
                     idle_steps = sum([max_step_count - bid.expected_steps for bid in bid_subset])
 
-                    value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation, number_of_agents)
+                    value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
+                                                  number_of_agents)
 
-                    if value > best_value:
-                        best_value = value
-                        best_combination = bid_subset
-                        best_finished_products = combination
-                if number_of_agents >= 4 and best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
+                    if value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
+                        best_combinations += [(bid_subset, combination, value)]
+                if number_of_agents >= 4 and len(best_combinations) > 0:
                     # we only try combinations with more than 4 agents if we could not find anything with less
                     break
-        ettilog.logerr("AssembleContractNetManager:: best bid: %f: %s Starting: %s", best_value, str(best_finished_products), best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD)
-        if best_value > AssemblyCombinationDecision.ACTIVATION_THRESHOLD:
-            return (best_combination, best_finished_products)
-        else:
-            # rospy.logerr("No bid found. best: %f: %s with %d agents", best_value, str(best_finished_products), len(best_combination))
 
-            return (None, None)
+        best_combinations.sort(key=lambda tuple_: tuple_[2],reverse=True)
+        return best_combinations
 
     def init_finished_products(self):
         finished_products = self._product_provider.finished_products
         self.finished_item_list = finished_products.keys()
-        self.finished_item_list.sort(key=self.natural_keys)
+        self.finished_item_list.sort(key=CalcUtil.natural_keys)
         self.finished_products = {}
         self.products = self._product_provider.products.keys()
-        self.products.sort(key=self.natural_keys)
+        self.products.sort(key=CalcUtil.natural_keys)
 
         for finished_product in finished_products.values():
             self.finished_products[finished_product.name] = np.zeros(len(self.products) + len(self.roles))
@@ -146,7 +142,9 @@ class AssemblyCombinationDecision(object):
                 return np.inf, None
 
             res = [item]
-            best_value = sum(products[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT + priorities[item] * \
+            best_value = sum(
+                products[0:-len(self.roles)]) * AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT + \
+                         priorities[item] * \
                          AssemblyCombinationDecision.WEIGHT_PRIORITY
             try_items = self.finished_item_list[self.finished_item_list.index(item):]
 
@@ -176,7 +174,8 @@ class AssemblyCombinationDecision(object):
 
         for key, count in finished_stock_items.iteritems():
             # Priority value is the percentage of items still needed to reach finished product goal
-            priority = 1.0 - (float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
+            priority = 1.0 - (
+                        float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
             # priority can not be lower than 0 -> this would mean we want to destroy finished products
             priority = max(priority, 0.0)
             finished_stock_items[key] = priority
@@ -203,19 +202,3 @@ class AssemblyCombinationDecision(object):
         bid_array[len(self.products) + self.roles.index(bid.role)] = 999
 
         return bid_array
-
-    def atof(self, text):
-        try:
-            retval = float(text)
-        except ValueError:
-            retval = text
-        return retval
-
-    def natural_keys(self, text):
-        '''
-        alist.sort(key=natural_keys) sorts in human order
-        http://nedbatchelder.com/blog/200712/human_sorting.html
-        (See Toothy's implementation in the comments)
-        float regex comes from https://stackoverflow.com/a/12643073/190597
-        '''
-        return [self.atof(c) for c in re.split(r'[+-]?([0-9]+(?:[.][0-9]*)?|[.][0-9]+)', text)]

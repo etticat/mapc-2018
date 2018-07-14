@@ -15,11 +15,23 @@ class AgentInfoProvider(object):
 
     def __init__(self, agent_name):
         self._pos = None
+        self._skill = None
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name=agent_name), Agent, self._callback_agent)
 
     def _callback_agent(self, agent):
+        """
+
+        :param agent:
+        :type agent: Agent
+        :return:
+        """
         self._pos = agent.pos
+        self._skill = agent.skill
 
     @property
     def pos(self):
         return self._pos
+
+    @property
+    def skill(self):
+        return self._skill

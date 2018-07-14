@@ -84,7 +84,7 @@ class TestAgent(object):
             t_truck.role = "truck"
             t_truck.agent_name = "agentA4"
             bids.append(t_truck)
-            combination, products = self.choose_best_assembly_combination.choose(bids)
+            combination, products = self.choose_best_assembly_combination.choose_best_combinations(bids)
             ettilog.logerr([task.agent_name for task in combination])
             ettilog.logerr(products)
             rospy.logerr("3")

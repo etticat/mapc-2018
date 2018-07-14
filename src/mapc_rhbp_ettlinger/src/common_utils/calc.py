@@ -1,4 +1,5 @@
 import copy
+import re
 
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import Item
@@ -131,5 +132,21 @@ class CalcUtil:
 
     @classmethod
     def negate_dict(cls, item_dict):
-        return {key: {key_: -val_ for key_, val_ in val.items()}
-         for key, val in item_dict.iteritems()}
+        res = {}
+        for key_, val_ in item_dict.iteritems():
+            res[key_] = -val_
+        return res
+
+    @staticmethod
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    @staticmethod
+    def natural_keys(text):
+        '''
+        alist.sort(key=natural_keys) sorts in human order
+        http://nedbatchelder.com/blog/200712/human_sorting.html
+        (See Toothy's implementation in the comments)
+        Taken from https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+        '''
+        return [ CalcUtil.atoi(c) for c in re.split('(\d+)', text) ]

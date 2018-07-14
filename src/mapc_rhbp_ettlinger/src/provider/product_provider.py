@@ -309,7 +309,7 @@ class ProductProvider(object):
 
         return res
 
-    def calculate_total_volume(self, product_dict):
+    def calculate_total_volume_dict(self, product_dict):
         """
         Calculates the total volume that a dict of products will use
         :param product_dict:
@@ -319,8 +319,21 @@ class ProductProvider(object):
         v = 0
 
         for product in product_dict.keys():
-            product_by_name = self.get_product_by_name(product)
-            v += product_by_name.volume * product_dict[product]
+            v += self.get_volume_of_item(product) * product_dict[product]
+
+        return v
+
+    def calculate_total_volume_list(self, product_list):
+        """
+        Calculates the total volume that a dict of products will use
+        :param product_list:
+        :return:
+        """
+
+        v = 0
+
+        for product in product_list:
+            v += self.get_volume_of_item(product)
 
         return v
 
@@ -387,3 +400,6 @@ class ProductProvider(object):
 
     def get_my_stock_items(self):
         return self.agent_stock_items[ProductProvider.STOCK_ITEM_TYPE_STOCK][self._agent_name]
+
+    def finished_product_load_factor(self):
+        return self.calculate_total_volume_dict(self.get_finished_products_in_stock())/ self.load_max

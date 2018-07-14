@@ -2,6 +2,10 @@ uint32                              id
 string                              agent_name
 string                              role
 float32                             bid
+uint32                              capacity
+uint32                              speed
+uint32                              skill
+uint32                              finished_product_factor
 string[]                            items
 uint32                              expected_steps
 mapc_rhbp_ettlinger/TaskRequest     request

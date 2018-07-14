@@ -25,6 +25,6 @@ class FinishedProductLoadSensor(RawTopicSensor):
 
         items_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients, normalize_to_zero=True)
 
-        finished_product_volume = self._product_provider.calculate_total_volume(items_to_store)
+        finished_product_volume = self._product_provider.calculate_total_volume_dict(items_to_store)
         ettilog.loginfo("FinishedProductLoadSensor(%s):: Volume: %d", self._agent_name, finished_product_volume)
         super(FinishedProductLoadSensor, self).subscription_callback(finished_product_volume)
