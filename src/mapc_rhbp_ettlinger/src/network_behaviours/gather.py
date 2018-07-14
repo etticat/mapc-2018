@@ -33,6 +33,15 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.apply_charging_restrictions(self.go_to_resource_node_behaviour)
 
+
+
+        self.move_goal = GoalBase(
+            name='move_goal',
+            permanent=True,
+            priority=15,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[self.at_resource_node_condition])
+
         self.charge_goal = GoalBase(
             name='gather_goal',
             permanent=True,
@@ -59,7 +68,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
             effect=Effect(
                 sensor_name=self._sensor_map.load_factor_sensor.name,
                 indicator=1.0,
-                sensor_type=bool
+                sensor_type=float
 
             )
         )

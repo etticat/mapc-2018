@@ -87,7 +87,7 @@ class Planner(object):
             ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s", job.id, CalcUtil.get_dict_from_items(job.items), items_to_pickup)
             succesful = self._job_manager.request_job(job)
             if succesful:
-                self._job_decider.coordinated_jobs.append(job.id)
+                self._job_decider.job_started(job.id)
 
     def coordinate_wells(self):
         well_to_build = self.well_chooser.choose_well_type()

@@ -34,9 +34,12 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
         self.goal = GoalBase(
             name='job_fulfillment_goal',
             permanent=True,
+            priority=100,
             plannerPrefix=self.get_manager_prefix(),
-            conditions=[Condition(sensor=self._sensor_map.resource_discovery_progress_sensor,
-                        activator=GreedyActivator())])
+            conditions=[Condition(
+                sensor=self._sensor_map.resource_discovery_progress_sensor,
+                activator=GreedyActivator()
+            )])
 
         self._reset_destination_behaviour.add_effect(
             effect=Effect(

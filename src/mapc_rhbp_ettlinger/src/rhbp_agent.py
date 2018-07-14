@@ -3,6 +3,8 @@ import cProfile as profile
 import time
 
 import numpy as np
+
+from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import RequestAction, GenericAction, SimStart, SimEnd, Bye, sys, Agent
 
 import rospy
@@ -15,6 +17,7 @@ from manager.coordination import CoordinationManager
 from provider.action_provider import ActionProvider, Action
 from provider.provider_info_distributor import ProviderInfoDistributor
 from provider.self_organisation_provider import SelfOrganisationProvider
+from provider.simulation_provider import SimulationProvider
 from sensor.sensor_map import SensorAndConditionMap
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.rhbp')
@@ -32,6 +35,7 @@ class RhbpAgent:
         :type agent_name:  str
         """
         # Take the name from the constructor parameter in case it was started from a development environment
+        self.simulation_provider = SimulationProvider()
         self.time_storage = []
         if agent_name is not None:
             self._agent_name = agent_name
@@ -146,6 +150,9 @@ class RhbpAgent:
             self._job_decider.save_jobs(request_action)
             self._job_decider.process_auction_jobs(request_action.auction_jobs)
 
+        if self.simulation_provider.out_of_bounds:
+            # TODO: When this happens build a well
+             pass
         steps = 0
         # wait for generic action response (send by any behaviour)
         while not self.action_provider.current_action_sent:
@@ -158,9 +165,14 @@ class RhbpAgent:
             # Recharge if decision-making-time > 3.9 seconds
             time_passed = (rospy.get_rostime() - self.request_time).to_sec()
             if time_passed > 3.9:
-                ettilog.logerr(
-                    "RhbpAgent(%s): No action within %.2fs and %d manager steps initialized: %s",
-                    self._agent_name, time_passed, steps, str(self._initialized))
+                if self.action_provider.current_action_sent:
+                    ettilog.logerr(
+                        "RhbpAgent(%s): action sent at %.2fs (very late) at %d manager steps initialized: %s",
+                        self._agent_name, time_passed, steps, str(self._initialized))
+                else:
+                    ettilog.logerr(
+                        "RhbpAgent(%s): No action within %.2fs and %d manager steps initialized: %s",
+                        self._agent_name, time_passed, steps, str(self._initialized))
                 self.fallback_recharge()
                 break
 
@@ -169,9 +181,6 @@ class RhbpAgent:
 
 
     def fallback_recharge(self):
-        pub_generic_action = rospy.Publisher(
-            self._agent_topic_prefix + 'generic_action',
-            GenericAction, queue_size=10)
         self.action_provider.send_action(action_type=Action.RECHARGE)
 
 

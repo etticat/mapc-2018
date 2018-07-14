@@ -47,7 +47,7 @@ class GoToDestinationBehaviour(DecisionBehaviour):
             # Sometimes movement doesnt work (e.g. when navigating into a building.)
             if agent.last_action == "goto" and agent.last_action_result == "failed_no_route":
                 # Avoid this place until step 100000
-                self.self_organisation_provider.send_msg(pos=self.destination, frame="no_route", parent_frame="agent", time=100000)
+                self.self_organisation_provider.send_msg(pos=self.destination, frame="no_route", parent_frame="agent", time=100000, payload=(self.destination.lat, self.destination.long))
                 self.destination = None
                 ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination, picking new one ...", self.name)
 

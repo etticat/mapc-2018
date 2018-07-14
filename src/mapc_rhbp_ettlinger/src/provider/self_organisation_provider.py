@@ -8,6 +8,8 @@ from provider.distance_provider import DistanceProvider
 from self_organisation.massim_so_buffer import MassimSoBuffer
 from self_organisation.posegradienttf import CallbackEntityTopicGradientTf
 from so_data.msg import SoMessage
+
+from so_data.sobroadcaster import SoBroadcaster
 from so_data.sobuffer import SoBuffer
 
 
@@ -19,6 +21,8 @@ class SelfOrganisationProvider(object):
         self.value_key = 'value_' + agent_name
         self.frame_agent = "agent"
         self.agent_name = agent_name
+        self._broadcast = SoBroadcaster()
+
         self.buffer = MassimSoBuffer(id=agent_name, pose_frame=self.frame_agent,
                                view_distance=np.inf, moving_storage_size=np.inf)
 
@@ -56,4 +60,4 @@ class SelfOrganisationProvider(object):
         msg.moving = moving
         msg.payload = payload
 
-        return msg
+        self._broadcast.send_data(msg)

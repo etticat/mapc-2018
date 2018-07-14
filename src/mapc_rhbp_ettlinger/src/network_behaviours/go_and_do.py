@@ -22,6 +22,15 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.init_destination_step_sensor()
         self.init_go_behaviour()
 
+
+
+        self.move_goal = GoalBase(
+            name='move_goal',
+            permanent=True,
+            priority=15,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[self.at_destination_cond])
+
     def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
         # Only perform behaviour when at target destination
 

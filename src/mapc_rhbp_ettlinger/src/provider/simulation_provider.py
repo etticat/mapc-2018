@@ -17,6 +17,7 @@ class SimulationProvider(object):
         self.min_long = 0
         self.max_long = 0
         self.step = 0
+        self.out_of_bounds = False
 
     def callback_sim_start(self, sim_start):
         """
@@ -40,6 +41,7 @@ class SimulationProvider(object):
         :return:
         """
         self.step = request_action.simulation_step
+        self.out_of_bounds = request_action.agent.pos.lat < self.min_lat or request_action.agent.pos.lat > self.max_lat or request_action.agent.pos.long < self.min_long or request_action.agent.pos.long > self.max_long
 
     def get_random_position(self):
         return Position(

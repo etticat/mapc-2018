@@ -15,7 +15,7 @@ from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
 from rospy import Publisher
-from rospy.my_publish_subscribe import MyPublisher
+from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_activation')
 
@@ -46,6 +46,8 @@ class JobDecider(object):
         self.factors = []
 
         self._pub_desired_finished_products = Publisher(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10)
+
+        MySubscriber(AgentUtils.get_coordination_topic(), message_type="stop", task_type=CurrentTaskDecision.TYPE_DELIVER, callback=self.job_finished)
 
         self._pub_job_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=CurrentTaskDecision.TYPE_DELIVER, queue_size=10)
 
@@ -204,4 +206,11 @@ class JobDecider(object):
                         KeyValue("Bid", str(int(bid)))])
                     # We can only bid on one auction each round. Return ...
                     return
+
+    def job_started(self, id):
+        self.coordinated_jobs.append(id)
+
+    def job_finished(self, task_stop):
+        if task_stop.job_id in self.coordinated_jobs:
+            self.coordinated_jobs.remove(task_stop.job_id)
 

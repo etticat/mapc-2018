@@ -59,7 +59,7 @@ class GatherDecisionMechanism(DecisionPattern):
             if resource is not None:
                 if resource.item is not None:
                     self.chosen_resource = resource
-                    ettilog.logerr("ChooseResourceMechanism(%s):: Choosing item %s", self.agent_name, resource.item)
+                    ettilog.loginfo("ChooseResourceMechanism(%s):: Choosing item %s", self.agent_name, resource.item.name)
                     self.chosen_resource = resource
                 else:
                     ettilog.logerr("ChooseResourceMechanism(%s):: Trying to choose item, but none fit in stock",

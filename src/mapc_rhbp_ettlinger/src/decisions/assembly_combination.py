@@ -164,14 +164,9 @@ class AssemblyCombinationDecision(object):
     def finished_items_priority_dict(self):
         finished_stock_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
 
-        values = finished_stock_items.values()
-        if len(values) == 0:
-            ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")
-            return {}
-
-        for key, count in finished_stock_items.iteritems():
+        for key in self._product_provider.finished_products.keys():
             # Priority value is the percentage of items still needed to reach finished product goal
-            priority = 1.0 - (float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
+            priority = 1.0 - (float(finished_stock_items.get(key, 0)) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
             # priority can not be lower than 0 -> this would mean we want to destroy finished products
             priority = max(priority, 0.0)
             finished_stock_items[key] = priority**AssemblyCombinationDecision.PRIORITY_EXPONENT # Square it to really emphasize the importance of items with few

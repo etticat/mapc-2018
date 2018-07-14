@@ -66,9 +66,9 @@ class ProductProvider(object):
             SimStart,
             self._callback_sim_start)
 
+        self._sub_stock_item = rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
         self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
-        self._sub_stock_item = rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
         rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
         self._facility_provider = FacilityProvider()
 
