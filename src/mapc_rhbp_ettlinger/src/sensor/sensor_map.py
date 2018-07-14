@@ -6,10 +6,12 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Disjunction
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
+from decisions.assembly_combination import AssemblyCombinationDecision
 from decisions.battery import ClosestChargingStationDecision
-from decisions.choose_stroage_for_hoarding import ChooseStorageMechanism
+from decisions.choose_finsihed_products_to_store import ChooseFinishedProductsToStore
+from decisions.choose_stroage_for_hoarding import ChooseStorageForHoardingMechanism
 from decisions.gather import GatherDecisionMechanism
-from decisions.p_task_decision import CurrentTaskDecision, AssembleTaskDecision
+from decisions.p_task_decision import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import FinishedProductLoadSensor
@@ -91,12 +93,17 @@ class SensorAndConditionMap(object):
                 fullActivationValue=1.0
             )
         )
-        self.has_finished_products_cond = Condition(
+
+        self.hoarding_target_sensor = GradientSensor(
+            name="hoarding_target_sensor",
+            sensor_type=SENSOR.VALUE_EXISTS,
+            mechanism=self.hoarding_items_decision
+        )
+
+        self.has_finished_products_to_store = Condition(
             name="has_finished_products_cond",
-            sensor=self.finished_product_load_sensor,
-            activator=ThresholdActivator(
-                isMinimum=True,
-                thresholdValue=1)
+            sensor=self.hoarding_target_sensor,
+            activator=BooleanActivator()
         )
         self.smallest_gatherable_item_sensor = SmallestGatherableItemSensor(
             name="smallest_gatherable_item_sensor",
@@ -219,11 +226,6 @@ class SensorAndConditionMap(object):
 
     def init_task_sensor(self, agent_name):
 
-        self.assemble_task_mechanism = AssembleTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
-        self.deliver_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER)
-        self.well_task_mechanism = CurrentTaskDecision(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
-        # TODO: GATHER
-        self.choose_hoarding_mechanism = ChooseStorageMechanism(agent_name=agent_name)
 
         self.assemble_task_sensor = GradientSensor(
             name="assemble_task_sensor",
@@ -339,4 +341,25 @@ class SensorAndConditionMap(object):
         )
 
     def init_mechanism(self, agent_name):
-        self.gather_decision_mechanism = GatherDecisionMechanism(agent_name=agent_name)
+        self.assemble_task_mechanism = AssembleTaskDecision(
+            agent_name=agent_name,
+            task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
+        self.assembly_combination_decision = AssemblyCombinationDecision(
+            agent_name=agent_name)
+        self.gather_decision_mechanism = GatherDecisionMechanism(
+            agent_name=agent_name,
+            assembly_combination_decision=self.assembly_combination_decision)
+        self.deliver_task_mechanism = DeliveryTaskDecision(
+            agent_name=agent_name,
+            task_type=CurrentTaskDecision.TYPE_DELIVER)
+        self.well_task_mechanism = CurrentTaskDecision(
+            agent_name=agent_name,
+            task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
+        self.hoarding_items_decision = ChooseFinishedProductsToStore(
+            agent_name=agent_name,
+            gather_mechanism=self.gather_decision_mechanism,
+            assembly_decision_mechanism=self.assembly_combination_decision)
+        self.choose_hoarding_mechanism = ChooseStorageForHoardingMechanism(
+            agent_name=agent_name,
+            hoarding_items_decision=self.hoarding_items_decision,
+            assembly_decision_mechanism=self.assembly_combination_decision)

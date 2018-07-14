@@ -18,11 +18,11 @@ class AssembleManager(ContractNetManager):
     WEIGHT_BID_SKILL = -100
     WEIGHT_BID_SPEED = 100
 
-    def __init__(self, agent_name):
+    def __init__(self, agent_name, assembly_combination_decision):
         super(AssembleManager, self).__init__(task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
 
         self._facility_provider = FacilityProvider()
-        self._assembly_combination = AssemblyCombinationDecision()
+        self._assembly_combination_decision = assembly_combination_decision
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def reset_manager(self):
@@ -42,7 +42,7 @@ class AssembleManager(ContractNetManager):
             return False
 
     def get_assignments(self, bids):
-        bids_products_array = self._assembly_combination.choose_best_combinations(bids)
+        bids_products_array = self._assembly_combination_decision.choose_best_combinations(bids)
         accepted_bids = None
         finished_products = None
 

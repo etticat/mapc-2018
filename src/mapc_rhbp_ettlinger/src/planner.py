@@ -19,6 +19,7 @@ from provider.action_provider import ActionProvider, Action
 from provider.product_provider import ProductProvider
 from provider.provider_info_distributor import ProviderInfoDistributor
 from provider.simulation_provider import SimulationProvider
+from sensor.sensor_map import SensorAndConditionMap
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.planner')
 
@@ -33,10 +34,11 @@ class Planner(object):
         self.well_chooser = ChooseWellToBuild()
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
+        self.sensor_map = SensorAndConditionMap(agent_name=agent_name)
 
         self._job_manager = DeliverManager()
         self._build_well_manager = BuildWellManager()
-        self._assemble_planner = AssembleManager(agent_name="agentA1")
+        self._assemble_planner = AssembleManager(agent_name=agent_name, assembly_combination_decision=self.sensor_map.assembly_combination_decision)
         self._provider_info_distributor = ProviderInfoDistributor()
 
         self.coordination_thread = None
@@ -107,8 +109,7 @@ if __name__ == '__main__':
     rospy.init_node(name='planner', log_level=rospy.INFO)
     try:
         # Just take a random agent. doesn't really matter
-        planner = Planner(
-            agent_name="agentA1")
+        planner = Planner(agent_name="agentA1")
 
         rospy.spin()
 

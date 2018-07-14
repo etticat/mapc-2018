@@ -18,6 +18,10 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
             name="store_behaviour",
             agent_name=agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            gather_decision_mechanism=sensor_map.gather_decision_mechanism
+            mechanism=sensor_map.choose_hoarding_mechanism
         )
         self.init_do_behaviour(store_behaviour)
+
+    def stop(self):
+        super(HoardingNetworkBehaviour, self).stop()
+        self._sensor_map.choose_hoarding_mechanism.reset_value()

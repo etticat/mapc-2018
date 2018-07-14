@@ -15,6 +15,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class AssemblyCombinationDecision(object):
+    PRIORITY_EXPONENT = 2 # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
     WEIGHT_PRIORITY = 10
     WEIGHT_NUMBER_OF_AGENTS = -10
@@ -27,10 +28,10 @@ class AssemblyCombinationDecision(object):
 
     ACTIVATION_THRESHOLD = -100
 
-    def __init__(self):
+    def __init__(self, agent_name):
 
         self.facility_provider = FacilityProvider()
-        self._product_provider = ProductProvider(agent_name="agentA1")  # TODO: make independent from agent
+        self._product_provider = ProductProvider(agent_name=agent_name)  # TODO: make independent from agent
 
         self.roles = ["car", "motorcycle", "drone", "truck"]
         self.finished_products = None
@@ -161,12 +162,8 @@ class AssemblyCombinationDecision(object):
         return best_value, res
 
     def finished_items_priority_dict(self):
-        stock_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
-        stored_items = self._product_provider.get_stored_items()
+        finished_stock_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
 
-        finished_stock_items = {}
-        for item in self._product_provider.finished_products.keys():
-            finished_stock_items[item] = stock_items.get(item, 0) + stored_items.get(item, 0)
         values = finished_stock_items.values()
         if len(values) == 0:
             ettilog.logerr("ChooseBestAssemblyCombination:: Finished products not yet loaded")
@@ -174,11 +171,10 @@ class AssemblyCombinationDecision(object):
 
         for key, count in finished_stock_items.iteritems():
             # Priority value is the percentage of items still needed to reach finished product goal
-            priority = 1.0 - (
-                        float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
+            priority = 1.0 - (float(count) / self.finished_product_goals.get(key, JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL))
             # priority can not be lower than 0 -> this would mean we want to destroy finished products
             priority = max(priority, 0.0)
-            finished_stock_items[key] = priority
+            finished_stock_items[key] = priority**AssemblyCombinationDecision.PRIORITY_EXPONENT # Square it to really emphasize the importance of items with few
         return finished_stock_items
 
     def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):
@@ -202,3 +198,6 @@ class AssemblyCombinationDecision(object):
         bid_array[len(self.products) + self.roles.index(bid.role)] = 999
 
         return bid_array
+
+    def get_desired_finished_products(self):
+        return self.finished_product_goals

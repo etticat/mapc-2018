@@ -49,7 +49,7 @@ class ActionManager(Manager):
                 Negation(self.sensor_map.resources_of_all_items_discovered_condition),
                 Conjunction(
                     Negation(self.sensor_map.can_fit_more_ingredients_cond),
-                    Negation(self.sensor_map.has_finished_products_cond)
+                    Negation(self.sensor_map.has_finished_products_to_store)
                 )
             )
         )
@@ -103,10 +103,9 @@ class ActionManager(Manager):
         # Only hoard when stock is full
         self._hoarding_network.add_precondition(Negation(self.sensor_map.can_fit_more_ingredients_cond))
 
-        self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_cond)
-
         self._hoarding_network.add_precondition(self.sensor_map.has_no_task_assigned_cond)
 
+        self._hoarding_network.add_precondition(self.sensor_map.has_finished_products_to_store)
 
         self._hoarding_network.add_effect(
             Effect(

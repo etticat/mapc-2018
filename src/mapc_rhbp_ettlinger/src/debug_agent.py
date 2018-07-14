@@ -19,12 +19,14 @@ class DebugAgent(object):
     def __init__(self):
         rospy.init_node('planner_node', anonymous=True, log_level=rospy.ERROR)
 
-        self.product_provider = ProductProvider(agent_name="agentA1")
+        agent_name = "agentA1"
+        
+        self.product_provider = ProductProvider(agent_name=agent_name)
         self.facility_provider = FacilityProvider()
-        self.sensor_map = SensorAndConditionMap(agent_name="agentA1")
+        self.sensor_map = SensorAndConditionMap(agent_name=agent_name)
         time.sleep(1)
 
-        self.choose_best_assembly_combination= AssemblyCombinationDecision()
+        self.choose_best_assembly_combination= AssemblyCombinationDecision(agent_name=agent_name)
         # DebugUtils.instant_find_resources(ResourceBaseKnowledgeBase())
         # time.sleep(1)
         # rospy.signal_shutdown("end of debug code")
@@ -37,7 +39,7 @@ class DebugAgent(object):
         # DebugUtils.add_build_well_task(agent_name="agentA5")
         # DebugUtils.add_build_well_task(agent_name="agentA6")
 
-        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
+        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._action_request_callback)
 
 
@@ -51,44 +53,58 @@ class DebugAgent(object):
         self.show_items()
 
     def show_items(self):
-        ettilog.logerr("-----------------------------------")
-        ettilog.logerr("Ingredients:")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("  ")
+        rospy.logerr("-----------------------------------")
+        rospy.logerr("Ingredients:")
 
-        ingredient_priority = self.sensor_map.gather_decision_mechanism.ingredient_priority_dict()
-        desired_ingredients = self.sensor_map.gather_decision_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
-        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
-        desired_finished_products = self.choose_best_assembly_combination.finished_product_goals
+        as_ = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_STOCK])
+        ag_ = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_GATHER_GOAL])
+        aa_ = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL])
+        ah_ = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL])
+        ad_ = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
 
-        stock_amount = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_STOCK])
-        stock_goals = self.product_provider.total_items_in_stock(types=[ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
-                                                            ProductProvider.STOCK_ITEM_TYPE_GATHER_GOAL,
-                                                                        ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
-                                                                        ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
-        storage_stock = self.product_provider.get_stored_items()
-        for i in range(0, 5):
+        ss_ = self.product_provider.get_stored_items(include_job_goals=False, include_stock=True, include_hoarding_goal=False)
+        sd_ = self.product_provider.get_stored_items(include_job_goals=True, include_stock=False, include_hoarding_goal=True)
+        sh_ = self.product_provider.get_stored_items(include_job_goals=False, include_stock=False, include_hoarding_goal=False)
+
+        gip_ = self.sensor_map.gather_decision_mechanism.ingredient_priority_dict()
+        gi_ = self.sensor_map.gather_decision_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
+        gfp_ = self.choose_best_assembly_combination.finished_items_priority_dict()
+        gf_ = self.choose_best_assembly_combination.get_desired_finished_products()
+
+
+        for i in range(0, 11):
             item = "item" + str(i)
-            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
-                               item,
-                           stock_amount.get(item,0),
-                           stock_goals.get(item,0),
-                           storage_stock.get(item, 0),
-                           ingredient_priority.get(item, 0),
-                           finished_product_priority.get(item, 0),
-                           desired_ingredients.get(item, 0),
-                           desired_finished_products.get(item, 0))
+            rospy.logerr("%7s: agents:[s:%-3s g:%-3s a:%-3s h:%-3s d:%-3s] storage:[s:%-3s d:%-3s h:%-3s] goal:[i:%2.2f f:%2.2f ip:%2.2f fp:%2.2f]",
+                            item,
 
-        ettilog.logerr("Finished products:")
-        for i in range(5, 11):
-            item = "item" + str(i)
-            ettilog.logerr("%s: %d/%d  - stored: %d ingredient_prio: %.2f finished_product_prio: %.2f, desired i: %d dfp: %f",
-                               item,
-                           stock_amount.get(item,0),
-                           stock_goals.get(item,0),
-                           storage_stock.get(item, 0),
-                           ingredient_priority.get(item, 0),
-                           finished_product_priority.get(item, 0),
-                           desired_ingredients.get(item, 0),
-                           desired_finished_products.get(item, 0))
+                           as_.get(item,0),
+                           ag_.get(item,0),
+                           aa_.get(item,0),
+                           ah_.get(item,0),
+                           ad_.get(item,0),
+
+                           ss_.get(item,0),
+                           sd_.get(item,0),
+                           sh_.get(item,0),
+
+                           gi_.get(item,0),
+                           gf_.get(item,0),
+                           gip_.get(item,0),
+                           gfp_.get(item,0)
+                         )
+            if i ==4:
+                rospy.logerr("Finished products:")
 
 if __name__ == '__main__':
 

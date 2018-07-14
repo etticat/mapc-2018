@@ -25,7 +25,8 @@ class JobDecider(object):
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
     BID_PERCENTILE = 50
 
-    ACTIVATION_THRESHOLD = 0
+    ACTIVATION_THRESHOLD = -50
+    IMPORTANT_JOB_THRESHOLD = 0
     ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = 0.2
 
     WEIGHT_PERCENTILE = 10
@@ -70,7 +71,8 @@ class JobDecider(object):
         self.factors.append(self.get_job_activation(job, include_fine=False))
 
     def job_to_do(self):
-        all_available_items = self._product_provider.total_items_in_stock(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
+        all_available_items = self._product_provider.total_items_in_stock(types=[
+            ProductProvider.STOCK_ITEM_TYPE_STOCK, ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
 
         desired_finished_product_stock = self.generate_default_desired_finished_product_stock()
 
@@ -87,7 +89,7 @@ class JobDecider(object):
 
             job_items = CalcUtil.get_dict_from_items(job.items)
 
-            items_in_destination_storage = self._product_provider.get_stored_items(storage_name=job.storage_name)
+            items_in_destination_storage = self._product_provider.get_stored_items(storage_name=job.storage_name, include_hoarding_goal=False)
             job_items_from_agents = CalcUtil.dict_diff(job_items, items_in_destination_storage, normalize_to_zero=True)
             job_items_from_storage = CalcUtil.dict_diff(job_items, job_items_from_agents)
 
@@ -125,8 +127,8 @@ class JobDecider(object):
                 job_to_try = job
                 items_to_take_from_storage = job_items_from_storage
 
-            if not has_all_items and activation > JobDecider.ACTIVATION_THRESHOLD:
-                activation_surpluss = activation - JobDecider.ACTIVATION_THRESHOLD
+            if not has_all_items and activation > JobDecider.IMPORTANT_JOB_THRESHOLD:
+                activation_surpluss = activation - JobDecider.IMPORTANT_JOB_THRESHOLD
                 for item in job.items:
                     desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + \
                                                                 (activation_surpluss * item.amount* JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)

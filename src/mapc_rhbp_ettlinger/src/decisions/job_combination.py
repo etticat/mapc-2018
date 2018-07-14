@@ -28,7 +28,7 @@ class ChooseBestJobCombination(object):
 
     def choose_best_agent_combination(self, job, bids):
 
-        items_in_storage = self.product_provider.get_stored_items(storage_name=job.storage_name)
+        items_in_storage = self.product_provider.get_stored_items(storage_name=job.storage_name, include_hoarding_goal=False)
         job_items = CalcUtil.get_list_from_items(job.items)
 
         best_agent_subset = None

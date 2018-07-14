@@ -24,12 +24,14 @@ class ProductProvider(object):
     STOCK_ITEM_TYPE_GATHER_GOAL = "gather"
     STOCK_ITEM_TYPE_ASSEMBLY_GOAL = "assembly"
     STOCK_ITEM_TYPE_DELIVERY_GOAL = "delivery"
+    STOCK_ITEM_TYPE_HOARDING_GOAL = "hoarding"
     STOCK_ITEM_TYPE_WELL_GOAL = "well"
     STOCK_ITEM_ALL_AGENT_TYPES = [STOCK_ITEM_TYPE_STOCK, STOCK_ITEM_TYPE_GATHER_GOAL, STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
-                                  STOCK_ITEM_TYPE_DELIVERY_GOAL]
+                                  STOCK_ITEM_TYPE_DELIVERY_GOAL, STOCK_ITEM_TYPE_HOARDING_GOAL]
 
     def __init__(self, agent_name):
 
+        self.hoarding_destination = None
         self.products = {}
         self.base_ingredients = {}
         self.finished_products = {}
@@ -38,11 +40,13 @@ class ProductProvider(object):
             ProductProvider.STOCK_ITEM_TYPE_STOCK: {},
             ProductProvider.STOCK_ITEM_TYPE_GATHER_GOAL: {},
             ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL: {},
-            ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL: {}
+            ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL: {},
+            ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL: {}
         }
         self.storage_stock_items = {
             ProductProvider.STOCK_ITEM_TYPE_STOCK: {},
-            ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL: {}
+            ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL: {},
+            ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL: {}
         }
         self.massim = {
             ProductProvider.STOCK_ITEM_TYPE_WELL_GOAL: {},
@@ -98,7 +102,7 @@ class ProductProvider(object):
             self.storage_stock_items[stock_item.type][stock_item.entity] = item_dict
 
 
-    def get_stored_items(self, storage_name=None, include_job_goals=True, include_stock=True):
+    def get_stored_items(self, storage_name=None, include_job_goals=True, include_stock=True, include_hoarding_goal=True):
         items = {}
 
         for storage in self.storages.values():
@@ -107,9 +111,12 @@ class ProductProvider(object):
                     for item in storage.items:
                         items[item.name] = items.get(item.name, 0) + item.stored
                 if include_job_goals:
-                    for job_dict in self.storage_stock_items.values():
-                        if storage in job_dict:
-                            items = CalcUtil.dict_sum(items, job_dict[storage])
+                    for job_name, job_dict in self.storage_stock_items.iteritems():
+                        if job_name[0] == "j":
+                            if storage in job_dict:
+                                items = CalcUtil.dict_sum(items, job_dict[storage])
+                if include_hoarding_goal and storage_name in self.storage_stock_items[ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL]:
+                    items = CalcUtil.dict_sum(items, self.storage_stock_items[ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL][storage_name])
 
         return items
 
@@ -228,6 +235,37 @@ class ProductProvider(object):
         self._pub_stock_item.publish(StockItem(
             entity=self._agent_name,
             type=ProductProvider.STOCK_ITEM_TYPE_ASSEMBLY_GOAL,
+            amounts={}
+        ))
+
+    def update_hoarding_goal(self, finished_products_to_store, destination):
+        if self.hoarding_destination is not None and destination is not self.hoarding_destination:
+            # If wes till have an old hoarding destination saved, first tell everyone, that this destination does
+            # not expect any new items
+            self.stop_hoarding(destination=self.hoarding_destination)
+
+        hoarding_destination = destination
+        self._pub_stock_item.publish(StockItem(
+            entity=self._agent_name,
+            type=ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL,
+            amounts=CalcUtil.key_int_values_from_dict(CalcUtil.negate_dict(finished_products_to_store))
+        ))
+        self._pub_stock_item.publish(StockItem(
+            entity=destination,
+            type=ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL,
+            amounts=CalcUtil.key_int_values_from_dict(finished_products_to_store)
+        ))
+
+    def stop_hoarding(self, destination):
+        self._assemble_goal = {}
+        self._pub_stock_item.publish(StockItem(
+            entity=self._agent_name,
+            type=ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL,
+            amounts={}
+        ))
+        self._pub_stock_item.publish(StockItem(
+            entity=destination,
+            type=ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL,
             amounts={}
         ))
 

@@ -29,7 +29,7 @@ class GatherDecisionMechanism(DecisionPattern):
     WEIGHT_PRIORITY = 200
     THRESHOLD = -np.inf
 
-    def __init__(self, agent_name):
+    def __init__(self, agent_name, assembly_combination_decision):
 
         self.agent_name = agent_name
         self._last_agent_position = None
@@ -47,7 +47,7 @@ class GatherDecisionMechanism(DecisionPattern):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider()
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
-        self.choose_best_assembly_combination = AssemblyCombinationDecision()
+        self.choose_best_assembly_combination = assembly_combination_decision
 
         super(GatherDecisionMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
 
@@ -122,7 +122,7 @@ class GatherDecisionMechanism(DecisionPattern):
         stored_items = self._product_provider.get_stored_items()
         current_stock = {}
 
-        max_percentage = 0
+        max_percentage = 0.01 # ignore everything lower than 1%
         for item in desired_ingredients.keys():
             current_stock[item] = stock_items.get(item,0) + stored_items.get(item, 0)
             percentage = (current_stock[item] + 1)/ (desired_ingredients.get(item, 0) + 1)
@@ -133,7 +133,14 @@ class GatherDecisionMechanism(DecisionPattern):
 
         priority_dict = {}
         for item in desired_ingredients.keys():
-            priority_dict[item] = 1.0 - (float(current_stock[item]) / (desired_ingredients.get(item, 0) * max_percentage))
+            if current_stock[item] == 0:
+                priority = 1.0
+            elif desired_ingredients.get(item, 0) == 0:
+                priority = 0.0
+            else:
+                priority = 1.0 - (float(current_stock[item]) / (desired_ingredients.get(item, 0) * max_percentage))
+
+            priority_dict[item] = priority
         return priority_dict
 
     def get_desired_ingredients(self, consider_intermediate_ingredients):
