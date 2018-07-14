@@ -1,6 +1,8 @@
 import copy
 import itertools
 
+import rospy
+
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
@@ -21,7 +23,7 @@ class ChooseBestJobCombination(object):
     ACTIVATION_THRESHOLD = -1000
 
     def __init__(self):
-
+        self.init_conf()
         self.product_provider = ProductProvider(agent_name="agentA1")
         self.facility_provider = FacilityProvider()
         self._stats_provider = StatsProvider()
@@ -91,3 +93,11 @@ class ChooseBestJobCombination(object):
             activation += ChooseBestJobCombination.WEIGHT_NO_STORAGE_NEEDED
 
         return activation
+    def init_conf(self):
+
+        ChooseBestJobCombination.MIN_STEP_BUFFER = rospy.get_param("ChooseBestJobCombination.MIN_STEP_BUFFER",ChooseBestJobCombination.MIN_STEP_BUFFER)
+        ChooseBestJobCombination.WEIGHT_LOAD = rospy.get_param("ChooseBestJobCombination.WEIGHT_LOAD",ChooseBestJobCombination.WEIGHT_LOAD)
+        ChooseBestJobCombination.WEIGHT_INGREDIENT_LOAD = rospy.get_param("ChooseBestJobCombination.WEIGHT_INGREDIENT_LOAD",ChooseBestJobCombination.WEIGHT_INGREDIENT_LOAD)
+        ChooseBestJobCombination.WEIGHT_NO_STORAGE_NEEDED = rospy.get_param("ChooseBestJobCombination.WEIGHT_NO_STORAGE_NEEDED",ChooseBestJobCombination.WEIGHT_NO_STORAGE_NEEDED)
+        ChooseBestJobCombination.WEIGHT_STEPS = rospy.get_param("ChooseBestJobCombination.WEIGHT_STEPS",ChooseBestJobCombination.WEIGHT_STEPS)
+        ChooseBestJobCombination.ACTIVATION_THRESHOLD = rospy.get_param("ChooseBestJobCombination.ACTIVATION_THRESHOLD",ChooseBestJobCombination.ACTIVATION_THRESHOLD)

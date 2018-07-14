@@ -11,6 +11,7 @@ from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_bid')
 
+
 class ShouldBidForAssembly(object):
 
     WEIGHT_LOAD = 30
@@ -21,6 +22,7 @@ class ShouldBidForAssembly(object):
 
     def __init__(self, agent_name, role):
 
+        self.init_config()
         self.agent_info_provider = AgentInfoProvider(agent_name=agent_name)
         self._agent_name = agent_name
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -37,6 +39,16 @@ class ShouldBidForAssembly(object):
 
         self.initialized = False
 
+    def init_config(self):
+        ShouldBidForAssembly.WEIGHT_LOAD = rospy.get_param("~ShouldBidForAssembly.WEIGHT_LOAD",
+                                                           ShouldBidForAssembly.WEIGHT_LOAD)
+        ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD = rospy.get_param("~ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD",
+                                                                      ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD)
+        ShouldBidForAssembly.WEIGHT_STEPS = rospy.get_param("~ShouldBidForAssembly.WEIGHT_STEPS",
+                                                            ShouldBidForAssembly.WEIGHT_STEPS)
+        ShouldBidForAssembly.ACTIVATION_THRESHOLD = rospy.get_param("~ShouldBidForAssembly.ACTIVATION_THRESHOLD",
+                                                                    ShouldBidForAssembly.ACTIVATION_THRESHOLD)
+
     def _callback_agent(self, agent):
         """
 
@@ -47,8 +59,10 @@ class ShouldBidForAssembly(object):
 
         self.max_load = agent.load_max
         self.load = agent.load
-        self.load_ingredients = self._product_provider.calculate_total_volume_dict(self._product_provider.get_base_ingredients_in_stock())
-        self.load_finished_products = self._product_provider.calculate_total_volume_dict(self._product_provider.get_finished_products_in_stock())
+        self.load_ingredients = self._product_provider.calculate_total_volume_dict(
+            self._product_provider.get_base_ingredients_in_stock())
+        self.load_finished_products = self._product_provider.calculate_total_volume_dict(
+            self._product_provider.get_finished_products_in_stock())
         self.items = {}
         self.pos = agent.pos
 
@@ -64,37 +78,41 @@ class ShouldBidForAssembly(object):
 
         steps_to_destination = self.distance_provider.calculate_steps(self.pos, request.destination)
 
-
-
         activation = ingredient_fullness * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD \
                      + general_fulness * ShouldBidForAssembly.WEIGHT_LOAD \
                      + steps_to_destination * ShouldBidForAssembly.WEIGHT_STEPS
 
         ettilog.loginfo("ShouldBidForAssembly:: Choosing to bid ....")
-        ettilog.loginfo("ShouldBidForAssembly:: ingredient_fullness (%f) * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD(%f) = %f",
-                       ingredient_fullness, ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD, ingredient_fullness * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD)
+        ettilog.loginfo(
+            "ShouldBidForAssembly:: ingredient_fullness (%f) * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD(%f) = %f",
+            ingredient_fullness, ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD,
+            ingredient_fullness * ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD)
         ettilog.loginfo("ShouldBidForAssembly:: general_fulness (%f) * ShouldBidForAssembly.WEIGHT_LOAD (%f) = %f",
-                       general_fulness, ShouldBidForAssembly.WEIGHT_LOAD, general_fulness * ShouldBidForAssembly.WEIGHT_LOAD
-                       )
-        ettilog.loginfo("ShouldBidForAssembly:: steps_to_destination (%f) * ShouldBidForAssembly.WEIGHT_STEPS (%f) = %f",
-                       steps_to_destination, ShouldBidForAssembly.WEIGHT_STEPS, steps_to_destination * ShouldBidForAssembly.WEIGHT_STEPS)
+                        general_fulness, ShouldBidForAssembly.WEIGHT_LOAD,
+                        general_fulness * ShouldBidForAssembly.WEIGHT_LOAD
+                        )
+        ettilog.loginfo(
+            "ShouldBidForAssembly:: steps_to_destination (%f) * ShouldBidForAssembly.WEIGHT_STEPS (%f) = %f",
+            steps_to_destination, ShouldBidForAssembly.WEIGHT_STEPS,
+            steps_to_destination * ShouldBidForAssembly.WEIGHT_STEPS)
         ettilog.loginfo("ShouldBidForAssembly:: activation (%f) > ShouldBidForAssembly.ACTIVATION_THRESHOLD (%f) = %s",
-                       activation, ShouldBidForAssembly.ACTIVATION_THRESHOLD, str(activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD))
+                        activation, ShouldBidForAssembly.ACTIVATION_THRESHOLD,
+                        str(activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD))
 
         # TODO: Oportunity cost (certain roles could better do something else?
 
         if activation > ShouldBidForAssembly.ACTIVATION_THRESHOLD:
             return TaskBid(
                 id=request.id,
-                bid = activation,
-                agent_name = self._agent_name,
-                items = self._product_provider.get_item_list(),
-                role = self.role,
-                capacity = self._product_provider.load_free,
-                skill = self.agent_info_provider.skill,
-                speed = self.distance_provider.speed,
-                finished_product_factor = self._product_provider.finished_product_load_factor(),
-                request = request,
+                bid=activation,
+                agent_name=self._agent_name,
+                items=self._product_provider.get_item_list(),
+                role=self.role,
+                capacity=self._product_provider.load_free,
+                skill=self.agent_info_provider.skill,
+                speed=self.distance_provider.speed,
+                finished_product_factor=self._product_provider.finished_product_load_factor(),
+                request=request,
                 expected_steps=steps_to_destination
             )
         else:

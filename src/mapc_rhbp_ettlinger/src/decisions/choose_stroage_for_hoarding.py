@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 
+import rospy
+
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from provider.agent_info_provider import AgentInfoProvider
@@ -18,6 +20,7 @@ class ChooseStorageForHoardingMechanism(DecisionPattern):
     WEIGHT_ITEMS_ALREADY_THERE = -1
 
     def __init__(self, agent_name, assembly_decision_mechanism, hoarding_items_decision):
+        self.init_config()
         self.hoarding_items_decision = hoarding_items_decision
         self.assembly_decision_mechanism = assembly_decision_mechanism
         self._agent_name = agent_name
@@ -27,6 +30,13 @@ class ChooseStorageForHoardingMechanism(DecisionPattern):
         self.facility_provider = FacilityProvider()
 
         super(ChooseStorageForHoardingMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
+
+    def init_config(self):
+        ChooseStorageForHoardingMechanism.WEIGHT_STEPS = rospy.get_param(
+            "~ChooseStorageForHoardingMechanism.WEIGHT_STEPS", ChooseStorageForHoardingMechanism.WEIGHT_STEPS)
+        ChooseStorageForHoardingMechanism.WEIGHT_ITEMS_ALREADY_THERE = rospy.get_param(
+            "~ChooseStorageForHoardingMechanism.WEIGHT_ITEMS_ALREADY_THERE",
+            ChooseStorageForHoardingMechanism.WEIGHT_ITEMS_ALREADY_THERE)
 
     def calc_value(self):
         max_activation = -np.inf

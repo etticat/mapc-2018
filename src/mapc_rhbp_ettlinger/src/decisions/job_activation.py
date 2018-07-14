@@ -21,22 +21,20 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class JobDecider(object):
     
-    DEFAULT_FINISHED_PRODUCT_GOAL = 5
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
-    BID_PERCENTILE = 50
 
+    DEFAULT_FINISHED_PRODUCT_GOAL = 5
+    BID_PERCENTILE = 50
     ACTIVATION_THRESHOLD = -50
     IMPORTANT_JOB_THRESHOLD = 0
     ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = 0.2
-
     WEIGHT_PERCENTILE = 10
     WEIGHT_TIME_PASSED = -0.3
-
     TIME_LEFT_WEIGHT_START = 30  # Steps
-
     WEIGHT_TIME_OVER = -0.4
 
     def __init__(self, agent_name="agentA1"):
+        self.init_conf()
         self.facility_provider = FacilityProvider()
         self.coordinated_jobs = []
         self.active_jobs = []
@@ -213,4 +211,15 @@ class JobDecider(object):
     def job_finished(self, task_stop):
         if task_stop.job_id in self.coordinated_jobs:
             self.coordinated_jobs.remove(task_stop.job_id)
+
+    def init_conf(self):
+        JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL = rospy.get_param("JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL",JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL)
+        JobDecider.BID_PERCENTILE = rospy.get_param("JobDecider.BID_PERCENTILE",JobDecider.BID_PERCENTILE)
+        JobDecider.ACTIVATION_THRESHOLD = rospy.get_param("JobDecider.ACTIVATION_THRESHOLD",JobDecider.ACTIVATION_THRESHOLD)
+        JobDecider.IMPORTANT_JOB_THRESHOLD = rospy.get_param("JobDecider.IMPORTANT_JOB_THRESHOLD",JobDecider.IMPORTANT_JOB_THRESHOLD)
+        JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = rospy.get_param("JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION",JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
+        JobDecider.WEIGHT_PERCENTILE = rospy.get_param("JobDecider.WEIGHT_PERCENTILE",JobDecider.WEIGHT_PERCENTILE)
+        JobDecider.WEIGHT_TIME_PASSED = rospy.get_param("JobDecider.WEIGHT_TIME_PASSED",JobDecider.WEIGHT_TIME_PASSED)
+        JobDecider.TIME_LEFT_WEIGHT_START = rospy.get_param("JobDecider.TIME_LEFT_WEIGHT_START",JobDecider.TIME_LEFT_WEIGHT_START)
+        JobDecider.WEIGHT_TIME_OVER = rospy.get_param("JobDecider.WEIGHT_TIME_OVER",JobDecider.WEIGHT_TIME_OVER)
 

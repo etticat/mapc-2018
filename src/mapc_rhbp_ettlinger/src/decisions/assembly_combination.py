@@ -29,6 +29,7 @@ class AssemblyCombinationDecision(object):
     ACTIVATION_THRESHOLD = -100
 
     def __init__(self, agent_name):
+        self.init_config()
 
         self.facility_provider = FacilityProvider()
         self._product_provider = ProductProvider(agent_name=agent_name)  # TODO: make independent from agent
@@ -41,6 +42,19 @@ class AssemblyCombinationDecision(object):
 
         rospy.Subscriber(JobDecider.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,
                          callback=self._planner_goal_callback)
+
+    def init_config(self):
+        AssemblyCombinationDecision.PRIORITY_EXPONENT = rospy.get_param("~AssemblyCombinationDecision.PRIORITY_EXPONENT", AssemblyCombinationDecision.PRIORITY_EXPONENT)
+        AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT", AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT)
+        AssemblyCombinationDecision.WEIGHT_PRIORITY = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_PRIORITY", AssemblyCombinationDecision.WEIGHT_PRIORITY)
+        AssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS", AssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS)
+        AssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION", AssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION)
+        AssemblyCombinationDecision.WEIGHT_IDLE_STEPS = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_IDLE_STEPS", AssemblyCombinationDecision.WEIGHT_IDLE_STEPS)
+        AssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT = rospy.get_param("~AssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT", AssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT)
+        AssemblyCombinationDecision.MAX_AGENTS = rospy.get_param("~AssemblyCombinationDecision.MAX_AGENTS", AssemblyCombinationDecision.MAX_AGENTS)
+        AssemblyCombinationDecision.MIN_AGENTS = rospy.get_param("~AssemblyCombinationDecision.MIN_AGENTS", AssemblyCombinationDecision.MIN_AGENTS)
+        AssemblyCombinationDecision.ACTIVATION_THRESHOLD = rospy.get_param("~AssemblyCombinationDecision.ACTIVATION_THRESHOLD", AssemblyCombinationDecision.ACTIVATION_THRESHOLD)
+
 
     def _planner_goal_callback(self, stock_item):
         """

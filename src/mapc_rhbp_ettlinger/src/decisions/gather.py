@@ -31,6 +31,8 @@ class GatherDecisionMechanism(DecisionPattern):
 
     def __init__(self, agent_name, assembly_combination_decision):
 
+        self.init_config()
+
         self.agent_name = agent_name
         self._last_agent_position = None
         self._last_calculated_agent_position = None
@@ -50,6 +52,17 @@ class GatherDecisionMechanism(DecisionPattern):
         self.choose_best_assembly_combination = assembly_combination_decision
 
         super(GatherDecisionMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
+
+    def init_config(self):
+        GatherDecisionMechanism.WEIGHT_STEPS = rospy.get_param("~GatherDecisionMechanism.WEIGHT_STEPS",
+                                                               GatherDecisionMechanism.WEIGHT_STEPS)
+        GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH = rospy.get_param(
+            "~GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH", GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH)
+        GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT = rospy.get_param(
+            "~GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT",
+            GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT)
+        GatherDecisionMechanism.WEIGHT_PRIORITY = rospy.get_param("~GatherDecisionMechanism.WEIGHT_PRIORITY",
+                                                                  GatherDecisionMechanism.WEIGHT_PRIORITY)
 
     def calc_value(self):
         if self.chosen_resource is None or not self._product_provider.fits_in_store(self.chosen_resource.item.name):
