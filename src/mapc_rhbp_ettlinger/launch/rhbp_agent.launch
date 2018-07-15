@@ -18,48 +18,60 @@
             <param name="activation_algorithm" type="string" value="default"/>
             <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
 
-
-            <param name="ShouldBidForAssembly.WEIGHT_LOAD" type="double" value="30"/>
-            <param name="ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD" type="double" value="100"/>
-            <param name="ShouldBidForAssembly.WEIGHT_STEPS" type="double" value="-3"/>
-            <param name="ShouldBidForAssembly.ACTIVATION_THRESHOLD" type="double" value="0"/>
-
-            <param name="AssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="2"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT"  value="-2.1" type="double"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_PRIORITY"  value="10" type="double"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS"  value="-10" type="double"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION"  value="30" type="double"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_IDLE_STEPS"  value="-3" type="double"/>
-            <param name="AssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-10" type="double"/>
-            <param name="AssemblyCombinationDecision.MAX_AGENTS"  value="7" type="int"/>
-            <param name="AssemblyCombinationDecision.MIN_AGENTS"  value="1" type="int"/>
-            <param name="AssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="-100" type="double"/>
-
-            <param name="ChooseStorageForHoardingMechanism.WEIGHT_STEPS"  value="-1" type="double"/>
-            <param name="ChooseStorageForHoardingMechanism.WEIGHT_ITEMS_ALREADY_THERE"  value="-1" type="double"/>
-
-            <param name="GatherDecisionMechanism.WEIGHT_STEPS"  value="1" type="double"/>
-            <param name="GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH"  value="2.5" type="double"/>
-            <param name="GatherDecisionMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT"  value="0.5" type="double"/>
-            <param name="GatherDecisionMechanism.WEIGHT_PRIORITY"  value="200" type="double"/>
+            <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="3.9"/>
 
 
-            <param name="JobDecider.DEFAULT_FINISHED_PRODUCT_GOAL"  value="5" type="double"/>
-            <param name="JobDecider.BID_PERCENTILE"  value="50" type="double"/>
-            <param name="JobDecider.ACTIVATION_THRESHOLD"  value="-50" type="double"/>
-            <param name="JobDecider.IMPORTANT_JOB_THRESHOLD"  value="0" type="double"/>
-            <param name="JobDecider.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION"  value="0.2" type="double"/>
-            <param name="JobDecider.WEIGHT_PERCENTILE"  value="10" type="double"/>
-            <param name="JobDecider.WEIGHT_TIME_PASSED"  value="-0.3" type="double"/>
-            <param name="JobDecider.TIME_LEFT_WEIGHT_START"  value="30" type="double"/>
-            <param name="JobDecider.WEIGHT_TIME_OVER"  value="-0.4" type="double"/>
+            <param name="ShouldBidForAssemblyDecision.WEIGHT_LOAD" type="double" value="30"/>
+            <param name="ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD" type="double" value="100"/>
+            <param name="ShouldBidForAssemblyDecision.WEIGHT_STEPS" type="double" value="-3"/>
+            <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="0"/>
 
-            <param name="ChooseBestJobCombination.MIN_STEP_BUFFER"  value="5" type="double"/>
-            <param name="ChooseBestJobCombination.WEIGHT_LOAD"  value="8" type="double"/>
-            <param name="ChooseBestJobCombination.WEIGHT_INGREDIENT_LOAD"  value="8" type="double"/>
-            <param name="ChooseBestJobCombination.WEIGHT_NO_STORAGE_NEEDED"  value="20" type="double"/>
-            <param name="ChooseBestJobCombination.WEIGHT_STEPS"  value="-1" type="double"/>
-            <param name="ChooseBestJobCombination.ACTIVATION_THRESHOLD"  value="-1000" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="2"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT"  value="-2.1" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY"  value="10" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS"  value="-10" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION"  value="30" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS"  value="-3" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-10" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="7" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="1" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="-100" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
+
+            <param name="ChooseStorageForHoardingDecision.WEIGHT_STEPS"  value="-1" type="double"/>
+            <param name="ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE"  value="-1" type="double"/>
+
+            <param name="ChooseItemToGatherMechanism.WEIGHT_STEPS"  value="1" type="double"/>
+            <param name="ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH"  value="2.5" type="double"/>
+            <param name="ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT"  value="0.5" type="double"/>
+            <param name="ChooseItemToGatherMechanism.WEIGHT_PRIORITY"  value="200" type="double"/>
+            <param name="ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION"  value="15" type="double"/>
+
+
+            <param name="ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL"  value="5" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="50" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD"  value="-50" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD"  value="0" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION"  value="0.2" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE"  value="10" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED"  value="-0.3" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START"  value="30" type="double"/>
+            <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER"  value="-0.4" type="double"/>
+
+            <param name="ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER"  value="5" type="double"/>
+            <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_LOAD"  value="8" type="double"/>
+            <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_INGREDIENT_LOAD"  value="8" type="double"/>
+            <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_NO_STORAGE_NEEDED"  value="20" type="double"/>
+            <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_STEPS"  value="-1" type="double"/>
+            <param name="ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD"  value="-1000" type="double"/>
+
+            <param name="ContractNetManager.DEADLINE_BIDS"  value="2" type="double"/>
+            <param name="ContractNetManager.DEADLINE_ACKNOWLEDGEMENT"  value="2" type="double"/>
+            
+            <param name="MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR"  value="-1" type="double"/>
+            <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
+            <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
+        
     </node>
 
 </launch>

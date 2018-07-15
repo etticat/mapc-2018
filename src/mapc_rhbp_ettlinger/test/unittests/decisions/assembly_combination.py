@@ -1,7 +1,7 @@
 """
 @author: krakowczyk
 """
-from decisions.assembly_combination import AssemblyCombinationDecision
+from decisions.best_agent_assembly_combination import AssemblyCombinationDecision
 
 PKG="group1_ws17"
 import roslib; roslib.load_manifest(PKG)

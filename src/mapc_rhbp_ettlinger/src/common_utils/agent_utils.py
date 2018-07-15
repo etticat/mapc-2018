@@ -1,11 +1,7 @@
 from __future__ import division
 
-import math
 
-from mac_ros_bridge.msg import Position
-
-
-class AgentUtils:
+class AgentUtils(object):
 
     @staticmethod
     def get_bridge_topic_prefix(agent_name):
@@ -27,33 +23,18 @@ class AgentUtils:
 
     @classmethod
     def get_bridge_topic(cls, agent_name, postfix):
+        """
+        Returns the bridge topic of an agent together with a postfix
+        :param agent_name: current agents name
+        :param postfix: postfix
+        :return: str
+        """
         return AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + postfix
-
-
-    @staticmethod
-    def calculate_distance(pos1, pos2):
-        """
-        TODO: Calculate distance on rode not only euclidean
-        Calculate the euclidean distance between two positions
-        :param pos1: position 1
-        :type pos1: Position
-        :param pos2: position 2
-        :type pos2: Position
-        :return: euclidean distance
-        """
-        return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
-
-    @staticmethod
-    def calculate_closest_facility(pos, facilities):
-        minDistance = 999999
-        closest_facility = None
-        for facility in facilities:
-            distance = AgentUtils.calculate_distance(pos, facility.pos)
-            if distance < minDistance:
-                minDistance = distance
-                closest_facility = facility
-        return closest_facility
 
     @classmethod
     def get_coordination_topic(cls):
+        """
+        Topic used for coordination in contract net
+        :return:
+        """
         return '/coordination'

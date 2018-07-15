@@ -9,42 +9,57 @@ from decisions.map_decisions import ExplorationDecision
 
 
 class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
-    def __init__(self, agent_name, name, sensor_map, **kwargs):
+    """
+    Network behaviour that is responsible for exploring the environment
+    """
+    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
 
+        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_decision, name=name,
+                                                          agent_name=agent_name,
+                                                          global_rhbp_components=global_rhbp_components,
+                                                          **kwargs)
 
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
+        self.exploration_decision = ExplorationDecision(self.self_organisation_provider._so_buffer)
 
-        self.exploration_decision = ExplorationDecision(self.self_organisation_provider.buffer)
+        self.init_behaviours()
+        self.init_goals()
 
-        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_decision, name=name, agent_name=agent_name, sensor_map=sensor_map,
-                                                          **kwargs)
-        self.init_destination_step_sensor()
+    def init_behaviours(self):
+        """
+        Initialise exploration behaviour
+        :return:
+        """
 
-
+        # When we reach a destination, just pick a new one and go there
         self._reset_destination_behaviour = GoToDestinationBehaviour(
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            name=self.get_manager_prefix()  + '_do_behaviour',
+            name=self.get_manager_prefix() + '_do_behaviour',
             mechanism=self.exploration_decision,
             recalculate_destination_every_step=True
         )
 
         self.init_do_behaviour(self._reset_destination_behaviour)
 
-        self.goal = GoalBase(
-            name='job_fulfillment_goal',
-            permanent=True,
-            priority=100,
-            plannerPrefix=self.get_manager_prefix(),
-            conditions=[Condition(
-                sensor=self._sensor_map.resource_discovery_progress_sensor,
-                activator=GreedyActivator()
-            )])
-
         self._reset_destination_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self._sensor_map.resource_discovery_progress_sensor.name,
+                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
                 sensor_type=float,
                 indicator=1.0
             )
         )
+
+    def init_goals(self):
+        """
+        Initialise the exploration goal
+        :return:
+        """
+        self.goal = GoalBase(
+            name='exploration_goal',
+            permanent=True,
+            plannerPrefix=self.get_manager_prefix(),
+            conditions=[Condition(
+                sensor=self._global_rhbp_components.resource_discovery_progress_sensor,
+                activator=GreedyActivator()
+            )])

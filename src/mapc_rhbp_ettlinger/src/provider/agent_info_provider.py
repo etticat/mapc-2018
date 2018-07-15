@@ -11,16 +11,20 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class AgentInfoProvider(object):
+    """
+    Provider, that provides information on the agent
+    """
     __metaclass__ = Singleton
 
     def __init__(self, agent_name):
         self._pos = None
         self._skill = None
+
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name=agent_name), Agent, self._callback_agent)
 
     def _callback_agent(self, agent):
         """
-
+        Retreive agent info after every simulation step
         :param agent:
         :type agent: Agent
         :return:

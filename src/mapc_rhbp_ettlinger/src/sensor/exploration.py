@@ -11,50 +11,61 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class ResourceDiscoveryProgressSensor(Sensor):
     """
-    Sensor, which provides information about a searched fact; returns list of
-    all matching facts
+    Calulates the percentage of gatherable items, where a resouce node is already found
     """
 
     def __init__(self, agent_name, optional=False, name=None, initial_value=0.0):
         super(ResourceDiscoveryProgressSensor, self).__init__(name=name, optional=optional, initial_value=initial_value)
-        self.facility_provider = FacilityProvider()
+
+        self._facility_provider = FacilityProvider()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def sync(self):
-        resources = self.facility_provider.get_resources()
-        base_ingredients = self._product_provider.get_base_ingredients().keys()
+        # If the value reached 1.0, it will never go down. No need to calculate it anymore
+        if self._value == 1.0:
+            return super(ResourceDiscoveryProgressSensor, self).sync()
 
-        total_ingredients = len(base_ingredients)
+        resources = self._facility_provider.get_resources()
+        base_ingredients = self._product_provider.get_gatherable_ingredients().keys()
+        number_of_base_ingredients = len(base_ingredients)
 
         for resource in resources.values():
             if resource.item.name in base_ingredients:
                 base_ingredients.remove(resource.item.name)
 
-        discovered_ingredients = total_ingredients - len(base_ingredients)
+        number_of_discovered_ingredients = number_of_base_ingredients - len(base_ingredients)
 
-        res = float(discovered_ingredients) / total_ingredients
-        ettilog.loginfo("%s:: Discovery progress: %s", self.name, str(res))
+        result = float(number_of_discovered_ingredients) / number_of_base_ingredients
+        ettilog.loginfo("%s:: Discovery progress: %s", self.name, str(result))
 
-        self.update(res)
-        super(ResourceDiscoveryProgressSensor, self).sync()
+        self.update(result)
+        return super(ResourceDiscoveryProgressSensor, self).sync()
 
 
 class DiscoveryProgressSensor(GradientSensor):
+    """
+    Calculates the percentage of the map that has been discovered
+    """
 
     def __init__(self, agent_name, name, thread=False, time=5, initial_value=None, sensor_type=SENSOR.VALUE):
+        self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
-        self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
+        self._discovery_progress_decision = DiscoverProgressDecision(self._self_organisation_provider._so_buffer)
 
-        self.discovery_progress_decision = DiscoverProgressDecision(self.self_organisation_provider.buffer)
+        super(DiscoveryProgressSensor, self).__init__(name, self._discovery_progress_decision, thread, time,
+                                                      initial_value, sensor_type)
 
-        super(DiscoveryProgressSensor, self).__init__(name, self.discovery_progress_decision, thread, time, initial_value, sensor_type)
 
 class OldestCellLastSeenSensor(GradientSensor):
+    """
+    Calculates maximum number of steps a cell on the map has been visited
+    """
 
     def __init__(self, agent_name, name, initial_value, thread=False, time=5, sensor_type=SENSOR.VALUE):
-
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
-        self.discovery_progress_decision = OldestCellAgeDecision(self.self_organisation_provider.buffer, init_value=initial_value)
+        self.discovery_progress_decision = OldestCellAgeDecision(self.self_organisation_provider.so_buffer,
+                                                                 init_value=initial_value)
 
-        super(OldestCellLastSeenSensor, self).__init__(name, self.discovery_progress_decision, thread, time, initial_value, sensor_type)
+        super(OldestCellLastSeenSensor, self).__init__(name, self.discovery_progress_decision, thread, time,
+                                                       initial_value, sensor_type)

@@ -11,10 +11,10 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class FacilityProvider(object):
-    __metaclass__ = Singleton
     """
     Keeps a list of all Facilities readily available for various components to use
     """
+    __metaclass__ = Singleton
 
     def __init__(self):
         self.charging_stations = {}
@@ -29,7 +29,7 @@ class FacilityProvider(object):
 
     def storage_callback(self, storageMsg):
         """
-
+        Updates the storage dict when new information comes from mac ros bridge
         :param storageMsg:
         :type storageMsg: StorageMsg
         :return:
@@ -40,7 +40,7 @@ class FacilityProvider(object):
 
     def workshop_callback(self, workshopMsg):
         """
-
+        Updates the workshop dict when new information comes from mac ros bridge
         :param workshopMsg:
         :type workshopMsg: WorkshopMsg
         :return:
@@ -50,7 +50,7 @@ class FacilityProvider(object):
 
     def charging_station_callback(self, charging_station_msg):
         """
-
+        Updates the charging_station dict when new information comes from mac ros bridge
         :param charging_station_msg:
         :type charging_station_msg: ChargingStationMsg
         :return:
@@ -60,7 +60,7 @@ class FacilityProvider(object):
 
     def resources_callback(self, resource_msg):
         """
-
+        Updates the resource dict when new information comes from mac ros bridge
         :param resource_msg:
         :type resource_msg: ResourceMsg
         :return:
@@ -69,12 +69,25 @@ class FacilityProvider(object):
             self.resources[resource.name] = resource
 
     def get_storage_by_name(self, name):
+        """
+        Returns the requested storage object
+        :param name:
+        :return:
+        """
         return self.storages[name]
 
     def get_storages(self):
+        """
+        returns all storages
+        :return: dict
+        """
         return self.storages
 
     def get_random_workshop(self):
+        """
+        Returns a random workshop
+        :return: Workshop
+        """
         values = self.workshops.values()
         if len(values) > 0:
             return random.choice(values)
@@ -83,7 +96,15 @@ class FacilityProvider(object):
             return None
 
     def get_charging_stations(self):
-        return self.charging_stations.values()
+        """
+        Returns all charging stations
+        :return: dict
+        """
+        return self.charging_stations
 
     def get_resources(self):
+        """
+        Returns all known resources
+        :return: dict
+        """
         return self.resources

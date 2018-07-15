@@ -8,14 +8,19 @@ from provider.well_provider import WellProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.well_chooser')
 
-class ChooseWellToBuild(object):
 
-    def __init__(self):
+class ChooseWellToBuildDecision(object):
+    """
+    Choose a well type to build.
+    TODO: This should be completely redone
+    """
+
+    def __init__(self, agent_name):
         self.task_prices = {}
-        self.stats_provider = StatsProvider()
-        self.well_provider = WellProvider()
+        self.stats_provider = StatsProvider(agent_name=agent_name)
+        self.well_provider = WellProvider(agent_name=agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
-        self._simulation_provider = SimulationProvider()
+        self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def choose_well_type(self):
 
@@ -24,7 +29,7 @@ class ChooseWellToBuild(object):
         # TODO: Choose it more elegantly
         massium = self.stats_provider.get_massium()
         massium -= self.get_massium_for_current_well_tasks()
-        for type, well in self.well_provider.get_wells_to_build().iteritems():
+        for type, well in self.well_provider.possible_wells.iteritems():
             if well.cost < massium and well.cost < res_cost:
                 res_type = type
                 res_cost = well.cost

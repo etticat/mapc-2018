@@ -34,6 +34,9 @@ class Action(object):
 
 
 class ActionProvider(object):
+    """
+    Provider for communication with the mac_ros bridge. It allows sending actions that are then performed on massim simulation
+    """
     __metaclass__ = Singleton
 
     def __init__(self, agent_name):
@@ -42,14 +45,14 @@ class ActionProvider(object):
             data_class=GenericAction,
             queue_size=10)
 
-        self.current_action_sent = False
+        self.action_response_found = False
 
     def send_action(self, action_type, params=None):
         """
-        Generic helper function for publishing GenericAction msg
-        :param publisher: publisher to use
-        :param action_type: the type of the action msg
-        :param params: optional parameter for the msg
+        Sends an action to the mac_ros_bridge
+        :param action_type:
+        :param params:
+        :return:
         """
         if params is None:
             params = []
@@ -58,17 +61,11 @@ class ActionProvider(object):
         action.action_type = action_type
         action.params = params
         self._pub_generic_action.publish(action)
-        self.current_action_sent = True
-
-    def action_go_to_location(self, lat, lon):
-        self.send_action(action_type=Action.GO_TO, params=[
-            KeyValue("latitude", str(lat)),
-            KeyValue("longitude", str(lon))
-        ])
+        self.action_response_found = True
 
     def action_go_to_position(self, pos):
         """
-
+        Sends the go_to action to the mac ros bridge using Position
         :param pos:
         :type pos: Position
         :return:
@@ -79,7 +76,13 @@ class ActionProvider(object):
         ])
 
     def action_go_to_destination(self, destination):
+        """
+        Sends the go_to action to the mac ros bridge using either a Position or an object with attribute pos : Position
+        :param destination:
+        :type destination: Position or Facility or Task
+        :return:
+        """
         if isinstance(destination, Position):
-            self.action_go_to_location(lat=destination.lat, lon=destination.long)
+            self.action_go_to_position(pos=destination)
         else:
-            self.action_go_to_location(lat=destination.pos.lat, lon=destination.pos.long)
+            self.action_go_to_position(pos=destination.pos)

@@ -1,14 +1,12 @@
-
-import rospy
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import GenericAction, Agent
+from mac_ros_bridge.msg import Agent
 from mapc_rhbp_ettlinger.msg import TaskProgress, TaskStop
 
-from behaviour_components.behaviours import BehaviourBase
-from decisions.p_task_decision import CurrentTaskDecision
-from provider.action_provider import Action
+import rospy
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from decisions.current_task import CurrentTaskDecision
+from provider.action_provider import Action
 from provider.action_provider import ActionProvider
 from provider.product_provider import ProductProvider
 from rhbp_selforga.behaviours import DecisionBehaviour
@@ -19,66 +17,79 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class AssembleProductBehaviour(DecisionBehaviour):
     """
-    Behaviour for the assembly of a product
+    Behaviour, that allows to execute the assemble and assist_assemble commands
     """
 
     def __init__(self, mechanism, name, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \
             .__init__(mechanism=mechanism, name=name,
-            requires_execution_steps=True,
-            **kwargs)
-        self._product_provider = ProductProvider(agent_name=agent_name)
-        self._task = None
+                      requires_execution_steps=True,
+                      **kwargs)
+        # Constructor parameters
         self._agent_name = agent_name
-        self._last_task = None
-        self._last_goal = None
+
+        self._task = None
+        self._last_action = None
+        self._last_target = None
+
+        # Init providers
+        self._product_provider = ProductProvider(agent_name=agent_name)
         self.action_provider = ActionProvider(agent_name=agent_name)
 
+        # Dictionary, that keeps track of all assembly progresses.
+        # We not only track our own, to avoid missing out on information, when the assembly behaviour did not
+        # get the information in time from the mechanism.
         self._task_progress_dict = {}
 
+        # Initialise subscribers and publishers
         topic = AgentUtils.get_coordination_topic()
-        self._pub_assemble_progress = MyPublisher(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
-
-        MySubscriber(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, callback=self._callback_task_progress)
-
-        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
-
+        MySubscriber(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
+                     callback=self._callback_task_progress)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
+        self._pub_assemble_progress = MyPublisher(topic, message_type="progress",
+                                                  task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
+        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
+                                              queue_size=10)
 
-    def _callback_task_progress(self, task_progress):
+    def _callback_task_progress(self, task_progres):
         """
-
-        :param task_progress:
-        :type task_progress: TaskProgress
+        Saves the progress of all assemble tasksin a dictionary
+        :param task_progres:
+        :type task_progres: TaskProgress
         :return:
         """
-        if task_progress.type == CurrentTaskDecision.TYPE_ASSEMBLE:
-            self._task_progress_dict[task_progress.id] = task_progress.step
+        if task_progres.type == CurrentTaskDecision.TYPE_ASSEMBLE:
+            self._task_progress_dict[task_progres.id] = task_progres.step
 
     def _action_request_agent(self, agent):
         """
-
+        Updates the assemble task after assembly
         :param agent:
         :type agent: Agent
         :return:
         """
-        # TODO: Also add a timeout here: if it doesnt work for 5 steps -> Fail with detailed error
-        if self._last_task == "assemble" and agent.last_action == "assemble":
-            ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name,
-                           agent.last_action_result)
-            if agent.last_action_result in ["successful", "failed_capacity"]:
-                if agent.last_action_result == "failed_capacity":
-                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", self._agent_name)
-                self._task_progress_dict[self._task.id] = self._task_progress_dict.get(self._task.id, 0) + 1
+        # if our last task was assemble and the last_action in the simulation was assemble too
+        if self._last_action == "assemble" and agent.last_action == "assemble":
+            ettilog.loginfo("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+
+            if agent.last_action_result == "failed_capacity":
+                # Only in a few edge cases this can happen. Generally we can ignore it and pretend it was succesful
+                ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity", self._agent_name)
+                agent.last_action_result = "successful"
+
+            if agent.last_action_result == "successful":
+                # Update the assemble step of the assemble task
+                next_assemble_step = self._get_assemble_step() + 1
+
                 if self._get_assemble_step() < len(self._task.task.split(",")):
-                    # If there are still tasks to do, inform all others that the next task will be performed
-                    ettilog.logerr(
+                    # If there are still tasks to do, inform all agents that the next task will be performed
+                    ettilog.loginfo(
                         "AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....",
                         self._agent_name)
                     assemble_task_coordination = TaskProgress(
                         id=self._task.id,
-                        step=self._get_assemble_step(),
+                        step=next_assemble_step,
                         type=CurrentTaskDecision.TYPE_ASSEMBLE
                     )
                     self._pub_assemble_progress.publish(assemble_task_coordination)
@@ -89,46 +100,60 @@ class AssembleProductBehaviour(DecisionBehaviour):
                         self._agent_name)
                     self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
 
-    def action_assemble(self, item):
+    def action_assemble(self, item_to_assemble):
         """
-        Specific "goto" action publishing helper function
-        :param facility_name: name of the facility we want to go to
-        :param publisher: publisher to use
-        """
-        self.action_provider.send_action(action_type = Action.ASSEMBLE, params=[
-            KeyValue("item", str(item))])
-
-
-    def action_assist_assemble(self, agent):
-        """
-        Performs the assist asemble action and publishes it towards the mac_ros_bridge
-        :param agent: str
+        Performs the assemble action to assemble one item
+        :param item_to_assemble:
+        :type item_to_assemble: str
         :return:
         """
-        self.action_provider.send_action(action_type = Action.ASSIST_ASSEMBLE, params=[
-            KeyValue("Agent", str(agent))])
+        self.action_provider.send_action(action_type=Action.ASSEMBLE, params=[
+            KeyValue("item", item_to_assemble)])
+
+    def action_assist_assemble(self, agent_name):
+        """
+        Performs the assist_assemble action to help another agent assemble one item
+        :param agent_name: The agent to support
+        :type agent_name: str
+        :return:
+        """
+        self.action_provider.send_action(action_type=Action.ASSIST_ASSEMBLE, params=[
+            KeyValue("Agent", agent_name)])
 
     def do_step(self):
+        """
+        Each step get the current assembly task, and perform the assigned action of the current step
+        :return:
+        """
         self._task = super(AssembleProductBehaviour, self).do_step()
-        assert self._task != None
-        products = self._task.task.split(",")
+        if self._task is None:
+            ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly task not available during assembly.")
+            return
+
+        # Action list contains all assemble, and assist_assemble actions of a task
+        action_list = self._task.task.split(",")
+
+        # Update the goals
         self._product_provider.update_assembly_goal(self._task.task, self._get_assemble_step())
-        if len(products) > 0 and self._get_assemble_step() < len(products):
-            (self._last_task, self._last_goal) = products[self._get_assemble_step()].split(":")
-            if self._last_task == "assemble":
-                ettilog.logerr("AssembleProductBehaviour(%s):: step %d/%d current task: %s", self._agent_name,
-                               self._get_assemble_step() + 1, len(products), products[self._get_assemble_step()])
-                self.action_assemble(self._last_goal)
-            elif self._last_task == "assist":
-                self.action_assist_assemble(self._last_goal)
+
+        # If there is an action for the current step, perform it
+        if len(action_list) > 0 and self._get_assemble_step() < len(action_list):
+            (self._last_action, self._last_target) = action_list[self._get_assemble_step()].split(":")
+            if self._last_action == "assemble":
+                ettilog.logerr("AssembleProductBehaviour(%s):: step %d/%d Assembling %s", self._agent_name,
+                               self._get_assemble_step() + 1, len(action_list), self._last_target)
+                self.action_assemble(self._last_target)
+            elif self._last_action == "assist":
+                self.action_assist_assemble(self._last_target)
             else:
-                ettilog.logerr("AssembleProductBehaviour(%s):: Invalid task", self._agent_name)
+                ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Invalid action", self._agent_name)
 
         else:
-            ettilog.logerr("This should never happen. Assembly is executed after all tasks are finished")
-
-    def start(self):
-        super(AssembleProductBehaviour, self).start()
+            ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly is executed after all tasks are finished")
 
     def _get_assemble_step(self):
+        """
+        Returns the current step of the assigned task
+        :return: int
+        """
         return self._task_progress_dict.get(self._task.id, 0)

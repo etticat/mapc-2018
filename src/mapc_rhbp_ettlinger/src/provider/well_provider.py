@@ -11,58 +11,68 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class WellProvider(object):
+    """
+    Well provider, that keeps track of all wells of the current team
+    """
     __metaclass__ = Singleton
 
     WELL_TOPIC = "/well"
 
-    def __init__(self, agent_name=None):
-        self.wells = {}
-        self.wells_to_build = {}
+    def __init__(self, agent_name):
+        self._existing_wells = {}
+        self._possible_wells = {}
 
-
-        if agent_name is not None:
-            self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
-            rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "well", WellMsg, self._callback_well)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="well") , WellMsg, self._callback_well)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start") , SimStart, self.callback_sim_start)
 
     def callback_sim_start(self, sim_start):
         """
-
+        Keep track of all wells in current simulation
         :param sim_start:
         :type sim_start: SimStart
         :return:
         """
         for well in sim_start.wells:
-            self.wells_to_build[well.name] = well
+            self._possible_wells[well.name] = well
 
     def _callback_well(self, wellMsg):
         """
-
+        Keep track of all built wells
         :param wellMsg:
         :type wellMsg: WellMsg
         :return:
         """
 
         for well in wellMsg.facilities:
-            self._save_well(well)
-
-    def _save_well(self, well):
-        """
-
-        :param well:
-        :param well: Well
-        :return:
-        """
-
-        self.wells[well.name] = well
-
-    def get_existing_wells(self):
-        return self.wells
+            self._existing_wells[well.name] = well
 
     def get_well(self, well_type):
-        return self.wells_to_build[well_type]
+        """
+        Returns a well object by well type
+        :param well_type:
+        :return:
+        """
+        return self._possible_wells[well_type]
 
     def get_wells_to_build(self):
-        return self.wells_to_build
+        """
+        Returns all wells that are possible to build in current simulation
+        :return:
+        """
+        return self._possible_wells
 
     def get_well_price(self, well_type):
-        return self.wells_to_build[well_type].cost
+        """
+        Returns cost of well in massium
+        :param well_type:
+        :return:
+        """
+        return self._possible_wells[well_type].cost
+
+    @property
+    def existing_wells(self):
+        return self._existing_wells
+
+    @property
+    def possible_wells(self):
+        return self._possible_wells

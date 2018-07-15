@@ -21,22 +21,29 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class DistanceProvider(object):
+    """
+    Provider, that provides information on the distance and steps to targets
+    """
     __metaclass__ = Singleton
 
     RADIUS_EARTH_METERS = 6373000.0  # Using same approximation as server
     GRAPHHOPPER_URL_REQUEST_TIMEOUT = 1.0
     GRAPHHOPPER_DEFAULT_PORT = 8989
 
-    def __init__(self):
-        self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
-        self.cell_size = 0.01
-        self.can_fly = False
-        self.speed = 1
-        self._proximity = 0.01
-        self.agent_pos = None
-        self.agent_vision = 300
+    def __init__(self, agent_name):
 
-        self._cache = {}
+        self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
+        self._cell_size = 0.01
+        self._can_fly = False
+        self._speed = 1
+        self._proximity = 0.01
+        self._agent_pos = None
+        self._agent_vision = 300
+
+        self._road_distance_cache = {}
+
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart, self.callback_sim_start)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="agent"), Agent, self.callback_agent)
 
 
     def callback_agent(self, msg):
@@ -47,8 +54,9 @@ class DistanceProvider(object):
         :type msg: Agent
         :return:
         """
-        self.agent_pos = msg.pos
-        self.agent_vision = msg.vision
+        self._agent_pos = msg.pos
+        self._agent_vision = msg.vision
+        self._speed = msg.speed
 
     def callback_sim_start(self, sim_start):
         """
@@ -57,36 +65,49 @@ class DistanceProvider(object):
         :type sim_start: SimStart
         :return:
         """
-        self.cell_size = sim_start.cell_size
-        self.can_fly = "drone" == sim_start.role.name
-        self.speed = sim_start.role.base_speed  # TODO: Update on upgrade
+        self._cell_size = sim_start.cell_size
+        self._can_fly = "drone" == sim_start.role.name
+        self._speed = sim_start.role.base_speed
         self._proximity = sim_start.proximity
 
 
+        # The agent often gets stuck at the boarders, avoid this by adding a slight margin around the borders that we do not want to touch
         # TODO: Make sure this works around the 0 meridian
-        self.min_lat = sim_start.min_lat + 0.001 # TODO: The agents always get stuck as the min lat is not reachable
-        self.max_lat = sim_start.max_lat - 0.001 # TODO: Find a better way
+        self.min_lat = sim_start.min_lat + 0.001
+        self.max_lat = sim_start.max_lat - 0.001
         self.min_lon = sim_start.min_lon + 0.001
         self.max_lon = sim_start.max_lon - 0.001
 
+        # Get the difference between max and min values
         self.lat_spread = self.max_lat - self.min_lat
         self.lon_spread = self.max_lon - self.min_lon
 
+        # Calculate the difference between min and max lat at the mean longitude
         mean_long = mean([self.min_lon, self.max_lon])
         self.total_distance_x = self.calculate_distance_air(
             Position(lat=self.min_lat, long=mean_long),
             Position(lat=self.max_lat, long=mean_long)
         )
 
+        # Calculate the difference between min and max long at the mean latitude
         mean_lat = mean([self.min_lat, self.max_lat])
         self.total_distance_y = self.calculate_distance_air(
             Position(long=self.min_lon, lat=mean_lat),
             Position(long=self.max_lon, lat=mean_lat)
         )
     def calculate_distance(self, startPosition, endPosition):
-        if self.can_fly:
+        """
+        Calculates the distance between two position.
+        Depending on the agent abilities, this returns either air or road distance
+        :param startPosition:
+        :param endPosition:
+        :return:
+        """
+        if self._can_fly:
+            # If agent can fly, return air distance
             return self.calculate_distance_air(startPosition, endPosition)
         else:
+            # if agent can't fly return road distance
             try:
                 return self.calculate_distance_street(startPosition, endPosition)
             except LookupError as e:
@@ -95,19 +116,33 @@ class DistanceProvider(object):
                 ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
                 ettilog.logerr(traceback.format_exc())
 
-            ettilog.logerr("DistanceProvider:: Using fallback approximation")
+            ettilog.logerr("DistanceProvider:: Road distance unavailable. Using fallback approximation: air distance * 2")
             return self.calculate_distance_air(startPosition, endPosition) * 2  # Fallback
 
     def calculate_steps(self, pos1, pos2):
-        if self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity:
+        """
+        Returns the step needed between two positions.
+        :param pos1:
+        :param pos2:
+        :return:
+        """
+        if self.at_same_location(pos1, pos2):
+            # If the distance is lower than proximity, agent is at destination.
             return 0
-        size_ = self.calculate_distance(pos1, pos2) / (self.speed * self.cell_size)
+
+        # calculate the air distance
+        size_ = self.calculate_distance(pos1, pos2) / (self._speed * self._cell_size)
+
+        # Round up to next int value.
+        # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
+        # The exact step size is not of utmost importance. 1 Step off is fine
         return math.ceil((size_ / 1000) - 0.002)  # round up except when its really close
-        # TODO Maype this can be better approximated using proximity. But then need to conver from latlong eucliedian to meters
+        # TODO Maype this can be better approximated using proximity. But then need to convert from latlong eucliedian to meters
 
     def calculate_distance_air(self, pos1, pos2):
         """
-        Logic extracted from massim server massim.protocol.scenario.city.util.LocationUtil.java
+        Returns the distance between two positions.
+        Logic extracted and constants from massim server massim.protocol.scenario.city.util.LocationUtil.java
         :param pos1:
         :param pos2:
         :return:
@@ -128,7 +163,8 @@ class DistanceProvider(object):
 
     def calculate_distance_street(self, a, b):
         """
-        Taken from 2017
+        Returns the street distance. If it is cached, use this value. otherwise request it from graphhopper
+        Partly taken from 2017
         :param a:
         :param b:
         :return:
@@ -136,23 +172,23 @@ class DistanceProvider(object):
 
         key = str(a) + str(b)
 
-        if key not in self._cache.keys():
-            self._cache[key] = self._request_street_distance(a, b)
-        return self._cache[key]
+        if key not in self._road_distance_cache.keys():
+            self._road_distance_cache[key] = self._request_street_distance(a, b)
+        return self._road_distance_cache[key]
 
-    def _request_street_distance(self, a, b):
+    def _request_street_distance(self, position1, position2):
         """"
-        Calculate the shortest street route between two positions
+        Request street distance between two positions from graphhoppper
         Taken from 2017
-        :param a: position 1
-        :type a: Position
-        :param b: position 2
-        :type b: Position
+        :param position1: position 1
+        :type position1: Position
+        :param position2: position 2
+        :type position2: Position
         :return: shortest street distance in km
         """
         request = 'http://localhost:{}/route?instructions=false&calc_points=false&' \
                   'points_encoded=false&point={},{}&point={},{}'.format(self.graphhopper_port,
-                                                                        a.lat, a.long, b.lat, b.long)
+                                                                        position1.lat, position1.long, position2.lat, position2.long)
         try:
             connection = urllib2.urlopen(request, timeout=DistanceProvider.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
             response = connection.read().decode()
@@ -160,7 +196,6 @@ class DistanceProvider(object):
             connection.close()
             distance = parsed['paths'][0]['distance']
             if distance:
-                # ettilog.loginfo("Successful route to '%s'", request)
                 return distance
             else:
                 raise LookupError('Graphhopper: Route not available for:' + request)
@@ -173,6 +208,7 @@ class DistanceProvider(object):
     def set_map(self, map):
         """
         Set the current map on the map server using the ROS service interface
+        Taken from 2017
         :param map: name of map to configure
         """
         try:
@@ -181,32 +217,53 @@ class DistanceProvider(object):
             if self._map != map:  # reset cache on new map
                 self._map = map
                 self.graphhopper_port = res.port
-                self._cache = {}
+                self._road_distance_cache = {}
         except rospy.ServiceException:
             ettilog.logerr("ROS service exception in set_map_service %s", traceback.format_exc())
 
     def calculate_positions_eucledian_distance(self, pos1, pos2):
-
+        """
+        Taken from 2017
+        :param pos1:
+        :param pos2:
+        :return:
+        """
         return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
 
-    def get_closest_facility(self, facilities, agent_position=None):
-        if agent_position is None:
-            agent_position = self.agent_pos
+    def get_closest_facility(self, facilities, position=None):
+        """
+        Returns the closest facility to the agent
+        :param facilities:
+        :param position:
+        :return:
+        """
+        if position is None:
+            position = self._agent_pos
 
-        closest_facility = None
-        closest_facility_steps = 99
-        for facility in facilities:
-            steps = self.calculate_steps(agent_position, facility.pos)
-            if steps < closest_facility_steps:
-                closest_facility_steps = steps
-                closest_facility = facility
-        return closest_facility
+        # If no facilities provided, return none
+        if facilities is None or len(facilities) ==0:
+            return None
+
+        # Return closest facility
+        return min(facilities, key=lambda facility:self.calculate_steps(position, facility.pos))
 
     def at_same_location(self, pos1, pos2):
-        return AgentUtils.calculate_distance(pos1, pos2) < self._proximity
+        """
+        Returns if pos1 and pos2 are at same location as defined in server.
+        TODO: Use facility attribute of Agent where possible
+        :param pos1:
+        :param pos2:
+        :return:
+        """
+        return self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity
 
 
     def lat_to_x(self, lat):
+        """
+        Converts a latitude value to an x value that can be used in the self organisation framework
+        :param lat:
+        :return:
+        """
         distance_from_left_side = lat - self.min_lat
         percentage_on_screen = distance_from_left_side / self.lat_spread
 
@@ -215,6 +272,11 @@ class DistanceProvider(object):
         return x
 
     def lon_to_y(self, lon):
+        """
+        Converts a longitude value to a y value that can be used in the self organisation framework
+        :param lon:
+        :return:
+        """
         distance_from_top = lon - self.min_lon
         percentage_on_screen = distance_from_top / self.lon_spread
 
@@ -224,7 +286,7 @@ class DistanceProvider(object):
 
     def position_to_xy(self, pos):
         """
-
+        Converts a Position object to an x ad y values that can be used in the self organisation framework
         :param pos:
         :type pos: Position
         :return:
@@ -232,6 +294,11 @@ class DistanceProvider(object):
         return self.lat_to_x(pos.lat), self.lon_to_y(pos.long)
 
     def y_to_lon(self, y):
+        """
+        Converts a y value from the self organisation framework to a lon value that can be used for massim simulation
+        :param y:
+        :return:
+        """
         percentage_on_screen = float(y) / self.total_distance_y
 
         distance_from_top = self.lon_spread * percentage_on_screen
@@ -241,6 +308,11 @@ class DistanceProvider(object):
         return max(min(lon, self.max_lon), self.min_lon)
 
     def x_to_lat(self, x):
+        """
+        Converts an x value from the self organisation framework to a long value that can be used for massim simulation
+        :param x:
+        :return:
+        """
         percentage_on_screen = float(x) / self.total_distance_x
 
         distance_from_left = self.lat_spread * percentage_on_screen
@@ -250,5 +322,19 @@ class DistanceProvider(object):
         return max(min(lat, self.max_lat), self.min_lat)
 
     def position_from_xy(self, x,y):
+        """
+        Converts x and y values from the self organisation framework to a Position object for the massim simulation
+        :param x:
+        :param y:
+        :return:
+        """
 
         return Position(lat=self.x_to_lat(x), long=self.y_to_lon(y))
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @property
+    def agent_pos(self):
+        return self._agent_pos

@@ -9,31 +9,40 @@ from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
 from so_data.patterns import DecisionPattern
 
-ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.self_organisation.decisions')
+ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.map')
 
 
 class MapDecision(DecisionPattern):
+    """
+    Calculates values for each cell of the map
+    these values can be either the time it was last visited or how often a place has beenvisited
+    """
+
     MODE_OLDEST_VISITED = "oldest_visited"
     MODE_SEEN_COUNT = "seen_count"
 
-    def __init__(self, buffer, frame, key, target_frames, mode, granulariy=500, value=None, state=None, moving=True,
+    def __init__(self, agent_name, buffer, frame, key, target_frames, mode, granulariy=500, value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
                  ev_factor=0.0, ev_time=5):
         """
 
+        :param agent_name:
         :param buffer:
         :param frame:
         :param key:
+        :param target_frames:
+        :param mode:
+        :param granulariy: how far the calculated points should be from another (in meters)
         :param value:
         :param state:
-        :param moving: As the goal changes sometimes
+        :param moving:
         :param static:
-        :param diffusion: 600 TODO: This should always be the vision of agent
-        :param goal_radius: We see everythong O.O TODO: consider this again
-        :param ev_factor: 0.0 -> diffusion goes to 0 after ev_time
-        :param ev_time: 5 -> after 10 steps the exploration goal is ignored by everyone
+        :param diffusion:
+        :param goal_radius:
+        :param ev_factor:
+        :param ev_time:
         """
-        self.simulation_provider = SimulationProvider()
+        self.simulation_provider = SimulationProvider(agent_name=agent_name)
         self.granulariy = granulariy
         self.mode = mode
         self.target_frames = target_frames
@@ -41,13 +50,13 @@ class MapDecision(DecisionPattern):
                                           moving, static, goal_radius, ev_factor,
                                           ev_time, diffusion)
 
-        self.distance_provider = DistanceProvider()
+        self.distance_provider = DistanceProvider(agent_name=agent_name)
         self.environment_array = None
         self.last_messages = []
 
     def calc_value(self):
         """
-        determines maximum received value by all agent gradients
+        Calculates the map
         :return: maximum number
         """
 
@@ -63,15 +72,17 @@ class MapDecision(DecisionPattern):
         simple_size_x = int(sizex / self.granulariy)
         simple_size_y = int(sizey / self.granulariy)
 
+        # create the map if it has not existed yet
         if self.environment_array is None:
             self.environment_array = np.zeros([simple_size_x, simple_size_y, ])
 
-        # Calculate map
+        # Go through all soMessages
         for so_message in so_messages:
+            # only take the ones into account that have not been processed yet.
             if so_message.diffusion > 0 and so_messages not in self.last_messages:
-                mask = self.generate_array_mask(simple_size_x, simple_size_y,
-                                                so_message.p.x / self.granulariy, so_message.p.y / self.granulariy,
-                                                so_message.diffusion / self.granulariy)
+                mask = self.generate_round_array_mask(simple_size_x, simple_size_y,
+                                                      so_message.p.x / self.granulariy, so_message.p.y / self.granulariy,
+                                                      so_message.diffusion / self.granulariy)
                 if self.mode == MapDecision.MODE_SEEN_COUNT:
                     self.environment_array[mask] += 1
                 elif self.mode == MapDecision.MODE_OLDEST_VISITED:
@@ -84,28 +95,33 @@ class MapDecision(DecisionPattern):
         return [self.environment_array, self.state]
 
     def create_message(self, val):
-
+        """
+        Overwrite the message creation to inject the simulation timestamp
+        :param val:
+        :return:
+        """
         msg = super(MapDecision, self).create_message(val)
-        msg.ev_stamp.secs = self.simulation_provider.step
+        msg.ev_stamp.secs = self.simulation_provider._step
 
-    def generate_array_mask(self, size_x, size_y, x, y, r):
+    def generate_round_array_mask(self, size_x, size_y, x, y, r):
+        """
+        Generates a round array_mask
+        :param size_x: length of mask
+        :param size_y: heiht of mask
+        :param x: point x in mask where the circle center should be
+        :param y: point y in mask where the circle center should be
+        :param r: the radius of the circle
+        :return:
+        """
         y, x = np.ogrid[-x:size_x - x, -y:size_y - y]
         mask = x * x + y * y <= r * r
         return mask
 
-    def spread(self):
-        """
-        spreads message with maximum value
-        :return:
-        """
-        try:
-            super(MapDecision, self).spread()
-        except Exception as e:
-            print(e)
-            print(traceback.format_exc())
-
-
 class PickClosestDestinationWithLowestValue(MapDecision):
+    """
+    Returns the closest cell with value 0 in the map.
+    If no cell has value 0, it returns a random value that is among the 10% of oldest palces.
+    """
 
     def __init__(self, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=500,
                  value=None, state=None, moving=True,
@@ -122,7 +138,12 @@ class PickClosestDestinationWithLowestValue(MapDecision):
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
 
     def calc_value(self):
+        """
+        Calculates the position
+        :return:
+        """
 
+        # Get map from superclass
         res = super(PickClosestDestinationWithLowestValue, self).calc_value()
 
         if res is None:
@@ -132,25 +153,20 @@ class PickClosestDestinationWithLowestValue(MapDecision):
         environment_array = res[0]
 
         simple_size_x, simple_size_y = environment_array.shape
-
-        pos_x, pos_y = self.distance_provider.position_to_xy(self.distance_provider.agent_pos)
-
+        pos_x, pos_y = self.distance_provider.position_to_xy(self.distance_provider._agent_pos)
         simple_pos_x = int(pos_x / self.granulariy)
         simple_pos_y = int(pos_y / self.granulariy)
-
-        vision = max(int(self.distance_provider.agent_vision / self.granulariy), 1)
-
+        vision = max(int(self.distance_provider._agent_vision / self.granulariy), 1)
         r = vision * 2
 
         min_val = np.inf
         size = np.size(environment_array)
-
         mask = None
 
         while min_val != 0:
             r = r + vision
 
-            mask = self.generate_array_mask(simple_size_x, simple_size_y, simple_pos_x, simple_pos_y, r)
+            mask = self.generate_round_array_mask(simple_size_x, simple_size_y, simple_pos_x, simple_pos_y, r)
 
             min_val = min(environment_array[mask])
 
@@ -161,8 +177,8 @@ class PickClosestDestinationWithLowestValue(MapDecision):
         if min_val == 0 or self.pick_random_of_lowest_values == False:
             array2[environment_array == min_val] = 1
         else:
-
             array2[environment_array < np.percentile(environment_array, 10)] = 1
+
         array2[mask == False] *= 0
 
         ii = np.where(array2 == 1)
@@ -174,88 +190,3 @@ class PickClosestDestinationWithLowestValue(MapDecision):
         destination = self.distance_provider.position_from_xy(res[0], res[1])
 
         return [destination, self.state]
-
-
-class ExplorationDecision(PickClosestDestinationWithLowestValue):
-
-    def __init__(self, buffer):
-        super(ExplorationDecision, self).__init__(buffer, mode=MapDecision.MODE_OLDEST_VISITED,
-                                                  frame='exploration_goal', key='destination',
-                                                  target_frames=["agent", "exploration_goal", "no_route"],
-                                                  pick_random_of_lowest_values=True)
-
-    def create_message(self, val):
-        msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)
-
-        if msg is not None:
-            # Inject the intended destination and use it instead of the current position
-            msg.p.x = val[0][0]
-            msg.p.y = val[0][1]
-            msg.diffusion = self.distance_provider.agent_vision
-
-        return msg
-
-
-class WellPositionDecision(PickClosestDestinationWithLowestValue):
-
-    def __init__(self, buffer):
-        super(WellPositionDecision, self).__init__(buffer, frame="build_well", key="destination",
-                                                   target_frames=["build_well", "opponent", "no_route"],
-                                                   mode=MapDecision.MODE_SEEN_COUNT)
-
-    def create_message(self, val):
-        msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)
-
-        if msg is not None:
-            # Inject the intended destination and use it instead of the current position
-            msg.p.x = val[0][0]
-            msg.p.y = val[0][1]
-            msg.diffusion = 200  # Dont build wells right next to each other
-            # TODO: Use proximity here?
-
-        return msg
-
-
-class OldestCellAgeDecision(MapDecision):
-
-    def __init__(self, buffer, init_value):
-        super(OldestCellAgeDecision, self).__init__(buffer, frame='noneTODOremove', key='destination',
-                                                    target_frames=["agent", "exploration_goal", "no_route"],
-                                                    mode=MapDecision.MODE_OLDEST_VISITED)
-        self.init_value = init_value
-
-    def calc_value(self):
-
-        res = super(OldestCellAgeDecision, self).calc_value()
-
-        if res is None:
-            return [0.0, self.state]
-
-        environment_array = res[0]
-
-        min_val = np.min(environment_array)
-
-        if min_val == 0:
-            return [self.init_value, self.state]
-        else:
-            return min_val
-
-
-class DiscoverProgressDecision(MapDecision):
-
-    def __init__(self, buffer):
-        super(DiscoverProgressDecision, self).__init__(buffer, frame=None, key='destination',
-                                                       target_frames=["agent", "exploration_goal", "no_route"],
-                                                       mode=MapDecision.MODE_OLDEST_VISITED)
-
-    def calc_value(self):
-        res = super(DiscoverProgressDecision, self).calc_value()
-
-        if res is None:
-            return [0.0, self.state]
-
-        environment_array = res[0]
-
-        progress = float(np.count_nonzero(environment_array)) / environment_array.size
-
-        return [progress, self.state]

@@ -1,0 +1,128 @@
+import rospy
+from mapc_rhbp_ettlinger.msg import TaskStop
+
+from common_utils.agent_utils import AgentUtils
+from provider.product_provider import ProductProvider
+from rospy.my_publish_subscribe import MyPublisher
+from so_data.patterns import DecisionPattern
+
+
+class CurrentTaskDecision(DecisionPattern):
+    """
+    Decision mechanism that keeps track of the current task and returns it in calc
+    """
+
+    TYPE_ASSEMBLE = "assemble"
+    TYPE_DELIVER = "deliver"
+    TYPE_BUILD_WELL = "build_well"
+
+    def __init__(self, agent_name, task_type):
+        self.agent_name = agent_name
+        self.task_type = task_type
+
+        super(CurrentTaskDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
+
+        self.current_task = None
+
+        self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type, queue_size=10)
+
+    def calc_value(self):
+        """
+        Returns the current task
+        :return:
+        """
+        return [self.current_task, self.state]
+
+    def start_task(self, task):
+        """
+        Saves the current task.
+        Can be overwritten to perform code on task start
+        :param task:
+        :return:
+        """
+        assert self.current_task is None
+        rospy.loginfo("CurrentTaskDecision(%s)::starting task %s current state: %s", self.task_type, task.id,
+                     self.current_task)
+        self.current_task = task
+
+    def end_task(self, notify_others=True):
+        """
+        Stops the current task.
+        Can be overwritten to perform code on task end
+        :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
+        :return:
+        """
+        rospy.loginfo("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.current_task))
+        if self.current_task is not None and notify_others:
+            self._pub_task_stop.publish(TaskStop(
+                id=self.current_task.id,
+                reason='stopped by client'))
+
+        self.current_task = None
+
+
+class AssembleTaskDecision(CurrentTaskDecision):
+    """
+    Decision mechanism that keeps track of the assemble current task and returns it in calc
+    """
+    def __init__(self, agent_name, task_type):
+
+        super(AssembleTaskDecision, self).__init__(agent_name, task_type)
+
+        self._product_provider = ProductProvider(agent_name=agent_name)
+
+    def end_task(self, notify_others=True):
+        """
+        Stops the current assembly task.
+        Also clears the assembly goal
+        :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
+        :return:
+        """
+        super(AssembleTaskDecision, self).end_task(notify_others)
+
+        if self.current_task is None:
+            self._product_provider.stop_assembly()
+
+    def start_task(self, task):
+        """
+        Saves the current assembly task.
+        Adds the expected items into the assembly goal
+        :param task:
+        :return:
+        """
+        super(AssembleTaskDecision, self).start_task(task)
+        self._product_provider.update_assembly_goal(task_string=task.task)
+
+
+class DeliveryTaskDecision(CurrentTaskDecision):
+    """
+    Decision mechanism that keeps track of the current delivery task and returns it in calc
+    """
+    def __init__(self, agent_name, task_type):
+
+        super(DeliveryTaskDecision, self).__init__(agent_name, task_type)
+
+        self._product_provider = ProductProvider(agent_name=agent_name)
+
+    def end_task(self, notify_others=True):
+        """
+        Stops the current delivery task.
+        Also clears the delivery goal
+        :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
+        :return:
+        """
+        if self.current_task is not None:
+            self._product_provider.stop_delivery(job_id=self.current_task.task,
+                                                 storage=self.current_task.destination_name)
+        super(DeliveryTaskDecision, self).end_task(notify_others)
+
+    def start_task(self, task):
+        """
+        Saves the current delivery task.
+        Adds the expected items into the delivery goal
+        :param task:
+        :return:
+        """
+        super(DeliveryTaskDecision, self).start_task(task)
+        self._product_provider.update_delivery_goal(item_list=self.current_task.items, job_id=self.current_task.task,
+                                                    storage=self.current_task.destination_name)

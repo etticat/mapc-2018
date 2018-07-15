@@ -6,29 +6,33 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation, Disjunction
 from behaviour_components.sensors import TopicSensor
 from common_utils.agent_utils import AgentUtils
-from decisions.assembly_combination import AssemblyCombinationDecision
-from decisions.battery import ClosestChargingStationDecision
-from decisions.choose_finsihed_products_to_store import ChooseFinishedProductsToStore
-from decisions.choose_stroage_for_hoarding import ChooseStorageForHoardingMechanism
-from decisions.gather import GatherDecisionMechanism
-from decisions.p_task_decision import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision
+from decisions.best_agent_assembly_combination import BestAgentAssemblyCombinationDecision
+from decisions.closest_charging_station import ClosestChargingStationDecision
+from decisions.choose_finished_products_to_store import ChooseFinishedProductsToStoreDecision
+from decisions.choose_stroage_for_hoarding import ChooseStorageForHoardingDecision
+from decisions.choose_item_to_gather import ChooseItemToGatherMechanism
+from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.agent import FinishedProductLoadSensor
+from sensor.agent import StorableItemsLoadSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor
-from sensor.gather import SmallestGatherableItemSensor
+from sensor.gather import SmallestGatherableItemVolumeSensor
 from sensor.general import FactorSensor, SubtractionSensor
 from sensor.movement import StepDistanceSensor
 
 
-class SensorAndConditionMap(object):
+class GlobalRhbpComponents(object):
+    """
+    Object that initialises sensors, mechanisms and conditions that are used by many different components later.
+    """
 
     DISCOVERY_AGE_FULL_ACTIVATION = 100
 
     def __init__(self, agent_name):
         self.agent_name = agent_name
         self.agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
-        self.init_mechanism(agent_name=agent_name)
+        self.init_mechanisms(agent_name=agent_name)
+
         self.init_load_sensors()
         self.init_agent_sensors()
         self.init_battery_sensors()
@@ -48,10 +52,10 @@ class SensorAndConditionMap(object):
             name="load_sensor",
             message_attr='load')
 
-        self.finished_product_load_sensor = FinishedProductLoadSensor(
+        self.storable_items_load_sensor = StorableItemsLoadSensor(
             agent_name=self.agent_name,
-            name="finished_product_load_sensor",
-            gather_decision_mechanism=self.gather_decision_mechanism
+            name="storable_items_load_sensor",
+            choose_finished_product_decision=self.hoarding_items_decision
         )
 
         self.free_load_sensor = SubtractionSensor(
@@ -79,15 +83,15 @@ class SensorAndConditionMap(object):
                 fullActivationValue=1.0
             )
         )
-        self.finished_product_load_factor_sensor = FactorSensor(
+        self.storable_items_load_factor_sensor = FactorSensor(
             name="finished_product_load_factor_sensor",
-            dividend_sensor=self.finished_product_load_sensor,
+            dividend_sensor=self.storable_items_load_sensor,
             divisor_sensor=self.max_load_sensor
         )
 
         self.finished_product_load_fullness_condition = Condition(
             name="finished_product_load_fullness_condition",
-            sensor=self.finished_product_load_factor_sensor,
+            sensor=self.storable_items_load_factor_sensor,
             activator=LinearActivator(
                 zeroActivationValue=0.0,
                 fullActivationValue=1.0
@@ -105,7 +109,7 @@ class SensorAndConditionMap(object):
             sensor=self.hoarding_target_sensor,
             activator=BooleanActivator()
         )
-        self.smallest_gatherable_item_sensor = SmallestGatherableItemSensor(
+        self.smallest_gatherable_item_sensor = SmallestGatherableItemVolumeSensor(
             name="smallest_gatherable_item_sensor",
             agent_name=self.agent_name
         )
@@ -143,6 +147,7 @@ class SensorAndConditionMap(object):
         # Sensor to check distance to charging station
         self.charging_station_step_sensor = StepDistanceSensor(
             name='charging_station_step_distance',
+            agent_name=self.agent_name,
             position_sensor_1=self.agent_position_sensor,
             position_sensor_2=self.closest_charging_station_sensor,
             initial_value=10
@@ -318,7 +323,7 @@ class SensorAndConditionMap(object):
 
         self.oldest_cell_last_seen_sensor = OldestCellLastSeenSensor(
             agent_name=agent_name,
-            initial_value=-SensorAndConditionMap.DISCOVERY_AGE_FULL_ACTIVATION,
+            initial_value=-GlobalRhbpComponents.DISCOVERY_AGE_FULL_ACTIVATION,
             name="discovery_completeness_condition")
 
         self.simulation_step_sensor = TopicSensor(
@@ -336,17 +341,17 @@ class SensorAndConditionMap(object):
             sensor=self.oldest_cell_age_sensor,
             activator=LinearActivator(
                 zeroActivationValue=0,
-                fullActivationValue=SensorAndConditionMap.DISCOVERY_AGE_FULL_ACTIVATION
+                fullActivationValue=GlobalRhbpComponents.DISCOVERY_AGE_FULL_ACTIVATION
             )
         )
 
-    def init_mechanism(self, agent_name):
+    def init_mechanisms(self, agent_name):
         self.assemble_task_mechanism = AssembleTaskDecision(
             agent_name=agent_name,
             task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
-        self.assembly_combination_decision = AssemblyCombinationDecision(
+        self.assembly_combination_decision = BestAgentAssemblyCombinationDecision(
             agent_name=agent_name)
-        self.gather_decision_mechanism = GatherDecisionMechanism(
+        self.gather_decision_mechanism = ChooseItemToGatherMechanism(
             agent_name=agent_name,
             assembly_combination_decision=self.assembly_combination_decision)
         self.deliver_task_mechanism = DeliveryTaskDecision(
@@ -355,11 +360,11 @@ class SensorAndConditionMap(object):
         self.well_task_mechanism = CurrentTaskDecision(
             agent_name=agent_name,
             task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
-        self.hoarding_items_decision = ChooseFinishedProductsToStore(
+        self.hoarding_items_decision = ChooseFinishedProductsToStoreDecision(
             agent_name=agent_name,
             gather_mechanism=self.gather_decision_mechanism,
             assembly_decision_mechanism=self.assembly_combination_decision)
-        self.choose_hoarding_mechanism = ChooseStorageForHoardingMechanism(
+        self.choose_hoarding_mechanism = ChooseStorageForHoardingDecision(
             agent_name=agent_name,
             hoarding_items_decision=self.hoarding_items_decision,
             assembly_decision_mechanism=self.assembly_combination_decision)

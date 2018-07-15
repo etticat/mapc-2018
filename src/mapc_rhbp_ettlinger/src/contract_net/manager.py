@@ -2,6 +2,7 @@ import random
 import time
 from abc import abstractmethod
 
+import rospy
 from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils import etti_logging
@@ -13,6 +14,9 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class ContractNetManager(object):
+    """
+    Contract Net manager base class
+    """
     DEADLINE_BIDS = 4
     DEADLINE_ACKNOWLEDGEMENT = 4
 
@@ -20,66 +24,112 @@ class ContractNetManager(object):
 
         self._task_type = task_type
 
-        self._id = random.randint(1,1000000)
+        self._init_config()
+
+        # Initialise runtime variables
+        self._id = 0 # Id of the current coordinated task
         self._bids = None
         self._acknowledgements = None
         self._assignments = None
-
         self.reset_manager()
 
+        # Initialise providers
         self._facility_provider = FacilityProvider()
 
+        # Initialise subscribers
         topic = AgentUtils.get_coordination_topic()
-
         self._pub_task_request = MyPublisher(topic, message_type="request", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="bid", task_type=self._task_type, callback=self._callback_bid)
-        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type, queue_size=10)
-        MySubscriber(topic, message_type="acknowledgement", task_type=self._task_type, callback=self._callback_acknowledgement)
+        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type,
+                                                queue_size=10)
+        MySubscriber(topic, message_type="acknowledgement", task_type=self._task_type,
+                     callback=self._callback_acknowledgement)
         self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
+
+    def _init_config(self):
+        """
+        Initialises the config parameters from the rospy config
+        :return:
+        """
+        ContractNetManager.DEADLINE_BIDS = rospy.get_param('~ContractNetManager.DEADLINE_BIDS', ContractNetManager.DEADLINE_BIDS)
+        ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('~ContractNetManager.DEADLINE_ACKNOWLEDGEMENT', ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
+
+
     def reset_manager(self):
+        """
+        Resets all values, so the manager can start a new task
+        :return:
+        """
         self._bids = []
         self._acknowledgements = []
         self._assignments = []
         self._id = self._id + 1
 
     def request_help(self, request):
+        """
+        Starts the coordination of a task.
+        This method blocks until the coordination is done or has failed
+        :param request:
+        :type request: TaskRequest
+        :return:
+        """
 
-        ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager start---------------------------", self._task_type)
+        ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager start---------------------------",
+                        self._task_type)
+
         self.reset_manager()
 
+        # Inject a new Id and the deadline for the request
         request.id = self._id
         request.deadline = time.time() + ContractNetManager.DEADLINE_BIDS
 
+        # Publish the request
         self._pub_task_request.publish(request)
 
+        # Wait until deadline to process all bids
         sleep_time = request.deadline - time.time()
         time.sleep(sleep_time)
         return self.process_bids()
 
     def _callback_bid(self, bid):
-
-        if bid.request.deadline < time.time():
-            ettilog.loginfo("ContractNetManager(%s):: Bid with expired deadline from %s (id:%d, bid-id:%d)", self._task_type, bid.agent_name, self._id, bid.id)
-        elif bid.id != self._id:
-            ettilog.loginfo("ContractNetManager(%s):: Received wrong id by %s (id:%d, bid-id:%d)", self._task_type, bid.agent_name, self._id, bid.id)
-        else:
-            ettilog.loginfo("ContractNetManager(%s):: Received bid from %s (id:%d)", self._task_type, bid.agent_name, self._id)
-            self._bids.append(bid)
-
-    def process_bids(self):
         """
-
-        :param bids:
-        :type bids: dict[]
+        Takes a bid from an agent and saves it into
+        :param bid:
         :return:
         """
 
+        if bid.request.deadline < time.time():
+            # Ignore bids after deadline
+            ettilog.logerr("ContractNetManager(%s):: Bid with expired deadline from %s (id:%d, bid-id:%d)",
+                            self._task_type, bid.agent_name, self._id, bid.id)
+            return
+        if bid.id != self._id:
+            # Ignore bids, that do not match the current id. This could happen if the agent took soo long to send bid,
+            # that the manager already started coordinating the next task when the bid arrives.
+            ettilog.logerr("ContractNetManager(%s):: Received invalid id by %s (id:%d, bid-id:%d)", self._task_type,
+                            bid.agent_name, self._id, bid.id)
+            return
+
+        # Add bid to bid array
+        ettilog.loginfo("ContractNetManager(%s):: Received bid from %s (id:%d)", self._task_type, bid.agent_name,
+                        self._id)
+        self._bids.append(bid)
+
+    def process_bids(self):
+        """
+        Processes all bids, finds the best agents and sends acknowledgements to those agents.
+        :return:
+        """
+
+        # Retrive the assignments. This method has to be implemented by an overriding class.
         assignments = self.get_assignments(self._bids)
 
+        # If no assignments could be created, stop coordination
         if assignments is None or len(assignments) == 0:
-            ettilog.loginfo("ContractNetManager(%s):: No useful bid combination found in %d bids", self._task_type, len(self._bids))
+            ettilog.loginfo("ContractNetManager(%s):: No useful bid combination found in %d bids", self._task_type,
+                            len(self._bids))
             return False
 
         ettilog.loginfo("ContractNetManager(%s):: Bids processed: Accepted bids from %s", self._task_type,
@@ -87,60 +137,94 @@ class ContractNetManager(object):
 
         acknowledgement_deadline = time.time() + ContractNetManager.DEADLINE_ACKNOWLEDGEMENT
 
+        # publish all assignments
         for assignment in assignments:
             assignment.deadline = acknowledgement_deadline
             self._assignments.append(assignment)
 
-            ettilog.loginfo("ContractNetManager(%s):: Publishing assignment for %s", self._task_type, assignment.bid.agent_name)
-
+            ettilog.loginfo("ContractNetManager(%s):: Publishing assignment for %s", self._task_type,
+                            assignment.bid.agent_name)
             self._pub_task_assignment.publish(assignment)
 
+        # Wait until deadline and process the acknowledgements
         time.sleep(acknowledgement_deadline - time.time())
-
-        return self._process_bid_acknowledgements()
+        return self._process_acknowledgements()
 
     def _callback_acknowledgement(self, acknowledgement):
+        """
+        Receives an acknolwedgement from an agent and saves it into an array.
+        :param acknowledgement:
+        :return:
+        """
 
+        if acknowledgement.assignment.deadline < time.time():
+            # Ignore acknowledgements after deadline
+            ettilog.logerr("ContractNetManager(%s):: Acknowledgement with expired deadline from %s (id:%d, bid-id:%d)",
+                            self._task_type, acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
+            return
         if acknowledgement.id != self._id:
-            ettilog.loginfo("ContractNetManager(%s):: Received Acknowledgement with wrong id by %s (id:%d, bid-id:%d)", self._task_type, acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
-            return False
-        else:
-            ettilog.loginfo("ContractNetManager(%s):: Received Acknowledgement from %s", self._task_type,
-                            acknowledgement.assignment.bid.agent_name)
-            self._acknowledgements.append(acknowledgement)
+            # Ignore acknowledgements, that do not match the current id. This could happen if the agent took soo long to send acknowledgement,
+            # that the manager already started coordinating the next task when the bid arrives.
+            ettilog.logerr("ContractNetManager(%s):: Received invalid acknowledgement by %s (id:%d, bid-id:%d)", self._task_type,
+                           acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
+            return
 
-    def _process_bid_acknowledgements(self):
+        ettilog.loginfo("ContractNetManager(%s):: Received Acknowledgement from %s", self._task_type,
+                        acknowledgement.assignment.bid.agent_name)
+        self._acknowledgements.append(acknowledgement)
+
+    def _process_acknowledgements(self):
+        """
+        Processes all acknowledgements. Checks if all were received succesfully. If not, it cancells the task again.
+        :return:
+        """
+
         if len(self._acknowledgements) == len(self._assignments):
+            # If all agents acknowledged the assignments, end coordination
             ettilog.logerr("ContractNetManager(%s):: Task (%d) starting with %s", self._task_type,
                            self._id, str([assignment.bid.agent_name for assignment in self._assignments]))
 
             self._on_task_acknowledged(self._acknowledgements[0].id)
-            ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager stop---------------------------", self._task_type)
+            ettilog.loginfo(
+                "ContractNetManager(%s):: ---------------------------Manager stop---------------------------",
+                self._task_type)
             return True
         else:
-            ettilog.loginfo("ContractNetManager(%s):: coordination unsuccessful. cancelling... Received %d/%d from %s", self._task_type,
+            # If not all assignments got acknowledged, Stop the whole task and end coordination.
+            ettilog.logerr("ContractNetManager(%s):: coordination unsuccessful. cancelling... Received %d/%d from %s",
+                            self._task_type,
                             len(self._acknowledgements), len(self._assignments),
-                            str([acknowledgement.assignment.bid.agent_name for acknowledgement in self._acknowledgements]))
+                            str([acknowledgement.assignment.bid.agent_name for acknowledgement in
+                                 self._acknowledgements]))
 
-            self._pub_task_stop.publish(TaskStop(
-                id=self._id,
-                reason='acknowledgements failed'))
-            ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager stop---------------------------", self._task_type)
+            self._pub_task_stop.publish(TaskStop(id=self._id,reason='acknowledgements failed'))
+            ettilog.loginfo(
+                "ContractNetManager(%s):: ---------------------------Manager stop---------------------------",
+                self._task_type)
             return False
-
 
     @abstractmethod
     def get_assignments(self, _bids):
+        """
+        Returns assignments from bids. Has to be overwritten.
+        :param _bids:
+        :return:
+        """
         return []
 
     def _on_task_acknowledged(self, task_id):
+        """
+        callback method, when a task was successfully coordinated
+        :param task_id:
+        :return:
+        """
         pass
 
     def _on_task_finished(self, task_id):
         """
-
-        :param task_stop:
-        :type task_stop: TaskStop
+        Callback method, for when a task is finished. either through error or by completing it.
+        :param task_id:
+        :type task_id: TaskStop
         :return:
         """
         pass
