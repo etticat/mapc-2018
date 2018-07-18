@@ -67,4 +67,4 @@ class SimulationProvider(object):
 
     @property
     def team(self):
-        return self.team
+        return self._team

@@ -123,18 +123,18 @@ class PickClosestDestinationWithLowestValue(MapDecision):
     If no cell has value 0, it returns a random value that is among the 10% of oldest palces.
     """
 
-    def __init__(self, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=500,
+    def __init__(self, agent_name, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=500,
                  value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
                  ev_factor=0.0, ev_time=5, pick_random_of_lowest_values=False):
 
-        super(PickClosestDestinationWithLowestValue, self).__init__(buffer, frame, key, target_frames, mode,
+        super(PickClosestDestinationWithLowestValue, self).__init__(buffer=buffer, frame=frame, key=key, target_frames=target_frames, mode=mode,
                                                                     granulariy=granulariy,
                                                                     value=value,
                                                                     state=state, moving=moving, static=static,
                                                                     diffusion=diffusion,
                                                                     goal_radius=goal_radius,
-                                                                    ev_factor=ev_factor, ev_time=ev_time)
+                                                                    ev_factor=ev_factor, ev_time=ev_time, agent_name=agent_name)
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
 
     def calc_value(self):

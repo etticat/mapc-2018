@@ -1,19 +1,12 @@
-import traceback
-
-import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import Agent
 
-from provider.action_provider import Action
+import rospy
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.action_provider import Action
 from provider.action_provider import ActionProvider
-from provider.distance_provider import DistanceProvider
-from provider.self_organisation_provider import SelfOrganisationProvider
-from provider.well_provider import WellProvider
 from rhbp_selforga.behaviours import DecisionBehaviour
-from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
-from decisions.map_decisions import WellPositionDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.well')
 

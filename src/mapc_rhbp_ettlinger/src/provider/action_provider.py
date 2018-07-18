@@ -45,7 +45,7 @@ class ActionProvider(object):
             data_class=GenericAction,
             queue_size=10)
 
-        self.action_response_found = False
+        self._action_response_found = False
 
     def send_action(self, action_type, params=None):
         """
@@ -61,7 +61,7 @@ class ActionProvider(object):
         action.action_type = action_type
         action.params = params
         self._pub_generic_action.publish(action)
-        self.action_response_found = True
+        self._action_response_found = True
 
     def action_go_to_position(self, pos):
         """
@@ -86,3 +86,7 @@ class ActionProvider(object):
             self.action_go_to_position(pos=destination)
         else:
             self.action_go_to_position(pos=destination.pos)
+
+    @property
+    def action_response_found(self):
+        return self._action_response_found

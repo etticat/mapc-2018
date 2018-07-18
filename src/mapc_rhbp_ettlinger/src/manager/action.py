@@ -24,7 +24,7 @@ class ActionManager(Manager):
         :param global_rhbp_components:
         :type global_rhbp_components: GlobalRhbpComponents
         """
-        super(ActionManager, self).__init__(prefix=self._agent_name, max_parallel_behaviours=1)
+        super(ActionManager, self).__init__(prefix=agent_name, max_parallel_behaviours=1)
 
         self._agent_name = agent_name
         self._global_rhbp_components = global_rhbp_components

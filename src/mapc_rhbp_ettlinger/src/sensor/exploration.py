@@ -1,10 +1,10 @@
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
+from decisions.choose_well_to_build import OldestCellAgeDecision, DiscoverProgressDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
-from decisions.map_decisions import DiscoverProgressDecision, OldestCellAgeDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.sensors.exploration')
 
@@ -50,10 +50,10 @@ class DiscoveryProgressSensor(GradientSensor):
     def __init__(self, agent_name, name, thread=False, time=5, initial_value=None, sensor_type=SENSOR.VALUE):
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
-        self._discovery_progress_decision = DiscoverProgressDecision(self._self_organisation_provider._so_buffer)
+        self._discovery_progress_decision = DiscoverProgressDecision(self._self_organisation_provider._so_buffer, agent_name=agent_name)
 
-        super(DiscoveryProgressSensor, self).__init__(name, self._discovery_progress_decision, thread, time,
-                                                      initial_value, sensor_type)
+        super(DiscoveryProgressSensor, self).__init__(name=name, mechanism=self._discovery_progress_decision, thread=thread, time=time,
+                                                      initial_value=initial_value, sensor_type=sensor_type)
 
 
 class OldestCellLastSeenSensor(GradientSensor):
@@ -65,7 +65,7 @@ class OldestCellLastSeenSensor(GradientSensor):
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
         self.discovery_progress_decision = OldestCellAgeDecision(self.self_organisation_provider.so_buffer,
-                                                                 init_value=initial_value)
+                                                                 init_value=initial_value, agent_name=agent_name)
 
         super(OldestCellLastSeenSensor, self).__init__(name, self.discovery_progress_decision, thread, time,
                                                        initial_value, sensor_type)

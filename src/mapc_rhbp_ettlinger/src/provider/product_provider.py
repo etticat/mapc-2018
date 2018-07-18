@@ -68,12 +68,12 @@ class ProductProvider(object):
         self._facility_provider = FacilityProvider()
 
         # Init subscribers and publishers
+        self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start", SimStart,
                          self._callback_sim_start)
         rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
         rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
-        self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
 
     def storage_callback(self, storageMsg):
         """

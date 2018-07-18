@@ -39,7 +39,7 @@ class RhbpAgent:
                          self._callback_action_request_first)
 
         # initialise providers
-        self._simulation_provider = SimulationProvider(agent_name=agent_name)
+        self._simulation_provider = SimulationProvider(agent_name=self._agent_name)
         self._action_provider = ActionProvider(agent_name=self._agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
 
@@ -47,6 +47,7 @@ class RhbpAgent:
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
         ettilog.logerr("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
         self._action_manager = ActionManager(agent_name=self._agent_name, global_rhbp_components=self.global_rhbp_components)
+        self._coordination_manager = None # Will be initialised once simulation is started
         ettilog.logerr("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
 
         # One agent has the task of bidding for auctions
@@ -58,7 +59,6 @@ class RhbpAgent:
                          self._callback_action_request_after_sensors)
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "agent", Agent, self._agent_callback)
         rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
         rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
 
@@ -128,7 +128,7 @@ class RhbpAgent:
         :return:
         """
         # We run until an action is found. reset flag here
-        self._action_provider.action_response_found = False
+        self._action_provider._action_response_found = False
 
         # If current agent is responsible for auction bidding, do so
         if self._should_bid_for_auctions:
@@ -145,7 +145,7 @@ class RhbpAgent:
         manager_steps = 0
         time_passed = 0
         # Do this until a component sets the action response flag the max decision making time is exceeded
-        while not self._action_provider.action_response_found and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
+        while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
             self._action_manager.step(guarantee_decision=True)
 
             manager_steps += 1
@@ -154,10 +154,10 @@ class RhbpAgent:
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
             ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider.action_response_found)
+                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback
-        if not self._action_provider.action_response_found:
+        if not self._action_provider._action_response_found:
             self._action_provider.send_action(action_type=Action.RECHARGE)
 
 

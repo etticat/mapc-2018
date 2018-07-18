@@ -18,7 +18,7 @@ class DiscoverProgressDecision(MapDecision):
     Calculates the percentage of the map tha has been already visited
     """
     def __init__(self, buffer, agent_name):
-        super(DiscoverProgressDecision, self).__init__(buffer, frame=None, key='destination',
+        super(DiscoverProgressDecision, self).__init__(buffer=buffer, frame=None, key='destination',
                                                        target_frames=["agent", "exploration_goal", "no_route"],
                                                        mode=MapDecision.MODE_OLDEST_VISITED, agent_name=agent_name)
 
@@ -40,7 +40,7 @@ class OldestCellAgeDecision(MapDecision):
     Calculates the max steps that have passed since all cells have been seen last
     """
     def __init__(self, buffer, init_value, agent_name):
-        super(OldestCellAgeDecision, self).__init__(buffer, frame='noneTODOremove', key='destination',
+        super(OldestCellAgeDecision, self).__init__(buffer=buffer, frame='noneTODOremove', key='destination',
                                                     target_frames=["agent", "exploration_goal", "no_route"],
                                                     mode=MapDecision.MODE_OLDEST_VISITED, agent_name=agent_name)
         self.init_value = init_value
