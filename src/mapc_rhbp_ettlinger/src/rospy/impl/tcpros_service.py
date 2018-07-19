@@ -247,7 +247,6 @@ def service_connection_handler(sock, client_addr, header):
             # thread_pool_executor.submit(service.handle, transport, header)
 
             TCPService.service_thread_count = TCPService.service_thread_count+ 1
-            # logerr("Service Connection Handler:: Thread nr %d for %s", TCPService.service_thread_count, str(header["service"]))
             t = threading.Thread(target=service.handle, args=(transport, header))
             t.setDaemon(True)
             t.start()

@@ -26,7 +26,7 @@ class AssembleManager(ContractNetManager):
         self._facility_provider = FacilityProvider()
         self._product_provider = ProductProvider(agent_name=agent_name)
 
-        self._assembly_agent_chooser = MainAssembleAgentDecision()
+        self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
 
     def request_assembly(self):
         """

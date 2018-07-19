@@ -127,17 +127,17 @@ class ProductProvider(object):
                     for item in storage.items:
                         items[item.name] = items.get(item.name, 0) + item.stored
                 if include_job_goals:
-                    for type, type in self._storage_stocks.iteritems():
+                    for job_name, job_dict in self._storage_stocks.iteritems():
                         # Types starting wiht j are job goals
-                        if type[0] == "j":
-                            if storage in type:
-                                items = CalcUtil.dict_sum(items, type[storage])
+                        if job_name[0] == "j":
+                            if storage in job_dict:
+                                items = CalcUtil.dict_sum(items, job_dict[storage])
                 if include_hoarding_goal:
-                    for type, type in self._storage_stocks.iteritems():
+                    for agent_name, hoarding_dict in self._storage_stocks.iteritems():
                         # Types starting wiht a are hoarding goals of agents
-                        if type[0] == "a":
-                            if storage in type:
-                                items = CalcUtil.dict_sum(items, type[storage])
+                        if agent_name[0] == "a":
+                            if storage in hoarding_dict:
+                                items = CalcUtil.dict_sum(items, hoarding_dict[storage])
         return items
 
     def _callback_agent(self, agent):

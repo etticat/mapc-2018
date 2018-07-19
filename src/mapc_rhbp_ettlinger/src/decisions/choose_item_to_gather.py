@@ -217,7 +217,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
         for resource in resources.values():
             if resource.item.name == item:
-                steps = self.step_provider.calculate_steps(self._agent_info_provider.pos, resource.pos)
+                steps = self._distance_provider.calculate_steps(self._agent_info_provider.pos, resource.pos)
                 if steps < min_steps:
                     min_steps = steps
                     best_resource = resource

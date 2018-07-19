@@ -57,7 +57,7 @@ class GoToDestinationBehaviour(DecisionBehaviour):
 
                 # Reset destination, so we can pick a new one in the next round
                 self.destination = None
-                ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination (%.3f, %3f), picking new one ...", self.name, self.destination.lat, self.destination.long)
+                ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
 
     def start(self):
         """

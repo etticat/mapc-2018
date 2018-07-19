@@ -25,7 +25,6 @@ class StatsProvider(object):
         self.score = 0
 
         rospy.Subscriber(StatsProvider.STATS_TOPIC, Team, self._callback_team)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction, self.callback_request_action)
 
     def _callback_team(self, team):
         """

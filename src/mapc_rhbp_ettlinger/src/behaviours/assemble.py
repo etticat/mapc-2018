@@ -82,11 +82,13 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 # Update the assemble step of the assemble task
                 next_assemble_step = self._get_assemble_step() + 1
 
-                if self._get_assemble_step() < len(self._task.task.split(",")):
+                step = self._get_assemble_step()
+                total_steps = len(self._task.task.split(",")) -1
+                if step < total_steps:
                     # If there are still tasks to do, inform all agents that the next task will be performed
-                    ettilog.loginfo(
-                        "AssembleProductBehaviour(%s):: Finished assembly of product, going on to next task ....",
-                        self._agent_name)
+                    ettilog.logerr(
+                        "AssembleProductBehaviour(%s):: Assembled item %d/%d, going on to next task ....",
+                        self._agent_name, step+1, total_steps +1)
                     assemble_task_coordination = TaskProgress(
                         id=self._task.id,
                         step=next_assemble_step,
@@ -96,8 +98,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 else:
                     # If this was the last task -> notify all contractors to end task
                     ettilog.logerr(
-                        "AssembleProductBehaviour(%s):: Last product of assembly task assembled, ending assembly",
-                        self._agent_name)
+                        "AssembleProductBehaviour(%s):: Assembled item %d/%d, stopping assembly",
+                        self._agent_name, step+1, total_steps+1)
                     self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
 
     def action_assemble(self, item_to_assemble):

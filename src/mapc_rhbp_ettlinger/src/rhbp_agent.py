@@ -5,6 +5,7 @@ from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
 import rospy
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.debug import DebugUtils
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
 from manager.action import ActionManager
 from manager.coordination import AgentCoordinationManager
@@ -69,7 +70,12 @@ class RhbpAgent:
         Initialises the config parameters from the rospy config
         :return:
         """
-        self._agent_name = rospy.get_param('~agent_name', "agentA1")
+
+        # Inject the agent name from command line into rospy to allow for easier debugging
+        if len(sys.argv) == 3 and sys.argv[1] == "--agent-name":
+            self._agent_name = sys.argv[2]
+        else:
+            self._agent_name = rospy.get_param('~agent_name')
         self._should_bid_for_auctions = rospy.get_param('~bid_for_auctions', False)
         RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("~RhbpAgent.MAX_DECISION_MAKING_TIME",
                                                              RhbpAgent.MAX_DECISION_MAKING_TIME)
@@ -86,6 +92,7 @@ class RhbpAgent:
 
             # Init coordination manager only once. Even when restarting simulation
             if self._coordination_manager is None:
+                DebugUtils.instant_find_resources()
                 self._coordination_manager = AgentCoordinationManager(agent_name=self._agent_name,
                                                                       global_rhbp_components=self.global_rhbp_components,
                                                                       role=sim_start.role.name)
@@ -157,17 +164,13 @@ class RhbpAgent:
                            self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback
-        if not self._action_provider._action_response_found:
+        if not self._action_provider.action_response_found:
             self._action_provider.send_action(action_type=Action.RECHARGE)
 
 
 if __name__ == '__main__':
 
     agent_name = None
-
-    # Inject the agent name from command line into rospy to allow for easier debugging
-    if len(sys.argv) == 3 and sys.argv[1] == "--agent-name":
-        rospy.set_param('agent_node', sys.argv[2])
 
     try:
         rhbp_agent = RhbpAgent()

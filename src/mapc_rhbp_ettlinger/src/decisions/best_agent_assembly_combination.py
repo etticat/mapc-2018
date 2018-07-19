@@ -98,7 +98,7 @@ class BestAgentAssemblyCombinationDecision(object):
         :type bids: TaskBid[]
         :return:
         """
-        if self.finished_products == None:
+        if self.finished_products is None:
             self.init_finished_products()
 
         best_combinations = []
@@ -131,20 +131,22 @@ class BestAgentAssemblyCombinationDecision(object):
                     # Get the best combination to build with the current subset
                     combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority)
 
-                    # The number of step until all agents can be at the workshop
-                    max_step_count = max([bid.expected_steps for bid in bid_subset])
+                    if len(combination) > 0:
 
-                    # Number of steps agents will have to wait at storage until the last agent arrives
-                    idle_steps = sum([max_step_count - bid.expected_steps for bid in bid_subset])
+                        # The number of step until all agents can be at the workshop
+                        max_step_count = max([bid.expected_steps for bid in bid_subset])
 
-                    prioritisation_activation = self.item_list_activation(combination,
-                                                                          priorities=finished_item_priority)
+                        # Number of steps agents will have to wait at storage until the last agent arrives
+                        idle_steps = sum([max_step_count - bid.expected_steps for bid in bid_subset])
 
-                    value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
-                                                  number_of_agents)
+                        prioritisation_activation = self.item_list_activation(combination,
+                                                                              priorities=finished_item_priority)
 
-                    if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD:
-                        best_combinations += [(bid_subset, combination, value)]
+                        value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
+                                                      number_of_agents)
+
+                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD:
+                            best_combinations += [(bid_subset, combination, value)]
                 if number_of_agents >= BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT and len(
                         best_combinations) > 0:
                     # we only try combinations with more than PREFERRED_AGENT_COUNT agents if we could not find anything with less

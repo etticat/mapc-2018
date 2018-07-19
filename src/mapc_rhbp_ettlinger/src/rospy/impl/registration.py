@@ -317,7 +317,6 @@ class RegManager(RegistrationListener):
                 for uri in uris:
                     self.thread_count = self.thread_count + 1
                     RegManager.total_thread_count = RegManager.total_thread_count + 1
-                    # logerr("RegManager:: Thread nr %d/%d for %s", self.thread_count, RegManager.total_thread_count, str(topic))
 
                     self.thread_pool_executor.submit(self._connect_topic_thread, topic, uri)
 

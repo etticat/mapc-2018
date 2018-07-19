@@ -19,7 +19,7 @@ class ChooseWellToBuildDecision(object):
         self.task_prices = {}
         self.stats_provider = StatsProvider(agent_name=agent_name)
         self.well_provider = WellProvider(agent_name=agent_name)
-        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name="agentA1")
+        self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def choose_well_type(self):
