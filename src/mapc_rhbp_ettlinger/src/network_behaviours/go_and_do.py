@@ -70,6 +70,13 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 indicator=-1.0,
                 sensor_type=float))
 
+        # Worst case scenareo: By moving we move 1 step away from a charging station
+        self._go_behaviour.add_effect(
+                Effect(
+                    sensor_name=self._global_rhbp_components.charging_station_step_sensor.name,
+                    indicator=1.0,  # 1 step at a time
+                    sensor_type=float))
+
         # We can only walk to shop until we are there
         self._go_behaviour.add_precondition(
             precondition=Negation(self.at_destination_cond)
