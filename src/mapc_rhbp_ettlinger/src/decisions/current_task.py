@@ -5,7 +5,6 @@ from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
-from rospy.my_publish_subscribe import MyPublisher
 from so_data.patterns import DecisionPattern
 
 
@@ -26,7 +25,7 @@ class CurrentTaskDecision(DecisionPattern):
 
         self.current_task = None
 
-        self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type, queue_size=10)
+        self._pub_task_stop = rospy.Publisher(AgentUtils.get_coordination_topic(task_type=task_type, message_type="stop"), data_class=TaskStop, queue_size=10)
 
         # Reset variables when simulation ends
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_simulation_end)

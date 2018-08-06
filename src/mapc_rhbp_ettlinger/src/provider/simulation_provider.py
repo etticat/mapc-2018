@@ -16,6 +16,8 @@ class SimulationProvider(object):
     """
     __metaclass__ = Singleton
 
+    COORDINATES_MARGIN = 0.001
+
     def __init__(self, agent_name):
         self._min_lat = 0
         self._max_lat = 0
@@ -34,10 +36,10 @@ class SimulationProvider(object):
         :type sim_start: SimStart
         :return:
         """
-        self._min_lat = sim_start.min_lat + 0.001
-        self._max_lat = sim_start.max_lat - 0.001
-        self._min_long = sim_start.min_lon + 0.001
-        self._max_long = sim_start.max_lon - 0.001
+        self._min_lat = sim_start.min_lat + SimulationProvider.COORDINATES_MARGIN
+        self._max_lat = sim_start.max_lat - SimulationProvider.COORDINATES_MARGIN
+        self._min_long = sim_start.min_lon + SimulationProvider.COORDINATES_MARGIN
+        self._max_long = sim_start.max_lon - SimulationProvider.COORDINATES_MARGIN
         self._team = sim_start.team
         pass
 

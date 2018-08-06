@@ -1,7 +1,7 @@
 from behaviour_components.activators import GreedyActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.movement import GoToDestinationBehaviour
 from decisions.exploration_target import ExplorationDecision
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
@@ -55,10 +55,10 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
         Initialise the exploration goal
         :return:
         """
-        self.goal = GoalBase(
+        self.goal = OfflineGoal(
             name='exploration_goal',
             permanent=True,
-            plannerPrefix=self.get_manager_prefix(),
+            planner_prefix=self.get_manager_prefix(),
             conditions=[Condition(
                 sensor=self._global_rhbp_components.resource_discovery_progress_sensor,
                 activator=GreedyActivator()

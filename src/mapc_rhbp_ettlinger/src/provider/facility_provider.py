@@ -1,7 +1,7 @@
 import random
 
 import rospy
-from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg, ResourceMsg, SimEnd
+from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg, ResourceMsg, SimEnd, RequestAction
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -24,8 +24,7 @@ class FacilityProvider(object):
         # Reset variables when simulation ends
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.init_runtime_variables)
 
-        rospy.Subscriber("/storage", StorageMsg, self.storage_callback)
-        rospy.Subscriber("/workshop", WorkshopMsg, self.workshop_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction, self.request_action_callback)
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
         rospy.Subscriber("/resource", ResourceMsg, self.resources_callback)
 
@@ -35,25 +34,17 @@ class FacilityProvider(object):
         self.workshops = {}
         self.resources = {}
 
-    def storage_callback(self, storageMsg):
+    def request_action_callback(self, request_action):
         """
-        Updates the storage dict when new information comes from mac ros bridge
-        :param storageMsg:
-        :type storageMsg: StorageMsg
+        Updates the storage and workshop dictionaries when new information comes from mac ros bridge
+        :param request_action:
+        :type request_action: RequestAction
         :return:
         """
-
-        for storage in storageMsg.facilities:
+        for storage in request_action.storages:
             self.storages[storage.name] = storage
 
-    def workshop_callback(self, workshopMsg):
-        """
-        Updates the workshop dict when new information comes from mac ros bridge
-        :param workshopMsg:
-        :type workshopMsg: WorkshopMsg
-        :return:
-        """
-        for workshop in workshopMsg.facilities:
+        for workshop in request_action.resources:
             self.workshops[workshop.name] = workshop
 
     def charging_station_callback(self, charging_station_msg):

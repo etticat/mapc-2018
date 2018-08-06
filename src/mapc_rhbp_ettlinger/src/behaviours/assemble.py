@@ -10,7 +10,6 @@ from provider.action_provider import Action
 from provider.action_provider import ActionProvider
 from provider.product_provider import ProductProvider
 from rhbp_selforga.behaviours import DecisionBehaviour
-from rospy.my_publish_subscribe import MyPublisher, MySubscriber
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.behaviours.job')
 
@@ -42,14 +41,12 @@ class AssembleProductBehaviour(DecisionBehaviour):
         self._task_progress_dict = {}
 
         # Initialise subscribers and publishers
-        topic = AgentUtils.get_coordination_topic()
-        MySubscriber(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
+        rospy.Subscriber(AgentUtils.get_coordination_topic(CurrentTaskDecision.TYPE_ASSEMBLE, "progress"), data_class=TaskProgress,
                      callback=self._callback_task_progress)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
-        self._pub_assemble_progress = MyPublisher(topic, message_type="progress",
-                                                  task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
-        self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
+        self._pub_assemble_progress = rospy.Publisher(AgentUtils.get_coordination_topic(CurrentTaskDecision.TYPE_ASSEMBLE, "progress"), data_class=TaskProgress, queue_size=10)
+        self._pub_assemble_stop = rospy.Publisher(AgentUtils.get_coordination_topic(CurrentTaskDecision.TYPE_ASSEMBLE, "stop"), data_class=TaskStop,
                                               queue_size=10)
 
     def _callback_task_progress(self, task_progres):

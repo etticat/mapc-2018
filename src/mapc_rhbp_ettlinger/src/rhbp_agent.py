@@ -3,12 +3,14 @@
 from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
 
 import rospy
+
+from agent_components.coordination import AgentCoordinationManager
+from agent_components.massim_rhbp_components import MassimRhbpComponents
+from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
-from manager.action import ActionManager
-from manager.coordination import AgentCoordinationManager
 from provider.action_provider import ActionProvider, Action
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
@@ -47,7 +49,8 @@ class RhbpAgent:
         # initialise all components
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
         ettilog.logerr("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
-        self._action_manager = ActionManager(agent_name=self._agent_name, global_rhbp_components=self.global_rhbp_components)
+        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
+        self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name, global_rhbp_components=self.global_rhbp_components)
         self._coordination_manager = None # Will be initialised once simulation is started
         ettilog.logerr("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
 
@@ -135,7 +138,7 @@ class RhbpAgent:
         :return:
         """
         # We run until an action is found. reset flag here
-        self._action_provider._action_response_found = False
+        self._action_provider.reset_action_response_found()
 
         # If current agent is responsible for auction bidding, do so
         if self._should_bid_for_auctions:
@@ -153,7 +156,7 @@ class RhbpAgent:
         time_passed = 0
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
-            self._action_manager.step(guarantee_decision=True)
+            self._manager.step(guarantee_decision=True)
 
             manager_steps += 1
             time_passed = (rospy.get_rostime() - self.request_time).to_sec()

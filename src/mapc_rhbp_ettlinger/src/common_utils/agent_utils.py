@@ -32,9 +32,9 @@ class AgentUtils(object):
         return AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + postfix
 
     @classmethod
-    def get_coordination_topic(cls):
+    def get_coordination_topic(cls, task_type, message_type):
         """
         Topic used for coordination in contract net
         :return:
         """
-        return '/coordination'
+        return '/coordination/%s/%s'%(task_type, message_type)

@@ -17,6 +17,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
 from graphhopper import GraphhopperProcessHandler
+from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.distance')
 
@@ -99,11 +100,10 @@ class DistanceProvider(object):
 
 
         # The agent often gets stuck at the boarders, avoid this by adding a slight margin around the borders that we do not want to touch
-        # TODO: Make sure this works around the 0 meridian
-        self.min_lat = sim_start.min_lat + 0.001
-        self.max_lat = sim_start.max_lat - 0.001
-        self.min_lon = sim_start.min_lon + 0.001
-        self.max_lon = sim_start.max_lon - 0.001
+        self.min_lat = sim_start.min_lat + SimulationProvider.COORDINATES_MARGIN
+        self.max_lat = sim_start.max_lat - SimulationProvider.COORDINATES_MARGIN
+        self.min_lon = sim_start.min_lon + SimulationProvider.COORDINATES_MARGIN
+        self.max_lon = sim_start.max_lon - SimulationProvider.COORDINATES_MARGIN
 
         # Get the difference between max and min values
         self.lat_spread = self.max_lat - self.min_lat

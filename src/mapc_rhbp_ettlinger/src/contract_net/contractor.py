@@ -1,12 +1,12 @@
 import time
 from abc import abstractmethod
 
-from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task
+import rospy
+from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task, TaskAssignment, TaskBid, TaskStop
 
 import utils.rhbp_logging
 from common_utils.agent_utils import AgentUtils
 from provider.product_provider import ProductProvider
-from rospy.my_publish_subscribe import MySubscriber, MyPublisher
 
 ettilog = utils.rhbp_logging.LogManager(logger_name=utils.rhbp_logging.LOGGER_DEFAULT_NAME + '.contractor')
 
@@ -30,12 +30,11 @@ class ContractNetContractorBehaviour(object):
         self._product_provider = ProductProvider(agent_name=self._agent_name)
 
         # Init subscribers and publishers
-        prefix = AgentUtils.get_coordination_topic()
-        MySubscriber(prefix, message_type="request", task_type=self._task_type, callback=self._callback_request)
-        self._pub_bid = MyPublisher(prefix, message_type="bid", task_type=self._task_type, queue_size=10)
-        MySubscriber(prefix, message_type="assignment", task_type=self._task_type, callback=self._callback_assign)
-        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledgement", task_type=self._task_type, queue_size=10)
-        MySubscriber(prefix, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
+        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "request"), data_class=TaskRequest, callback=self._callback_request)
+        self._pub_bid = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "bid"), data_class=TaskBid, queue_size=10)
+        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "assignment"), data_class=TaskAssignment, callback=self._callback_assign)
+        self._pub_acknowledge = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "acknowledgement"), data_class=TaskAcknowledgement, queue_size=10)
+        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskStop, callback=self._on_task_finished)
 
     def _callback_request(self, request):
         """

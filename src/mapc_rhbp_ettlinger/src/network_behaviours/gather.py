@@ -2,7 +2,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
@@ -33,11 +33,11 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.apply_charging_restrictions(self.go_to_resource_node_behaviour)
 
-        self.charge_goal = GoalBase(
+        self.charge_goal = OfflineGoal(
             name='gather_goal',
             permanent=True,
             priority=100,
-            plannerPrefix=self.get_manager_prefix(),
+            planner_prefix=self.get_manager_prefix(),
             conditions=[self._global_rhbp_components.load_fullness_condition])
 
     def init_gather_behaviour(self):

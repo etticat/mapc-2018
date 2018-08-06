@@ -15,6 +15,9 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 
 class BestAgentAssemblyCombinationDecision(object):
+    """
+    Selects the combination of agents that together can perform the most valuable assembly tasks
+    """
     PREFERRED_AGENT_COUNT = 4
     PRIORITY_EXPONENT = 2  # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1

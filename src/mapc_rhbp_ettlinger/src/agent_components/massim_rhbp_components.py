@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
+from rospy.impl.registration import RegManager
+
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction, Conjunction
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from network_behaviours.assemble import AssembleNetworkBehaviour
@@ -15,7 +17,7 @@ from global_rhbp_components import GlobalRhbpComponents
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
 
 
-class ActionManager(Manager):
+class MassimRhbpComponents(object):
 
     def __init__(self, agent_name, global_rhbp_components):
         """
@@ -24,8 +26,6 @@ class ActionManager(Manager):
         :param global_rhbp_components:
         :type global_rhbp_components: GlobalRhbpComponents
         """
-        super(ActionManager, self).__init__(prefix=agent_name, max_parallel_behaviours=1)
-
         self._agent_name = agent_name
         self._global_rhbp_components = global_rhbp_components
 
@@ -195,19 +195,21 @@ class ActionManager(Manager):
         """
 
         # Tasks need to be fulfilled
-        self.task_fulfillment_goal = GoalBase(
+        self.task_fulfillment_goal = OfflineGoal(
             name='task_fulfillment_goal',
             permanent=True,
             priority=200,
-            plannerPrefix=self._agent_name,
+            planner_prefix=self._agent_name,
             conditions=[self._global_rhbp_components.has_no_task_assigned_cond])
 
         # We want to gather items otherwise
-        self._gather_goal = GoalBase(
+        self._gather_goal = OfflineGoal(
             name='fill_load_goal',
             permanent=True,
             priority=50,
-            plannerPrefix=self._agent_name,
+            planner_prefix=self._agent_name,
             conditions=[self._global_rhbp_components.load_fullness_condition])
 
         # TODO: Proper working hoarding goal
+
+        RegManager

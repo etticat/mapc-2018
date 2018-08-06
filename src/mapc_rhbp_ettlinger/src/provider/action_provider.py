@@ -35,7 +35,9 @@ class Action(object):
 
 class ActionProvider(object):
     """
-    Provider for communication with the mac_ros bridge. It allows sending actions that are then performed on massim simulation
+    Provider for communication with the mac_ros bridge.
+    It allows sending actions that are then performed on massim simulation
+    When an action is sent, it sets a flag indicating this, so the planner can be stopped.
     """
     __metaclass__ = Singleton
 
@@ -90,3 +92,6 @@ class ActionProvider(object):
     @property
     def action_response_found(self):
         return self._action_response_found
+
+    def reset_action_response_found(self):
+        self._action_response_found = False

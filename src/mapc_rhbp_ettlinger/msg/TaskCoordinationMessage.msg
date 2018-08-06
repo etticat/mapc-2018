@@ -1,8 +1,0 @@
-string                                  message_type
-string                                  task_type
-mapc_rhbp_ettlinger/TaskRequest         request
-mapc_rhbp_ettlinger/TaskBid             bid
-mapc_rhbp_ettlinger/TaskAssignment      assignment
-mapc_rhbp_ettlinger/TaskAcknowledgement acknowledgement
-mapc_rhbp_ettlinger/TaskProgress        progress
-mapc_rhbp_ettlinger/TaskStop            stop

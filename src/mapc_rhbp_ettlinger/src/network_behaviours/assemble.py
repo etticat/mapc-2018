@@ -1,6 +1,6 @@
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.assemble import AssembleProductBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
@@ -34,11 +34,11 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        assemble_goal = GoalBase(
+        self.assemble_goal = OfflineGoal(
             name='assemble_goal',
             permanent=True,
             priority=100,
-            plannerPrefix=self.get_manager_prefix(),
+            planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._global_rhbp_components.has_assemble_task_assigned_cond)])
 
         self.init_do_behaviour(assemble_behaviour)
