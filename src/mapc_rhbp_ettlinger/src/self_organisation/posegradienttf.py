@@ -36,13 +36,15 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
         """
 
         entity_topic = AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="entity")
+
+        self.distance_provider = DistanceProvider(agent_name=agent_name)
+        self.simulation_provider = SimulationProvider(agent_name=agent_name)
+
         super(CallbackEntityTopicGradientTf, self).__init__(entity_topic, frame, id, message_type,
                                                             attraction=-1,
                                                             ev_factor=1.0,
                                                             moving=True, **kwargs)
 
-        self.distance_provider = DistanceProvider(agent_name=agent_name)
-        self.simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def callback(self, entity_msg):
         """

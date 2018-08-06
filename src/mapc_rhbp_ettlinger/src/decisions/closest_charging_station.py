@@ -17,7 +17,7 @@ class ClosestChargingStationDecision(DecisionPattern):
 
         self._last_calculated_agent_position = None
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._distance_provider = DistanceProvider(agent_name=agent_name)
 
         super(ClosestChargingStationDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
@@ -29,8 +29,7 @@ class ClosestChargingStationDecision(DecisionPattern):
         """
         if self._last_calculated_agent_position != self._distance_provider.agent_pos:
             charging_stations = self._facility_provider.get_charging_stations().values()
-            closest_facility = self._distance_provider.get_closest_facility(position=self._distance_provider.agent_pos,
-                                                                            facilities=charging_stations)
+            closest_facility = self._distance_provider.get_closest_facility(facilities=charging_stations)
 
             return [closest_facility, self.state]
 

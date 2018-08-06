@@ -17,7 +17,7 @@ class GenerateBidFromRequestDecision(object):
     """
 
     def __init__(self, agent_name):
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._agent_name = agent_name
         self._step_provider = DistanceProvider(agent_name=agent_name)
@@ -37,8 +37,7 @@ class GenerateBidFromRequestDecision(object):
             return TaskBid(
                 id=request.id,
                 agent_name=self._agent_name,
-                expected_steps=self._step_provider.calculate_steps(self._step_provider.agent_pos,
-                                                   self._facility_provider.get_storage_by_name(request.destination_name)),
+                expected_steps=self._step_provider.calculate_steps(self._facility_provider.get_storage_by_name(request.destination_name).pos),
                 items=useful_items,
                 request=request
             )

@@ -34,7 +34,6 @@ class GlobalRhbpComponents(object):
         self.init_mechanisms(agent_name=agent_name)
 
         self.init_load_sensors()
-        self.init_agent_sensors()
         self.init_battery_sensors()
         self.init_resource_sensor(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
@@ -128,12 +127,6 @@ class GlobalRhbpComponents(object):
             )
         )
 
-    def init_agent_sensors(self):
-        self.agent_position_sensor = TopicSensor(
-            topic=self.agent_topic,
-            name="agent_position_sensor",
-            message_attr='pos')
-
     def init_battery_sensors(self):
         agent_topic = AgentUtils.get_bridge_topic_agent(self.agent_name)
 
@@ -148,7 +141,6 @@ class GlobalRhbpComponents(object):
         self.charging_station_step_sensor = StepDistanceSensor(
             name='charging_station_step_distance',
             agent_name=self.agent_name,
-            position_sensor_1=self.agent_position_sensor,
             position_sensor_2=self.closest_charging_station_sensor,
             initial_value=10
         )

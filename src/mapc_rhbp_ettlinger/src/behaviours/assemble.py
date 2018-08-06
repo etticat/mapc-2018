@@ -151,7 +151,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Invalid action", self._agent_name)
 
         else:
-            ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly is executed after all tasks are finished")
+            ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Assembly is executed after all tasks are finished", self._agent_name)
 
     def _get_assemble_step(self):
         """

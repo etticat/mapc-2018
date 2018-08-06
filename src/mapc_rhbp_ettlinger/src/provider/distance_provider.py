@@ -9,7 +9,8 @@ from numpy import mean
 from urllib2 import URLError
 
 import rospy
-from mac_ros_bridge.msg import SimStart, Position, Agent
+from mac_ros_bridge.msg import SimStart, Position, Agent, ShopMsg, DumpMsg, StorageMsg, WorkshopMsg, WellMsg, \
+    ChargingStationMsg, SimEnd, ResourceMsg
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import etti_logging
@@ -32,6 +33,8 @@ class DistanceProvider(object):
 
     def __init__(self, agent_name):
 
+        self._agent_name = agent_name
+
         self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
         self._cell_size = 0.01
         self._can_fly = False
@@ -39,11 +42,33 @@ class DistanceProvider(object):
         self._proximity = 0.01
         self._agent_pos = None
         self._agent_vision = 300
-
         self._road_distance_cache = {}
+        self._facility_positions = {}
+
+        self._facility = None
+        self._in_facility = False
 
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart, self.callback_sim_start)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_sim_end)
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="agent"), Agent, self.callback_agent)
+
+        rospy.Subscriber('/shop', ShopMsg, self.callback_facility)
+        rospy.Subscriber('/charging_station', ChargingStationMsg, self.callback_facility)
+        rospy.Subscriber('/dump', DumpMsg, self.callback_facility)
+        rospy.Subscriber('/storage', StorageMsg, self.callback_facility)
+        rospy.Subscriber('/workshop', WorkshopMsg, self.callback_facility)
+        rospy.Subscriber('/well', WellMsg, self.callback_facility)
+        rospy.Subscriber('/resource', ResourceMsg, self.callback_facility)
+
+    def callback_facility(self, facility_msg):
+        """
+        Keeps track of all positions of facilities
+        :param facilityMsg:
+        :return:
+        """
+
+        for facility in facility_msg.facilities:
+            self._facility_positions[facility.name] = facility.pos
 
 
     def callback_agent(self, msg):
@@ -55,6 +80,8 @@ class DistanceProvider(object):
         :return:
         """
         self._agent_pos = msg.pos
+        self._facility = msg.facility
+        self._in_facility = msg.in_facility
         self._agent_vision = msg.vision
         self._speed = msg.speed
 
@@ -95,7 +122,11 @@ class DistanceProvider(object):
             Position(long=self.min_lon, lat=mean_lat),
             Position(long=self.max_lon, lat=mean_lat)
         )
-    def calculate_distance(self, startPosition, endPosition):
+
+    def callback_sim_end(self, sim_end):
+        self._facility_positions.clear()
+
+    def calculate_distance(self, endPosition):
         """
         Calculates the distance between two position.
         Depending on the agent abilities, this returns either air or road distance
@@ -105,33 +136,33 @@ class DistanceProvider(object):
         """
         if self._can_fly:
             # If agent can fly, return air distance
-            return self.calculate_distance_air(startPosition, endPosition)
+            return self.calculate_distance_air(self.agent_pos, endPosition)
         else:
             # if agent can't fly return road distance
             try:
-                return self.calculate_distance_street(startPosition, endPosition)
+                return self.calculate_distance_street(self.agent_pos, endPosition)
             except LookupError as e:
                 ettilog.logerr(e)
             except Exception as e:
                 ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
                 ettilog.logerr(traceback.format_exc())
 
-            ettilog.logerr("DistanceProvider:: Road distance unavailable. Using fallback approximation: air distance * 2")
-            return self.calculate_distance_air(startPosition, endPosition) * 2  # Fallback
+            ettilog.logerr("DistanceProvider(%s):: Road distance unavailable. Using fallback approximation: air distance * 2", self._agent_name)
+            return self.calculate_distance_air(self.agent_pos, endPosition) * 2  # Fallback
 
-    def calculate_steps(self, pos1, pos2):
+    def calculate_steps(self, pos2):
         """
         Returns the step needed between two positions.
         :param pos1:
         :param pos2:
         :return:
         """
-        if self.at_same_location(pos1, pos2):
+        if self.at_destination(pos2):
             # If the distance is lower than proximity, agent is at destination.
             return 0
 
         # calculate the air distance
-        size_ = self.calculate_distance(pos1, pos2) / (self._speed * self._cell_size)
+        size_ = self.calculate_distance(pos2) / (self._speed * self._cell_size)
 
         # Round up to next int value.
         # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
@@ -230,33 +261,40 @@ class DistanceProvider(object):
         """
         return math.sqrt((pos1.lat - pos2.lat) ** 2 + (pos1.long - pos2.long) ** 2)
 
-    def get_closest_facility(self, facilities, position=None):
+    def get_closest_facility(self, facilities):
         """
         Returns the closest facility to the agent
         :param facilities:
         :param position:
         :return:
         """
-        if position is None:
-            position = self._agent_pos
-
         # If no facilities provided, return none
-        if facilities is None or len(facilities) ==0:
+        if facilities is None or len(facilities) == 0:
             return None
 
         # Return closest facility
-        return min(facilities, key=lambda facility:self.calculate_steps(position, facility.pos))
+        return min(facilities, key=lambda facility:self.calculate_steps(facility.pos))
 
-    def at_same_location(self, pos1, pos2):
+    def at_destination(self, destination_pos):
         """
         Returns if pos1 and pos2 are at same location as defined in server.
         TODO: Use facility attribute of Agent where possible
-        :param pos1:
-        :param pos2:
+        :param destination_pos:
         :return:
         """
-        return self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity
 
+        if self._in_facility:
+            if self._facility in self._facility_positions:
+                pos = self._facility_positions[self._facility]
+                destination_reached = pos.lat == destination_pos.lat and pos.long == destination_pos.long
+
+                rospy.loginfo("DistanceProvider(%s):: at facility %s, destination reached: %r", self._agent_name, self._facility, destination_reached)
+                if destination_reached:
+                    return True
+            else:
+                rospy.logerr("DistanceProvider(%s):: current faciliy unknown: %s", self._agent_name, self._facility)
+
+        return False
 
     def lat_to_x(self, lat):
         """

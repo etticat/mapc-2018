@@ -19,11 +19,11 @@ class AssembleManager(ContractNetManager):
     """
 
     def __init__(self, agent_name, assembly_combination_decision):
-        super(AssembleManager, self).__init__(task_type=CurrentTaskDecision.TYPE_ASSEMBLE)
+        super(AssembleManager, self).__init__(task_type=CurrentTaskDecision.TYPE_ASSEMBLE, agent_name=agent_name)
 
         self._assembly_combination_decision = assembly_combination_decision
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
 
         self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
@@ -75,6 +75,9 @@ class AssembleManager(ContractNetManager):
             if assembly_instructions is not None:
                 finished_products = products
                 accepted_bids = bids
+
+                ettilog.logerr("AssembleManager:: Assembling %s activation: %f", str(finished_products), activation)
+
                 break
             else:
                 ettilog.loginfo("AssembleManager:: Cannot assemble %s, no capacity", str(finished_products))
@@ -83,8 +86,6 @@ class AssembleManager(ContractNetManager):
             # None of the cominations that we found is possible due to capacity
             ettilog.logerr("AssembleManager::No one has enough capacity to assemble")
             return None
-
-        ettilog.logerr("AssembleManager:: Assembling %s", str(finished_products))
 
         # Create assignments for all accepted bids
         assignments = []

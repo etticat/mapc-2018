@@ -10,8 +10,8 @@ class BuildWellManager(ContractNetManager):
     Manager for build well coordination.
     """
 
-    def __init__(self, well_chooser):
-        super(BuildWellManager, self).__init__(task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
+    def __init__(self, well_chooser, agent_name):
+        super(BuildWellManager, self).__init__(task_type=CurrentTaskDecision.TYPE_BUILD_WELL, agent_name=agent_name)
 
         self.well_type = None
         self.pos = None

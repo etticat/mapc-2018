@@ -26,7 +26,7 @@ class DebugAgent(object):
 
         # Init providers
         self.product_provider = ProductProvider(agent_name=agent_name)
-        self.facility_provider = FacilityProvider()
+        self.facility_provider = FacilityProvider(agent_name=agent_name)
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=agent_name)
 
         # Sleep just to make sure everything is intitialised. DebugAgent does not use any components, so without this

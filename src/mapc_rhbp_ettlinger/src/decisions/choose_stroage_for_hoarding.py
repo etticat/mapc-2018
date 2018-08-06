@@ -30,7 +30,7 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
         self._distance_provider = DistanceProvider(agent_name=agent_name)
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
 
         super(ChooseStorageForHoardingDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
 

@@ -92,7 +92,6 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.target_step_sensor = StepDistanceSensor(
             name=self.get_manager_prefix() + "_target_step_sensor",
             agent_name=self._agent_name,
-            position_sensor_1=self._global_rhbp_components.agent_position_sensor,
             position_sensor_2=self.target_sensor,
             initial_value=10
         )

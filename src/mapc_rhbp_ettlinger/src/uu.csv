@@ -1,0 +1,164 @@
+Event Name,Description,Properties,Comments,Web,iOS,Android,AppleTV,AndroidTV
+login_started,,,,,False,True,True,True,True
+login_success_email,,,,,False,True,True,True,True
+login_success_google,,,,,False,True,True,False,True
+login_success_amazon,,,,,False,False,False,False,True
+login_success_facebook,,,,,False,True,True,True,True
+registration_started,,,,,False,True,True,True,True
+goal_selected,,,,,False,True,False,True,True
+profile_setup_skipped,,,,,False,False,False,True,True
+registration_success_email,,,,,False,True,True,True,True
+registration_success_google,,,,,False,True,True,False,True
+registration_success_facebook,,,,,False,True,True,True,True
+registration_success_amazon,,,,,False,False,True,False,True
+registration_skipped,,,,,False,False,False,True,True
+personalization,,,,,False,True,True,False,True
+personalization_skipped,,,,,False,False,False,True,True
+widget_shown,,,,,False,False,False,False,False
+widget_clicked,,,,,False,False,False,False,False
+program_start,,,,,False,True,True,True,True
+program_completed,,,,,False,True,True,True,True
+go_premium_clicked,,,,,False,True,True,True,True
+package_selected,,,,,False,True,True,True,True
+premium_signup_success,,,,,False,True,True,True,True
+view_page_package,,,,,False,True,False,True,False
+view_page_program_settings,,,,,False,True,False,False,False
+view_page_settings,,,,,False,True,False,False,False
+view_page_recipe,,,,,False,True,False,True,False
+view_page_program,,,,,False,True,False,True,True
+view_page_workouts,,,,,False,True,False,True,True
+view_page_fitness_profile,,,,,False,True,False,True,False
+workout_started,,,,,False,True,True,True,True
+log_out_clicked,,,,,False,True,True,True,True
+fitness_check,,,,,True,True,True,False,False
+workout_finished,,,,,False,True,True,True,True
+onboarding_step0,,,,,True,False,False,False,False
+onboarding_step1,,,,,True,False,False,False,False
+onboarding_step2,,,,,True,False,False,False,False
+onboarding_step3,,,,,True,False,False,False,False
+onboarding_step4,,,,,True,False,False,False,False
+onboarding_step5,,,,,True,False,False,False,False
+onboarding_step6,,,,,True,False,False,False,False
+onboarding_step7,,,,,True,False,False,False,False
+onboarding_step8,,,,,True,False,False,False,False
+onboarding_step9,,,,,False,False,False,False,False
+onboarding_step_+step,,,,,False,False,False,False,False
+onboarding_step_post_login_+step,,,,,False,False,False,False,False
+music_settings_selected,,,,,True,True,True,False,False
+music_settings_close,,,,,True,False,False,False,False
+music_gymondo_toggle,,,,,True,True,True,False,False
+music_gymondo_volume,,,,,True,False,False,False,False
+music_spotify_info,,,,,False,False,False,False,False
+music_spotify_toggle,,,,,False,True,True,False,False
+music_spotify_play,,,,,False,True,True,False,False
+music_spotify_pause,,,,,False,True,True,False,False
+music_spotify_skip_forward,,,,,False,True,True,False,False
+music_spotify_skip_backward,,,,,False,True,True,False,False
+music_spotify_volume,,,,,False,True,True,False,False
+watch_paired,,,,,False,False,False,False,False
+watch_unpaired,,,,,False,False,False,False,False
+workout start,,,,,False,False,False,False,False
+workout finish,,,,,False,False,False,False,False
+workout share,,,,,False,False,False,False,False
+workout filters,,,,,False,False,False,False,False
+workout challenge save,,,,,False,False,False,False,False
+signup_complete,,,,,True,False,False,False,False
+sign_up_clicked,,,,,False,False,False,False,False
+payment_clicked,,,,,True,False,False,False,False
+google_registered,,,,,False,False,False,False,False
+facebook_registered,,,,,False,False,False,False,False
+email_registered,,,,,False,False,False,False,False
+upload progress picture,,,,,False,False,False,False,False
+subscription extended,,,,,False,False,False,False,False
+referral link clicked,,,,,False,False,False,False,False
+recipe filters,,,,,False,False,False,False,False
+workout difficulty rating,,,,,False,False,False,False,False
+program terminated by user,,,,,False,False,False,False,False
+program stop,,,,,False,False,False,False,False
+program start,,,,,False,False,False,False,False
+program resume,,,,,False,False,False,False,False
+program pause,,,,,False,False,False,False,False
+onboarding step 1,,,,,False,False,False,False,False
+onboarding step 2,,,,,False,False,False,False,False
+onboarding step 3,,,,,False,False,False,False,False
+onboarding step 4,,,,,False,False,False,False,False
+onboarding step 5,,,,,False,False,False,False,False
+nutritionpdf open,,,,,False,False,False,False,False
+nutrition video start,,,,,False,False,False,False,False
+nutrition video finish,,,,,False,False,False,False,False
+login,,,,,False,False,False,False,False
+charge,,,,,False,False,False,False,False
+change rest days,,,,,False,False,False,False,False
+cancellation,,,,,False,False,False,False,False
+reactivate,,,,,True,False,False,False,False
+abort,,,,,True,False,False,False,False
+abort_take_offer_trial,,,,,False,False,False,False,False
+abort_take_offer_discount,,,,,False,False,False,False,False
+pause_clicked,,,,,False,False,False,False,False
+pause_resume,,,,,True,False,False,False,False
+abort_pausing,,,,,True,False,False,False,False
+onboarding_widget_start_program,,,,,False,False,False,False,False
+onboarding_widget_first_workout,,,,,False,False,False,False,False
+onboarding_widget_discover_settings,,,,,False,False,False,False,False
+onboarding_widget_second_workout,,,,,False,False,False,False,False
+onboarding_widget_subscribe_email,,,,,False,False,False,False,False
+onboarding_widget_like_recipe,,,,,False,False,False,False,False
+onboarding_widget_community,,,,,False,False,False,False,False
+onboarding_motivational_video_start,,,,,False,False,False,False,False
+onboarding_motivational_video_skip,,,,,False,False,False,False,False
+onboarding_motivational_video_close,,,,,False,False,False,False,False
+app_open_push,,,,,False,True,True,False,False
+download_workout_initiated,,,,,False,False,False,False,False
+download_workout_completed,,,,,False,False,False,False,False
+nutrition_info_card_card_score,,,,,False,True,False,False,False
+nutrition_info_card_detail_card_score,,,,,False,True,False,False,False
+nutrition_info_card_detail_eat_natural,,,,,False,True,True,False,False
+nutrition_info_card_detail_goal,,,,,False,True,True,False,False
+nutrition_info_card_detail_score,,,,,False,False,True,False,False
+nutrition_info_card_detail_three_threes,,,,,False,True,True,False,False
+nutrition_info_card_detail_welcome,,,,,False,True,True,False,False
+nutrition_info_card_eat_natural,,,,,False,True,True,False,False
+nutrition_info_card_goal,,,,,False,True,True,False,False
+nutrition_info_card_overview,,,,,False,True,True,False,False
+nutrition_info_card_point_entry,,,,,False,False,True,False,False
+nutrition_info_card_score,,,,,False,False,True,False,False
+nutrition_info_card_start,,,,,False,True,True,False,False
+nutrition_info_card_three_threes,,,,,False,True,True,False,False
+nutrition_info_card_welcome,,,,,False,True,True,False,False
+nutrition_plan_end,,,,,False,True,True,False,False
+nutrition_plan_goal_selected,,,,,False,True,True,False,False
+nutrition_plan_preference_selected,,,,,False,True,True,False,False
+nutrition_plan_started,,,,,False,True,True,False,False
+nutrition_point_entry_item_changed,,,,,False,True,True,False,False
+nutrition_point_entry_screen,,,,,False,False,True,False,False
+nutrition_settings,,,,,False,True,True,False,False
+nutrition_settings_goal_change,,,,,False,True,True,False,False
+nutrition_settings_preference_change,,,,,False,True,True,False,False
+a_rate_skipped,,,,,False,True,False,False,False
+a_registration_started,,,,,False,True,False,False,False
+cast_started,,,,,False,False,True,False,False
+$opt_in,,,,,False,False,False,False,False
+-----------------------------------------------------
+program_selection,,,,,False,True,False,True,False
+workout_selection,,,,,False,True,False,True,True
+settings_feedback_sent,,,,,False,True,False,False,False
+onboarding_step_7,,,,,False,True,True,False,False
+onboarding_step_post_login_1_1,,,,,False,True,True,False,False
+onboarding_step_post_login_2,,,,,False,True,True,False,False
+onboarding_step_post_login_3,,,,,False,True,True,False,False
+point_entry_screen,,,,,False,True,False,False,False
+onboarding_step_5,,,,,False,True,True,False,False
+onboarding_step_6,,,,,False,True,True,False,False
+onboarding_step_0,,,,,False,True,True,False,False
+onboarding_step_1,,,,,False,True,True,False,False
+onboarding_step_2,,,,,False,True,True,False,False
+onboarding_step_3,,,,,False,True,True,False,False
+onboarding_step_post_login_2_1,,,,,False,True,True,False,False
+view_landing_page,,,,,False,True,True,False,False
+registration_success_optional("facebook"),,,,,False,True,False,False,False
+onboarding_step_4,,,,,False,True,True,False,False
+onboarding_step_post_login_1,,,,,False,True,True,False,False
+onboarding_step_post_login_6,,,,,False,False,True,False,False
+onboarding_step_post_login_4,,,,,False,True,True,False,False
+onboarding_step_post_login_5,,,,,False,True,True,False,False
+tutorial_canceled,,,,,False,True,True,False,False

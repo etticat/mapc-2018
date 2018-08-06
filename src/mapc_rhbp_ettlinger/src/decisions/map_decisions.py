@@ -2,8 +2,11 @@ import numpy as np
 import random
 import traceback
 
+from mac_ros_bridge.msg import SimEnd
+
 import rospy
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 
 from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
@@ -53,6 +56,13 @@ class MapDecision(DecisionPattern):
         self.distance_provider = DistanceProvider(agent_name=agent_name)
         self.environment_array = None
         self.last_messages = []
+
+        # Reset variables when simulation ends
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.reset_environment_array)
+
+
+    def reset_environment_array(self, sim_end=None):
+        self.environment_array = None
 
     def calc_value(self):
         """

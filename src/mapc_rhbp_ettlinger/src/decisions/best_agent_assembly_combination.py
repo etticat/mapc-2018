@@ -18,16 +18,16 @@ class BestAgentAssemblyCombinationDecision(object):
     PREFERRED_AGENT_COUNT = 4
     PRIORITY_EXPONENT = 2  # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
-    WEIGHT_PRIORITY = 10
+    WEIGHT_PRIORITY = 100
     WEIGHT_NUMBER_OF_AGENTS = -10
     WEIGHT_PRIORITISATION_ACTIVATION = 30
     WEIGHT_IDLE_STEPS = -3
-    WEIGHT_MAX_STEP_COUNT = -10
+    WEIGHT_MAX_STEP_COUNT = -100
 
     MAX_AGENTS = 7
     MIN_AGENTS = 1
 
-    ACTIVATION_THRESHOLD = -100
+    ACTIVATION_THRESHOLD = 1000
 
     def __init__(self, agent_name):
         self._init_config()
@@ -39,7 +39,7 @@ class BestAgentAssemblyCombinationDecision(object):
         # TODO: This maybe should be made dynamic. According to scenario those stay the same.
         self._roles = ["car", "motorcycle", "drone", "truck"]
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)  # TODO: make independent from agent
 
         rospy.Subscriber(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,

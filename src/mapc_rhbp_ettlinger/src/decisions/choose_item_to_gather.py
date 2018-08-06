@@ -44,7 +44,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         self._last_agent_position = None
         self._last_calculated_agent_position = None
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._distance_provider = DistanceProvider(agent_name=agent_name)
         self._action_provider = ActionProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -217,7 +217,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
         for resource in resources.values():
             if resource.item.name == item:
-                steps = self._distance_provider.calculate_steps(self._agent_info_provider.pos, resource.pos)
+                steps = self._distance_provider.calculate_steps(resource.pos)
                 if steps < min_steps:
                     min_steps = steps
                     best_resource = resource

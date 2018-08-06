@@ -31,7 +31,7 @@ class ChooseBestJobAgentCombinationDecision(object):
         self._init_conf()
 
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def _init_conf(self):

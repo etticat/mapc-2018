@@ -92,13 +92,13 @@ class RhbpAgent:
 
             # Init coordination manager only once. Even when restarting simulation
             if self._coordination_manager is None:
-                DebugUtils.instant_find_resources()
+                # DebugUtils.instant_find_resources(self._agent_name)
                 self._coordination_manager = AgentCoordinationManager(agent_name=self._agent_name,
                                                                       global_rhbp_components=self.global_rhbp_components,
                                                                       role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
 
-            self._self_organisation_provider.init_entity_listener()
+        self._self_organisation_provider.init_entity_listener()
 
     def _sim_end_callback(self, sim_end):
         """

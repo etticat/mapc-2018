@@ -17,7 +17,7 @@ class DebugUtils:
     FILE_HANDLER_STEP = None
 
     @staticmethod
-    def instant_find_resources():
+    def instant_find_resources(agent_name):
         """
         Instantly finds all resources in the beginning. Only works for the default seed ad configuration
         :return:
@@ -40,7 +40,7 @@ class DebugUtils:
             r.item.name = tuple[0]
             rsMsg.facilities.append(r)
 
-        facility_provider = FacilityProvider()
+        facility_provider = FacilityProvider(agent_name=agent_name)
         facility_provider.resources_callback(rsMsg)
 
     @staticmethod

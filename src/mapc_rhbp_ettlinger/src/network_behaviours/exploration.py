@@ -15,7 +15,7 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
     def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
 
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
-        self.exploration_decision = ExplorationDecision(self.self_organisation_provider._so_buffer, agent_name=agent_name)
+        self.exploration_decision = ExplorationDecision(self.self_organisation_provider.so_buffer, agent_name=agent_name)
         super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_decision, name=name,
                                                           agent_name=agent_name,
                                                           global_rhbp_components=global_rhbp_components,

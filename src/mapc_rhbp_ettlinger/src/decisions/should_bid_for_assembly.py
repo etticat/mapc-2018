@@ -86,7 +86,7 @@ class ShouldBidForAssemblyDecision(object):
 
         ingredient_fullness = float(self._load_ingredients) / self._max_load
         general_fullness = float(self._load) / self._max_load
-        steps_to_destination = self._distance_provider.calculate_steps(self._pos, request.destination)
+        steps_to_destination = self._distance_provider.calculate_steps(request.destination)
 
         activation = ingredient_fullness * ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD \
                      + general_fullness * ShouldBidForAssemblyDecision.WEIGHT_LOAD \

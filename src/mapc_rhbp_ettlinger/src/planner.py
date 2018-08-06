@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
+import threading
 from threading import Thread
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, SimStart, Position
+from mac_ros_bridge.msg import RequestAction, SimStart, Position, SimEnd
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -36,14 +37,14 @@ class Planner(object):
 
         # Initialise mechanisms
         self._job_decider = ChooseBestAvailableJobDecision(agent_name=agent_name)
-        self.well_chooser = ChooseWellToBuildDecision(agent_name=agent_name)
+        self._well_chooser = ChooseWellToBuildDecision(agent_name=agent_name)
 
         # Initialise rhbp components
         self._global_rhbp_components = GlobalRhbpComponents(agent_name=agent_name)
 
         # Init contract net managers
         self._manager_deliver = DeliverManager(agent_name=agent_name)
-        self._manager_well = BuildWellManager(self.well_chooser)
+        self._manager_well = BuildWellManager(self._well_chooser, agent_name=agent_name)
         self._manager_assemble = AssembleManager(agent_name=agent_name,
                                                  assembly_combination_decision=self._global_rhbp_components.assembly_combination_decision)
 
@@ -54,6 +55,7 @@ class Planner(object):
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._callback_action_request)
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
+        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
 
     def _sim_start_callback(self, sim_start):
         """
@@ -62,9 +64,24 @@ class Planner(object):
         :type sim_start: SimStart
         """
 
+        self._manager_deliver.enabled = True
+        self._manager_well.enabled = True
+        self._manager_assemble.enabled = True
+
         if self.coordination_thread is None:
             self.coordination_thread = Thread(target=self.coordinate, name="coordination")
             self.coordination_thread.start()
+
+    def _sim_end_callback(self, sim_end):
+
+        self.coordination_thread = None
+
+        self._manager_deliver.enabled = False
+        self._manager_well.enabled = False
+        self._manager_assemble.enabled = False
+
+        self._job_decider.reset_decider()
+
 
     def _callback_action_request(self, request_action):
         """
@@ -82,7 +99,7 @@ class Planner(object):
         :return: None
         """
 
-        while self.coordination_thread is not None:
+        while self.coordination_thread is threading.current_thread():
             # self.coordinate_wells()
             self.coordinate_jobs()
             self.coordinate_assembly()
@@ -113,7 +130,7 @@ class Planner(object):
         """
 
         #Choose well type that we can currently afford with massium
-        well_to_build = self.well_chooser.choose_well_type()
+        well_to_build = self._well_chooser.choose_well_type()
 
         if well_to_build is not None:
             # If we found a well type to build, assign an agent. This may take a few seconds

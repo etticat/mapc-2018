@@ -20,7 +20,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         self._agent_name = agent_name
         self._global_rhbp_components = global_rhbp_components
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._distance_provider = DistanceProvider(agent_name=agent_name)
 
         # Behaviour to go to the closest Charging station

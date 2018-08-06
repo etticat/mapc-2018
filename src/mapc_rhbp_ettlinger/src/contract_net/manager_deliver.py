@@ -16,7 +16,7 @@ class DeliverManager(ContractNetManager):
     """
 
     def __init__(self, agent_name):
-        super(DeliverManager, self).__init__(task_type=CurrentTaskDecision.TYPE_DELIVER)
+        super(DeliverManager, self).__init__(task_type=CurrentTaskDecision.TYPE_DELIVER, agent_name=agent_name)
 
         self._job_combination = ChooseBestJobAgentCombinationDecision(agent_name=agent_name)
         self._job = None
@@ -99,3 +99,6 @@ class DeliverManager(ContractNetManager):
                 ettilog.logerr("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items) ))
             return None
         return assignments
+
+    def reset_history(self):
+        pass

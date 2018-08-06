@@ -31,7 +31,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
         # Initialise providers
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._action_provider = ActionProvider(agent_name=agent_name)
-        self.facility_provider = FacilityProvider()
+        self.facility_provider = FacilityProvider(agent_name=agent_name)
 
         self._current_task = None
         self._items_to_retrieve = None

@@ -16,7 +16,7 @@ class SmallestGatherableItemVolumeSensor(Sensor):
     def __init__(self, agent_name, name=None, optional=False, initial_value=100):
         super(SmallestGatherableItemVolumeSensor, self).__init__(name, optional, initial_value)
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self.product_provider = ProductProvider(agent_name=agent_name)
 
     def sync(self):

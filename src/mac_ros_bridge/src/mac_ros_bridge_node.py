@@ -3,18 +3,21 @@
 # Thanks to Python-DTU for inspiration!
 # Parts of code taken from Communicator class
 
-import errno
-import socket
-import threading
-import time
-import traceback
-import xml.etree.cElementTree as eT
-
 import rospy
+
+import traceback
+
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
     ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg, Team, \
     Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, \
     Product, Well, WellMsg, Upgrade
+
+import socket
+import threading
+import time
+import errno
+
+import xml.etree.cElementTree as eT
 
 
 class MacRosBridge(threading.Thread):
@@ -71,7 +74,7 @@ class MacRosBridge(threading.Thread):
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
         self._pub_local_wells = rospy.Publisher('~well', WellMsg, queue_size=1, latch=True)
         self._pub_local_entity = rospy.Publisher('~entity', EntityMsg, queue_size=1, latch=True)
-        # self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
+        self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
         # self._pub_global_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
         self._pub_global_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
         self._pub_local_resource = rospy.Publisher('~resource', ResourceMsg, queue_size=1, latch=True)
@@ -500,6 +503,14 @@ class MacRosBridge(threading.Thread):
             msg.last_action = agent_self_action.get('type')
             msg.last_action_result = agent_self_action.get('result')
         msg.items = self._get_items_of_agent(elem=agent_self)
+
+        facility = agent_self.get('facility')
+        if facility:
+            msg.facility = facility
+            msg.in_facility = True
+        else:
+            msg.in_facility = False
+
         return msg
 
     def _get_items_of_agent(self, elem):
@@ -696,19 +707,19 @@ class MacRosBridge(threading.Thread):
         :type perception: eT  ElementTree
         """
         has_local_subscribers = self._pub_local_wells.get_num_connections() > 0
-        # has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
 
-        if has_local_subscribers:
+        if has_local_subscribers or has_global_subscribers:
             well_msg = WellMsg()
             well_msg.facilities = self._parse_wells(perception)
             well_msg.timestamp = timestamp
 
-        if has_local_subscribers:
-            self._pub_local_wells.publish(well_msg)
+            if has_local_subscribers:
+                self._pub_local_wells.publish(well_msg)
 
-        # publish only on the global topic if we have information
-        # if has_global_subscribers and len(well_msg.facilities) > 0:
-        #     self._pub_global_wells.publish(well_msg)
+            # publish only on the global topic if we have information
+            if has_global_subscribers and len(well_msg.facilities) > 0:
+                self._pub_global_wells.publish(well_msg)
 
     def _publish_entity(self, timestamp, perception):
         """

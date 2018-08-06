@@ -1,5 +1,7 @@
 import numpy as np
 
+from mac_ros_bridge.msg import SimEnd
+
 import rospy
 
 from common_utils.agent_utils import AgentUtils
@@ -30,6 +32,10 @@ class SelfOrganisationProvider(object):
 
         self._so_buffer = MassimSoBuffer(id=agent_name, pose_frame=self._frame_agent,
                                          view_distance=np.inf, moving_storage_size=np.inf, agent_name=agent_name)
+
+        # Reset variables when simulation ends
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.reset_provider)
+
 
     def init_entity_listener(self):
         """
@@ -72,3 +78,10 @@ class SelfOrganisationProvider(object):
     @property
     def so_buffer(self):
         return self._so_buffer
+
+    def reset_provider(self, sim_end=None):
+        """
+        Delete all values in the SoBuffer
+        :return:
+        """
+        self._so_buffer.reset_buffer()

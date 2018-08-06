@@ -43,7 +43,7 @@ class ChooseBestAvailableJobDecision(object):
         self.active_jobs = []
         self.factors = []
 
-        self._facility_provider = FacilityProvider()
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._action_provider = ActionProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
@@ -311,3 +311,6 @@ class ChooseBestAvailableJobDecision(object):
         """
         if task_stop.job_id in self.coordinated_jobs:
             self.coordinated_jobs.remove(task_stop.job_id)
+
+    def reset_decider(self):
+        self.factors = []

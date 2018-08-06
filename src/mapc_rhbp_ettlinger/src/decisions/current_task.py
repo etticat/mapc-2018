@@ -1,3 +1,5 @@
+from mac_ros_bridge.msg import SimEnd
+
 import rospy
 from mapc_rhbp_ettlinger.msg import TaskStop
 
@@ -25,6 +27,10 @@ class CurrentTaskDecision(DecisionPattern):
         self.current_task = None
 
         self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type, queue_size=10)
+
+        # Reset variables when simulation ends
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_simulation_end)
+
 
     def calc_value(self):
         """
@@ -59,6 +65,13 @@ class CurrentTaskDecision(DecisionPattern):
                 reason='stopped by client'))
 
         self.current_task = None
+
+    def callback_simulation_end(self, sim_end):
+        """
+        Reset task when simulation ends
+        :return:
+        """
+        self.end_task(notify_others=False)
 
 
 class AssembleTaskDecision(CurrentTaskDecision):

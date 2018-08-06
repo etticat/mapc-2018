@@ -10,5 +10,7 @@ uint32 vision
 string last_action
 string last_action_result
 Item[] items
+bool in_facility
+string facility
 #Maybe add inFacility and fPosition if necessary
 #More optional information like current route, last action, last action result could be added as well

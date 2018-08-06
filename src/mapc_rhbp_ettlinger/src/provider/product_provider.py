@@ -2,8 +2,8 @@
 from diagnostic_msgs.msg import KeyValue
 
 import rospy
-from mac_ros_bridge.msg import SimStart, Agent, StorageMsg
-from mapc_rhbp_ettlinger.msg import StockItem, StockItemMsg
+from mac_ros_bridge.msg import SimStart, Agent, StorageMsg, SimEnd
+from mapc_rhbp_ettlinger.msg import StockItem
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -40,6 +40,23 @@ class ProductProvider(object):
         self._agent_name = agent_name
 
         # Init runtime variables
+        self.init_runtime_variables()
+
+        # Init providers
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
+
+        # Reset variables when simulation ends
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.init_runtime_variables)
+
+        # Init subscribers and publishers
+        self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start", SimStart,
+                         self._callback_sim_start)
+        rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
+        rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
+
+    def init_runtime_variables(self, sim_end=None):
         self.hoarding_destination = None
         self._product_infos = {}
         self._gatherable_items = {}
@@ -63,17 +80,6 @@ class ProductProvider(object):
         self.load = 0
         self.role = None
         self.useful_items_for_assembly = []
-
-        # Init providers
-        self._facility_provider = FacilityProvider()
-
-        # Init subscribers and publishers
-        self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
-        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start", SimStart,
-                         self._callback_sim_start)
-        rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
-        rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
-        rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
 
     def storage_callback(self, storageMsg):
         """
@@ -541,7 +547,11 @@ class ProductProvider(object):
         returns the stock items of the agent itself
         :return:
         """
-        return self._agent_stocks[ProductProvider.STOCK_ITEM_TYPE_STOCK][self._agent_name]
+        if self._agent_name in self._agent_stocks[ProductProvider.STOCK_ITEM_TYPE_STOCK]:
+            return self._agent_stocks[ProductProvider.STOCK_ITEM_TYPE_STOCK][self._agent_name]
+        else:
+            rospy.logerr("ProductProvider(%s):: can't fetch own items, none found", self._agent_name)
+            return {}
 
     def finished_product_load_factor(self):
         """
