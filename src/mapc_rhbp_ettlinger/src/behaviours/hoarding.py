@@ -37,6 +37,7 @@ class StoreBehaviour(GenericActionBehaviour):
         """
         # Get all the items to store
         finished_products_to_store = self._mechanism.calc_value()[0]
+        ettilog.logerr("StoreBehaviour(%s):: storing items: %s", str(finished_products_to_store))
 
         # Update the hoarding goal
         self._product_provider.update_hoarding_goal(finished_products_to_store, destination=self._mechanism.value.name)

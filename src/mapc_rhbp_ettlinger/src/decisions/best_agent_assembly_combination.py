@@ -29,6 +29,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
     MAX_AGENTS = 7
     MIN_AGENTS = 1
+    MAX_STEPS = 20
 
     ACTIVATION_THRESHOLD = 1000
 
@@ -74,6 +75,8 @@ class BestAgentAssemblyCombinationDecision(object):
             "~BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)
         BestAgentAssemblyCombinationDecision.MIN_AGENTS = rospy.get_param(
             "~BestAgentAssemblyCombinationDecision.MIN_AGENTS", BestAgentAssemblyCombinationDecision.MIN_AGENTS)
+        BestAgentAssemblyCombinationDecision.MAX_STEPS = rospy.get_param(
+            "~BestAgentAssemblyCombinationDecision.MAX_STEPS", BestAgentAssemblyCombinationDecision.MAX_STEPS)
         BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT = rospy.get_param(
             "~BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT",
             BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT)
@@ -138,6 +141,10 @@ class BestAgentAssemblyCombinationDecision(object):
 
                         # The number of step until all agents can be at the workshop
                         max_step_count = max([bid.expected_steps for bid in bid_subset])
+
+                        # If max nr of steps is too high, ignore combination
+                        if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS:
+                            continue
 
                         # Number of steps agents will have to wait at storage until the last agent arrives
                         idle_steps = sum([max_step_count - bid.expected_steps for bid in bid_subset])

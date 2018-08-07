@@ -55,7 +55,6 @@ class CurrentTaskDecision(DecisionPattern):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
-        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.value))
         if self.value is not None and notify_others:
             self._pub_task_stop.publish(TaskStop(
                 id=self.value.id,
@@ -120,6 +119,7 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
+        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s notify: %r", self.task_type, str(self.value), notify_others)
         if self.value is not None:
             self._product_provider.stop_delivery(job_id=self.value.task,
                                                  storage=self.value.destination_name)
@@ -135,10 +135,6 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         super(DeliveryTaskDecision, self).start_task(task)
         self._product_provider.update_delivery_goal(item_list=self.value.items, job_id=self.value.task,
                                                     storage=self.value.destination_name)
-
-    @property
-    def current_task(self):
-        return self.value
 
 class WellTaskDecision(CurrentTaskDecision):
 

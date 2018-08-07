@@ -35,6 +35,7 @@
             <param name="BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-30" type="double"/>
             <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="7" type="int"/>
             <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="1" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS"  value="10" type="int"/>
             <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
             <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
 

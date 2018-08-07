@@ -53,5 +53,5 @@ class DeliverContractor(ContractNetContractorBehaviour):
         :return:
         """
         super(DeliverContractor, self)._on_task_finished(finish)
-        if self._current_task_mechanism.current_task is not None and self._current_task_mechanism.current_task.task == finish.job_id:
+        if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.task == finish.job_id:
             self._current_task_mechanism.end_task()

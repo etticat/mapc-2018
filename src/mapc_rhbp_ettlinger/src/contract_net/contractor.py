@@ -156,7 +156,7 @@ class ContractNetContractorBehaviour(object):
         :param finish:
         :return:
         """
-        if self._current_task_mechanism.current_task is not None and self._current_task_mechanism.current_task.id == finish.id:
+        if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.id == finish.id:
             self._current_task_mechanism.end_task()
 
     @abstractmethod

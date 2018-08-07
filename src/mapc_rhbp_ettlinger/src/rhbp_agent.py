@@ -36,7 +36,7 @@ class RhbpAgent:
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
         self._init_config()
 
-        ettilog.logerr("RhbpAgent(%s):: Starting", self._agent_name)
+        ettilog.loginfo("RhbpAgent(%s):: Starting", self._agent_name)
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name)
 
@@ -50,17 +50,18 @@ class RhbpAgent:
         self._stats_provider = StatsProvider(agent_name=self._agent_name)
         self._action_provider = ActionProvider(agent_name=self._agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
+        self._self_organisation_provider.init_entity_listener()
 
         self._choose_well_to_build_decision = ChooseWellToBuildDecision(agent_name=self._agent_name)
 
         # initialise all components
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
-        ettilog.logerr("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
+        ettilog.loginfo("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
         self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
         self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name,
                                                             global_rhbp_components=self.global_rhbp_components)
         self._coordination_manager = None  # Will be initialised once simulation is started
-        ettilog.logerr("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
+        ettilog.loginfo("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
 
         # One agent has the task of bidding for auctions
         if self._should_bid_for_auctions:
@@ -109,8 +110,6 @@ class RhbpAgent:
                                                                       role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
 
-        self._self_organisation_provider.init_entity_listener()
-
     def _sim_end_callback(self, sim_end):
         """
         Callback after the simulation is over
@@ -158,7 +157,7 @@ class RhbpAgent:
         well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
                                                                request_action.agent)
         if well_task is not None:
-            ettilog.logerr("RhbpAgent(%s):: building well", self._agent_name)
+            ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
             self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
@@ -172,7 +171,7 @@ class RhbpAgent:
 
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
+            ettilog.loginfo("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
                            self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback

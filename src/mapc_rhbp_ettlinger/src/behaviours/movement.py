@@ -55,8 +55,8 @@ class GoToDestinationBehaviour(DecisionBehaviour):
                     KeyValue(key="lat", value=str(self.destination.lat)), KeyValue(key="long", value=str(self.destination.long))], diffusion=0.01)
 
                 # Reset destination, so we can pick a new one in the next round
+                ettilog.logerr("GoToDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
                 self.destination = None
-                ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
                 self.mechanism.destination_not_found()
 
     def start(self):
@@ -79,12 +79,12 @@ class GoToDestinationBehaviour(DecisionBehaviour):
             # This allows to reuse the mechanism for other purposes. In this case use the attribute
             if not isinstance(self.destination, Position) and self.destination is not None:
                 self.destination = self.destination.pos
-            ettilog.loginfo("GoToTaskDestinationBehaviour(%s):: Picked new destination (%.3f, %3f)", self.name, self.destination.lat, self.destination.long)
+            ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%.3f, %3f)", self.name, self.destination.lat, self.destination.long)
 
         if self.destination is not None:
             self._action_provider.action_go_to_destination(self.destination)
         else:
-            ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not decide for destination", self.name)
+            ettilog.logerr("GoToDestinationBehaviour(%s):: Could not decide for destination", self.name)
 
     def stop(self):
         """

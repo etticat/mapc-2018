@@ -83,7 +83,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 total_steps = len(self._task.task.split(",")) -1
                 if step < total_steps:
                     # If there are still tasks to do, inform all agents that the next task will be performed
-                    ettilog.logerr(
+                    ettilog.loginfo(
                         "AssembleProductBehaviour(%s):: Assembled item %d/%d, going on to next task ....",
                         self._agent_name, step+1, total_steps +1)
                     assemble_task_coordination = TaskProgress(
@@ -139,7 +139,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         if len(action_list) > 0 and self._get_assemble_step() < len(action_list):
             (self._last_action, self._last_target) = action_list[self._get_assemble_step()].split(":")
             if self._last_action == "assemble":
-                ettilog.logerr("AssembleProductBehaviour(%s):: step %d/%d Assembling %s", self._agent_name,
+                ettilog.loginfo("AssembleProductBehaviour(%s):: step %d/%d Assembling %s", self._agent_name,
                                self._get_assemble_step() + 1, len(action_list), self._last_target)
                 self.action_assemble(self._last_target)
             elif self._last_action == "assist":
