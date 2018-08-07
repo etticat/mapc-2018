@@ -55,8 +55,9 @@ add_message_files(
   TaskBid.msg
   TaskAssignment.msg
   TaskAcknowledgement.msg
-  TaskProgress.msg
   TaskStop.msg
+  TaskProgress.msg
+  TaskCoordinationMessage.msg
   Task.msg
 )
 ## Generate services in the 'srv' folder

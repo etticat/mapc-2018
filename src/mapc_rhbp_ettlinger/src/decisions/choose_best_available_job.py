@@ -10,6 +10,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.current_task import CurrentTaskDecision
+from my_subscriber import MyPublisher, MySubscriber
 from provider.action_provider import ActionProvider, Action
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -47,12 +48,16 @@ class ChooseBestAvailableJobDecision(object):
         self._action_provider = ActionProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
-        rospy.Subscriber(AgentUtils.get_coordination_topic(task_type=CurrentTaskDecision.TYPE_DELIVER, message_type="stop"), data_class=TaskStop, callback=self.job_stopped)
+        MySubscriber(AgentUtils.get_coordination_topic(), message_type="stop",
+                     task_type=CurrentTaskDecision.TYPE_DELIVER, callback=self.job_stopped)
+
 
         self._pub_desired_finished_products = Publisher(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL,
                                                         StockItem,
                                                         queue_size=10)
-        self._pub_job_stop = rospy.Publisher(AgentUtils.get_coordination_topic(task_type=CurrentTaskDecision.TYPE_DELIVER, message_type="stop"), data_class=TaskStop, queue_size=10)
+        self._pub_job_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop",
+                                         task_type=CurrentTaskDecision.TYPE_DELIVER, queue_size=10)
+
 
     def init_conf(self):
         ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL = rospy.get_param(

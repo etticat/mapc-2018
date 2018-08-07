@@ -7,6 +7,7 @@ from mapc_rhbp_ettlinger.msg import TaskStop, TaskRequest, TaskBid, TaskAssignme
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from my_subscriber import MySubscriber, MyPublisher
 from provider.facility_provider import FacilityProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.coordination.manager')
@@ -37,14 +38,15 @@ class ContractNetManager(object):
         self._facility_provider = FacilityProvider(agent_name=agent_name)
 
         # Initialise subscribers
-        self._pub_task_request = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "request"), data_class=TaskRequest, queue_size=10)
-        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "bid"), data_class=TaskBid, callback=self._callback_bid)
-        self._pub_task_assignment = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "assignment"), data_class=TaskAssignment,
-                                                queue_size=10)
-        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "acknowledgement"), data_class=TaskAcknowledgement,
+        topic = AgentUtils.get_coordination_topic()
+        self._pub_task_request = MyPublisher(topic, message_type="request", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="bid", task_type=self._task_type, callback=self._callback_bid)
+        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type,queue_size=10)
+        MySubscriber(topic, message_type="acknowledgement", task_type=self._task_type,
                      callback=self._callback_acknowledgement)
-        self._pub_task_stop = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskStop, queue_size=10)
-        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskStop, callback=self._on_task_finished)
+        self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
+        MySubscriber(topic, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
+
 
     def _init_config(self):
         """

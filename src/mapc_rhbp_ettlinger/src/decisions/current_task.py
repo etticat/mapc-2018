@@ -4,6 +4,7 @@ import rospy
 from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils.agent_utils import AgentUtils
+from my_subscriber import MyPublisher
 from provider.product_provider import ProductProvider
 from so_data.patterns import DecisionPattern
 
@@ -23,7 +24,7 @@ class CurrentTaskDecision(DecisionPattern):
 
         super(CurrentTaskDecision, self).__init__(buffer=None, frame=None, requres_pos=False, value=None)
 
-        self._pub_task_stop = rospy.Publisher(AgentUtils.get_coordination_topic(task_type=task_type, message_type="stop"), data_class=TaskStop, queue_size=10)
+        self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type, queue_size=10)
 
         # Reset variables when simulation ends
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_simulation_end)
@@ -56,6 +57,7 @@ class CurrentTaskDecision(DecisionPattern):
         :return:
         """
         if self.value is not None and notify_others:
+            rospy.logerr("Current Task(%s) id: %s(%s)",self.agent_name, str(self.value.id), str(type(self.value.id)))
             self._pub_task_stop.publish(TaskStop(
                 id=self.value.id,
                 reason='stopped by client'))

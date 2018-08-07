@@ -44,7 +44,7 @@ class ChooseWellToBuildDecision(object):
             well_type = self.choose_well_type()
 
             task = Task(
-                id=self._agent_name + str(time.time()),
+                id=int(time.time() / 17),
                 type=CurrentTaskDecision.TYPE_BUILD_WELL,
                 agent_name=self._agent_name,
                 items=[],
