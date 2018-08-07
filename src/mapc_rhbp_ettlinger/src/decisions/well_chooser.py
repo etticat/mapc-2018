@@ -40,7 +40,7 @@ class ChooseWellToBuildDecision(object):
         :return:
         """
         # If we are currently out of bounds we build the best available well at the current position
-        if self._simulation_provider.out_of_bounds(agent.pos) and current_well_task_mechanism.current_task is None and not agent.in_facility:
+        if self._simulation_provider.out_of_bounds(agent.pos) and current_well_task_mechanism.value is None and not agent.in_facility:
             well_type = self.choose_well_type()
 
             task = Task(
@@ -52,9 +52,7 @@ class ChooseWellToBuildDecision(object):
                 destination_name="none",
                 task=well_type
             )
-            current_well_task_mechanism.start_task(task)
-            ettilog.logerr("ChooseWellToBuildDecision(%s):: Starting well task: %s", self._agent_name, str(task))
-
+            return task
         return None
 
     def choose_well_type(self):

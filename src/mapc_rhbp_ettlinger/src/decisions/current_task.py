@@ -21,9 +21,7 @@ class CurrentTaskDecision(DecisionPattern):
         self.agent_name = agent_name
         self.task_type = task_type
 
-        super(CurrentTaskDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
-
-        self.current_task = None
+        super(CurrentTaskDecision, self).__init__(buffer=None, frame=None, requres_pos=False, value=None)
 
         self._pub_task_stop = rospy.Publisher(AgentUtils.get_coordination_topic(task_type=task_type, message_type="stop"), data_class=TaskStop, queue_size=10)
 
@@ -36,7 +34,7 @@ class CurrentTaskDecision(DecisionPattern):
         Returns the current task
         :return:
         """
-        return [self.current_task, self.state]
+        return [self.value, self.state]
 
     def start_task(self, task):
         """
@@ -45,10 +43,10 @@ class CurrentTaskDecision(DecisionPattern):
         :param task:
         :return:
         """
-        assert self.current_task is None
+        assert self.value is None
         rospy.loginfo("CurrentTaskDecision(%s)::starting task %s current state: %s", self.task_type, task.id,
-                     self.current_task)
-        self.current_task = task
+                     self.value)
+        self.value = task
 
     def end_task(self, notify_others=True):
         """
@@ -57,13 +55,13 @@ class CurrentTaskDecision(DecisionPattern):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
-        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.current_task))
-        if self.current_task is not None and notify_others:
+        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.value))
+        if self.value is not None and notify_others:
             self._pub_task_stop.publish(TaskStop(
-                id=self.current_task.id,
+                id=self.value.id,
                 reason='stopped by client'))
 
-        self.current_task = None
+        self.value = None
 
     def callback_simulation_end(self, sim_end):
         """
@@ -91,7 +89,7 @@ class AssembleTaskDecision(CurrentTaskDecision):
         """
         super(AssembleTaskDecision, self).end_task(notify_others)
 
-        if self.current_task is None:
+        if self.value is None:
             self._product_provider.stop_assembly()
 
     def start_task(self, task):
@@ -122,9 +120,9 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
-        if self.current_task is not None:
-            self._product_provider.stop_delivery(job_id=self.current_task.task,
-                                                 storage=self.current_task.destination_name)
+        if self.value is not None:
+            self._product_provider.stop_delivery(job_id=self.value.task,
+                                                 storage=self.value.destination_name)
         super(DeliveryTaskDecision, self).end_task(notify_others)
 
     def start_task(self, task):
@@ -135,15 +133,18 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         :return:
         """
         super(DeliveryTaskDecision, self).start_task(task)
-        self._product_provider.update_delivery_goal(item_list=self.current_task.items, job_id=self.current_task.task,
-                                                    storage=self.current_task.destination_name)
+        self._product_provider.update_delivery_goal(item_list=self.value.items, job_id=self.value.task,
+                                                    storage=self.value.destination_name)
+
+    @property
+    def current_task(self):
+        return self.value
 
 class WellTaskDecision(CurrentTaskDecision):
 
-
-    # def destination_not_found(self):
+    def destination_not_found(self):
         """
-        Is called when destinatino is unreachable. Just end task
+        Is called when destination is unreachable. Just end task
         :return:
         """
-        # self.end_task()
+        self.end_task()

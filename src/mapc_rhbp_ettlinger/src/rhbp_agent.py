@@ -158,7 +158,7 @@ class RhbpAgent:
         well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
                                                                request_action.agent)
         if well_task is not None:
-            ettilog.logerr("RhbpAgent(%s):: building well")
+            ettilog.logerr("RhbpAgent(%s):: building well", self._agent_name)
             self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0

@@ -43,32 +43,9 @@ class ExploreCornersDecision(DecisionPattern):
 
     MODE_OLDEST_VISITED = "oldest_visited"
     MODE_SEEN_COUNT = "seen_count"
-
-    def __init__(self, agent_name, buffer, frame, key, target_frames, mode, granulariy=500, value=None, state=None, moving=True,
-                 static=False, diffusion=600, goal_radius=0.5,
-                 ev_factor=0.0, ev_time=5):
-        """
-
-        :param agent_name:
-        :param buffer:
-        :param frame:
-        :param key:
-        :param target_frames:
-        :param mode:
-        :param granulariy: how far the calculated points should be from another (in meters)
-        :param value:
-        :param state:
-        :param moving:
-        :param static:
-        :param diffusion:
-        :param goal_radius:
-        :param ev_factor:
-        :param ev_time:
-        """
+    def __init__(self, buffer, agent_name):
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
-        super(ExploreCornersDecision, self).__init__(buffer, frame, key, value, state,
-                                          moving, static, goal_radius, ev_factor,
-                                          ev_time, diffusion)
+        super(ExploreCornersDecision, self).__init__(buffer=buffer)
 
     def calc_value(self):
         corners = self._simulation_provider.get_corners()

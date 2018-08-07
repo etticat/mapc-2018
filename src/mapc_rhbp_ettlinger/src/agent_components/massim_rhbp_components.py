@@ -211,5 +211,3 @@ class MassimRhbpComponents(object):
             conditions=[self._global_rhbp_components.load_fullness_condition])
 
         # TODO: Proper working hoarding goal
-
-        RegManager

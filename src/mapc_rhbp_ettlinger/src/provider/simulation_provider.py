@@ -83,7 +83,7 @@ class SimulationProvider(object):
         return self._team
 
     def get_corners(self):
-        return [Position(lat=self._min_lat_outer, long=self._min_long_outer),
-                Position(lat=self._min_lat_outer, long=self._max_long_outer),
-                Position(lat=self._max_lat_outer, long=self._min_long_outer),
-                Position(lat=self._max_lat_outer, long=self._max_long_outer),]
+        return [Position(lat=self._min_lat, long=self._min_long),
+                Position(lat=self._min_lat, long=self._max_long),
+                Position(lat=self._max_lat, long=self._min_long),
+                Position(lat=self._max_lat, long=self._max_long),]

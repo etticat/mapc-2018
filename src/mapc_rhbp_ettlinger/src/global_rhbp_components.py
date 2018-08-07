@@ -11,7 +11,7 @@ from decisions.closest_charging_station import ClosestChargingStationDecision
 from decisions.choose_finished_products_to_store import ChooseFinishedProductsToStoreDecision
 from decisions.choose_stroage_for_hoarding import ChooseStorageForHoardingDecision
 from decisions.choose_item_to_gather import ChooseItemToGatherMechanism
-from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision
+from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision, WellTaskDecision
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorableItemsLoadSensor

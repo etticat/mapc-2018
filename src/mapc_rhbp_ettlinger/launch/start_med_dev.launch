@@ -80,6 +80,9 @@
         <arg name="agent_name" value="agentA5" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentA6" />
+    </include>
+    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA7" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
