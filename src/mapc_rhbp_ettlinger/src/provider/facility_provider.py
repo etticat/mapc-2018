@@ -44,7 +44,7 @@ class FacilityProvider(object):
         for storage in request_action.storages:
             self.storages[storage.name] = storage
 
-        for workshop in request_action.resources:
+        for workshop in request_action.workshops:
             self.workshops[workshop.name] = workshop
 
     def charging_station_callback(self, charging_station_msg):

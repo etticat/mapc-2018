@@ -23,7 +23,7 @@ class WellIntegritySensor(GradientSensor):
 
         if val is not None:
             for well in self._well_provider.existing_wells.values():
-                if self._distance_provider.at_destination(well.pos, val.pos):
+                if self._distance_provider.same_location(well.pos, val.pos):
                     well_prototype = self._well_provider.get_well(val.task)
 
                     return well.integrity / well_prototype.integrity

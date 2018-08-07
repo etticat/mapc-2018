@@ -136,28 +136,28 @@ class DistanceProvider(object):
         """
         if self._can_fly:
             # If agent can fly, return air distance
-            return self.calculate_distance_air(self.agent_pos, endPosition)
+            air_distance = self.calculate_distance_air(self.agent_pos, endPosition)
+            return air_distance
         else:
             # if agent can't fly return road distance
-            try:
-                return self.calculate_distance_street(self.agent_pos, endPosition)
-            except LookupError as e:
-                ettilog.logerr(e)
-            except Exception as e:
-                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                ettilog.logerr(traceback.format_exc())
+            # try:
+            #     return self.calculate_distance_street(self.agent_pos, endPosition)
+            # except LookupError as e:
+            #     ettilog.logerr(e)
+            # except Exception as e:
+            #     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+            #     ettilog.logerr(traceback.format_exc())
 
-            ettilog.logerr("DistanceProvider(%s):: Road distance unavailable. Using fallback approximation: air distance * 2", self._agent_name)
             return self.calculate_distance_air(self.agent_pos, endPosition) * 2  # Fallback
 
-    def calculate_steps(self, pos2):
+    def calculate_steps(self, pos2, use_in_facility_flag = True):
         """
         Returns the step needed between two positions.
         :param pos1:
         :param pos2:
         :return:
         """
-        if self.at_destination(pos2):
+        if self.at_destination(pos2, use_in_facility_flag):
             # If the distance is lower than proximity, agent is at destination.
             return 0
 
@@ -275,24 +275,26 @@ class DistanceProvider(object):
         # Return closest facility
         return min(facilities, key=lambda facility:self.calculate_steps(facility.pos))
 
-    def at_destination(self, destination_pos):
+    def at_destination(self, destination_pos, use_in_facility_flag):
         """
         Returns if pos1 and pos2 are at same location as defined in server.
-        TODO: Use facility attribute of Agent where possible
         :param destination_pos:
         :return:
         """
 
-        if self._in_facility:
-            if self._facility in self._facility_positions:
-                pos = self._facility_positions[self._facility]
-                destination_reached = pos.lat == destination_pos.lat and pos.long == destination_pos.long
+        if use_in_facility_flag:
+            if self._in_facility:
+                if self._facility in self._facility_positions:
+                    pos = self._facility_positions[self._facility]
+                    destination_reached = pos.lat == destination_pos.lat and pos.long == destination_pos.long
 
-                rospy.loginfo("DistanceProvider(%s):: at facility %s, destination reached: %r", self._agent_name, self._facility, destination_reached)
-                if destination_reached:
-                    return True
-            else:
-                rospy.logerr("DistanceProvider(%s):: current faciliy unknown: %s", self._agent_name, self._facility)
+                    rospy.loginfo("DistanceProvider(%s):: at facility %s, destination reached: %r", self._agent_name, self._facility, destination_reached)
+                    if destination_reached:
+                        return True
+                else:
+                    rospy.logerr("DistanceProvider(%s):: current faciliy unknown: %s", self._agent_name, self._facility)
+        else:
+            return self.same_location(self.agent_pos, destination_pos)
 
         return False
 
@@ -376,3 +378,10 @@ class DistanceProvider(object):
     @property
     def agent_pos(self):
         return self._agent_pos
+
+    @property
+    def in_facility(self):
+        return self._in_facility
+
+    def same_location(self, pos1, pos2):
+        return self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity

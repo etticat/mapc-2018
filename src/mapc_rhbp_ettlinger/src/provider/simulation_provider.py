@@ -23,9 +23,12 @@ class SimulationProvider(object):
         self._max_lat = 0
         self._min_long = 0
         self._max_long = 0
+        self._min_lat_outer = 0
+        self._max_lat_outer = 0
+        self._min_long_outer = 0
+        self._max_long_outer = 0
         self._step = 0
         self._team = None
-        self.out_of_bounds = False
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start") , SimStart, self.callback_sim_start)
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction, self.callback_request_action)
 
@@ -40,6 +43,12 @@ class SimulationProvider(object):
         self._max_lat = sim_start.max_lat - SimulationProvider.COORDINATES_MARGIN
         self._min_long = sim_start.min_lon + SimulationProvider.COORDINATES_MARGIN
         self._max_long = sim_start.max_lon - SimulationProvider.COORDINATES_MARGIN
+
+        self._min_lat_outer = sim_start.min_lat
+        self._max_lat_outer = sim_start.max_lat
+        self._min_long_outer = sim_start.min_lon
+        self._max_long_outer = sim_start.max_lon
+
         self._team = sim_start.team
         pass
 
@@ -51,8 +60,10 @@ class SimulationProvider(object):
         :return:
         """
         self._step = request_action.simulation_step
-        self.out_of_bounds = request_action.agent.pos.lat < self._min_lat or request_action.agent.pos.lat > self._max_lat \
-                             or request_action.agent.pos.long < self._min_long or request_action.agent.pos.long > self._max_long
+
+    def  out_of_bounds(self, pos):
+        return pos.lat < self._min_lat_outer or pos.lat > self._max_lat_outer \
+                             or pos.long < self._min_long_outer or pos.long > self._max_long_outer
 
     def get_random_position(self):
         """
@@ -70,3 +81,9 @@ class SimulationProvider(object):
     @property
     def team(self):
         return self._team
+
+    def get_corners(self):
+        return [Position(lat=self._min_lat_outer, long=self._min_long_outer),
+                Position(lat=self._min_lat_outer, long=self._max_long_outer),
+                Position(lat=self._max_lat_outer, long=self._min_long_outer),
+                Position(lat=self._max_lat_outer, long=self._max_long_outer),]

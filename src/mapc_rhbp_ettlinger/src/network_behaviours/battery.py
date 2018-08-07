@@ -1,6 +1,6 @@
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction
-from behaviour_components.goals import OfflineGoal
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
@@ -80,7 +80,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         recharge_behaviour.add_precondition(self._global_rhbp_components.battery_empty_cond)
         go_to_charging_station_behaviour.add_precondition(self._global_rhbp_components.require_charging_cond)
 
-        self.charge_goal = OfflineGoal(
+        self.charge_goal = GoalBase(
             name='charge_goal',
             permanent=True,
             planner_prefix=self.get_manager_prefix(),

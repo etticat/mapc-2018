@@ -34,7 +34,6 @@ class AssembleManager(ContractNetManager):
         :return:
         """
 
-        # TODO: Currently we pick random assembly facility. Maybe we should decide this differently. After coordination?
         workshop = self._facility_provider.get_random_workshop()
         if workshop is not None:
             request = TaskRequest(

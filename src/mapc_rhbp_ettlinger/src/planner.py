@@ -9,10 +9,8 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from contract_net.manager_assemble import AssembleManager
-from contract_net.manager_build_well import BuildWellManager
 from contract_net.manager_deliver import DeliverManager
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
-from decisions.well_chooser import ChooseWellToBuildDecision
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
 from global_rhbp_components import GlobalRhbpComponents
@@ -23,7 +21,6 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 class Planner(object):
     """
     Central planner, that keeps track of all jobs and distributes the best ones. Also responsible for Assembly coordination
-    TODO: Well coordination
     """
 
     def __init__(self):
@@ -37,14 +34,12 @@ class Planner(object):
 
         # Initialise mechanisms
         self._job_decider = ChooseBestAvailableJobDecision(agent_name=agent_name)
-        self._well_chooser = ChooseWellToBuildDecision(agent_name=agent_name)
 
         # Initialise rhbp components
         self._global_rhbp_components = GlobalRhbpComponents(agent_name=agent_name)
 
         # Init contract net managers
         self._manager_deliver = DeliverManager(agent_name=agent_name)
-        self._manager_well = BuildWellManager(self._well_chooser, agent_name=agent_name)
         self._manager_assemble = AssembleManager(agent_name=agent_name,
                                                  assembly_combination_decision=self._global_rhbp_components.assembly_combination_decision)
 
@@ -65,7 +60,6 @@ class Planner(object):
         """
 
         self._manager_deliver.enabled = True
-        self._manager_well.enabled = True
         self._manager_assemble.enabled = True
 
         if self.coordination_thread is None:
@@ -77,7 +71,6 @@ class Planner(object):
         self.coordination_thread = None
 
         self._manager_deliver.enabled = False
-        self._manager_well.enabled = False
         self._manager_assemble.enabled = False
 
         self._job_decider.reset_decider()
@@ -100,7 +93,6 @@ class Planner(object):
         """
 
         while self.coordination_thread is threading.current_thread():
-            # self.coordinate_wells()
             self.coordinate_jobs()
             self.coordinate_assembly()
 
@@ -121,20 +113,6 @@ class Planner(object):
             if successful:
                 # If distribution was successful, inform the job decider
                 self._job_decider._on_job_started(job.id)
-
-    def coordinate_wells(self):
-        """
-        Coordinates Well building. If enough mssim is available to build a well, let a random agent build it.
-        TODO: This should be moved into the agent itself (Maybe throgh self organisation?)
-        :return:
-        """
-
-        #Choose well type that we can currently afford with massium
-        well_to_build = self._well_chooser.choose_well_type()
-
-        if well_to_build is not None:
-            # If we found a well type to build, assign an agent. This may take a few seconds
-            self._manager_well.build_well(well_to_build, pos=Position(lat=0.0, long=0.0))
 
     def coordinate_assembly(self):
         """

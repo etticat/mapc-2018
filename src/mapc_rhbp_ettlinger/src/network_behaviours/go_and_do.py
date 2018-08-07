@@ -1,7 +1,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import OfflineGoal
+from behaviour_components.goals import GoalBase
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
@@ -14,7 +14,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
     NetworkBehaviour Base class for all network behaviours, that need to go to a destination and perform ana action there
     """
 
-    def __init__(self, agent_name, name, global_rhbp_components, mechanism, **kwargs):
+    def __init__(self, agent_name, name, global_rhbp_components, mechanism, use_in_facility_flag=True, **kwargs):
         super(GoAndDoNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             global_rhbp_components=global_rhbp_components,
@@ -25,7 +25,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self._go_behaviour = None
         self._do_behaviour = None
 
-        self.init_destination_step_sensor()
+        self.init_destination_step_sensor(use_in_facility_flag)
         self.init_go_behaviour()
 
     def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
@@ -83,7 +83,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         )
         self.apply_charging_restrictions(self._go_behaviour)
 
-    def init_destination_step_sensor(self):
+    def init_destination_step_sensor(self, use_in_facility_flag):
         """
         Initialises the destination step sensor
         :return:
@@ -99,7 +99,8 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.target_step_sensor = StepDistanceSensor(
             name=self.get_manager_prefix() + "_target_step_sensor",
             agent_name=self._agent_name,
-            position_sensor_2=self.target_sensor,
+            destination_sensor=self.target_sensor,
+            use_in_facility_flag=use_in_facility_flag,
             initial_value=10
         )
 

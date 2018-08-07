@@ -19,11 +19,12 @@ class StepDistanceSensor(Sensor):
     Sensor that takes two other sensors which provide a position and calculates the step distance between them
     """
 
-    def __init__(self, name, agent_name, position_sensor_2, initial_value):
+    def __init__(self, name, agent_name, destination_sensor, initial_value, use_in_facility_flag=True):
         super(StepDistanceSensor, self).__init__(
             name=name,
             initial_value=initial_value)
-        self.destination_sensor = position_sensor_2
+        self.destination_sensor = destination_sensor
+        self.use_in_facility_flag = use_in_facility_flag
         self.distance_provider = DistanceProvider(agent_name=agent_name)
         self.log = False
 
@@ -41,7 +42,7 @@ class StepDistanceSensor(Sensor):
         if not isinstance(destination_position, Position):
             destination_position = destination_position.pos
 
-        steps = self.distance_provider.calculate_steps(destination_position)
+        steps = self.distance_provider.calculate_steps(destination_position, self.use_in_facility_flag)
 
         self.update(steps)
 

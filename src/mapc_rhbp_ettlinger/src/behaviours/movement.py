@@ -49,7 +49,6 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         if self.destination is not None:
             # Sometimes movement doesnt work (e.g. when navigating into a building.)
             # We save this destination into the self organisation component, so we don't try it again later
-            # TODO: build wells there using drones
             if agent.last_action == "goto" and agent.last_action_result == "failed_no_route":
                 # Avoid this place until step 100000
                 self._self_organisation_provider.send_msg(pos=self.destination, frame="no_route", parent_frame="agent", time=100000, payload=[
@@ -58,6 +57,7 @@ class GoToDestinationBehaviour(DecisionBehaviour):
                 # Reset destination, so we can pick a new one in the next round
                 self.destination = None
                 ettilog.logerr("GoToTaskDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
+                self.mechanism.destination_not_found()
 
     def start(self):
         """

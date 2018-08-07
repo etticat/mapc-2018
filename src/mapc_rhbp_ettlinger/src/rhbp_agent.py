@@ -11,10 +11,13 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.debug import DebugUtils
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
+from decisions.well_chooser import ChooseWellToBuildDecision
 from provider.action_provider import ActionProvider, Action
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
 from global_rhbp_components import GlobalRhbpComponents
+from provider.stats_provider import StatsProvider
+from provider.well_provider import WellProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.agent')
 
@@ -43,15 +46,20 @@ class RhbpAgent:
 
         # initialise providers
         self._simulation_provider = SimulationProvider(agent_name=self._agent_name)
+        self._well_provider = WellProvider(agent_name=self._agent_name)
+        self._stats_provider = StatsProvider(agent_name=self._agent_name)
         self._action_provider = ActionProvider(agent_name=self._agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
+
+        self._choose_well_to_build_decision = ChooseWellToBuildDecision(agent_name=self._agent_name)
 
         # initialise all components
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
         ettilog.logerr("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
         self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
-        self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name, global_rhbp_components=self.global_rhbp_components)
-        self._coordination_manager = None # Will be initialised once simulation is started
+        self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name,
+                                                            global_rhbp_components=self.global_rhbp_components)
+        self._coordination_manager = None  # Will be initialised once simulation is started
         ettilog.logerr("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
 
         # One agent has the task of bidding for auctions
@@ -145,12 +153,13 @@ class RhbpAgent:
             self._job_decider.save_jobs(request_action)
             self._job_decider.process_auction_jobs(request_action.auction_jobs)
 
-        # TODO: When this happens, the agent is out of bounds. This can happen when the agent is close to the border
-        # TODO: and tries to move to a different spot which is also close to the border.
-        # TODO: This is a perfect spot for building wells, as opponents can reach this place only through grinding
-        # TODO: the boarders themselves, which is very hard. (no one will implement this)
-        if self._simulation_provider.out_of_bounds:
-            pass
+
+        # Build a well if we are currently out of bounds.
+        well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
+                                                               request_action.agent)
+        if well_task is not None:
+            ettilog.logerr("RhbpAgent(%s):: building well")
+            self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
         time_passed = 0

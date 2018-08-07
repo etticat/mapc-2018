@@ -141,7 +141,7 @@ class GlobalRhbpComponents(object):
         self.charging_station_step_sensor = StepDistanceSensor(
             name='charging_station_step_distance',
             agent_name=self.agent_name,
-            position_sensor_2=self.closest_charging_station_sensor,
+            destination_sensor=self.closest_charging_station_sensor,
             initial_value=10
         )
 
@@ -349,7 +349,7 @@ class GlobalRhbpComponents(object):
         self.deliver_task_mechanism = DeliveryTaskDecision(
             agent_name=agent_name,
             task_type=CurrentTaskDecision.TYPE_DELIVER)
-        self.well_task_mechanism = CurrentTaskDecision(
+        self.well_task_mechanism = WellTaskDecision(
             agent_name=agent_name,
             task_type=CurrentTaskDecision.TYPE_BUILD_WELL)
         self.hoarding_items_decision = ChooseFinishedProductsToStoreDecision(

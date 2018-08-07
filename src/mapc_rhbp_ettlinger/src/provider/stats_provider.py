@@ -37,7 +37,7 @@ class StatsProvider(object):
         self.massium = team.massium
         self.score = team.score
 
-    def get_massium(self):
+    def get_expected_massium(self):
         """
         Returns the current amount of massium
         :return:

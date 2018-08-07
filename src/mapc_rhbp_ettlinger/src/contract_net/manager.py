@@ -41,7 +41,7 @@ class ContractNetManager(object):
         rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "bid"), data_class=TaskBid, callback=self._callback_bid)
         self._pub_task_assignment = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "assignment"), data_class=TaskAssignment,
                                                 queue_size=10)
-        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskAcknowledgement,
+        rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "acknowledgement"), data_class=TaskAcknowledgement,
                      callback=self._callback_acknowledgement)
         self._pub_task_stop = rospy.Publisher(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskStop, queue_size=10)
         rospy.Subscriber(AgentUtils.get_coordination_topic(self._task_type, "stop"), data_class=TaskStop, callback=self._on_task_finished)

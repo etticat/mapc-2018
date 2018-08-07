@@ -2,7 +2,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import OfflineGoal
+from behaviour_components.goals import GoalBase
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
@@ -33,7 +33,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.apply_charging_restrictions(self.go_to_resource_node_behaviour)
 
-        self.charge_goal = OfflineGoal(
+        self.charge_goal = GoalBase(
             name='gather_goal',
             permanent=True,
             priority=100,
@@ -91,7 +91,7 @@ class GatheringNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.target_step_sensor = StepDistanceSensor(
             name='gather_target_step_sensor',
             agent_name=self._agent_name,
-            position_sensor_2=self.gather_target_sensor,
+            destination_sensor=self.gather_target_sensor,
             initial_value=10
         )
         self.at_resource_node_condition = Condition(

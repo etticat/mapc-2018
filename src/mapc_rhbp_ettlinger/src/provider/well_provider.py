@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import SimStart, WellMsg
+from mac_ros_bridge.msg import SimStart, WellMsg, RequestAction
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
+from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.well')
 
@@ -22,8 +23,12 @@ class WellProvider(object):
         self._existing_wells = {}
         self._possible_wells = {}
 
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="well") , WellMsg, self._callback_well)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start") , SimStart, self.callback_sim_start)
+
+
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="well"), WellMsg,
+                         self._callback_well)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart,
+                         self.callback_sim_start)
 
     def callback_sim_start(self, sim_start):
         """
@@ -34,6 +39,16 @@ class WellProvider(object):
         """
         for well in sim_start.wells:
             self._possible_wells[well.name] = well
+
+    def build_well_if_possible(self, massium):
+        """
+        Checks if the agent is currently out of bounds and creates a well task if enough massim is available
+        :param request_action:
+        :return:
+        """
+
+        if self._simulation_provider.out_of_bounds:
+            pass
 
     def _callback_well(self, wellMsg):
         """

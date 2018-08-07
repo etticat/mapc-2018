@@ -57,7 +57,7 @@ class CurrentTaskDecision(DecisionPattern):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
-        rospy.loginfo("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.current_task))
+        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s", self.task_type, str(self.current_task))
         if self.current_task is not None and notify_others:
             self._pub_task_stop.publish(TaskStop(
                 id=self.current_task.id,
@@ -71,7 +71,6 @@ class CurrentTaskDecision(DecisionPattern):
         :return:
         """
         self.end_task(notify_others=False)
-
 
 class AssembleTaskDecision(CurrentTaskDecision):
     """
@@ -138,3 +137,13 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         super(DeliveryTaskDecision, self).start_task(task)
         self._product_provider.update_delivery_goal(item_list=self.current_task.items, job_id=self.current_task.task,
                                                     storage=self.current_task.destination_name)
+
+class WellTaskDecision(CurrentTaskDecision):
+
+
+    # def destination_not_found(self):
+        """
+        Is called when destinatino is unreachable. Just end task
+        :return:
+        """
+        # self.end_task()
