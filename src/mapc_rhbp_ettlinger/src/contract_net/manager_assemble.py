@@ -88,10 +88,12 @@ class AssembleManager(ContractNetManager):
 
         # Create assignments for all accepted bids
         assignments = []
+        agents = [bid.agent_name for bid in accepted_bids]
         for bid in accepted_bids:
             assignment = TaskAssignment(
                 id=bid.id,
                 bid=bid,
+                agents=agents,
                 tasks=assembly_instructions[bid.agent_name]
             )
             assignments.append(assignment)

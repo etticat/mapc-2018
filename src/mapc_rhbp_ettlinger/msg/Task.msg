@@ -5,3 +5,4 @@ string[]                    items
 string                      destination_name
 string                      task
 string                      id
+string[]                    agents

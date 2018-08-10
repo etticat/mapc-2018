@@ -40,6 +40,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
         # We not only track our own, to avoid missing out on information, when the assembly behaviour did not
         # get the information in time from the mechanism.
         self._task_progress_dict = {}
+        # Dictionary, that keeps track of which agents have arrived at their destination
+        self._task_destination_reached_dict = {}
 
         # Initialise subscribers and publishers
         topic = AgentUtils.get_coordination_topic()
@@ -49,6 +51,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
                                                   task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
         self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
                                               queue_size=10)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
+                         self._action_request_agent)
 
     def _callback_task_progress(self, task_progres):
         """
@@ -58,7 +62,18 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :return:
         """
         if task_progres.type == CurrentTaskDecision.TYPE_ASSEMBLE:
-            self._task_progress_dict[task_progres.id] = task_progres.step
+            # Task progress greater than 0 is used to coordinate the step within assembly
+            if task_progres.step > 0:
+                self._task_progress_dict[task_progres.id] = task_progres.step
+            # Task progress equal 0 indicates, that the agent is ready for assembly
+            else:
+                agents_at_destination = self.get_agents_at_destination(task_progres.id)
+                agents_at_destination.append(task_progres.agent_name)
+
+    def get_agents_at_destination(self, task_id):
+        if task_id not in self._task_destination_reached_dict:
+            self._task_destination_reached_dict[task_id] = []
+        return self._task_destination_reached_dict[task_id]
 
     def _action_request_agent(self, agent):
         """
@@ -73,32 +88,49 @@ class AssembleProductBehaviour(DecisionBehaviour):
 
             if agent.last_action_result == "failed_capacity":
                 # Only in a few edge cases this can happen. Generally we can ignore it and pretend it was succesful
-                ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity", self._agent_name)
-                agent.last_action_result = "successful"
-
-            if agent.last_action_result == "successful":
-                # Update the assemble step of the assemble task
-                next_assemble_step = self._get_assemble_step() + 1
-
                 step = self._get_assemble_step()
-                total_steps = len(self._task.task.split(",")) -1
-                if step < total_steps:
-                    # If there are still tasks to do, inform all agents that the next task will be performed
-                    ettilog.loginfo(
-                        "AssembleProductBehaviour(%s):: Assembled item %d/%d, going on to next task ....",
-                        self._agent_name, step+1, total_steps +1)
-                    assemble_task_coordination = TaskProgress(
-                        id=self._task.id,
-                        step=next_assemble_step,
-                        type=CurrentTaskDecision.TYPE_ASSEMBLE
-                    )
-                    self._pub_assemble_progress.publish(assemble_task_coordination)
-                else:
-                    # If this was the last task -> notify all contractors to end task
-                    ettilog.logerr(
-                        "AssembleProductBehaviour(%s):: Assembled item %d/%d, stopping assembly",
-                        self._agent_name, step+1, total_steps+1)
-                    self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
+                total_steps = len(self._task.task.split(","))
+                ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity at step %d/%d", self._agent_name, step, total_steps)
+                self.perform_next_task()
+            elif agent.last_action_result == "failed_item_amount" and self.all_agents_reached_destination():
+                # If all agents have reached but still don't have all items, go on to next task
+                step = self._get_assemble_step()
+                total_steps = len(self._task.task.split(","))
+                ettilog.logerr("AssembleProductBehaviour(%s)::Failed failed_item_amount with all agents presentat step %d/%d", self._agent_name, step, total_steps)
+                self.perform_next_task()
+            elif agent.last_action_result == "successful":
+                # Update the assemble step of the assemble task
+                self.perform_next_task()
+            else:
+                # For all other error messages, wo just try again
+                pass
+
+    def perform_next_task(self):
+        step = self._get_assemble_step()
+        next_assemble_step = step + 1
+        total_steps = len(self._task.task.split(",")) - 1
+        if step < total_steps:
+            # If there are still tasks to do, inform all agents that the next task will be performed
+            ettilog.loginfo(
+                "AssembleProductBehaviour(%s):: Assembled item %d/%d, going on to next task ....",
+                self._agent_name, next_assemble_step, total_steps + 1)
+            assemble_task_coordination = TaskProgress(
+                id=self._task.id,
+                step=next_assemble_step,
+                type=CurrentTaskDecision.TYPE_ASSEMBLE,
+                agent_name=self._agent_name
+            )
+            self._pub_assemble_progress.publish(assemble_task_coordination)
+        else:
+            # If this was the last task -> notify all contractors to end task
+            ettilog.logerr(
+                "AssembleProductBehaviour(%s):: Assembled item %d/%d, stopping assembly",
+                self._agent_name, next_assemble_step, total_steps + 1)
+            self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
+
+    def all_agents_reached_destination(self):
+        agents_ = len(self.get_agents_at_destination(self._task.id)) == len(self._task.agents)
+        return agents_
 
     def action_assemble(self, item_to_assemble):
         """
@@ -125,7 +157,20 @@ class AssembleProductBehaviour(DecisionBehaviour):
         Each step get the current assembly task, and perform the assigned action of the current step
         :return:
         """
-        self._task = super(AssembleProductBehaviour, self).do_step()
+        task = super(AssembleProductBehaviour, self).do_step()
+        if task != self._task:
+            self._task = task
+            # When a new task executed, tell all other agents. This allows them to determine if all agents are at the
+            # destination or if they still need to wait.
+            assemble_task_coordination = TaskProgress(
+                id=self._task.id,
+                step=0,
+                type=CurrentTaskDecision.TYPE_ASSEMBLE,
+                agent_name=self._agent_name
+            )
+            self._pub_assemble_progress.publish(assemble_task_coordination)
+
+
         if self._task is None:
             ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly task not available during assembly.")
             return
@@ -141,7 +186,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
             (self._last_action, self._last_target) = action_list[self._get_assemble_step()].split(":")
             if self._last_action == "assemble":
                 ettilog.loginfo("AssembleProductBehaviour(%s):: step %d/%d Assembling %s", self._agent_name,
-                               self._get_assemble_step() + 1, len(action_list), self._last_target)
+                                self._get_assemble_step() + 1, len(action_list), self._last_target)
                 self.action_assemble(self._last_target)
             elif self._last_action == "assist":
                 self.action_assist_assemble(self._last_target)
