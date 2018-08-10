@@ -1,17 +1,25 @@
 from common_utils import etti_logging
 from contract_net.contractor import ContractNetContractorBehaviour
 from decisions.generate_bid_from_request import GenerateBidFromRequestDecision
-from decisions.current_task import CurrentTaskDecision
+from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.contractor.deliver')
 
 
 class DeliverContractor(ContractNetContractorBehaviour):
 
-    def __init__(self, agent_name, current_task_mechanism, ready_for_bid_condition):
+    def __init__(self, agent_name, current_task_mechanism, ready_for_bid_condition, assemble_task_mechanism):
+        """
+
+        :param agent_name:
+        :param current_task_mechanism:
+        :param ready_for_bid_condition:
+        :param assemble_task_mechanism: AssembleTaskDecision
+        """
         super(DeliverContractor, self).__init__(
             agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER, current_task_mechanism=current_task_mechanism)
 
+        self.assemble_task_mechanism = assemble_task_mechanism
         self.ready_for_bid_condition = ready_for_bid_condition
 
         self.job_bid_decider = GenerateBidFromRequestDecision(self._agent_name)
@@ -55,3 +63,12 @@ class DeliverContractor(ContractNetContractorBehaviour):
         super(DeliverContractor, self)._on_task_finished(finish)
         if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.task == finish.job_id:
             self._current_task_mechanism.end_task()
+
+    def _on_assignment_confirmed(self, assignment):
+        """
+        After accepting a delivery task, cancel the assembly task if there is one, so the partner agents don't have
+        to wait for the delivery and can do something else instead
+        :param assignment:
+        :return:
+        """
+        self.assemble_task_mechanism.end_task(notify_others=True)

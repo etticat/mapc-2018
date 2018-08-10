@@ -58,7 +58,7 @@ class DistanceProvider(object):
         rospy.Subscriber('/dump', DumpMsg, self.callback_facility)
         rospy.Subscriber('/storage', StorageMsg, self.callback_facility)
         rospy.Subscriber('/workshop', WorkshopMsg, self.callback_facility)
-        rospy.Subscriber('/well', WellMsg, self.callback_facility)
+        # rospy.Subscriber('/well', WellMsg, self.callback_facility)
         rospy.Subscriber('/resource', ResourceMsg, self.callback_facility)
 
     def callback_facility(self, facility_msg):

@@ -3,8 +3,8 @@
     <!-- Enable custom logger configuration-->
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 
-    <include file="$(find knowledge_base)/launch/knowledge_base_node.launch" pass_all_args="true">
-    </include>
-
+    <!--Infrastructure Nodes-->
+    <node pkg="mapc_rhbp_ettlinger" type="debug_agent.py" name ="debug_node" output="screen">
+    </node>
 
 </launch>

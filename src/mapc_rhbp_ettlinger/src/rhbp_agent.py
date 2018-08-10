@@ -9,6 +9,7 @@ from agent_components.massim_rhbp_components import MassimRhbpComponents
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 from common_utils.debug import DebugUtils
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
 from decisions.well_chooser import ChooseWellToBuildDecision
@@ -28,6 +29,7 @@ class RhbpAgent:
     """
 
     MAX_DECISION_MAKING_TIME = 3.9
+    BUILD_WELL_ENABLED = True
 
     def __init__(self):
 
@@ -91,6 +93,8 @@ class RhbpAgent:
         self._should_bid_for_auctions = rospy.get_param('~bid_for_auctions', False)
         RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("~RhbpAgent.MAX_DECISION_MAKING_TIME",
                                                              RhbpAgent.MAX_DECISION_MAKING_TIME)
+        RhbpAgent.BUILD_WELL_ENABLED = rospy.get_param("~RhbpAgent.BUILD_WELL_ENABLED",
+                                                       RhbpAgent.BUILD_WELL_ENABLED)
 
     def _sim_start_callback(self, sim_start):
         """
@@ -154,11 +158,12 @@ class RhbpAgent:
 
 
         # Build a well if we are currently out of bounds.
-        well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
-                                                               request_action.agent)
-        if well_task is not None:
-            ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
-            self.global_rhbp_components.well_task_mechanism.start_task(well_task)
+        if RhbpAgent.BUILD_WELL_ENABLED:
+            well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
+                                                                   request_action.agent)
+            if well_task is not None:
+                ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
+                self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
         time_passed = 0
@@ -172,7 +177,7 @@ class RhbpAgent:
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
             ettilog.loginfo("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+                            self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:

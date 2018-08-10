@@ -16,213 +16,213 @@
     <!-- Drones -->
         <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
+        <arg name="agent_name" value="agentB1" />
         <arg name="only_agent_specific" value="False" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
+        <arg name="agent_name" value="agentB2" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
+        <arg name="agent_name" value="agentB3" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA4" />
+        <arg name="agent_name" value="agentB4" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA5" />
+        <arg name="agent_name" value="agentB5" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA6" />
+        <arg name="agent_name" value="agentB6" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA7" />
+        <arg name="agent_name" value="agentB7" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA8" />
+        <arg name="agent_name" value="agentB8" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA9" />
+        <arg name="agent_name" value="agentB9" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA10" />
+        <arg name="agent_name" value="agentB10" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA11" />
+        <arg name="agent_name" value="agentB11" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA12" />
+        <arg name="agent_name" value="agentB12" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA13" />
+        <arg name="agent_name" value="agentB13" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA14" />
+        <arg name="agent_name" value="agentB14" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA15" />
+        <arg name="agent_name" value="agentB15" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA16" />
+        <arg name="agent_name" value="agentB16" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA17" />
+        <arg name="agent_name" value="agentB17" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA18" />
+        <arg name="agent_name" value="agentB18" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA19" />
+        <arg name="agent_name" value="agentB19" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA20" />
+        <arg name="agent_name" value="agentB20" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA21" />
+        <arg name="agent_name" value="agentB21" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA22" />
+        <arg name="agent_name" value="agentB22" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA23" />
+        <arg name="agent_name" value="agentB23" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA24" />
+        <arg name="agent_name" value="agentB24" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA25" />
+        <arg name="agent_name" value="agentB25" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA26" />
+        <arg name="agent_name" value="agentB26" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA27" />
+        <arg name="agent_name" value="agentB27" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA28" />
+        <arg name="agent_name" value="agentB28" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA29" />
+        <arg name="agent_name" value="agentB29" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA30" />
+        <arg name="agent_name" value="agentB30" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA31" />
+        <arg name="agent_name" value="agentB31" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA32" />
+        <arg name="agent_name" value="agentB32" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA33" />
+        <arg name="agent_name" value="agentB33" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA34" />
+        <arg name="agent_name" value="agentB34" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
+        <arg name="agent_name" value="agentB1" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
+        <arg name="agent_name" value="agentB2" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
+        <arg name="agent_name" value="agentB3" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA4" />
+        <arg name="agent_name" value="agentB4" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA5" />
+        <arg name="agent_name" value="agentB5" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA6" />
+        <arg name="agent_name" value="agentB6" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA7" />
+        <arg name="agent_name" value="agentB7" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA8" />
+        <arg name="agent_name" value="agentB8" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA9" />
+        <arg name="agent_name" value="agentB9" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA10" />
+        <arg name="agent_name" value="agentB10" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA11" />
+        <arg name="agent_name" value="agentB11" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA12" />
+        <arg name="agent_name" value="agentB12" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA13" />
+        <arg name="agent_name" value="agentB13" />
         <arg name="bid_for_auctions" value="True" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA14" />
+        <arg name="agent_name" value="agentB14" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA15" />
+        <arg name="agent_name" value="agentB15" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA16" />
+        <arg name="agent_name" value="agentB16" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA17" />
+        <arg name="agent_name" value="agentB17" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA18" />
+        <arg name="agent_name" value="agentB18" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA19" />
+        <arg name="agent_name" value="agentB19" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA20" />
+        <arg name="agent_name" value="agentB20" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA21" />
+        <arg name="agent_name" value="agentB21" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA22" />
+        <arg name="agent_name" value="agentB22" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA23" />
+        <arg name="agent_name" value="agentB23" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA24" />
+        <arg name="agent_name" value="agentB24" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA25" />
+        <arg name="agent_name" value="agentB25" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA26" />
+        <arg name="agent_name" value="agentB26" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA27" />
+        <arg name="agent_name" value="agentB27" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA28" />
+        <arg name="agent_name" value="agentB28" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA29" />
+        <arg name="agent_name" value="agentB29" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA30" />
+        <arg name="agent_name" value="agentB30" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA31" />
+        <arg name="agent_name" value="agentB31" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA32" />
+        <arg name="agent_name" value="agentB32" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA33" />
+        <arg name="agent_name" value="agentB33" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA34" />
+        <arg name="agent_name" value="agentB34" />
     </include>
 </launch>

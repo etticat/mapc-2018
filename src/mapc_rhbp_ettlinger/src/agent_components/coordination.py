@@ -30,6 +30,7 @@ class AgentCoordinationManager(object):
 
         self.deliver_contractor_behaviour = DeliverContractor(agent_name=self._agent_name,
                                                               current_task_mechanism=self.global_rhbp_components.deliver_task_mechanism,
+                                                              assemble_task_mechanism=self.global_rhbp_components.assemble_task_mechanism,
                                                               ready_for_bid_condition=Negation(
                                                                   self.global_rhbp_components.has_deliver_job_task_assigned_cond))
 

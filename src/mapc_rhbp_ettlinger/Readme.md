@@ -11,8 +11,20 @@ If the battery level is getting to low the agents will also recharge at a random
 
 ## Execution
 
-The example can be executed with `roslaunch mapc_rhbp_ettlinger rhbp_agents_example.launch`
-The configuration in above launch file is made for a 6 agent scenario of default team A executed on localhost.
+* Start massim contest server `sh script/start_massim_contest.sh`
+* start agents: 
+  * either together with planner: 
+    * `roslaunch mapc_rhbp_ettlinger start_big_prod.launch`
+  * seperately from planner: 
+    * `roslaunch mapc_rhbp_ettlinger start_big_dev.launch`
+    * `roslaunch mapc_rhbp_ettlinger planner.launch`
+* start item observer: 
+  * `roslaunch mapc_rhbp_ettlinger debug_agent.launch`
+* go back to second tab (agents) and wait for all agents being initialised (Indicated by "Initialisation finished" message)
+* Go to first terminal and hit Enter to start contest
+* Overview of items and goals can be found in 3rd window
+
+
 
 ## Exercise
 
