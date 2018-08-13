@@ -5,6 +5,19 @@
 
     <!--Infrastructure Nodes-->
     <node pkg="mapc_rhbp_ettlinger" type="planner.py" name ="planner_node" output="screen">
+
+            <param name="BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="2"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT"  value="-2.1" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY"  value="10" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS"  value="-10" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION"  value="30" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS"  value="-3" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-30" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="5" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="1" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS"  value="10" type="int"/>
+            <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
+            <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
     </node>
 
 </launch>

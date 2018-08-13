@@ -29,7 +29,7 @@ class RhbpAgent:
     """
 
     MAX_DECISION_MAKING_TIME = 3.9
-    BUILD_WELL_ENABLED = True
+    BUILD_WELL_ENABLED = False
 
     def __init__(self):
 
@@ -53,8 +53,6 @@ class RhbpAgent:
         self._action_provider = ActionProvider(agent_name=self._agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
         self._self_organisation_provider.init_entity_listener()
-
-        self._choose_well_to_build_decision = ChooseWellToBuildDecision(agent_name=self._agent_name)
 
         # initialise all components
         self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
@@ -158,12 +156,11 @@ class RhbpAgent:
 
 
         # Build a well if we are currently out of bounds.
-        if RhbpAgent.BUILD_WELL_ENABLED:
-            well_task = self._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
-                                                                   request_action.agent)
-            if well_task is not None:
-                ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
-                self.global_rhbp_components.well_task_mechanism.start_task(well_task)
+        well_task = self.global_rhbp_components._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
+                                                               request_action.agent)
+        if well_task is not None:
+            ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
+            self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
         time_passed = 0

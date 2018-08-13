@@ -73,6 +73,7 @@ add_message_files(
   Upgrade.msg
   Well.msg
   WellMsg.msg
+  FacilityMsg.msg
   Resource.msg
   ResourceMsg.msg
   SimStart.msg

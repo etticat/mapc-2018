@@ -5,18 +5,16 @@ from behaviour_components.goals import GoalBase
 from behaviours.movement import GoToDestinationBehaviour
 from decisions.exploration_target import ExplorationDecision
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
-from provider.self_organisation_provider import SelfOrganisationProvider
 
 
 class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
     Network behaviour that is responsible for exploring the environment
     """
-    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
+    def __init__(self, agent_name, name, global_rhbp_components, exploration_mechanism, **kwargs):
 
-        self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
-        self.exploration_decision = ExplorationDecision(self.self_organisation_provider.so_buffer, agent_name=agent_name)
-        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_decision, name=name,
+        self.exploration_mechanism = exploration_mechanism
+        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_mechanism, name=name,
                                                           agent_name=agent_name,
                                                           use_in_facility_flag=False,
                                                           global_rhbp_components=global_rhbp_components,
@@ -37,13 +35,21 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + '_do_behaviour',
-            mechanism=self.exploration_decision,
+            mechanism=self.exploration_mechanism,
             recalculate_destination_every_step=True
         )
 
         self.init_do_behaviour(self._reset_destination_behaviour)
+        self.apply_charging_restrictions(self._reset_destination_behaviour)
 
         self._reset_destination_behaviour.add_effect(
+            effect=Effect(
+                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
+                sensor_type=float,
+                indicator=1.0
+            )
+        )
+        self._go_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
                 sensor_type=float,

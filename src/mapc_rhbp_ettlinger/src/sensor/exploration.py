@@ -43,9 +43,11 @@ class ResourceDiscoveryProgressSensor(Sensor):
                 base_ingredients.remove(resource.item.name)
 
         number_of_discovered_ingredients = number_of_base_ingredients - len(base_ingredients)
-
-        result = float(number_of_discovered_ingredients) / number_of_base_ingredients
-        ettilog.loginfo("%s:: Discovery progress: %s", self.name, str(result))
+        if number_of_base_ingredients > 0:
+            result = float(number_of_discovered_ingredients) / number_of_base_ingredients
+            ettilog.loginfo("%s:: Discovery progress: %s", self.name, str(result))
+        else:
+            result = 0
 
         self.update(result)
         return super(ResourceDiscoveryProgressSensor, self).sync()

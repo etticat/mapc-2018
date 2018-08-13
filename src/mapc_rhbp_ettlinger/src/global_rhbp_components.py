@@ -12,6 +12,9 @@ from decisions.choose_finished_products_to_store import ChooseFinishedProductsTo
 from decisions.choose_stroage_for_hoarding import ChooseStorageForHoardingDecision
 from decisions.choose_item_to_gather import ChooseItemToGatherMechanism
 from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision, DeliveryTaskDecision, WellTaskDecision
+from decisions.dismantle_well import ExistingOpponentWellsDecision
+from decisions.well_chooser import ChooseWellToBuildDecision
+from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorableItemsLoadSensor
@@ -19,6 +22,7 @@ from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgres
 from sensor.gather import SmallestGatherableItemVolumeSensor
 from sensor.general import FactorSensor, SubtractionSensor
 from sensor.movement import StepDistanceSensor
+from sensor.well import EnoughMassiumToBuildWellSensor
 
 
 class GlobalRhbpComponents(object):
@@ -29,6 +33,7 @@ class GlobalRhbpComponents(object):
     DISCOVERY_AGE_FULL_ACTIVATION = 100
 
     def __init__(self, agent_name):
+        self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
         self.agent_name = agent_name
         self.agent_topic = AgentUtils.get_bridge_topic_agent(agent_name=agent_name)
         self.init_mechanisms(agent_name=agent_name)
@@ -38,6 +43,7 @@ class GlobalRhbpComponents(object):
         self.init_resource_sensor(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
         self.init_exploration_sensor(agent_name=agent_name)
+        self.init_well_sensors(agent_name=agent_name)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(self.agent_name), Agent, self.callback_agent)
 
@@ -285,6 +291,28 @@ class GlobalRhbpComponents(object):
             self.has_task_assigned_cond
         )
 
+    def init_well_sensors(self, agent_name):
+        self.opponent_wells_sensor = GradientSensor(
+            name="opponent_well_exists",
+            sensor_type=SENSOR.VALUE_EXISTS,
+            mechanism=self.opponent_wells_decision
+        )
+        self.opponent_well_exists_cond = Condition(
+            sensor=self.opponent_wells_sensor,
+            activator=BooleanActivator()
+        )
+        self.enough_massium_to_build_well_sensor = EnoughMassiumToBuildWellSensor(
+            name="opponent_well_exists",
+            well_choser_mechanism=self._choose_well_to_build_decision,
+            initial_value=False,
+        )
+
+        self.enough_massium_to_build_well_cond = Condition(
+            sensor=self.enough_massium_to_build_well_sensor,
+            activator=BooleanActivator()
+        )
+
+
     def callback_agent(self, msg):
         """
 
@@ -360,3 +388,7 @@ class GlobalRhbpComponents(object):
             agent_name=agent_name,
             hoarding_items_decision=self.hoarding_items_decision,
             assembly_decision_mechanism=self.assembly_combination_decision)
+        self.opponent_wells_decision = ExistingOpponentWellsDecision(
+            agent_name=agent_name, target_frames=["agent"], key="destination", frame=None, buffer=self.self_organisation_provider.so_buffer
+        )
+        self._choose_well_to_build_decision = ChooseWellToBuildDecision(agent_name=agent_name)

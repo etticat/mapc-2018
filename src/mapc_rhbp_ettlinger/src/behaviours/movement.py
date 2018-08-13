@@ -32,7 +32,6 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         self.destination = None
 
         # initialise providers
-        self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
         self._action_provider = ActionProvider(agent_name=agent_name)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
@@ -50,14 +49,10 @@ class GoToDestinationBehaviour(DecisionBehaviour):
             # Sometimes movement doesnt work (e.g. when navigating into a building.)
             # We save this destination into the self organisation component, so we don't try it again later
             if agent.last_action == "goto" and agent.last_action_result == "failed_no_route":
-                # Avoid this place until step 100000
-                self._self_organisation_provider.send_msg(pos=self.destination, frame="no_route", parent_frame="agent", time=100000, payload=[
-                    KeyValue(key="lat", value=str(self.destination.lat)), KeyValue(key="long", value=str(self.destination.long))], diffusion=0.01)
-
                 # Reset destination, so we can pick a new one in the next round
                 ettilog.logerr("GoToDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
+                self.mechanism.destination_not_found(self.destination)
                 self.destination = None
-                self.mechanism.destination_not_found()
 
     def start(self):
         """

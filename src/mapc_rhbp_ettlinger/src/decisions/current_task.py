@@ -24,11 +24,12 @@ class CurrentTaskDecision(DecisionPattern):
 
         super(CurrentTaskDecision, self).__init__(buffer=None, frame=None, requres_pos=False, value=None)
 
-        self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type, queue_size=10)
+        self._pub_task_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop", task_type=task_type,
+                                          queue_size=10)
 
         # Reset variables when simulation ends
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_simulation_end)
-
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self.callback_simulation_end)
 
     def calc_value(self):
         """
@@ -46,7 +47,7 @@ class CurrentTaskDecision(DecisionPattern):
         """
         assert self.value is None
         rospy.loginfo("CurrentTaskDecision(%s)::starting task %s current state: %s", self.task_type, task.id,
-                     self.value)
+                      self.value)
         self.value = task
 
     def end_task(self, notify_others=True):
@@ -57,7 +58,6 @@ class CurrentTaskDecision(DecisionPattern):
         :return:
         """
         if self.value is not None and notify_others:
-            rospy.logerr("Current Task(%s) id: %s(%s)",self.agent_name, str(self.value.id), str(type(self.value.id)))
             self._pub_task_stop.publish(TaskStop(
                 id=self.value.id,
                 reason='stopped by client'))
@@ -71,12 +71,13 @@ class CurrentTaskDecision(DecisionPattern):
         """
         self.end_task(notify_others=False)
 
+
 class AssembleTaskDecision(CurrentTaskDecision):
     """
     Decision mechanism that keeps track of the assemble current task and returns it in calc
     """
-    def __init__(self, agent_name, task_type):
 
+    def __init__(self, agent_name, task_type):
         super(AssembleTaskDecision, self).__init__(agent_name, task_type)
 
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -108,8 +109,8 @@ class DeliveryTaskDecision(CurrentTaskDecision):
     """
     Decision mechanism that keeps track of the current delivery task and returns it in calc
     """
-    def __init__(self, agent_name, task_type):
 
+    def __init__(self, agent_name, task_type):
         super(DeliveryTaskDecision, self).__init__(agent_name, task_type)
 
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -121,7 +122,8 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         :param notify_others: If set to True, all other agents with the same receive a message to cancel their task too
         :return:
         """
-        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s notify: %r", self.task_type, str(self.value), notify_others)
+        rospy.logerr("CurrentTaskDecision(%s)::stopping task: %s notify: %r", self.task_type, str(self.value),
+                     notify_others)
         if self.value is not None:
             self._product_provider.stop_delivery(job_id=self.value.task,
                                                  storage=self.value.destination_name)
@@ -138,9 +140,10 @@ class DeliveryTaskDecision(CurrentTaskDecision):
         self._product_provider.update_delivery_goal(item_list=self.value.items, job_id=self.value.task,
                                                     storage=self.value.destination_name)
 
+
 class WellTaskDecision(CurrentTaskDecision):
 
-    def destination_not_found(self):
+    def destination_not_found(self, pos):
         """
         Is called when destination is unreachable. Just end task
         :return:

@@ -8,7 +8,8 @@ Module to transform entity topic messages to SoMessages
 
 import copy
 
-from mac_ros_bridge.msg import EntityMsg, Entity
+import rospy
+from mac_ros_bridge.msg import EntityMsg, Entity, FacilityMsg
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -45,7 +46,6 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
                                                             ev_factor=1.0,
                                                             moving=True, **kwargs)
 
-
     def callback(self, entity_msg):
         """
         extract inforamtion from entity messages
@@ -53,6 +53,9 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
         :type entity_msg: EntityMsg
         :return:
         """
+
+        if not self.distance_provider.initialised:
+            return
 
         # Track each entity we find
         for entity in entity_msg.entities:

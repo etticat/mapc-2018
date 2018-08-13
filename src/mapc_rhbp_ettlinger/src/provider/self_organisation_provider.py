@@ -62,8 +62,12 @@ class SelfOrganisationProvider(object):
         msg.header.stamp = now
         if time is not None:
             msg.header.stamp.secs = time
-        msg.p.x = self._distance_provider.lat_to_x(pos.lat)
-        msg.p.y = self._distance_provider.lon_to_y(pos.long)
+        # Rounding to int is neccessary instead of casting down
+        # When an agent moves to a exploration location defined by the map, the destination is converted to lat lon
+        # When converting back (e.g When destination is unreachable, this can result in positions like 1999.9999991241)
+        # Therefore rounding to closest int is always the best option here
+        msg.p.x = int(round(self._distance_provider.lat_to_x(pos.lat)))
+        msg.p.y = int(round(self._distance_provider.lon_to_y(pos.long)))
         msg.attraction = attraction
         msg.diffusion = diffusion
         msg.goal_radius = goal_radius

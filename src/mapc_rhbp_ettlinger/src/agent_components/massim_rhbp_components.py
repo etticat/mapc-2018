@@ -6,13 +6,16 @@ from behaviour_components.conditions import Negation, Disjunction, Conjunction
 from behaviour_components.goals import GoalBase
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
+from decisions.exploration_target import ExplorationDecision, ExploreCornersDecision
 from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
+from network_behaviours.dismantle import DismantleNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
 from network_behaviours.hoarding import HoardingNetworkBehaviour
 from network_behaviours.job_execution import DeliverJobNetworkBehaviour
 from global_rhbp_components import GlobalRhbpComponents
+from provider.self_organisation_provider import SelfOrganisationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
 
@@ -29,6 +32,8 @@ class MassimRhbpComponents(object):
         self._agent_name = agent_name
         self._global_rhbp_components = global_rhbp_components
 
+        self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
+
         self._init_behaviour_network()
         self._init_goals()
 
@@ -41,6 +46,7 @@ class MassimRhbpComponents(object):
         self.exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/explore',
             plannerPrefix=self._agent_name,
+            exploration_mechanism=ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
             priority=1,
             agent_name=self._agent_name,
             global_rhbp_components=self._global_rhbp_components,
@@ -48,15 +54,7 @@ class MassimRhbpComponents(object):
 
         self.exploration_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
 
-        self.exploration_network.add_precondition(
-            Disjunction(
-                Negation(self._global_rhbp_components.resources_of_all_items_discovered_condition),
-                Conjunction(
-                    Negation(self._global_rhbp_components.can_fit_more_ingredients_cond),
-                    Negation(self._global_rhbp_components.has_finished_products_to_store)
-                )
-            )
-        )
+        self.exploration_network.add_precondition(Negation(self._global_rhbp_components.resources_of_all_items_discovered_condition))
 
         self.exploration_network.add_effect(
             Effect(
@@ -188,6 +186,55 @@ class MassimRhbpComponents(object):
             )
         )
 
+        ####################### Explore Corners Network Behaviour ########################
+        # TODO: If massium > min well type
+        # id %5 == 0 (only some do that)
+        # move from corner to corer (ExplorationNetwork with ExploreCornerDecision)
+
+        ####################### Dismantle Network Behaviour ########################
+        self.dismantle_network = DismantleNetworkBehaviour(
+            name=self._agent_name + '/dismantle',
+            plannerPrefix=self._agent_name,
+            priority=10,
+            agent_name=self._agent_name,
+            global_rhbp_components=self._global_rhbp_components,
+            max_parallel_behaviours=1)
+
+        self.dismantle_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
+        self.dismantle_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
+        self.dismantle_network.add_precondition(self._global_rhbp_components.opponent_well_exists_cond)
+
+        self.dismantle_network.add_effect(
+            effect=Effect(
+                sensor_name=self._global_rhbp_components.opponent_wells_sensor.name,
+                sensor_type=bool,
+                indicator=-1.0
+            )
+        )
+
+        ####################### Find Well Location Network Behaviour ########################
+        self.exploration_network = ExplorationNetworkBehaviour(
+            name=self._agent_name + '/welllocation',
+            plannerPrefix=self._agent_name,
+            exploration_mechanism=ExploreCornersDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
+            priority=1,
+            agent_name=self._agent_name,
+            global_rhbp_components=self._global_rhbp_components,
+            max_parallel_behaviours=1)
+
+        self.exploration_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
+        self.exploration_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
+        self.exploration_network.add_precondition(self._global_rhbp_components.enough_massium_to_build_well_cond)
+
+        self.exploration_network.add_effect(
+            Effect(
+                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
+                indicator=2.0,
+                sensor_type=float
+            )
+        )
+
+
     def _init_goals(self):
         """
         Initialises goals on action manager level
@@ -210,4 +257,9 @@ class MassimRhbpComponents(object):
             planner_prefix=self._agent_name,
             conditions=[self._global_rhbp_components.load_fullness_condition])
 
-        # TODO: Proper working hoarding goal
+        # We want to destroy all opposing wells
+        self._dismantle_goal = GoalBase(
+            name='dismantle_goal',
+            permanent=True,
+            planner_prefix=self._agent_name,
+            conditions=[Negation(self._global_rhbp_components.opponent_well_exists_cond)])

@@ -10,7 +10,7 @@ import traceback
 from mac_ros_bridge.msg import RequestAction, GenericAction, Agent, AuctionJob, AuctionJobMsg, \
     ChargingStation, ChargingStationMsg, Dump, DumpMsg, Item, Job, JobMsg, Shop, ShopMsg, Storage, StorageMsg, Team, \
     Workshop, WorkshopMsg, Position, Entity, EntityMsg, Role, Resource, ResourceMsg, Bye, SimStart, SimEnd, \
-    Product, Well, WellMsg, Upgrade
+    Product, Well, WellMsg, Upgrade, FacilityMsg
 
 import socket
 import threading
@@ -72,12 +72,13 @@ class MacRosBridge(threading.Thread):
         self._pub_sim_start = rospy.Publisher('~start', SimStart, queue_size=1, latch=True)
         self._pub_sim_end = rospy.Publisher('~end', SimEnd, queue_size=1, latch=False)
         self._pub_bye = rospy.Publisher('~bye', Bye, queue_size=1, latch=True)
-        self._pub_local_wells = rospy.Publisher('~well', WellMsg, queue_size=1, latch=True)
         self._pub_local_entity = rospy.Publisher('~entity', EntityMsg, queue_size=1, latch=True)
-        self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
+        # self._pub_global_wells = rospy.Publisher('/well', WellMsg, queue_size=1, latch=True)
         # self._pub_global_entity = rospy.Publisher('/entity', EntityMsg, queue_size=1, latch=True)
-        self._pub_global_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
-        self._pub_local_resource = rospy.Publisher('~resource', ResourceMsg, queue_size=1, latch=True)
+        # self._pub_global_resource = rospy.Publisher('/resource', ResourceMsg, queue_size=1, latch=True)
+
+        self._pub_local_facilities = rospy.Publisher('~facilities', FacilityMsg, queue_size=1, latch=True)
+        self._pub_global_facilities = rospy.Publisher('/facilities', FacilityMsg, queue_size=1, latch=True)
 
         if not self._only_agent_specific:
             self._pub_team = rospy.Publisher('/team', Team, queue_size=1, latch=True)
@@ -441,6 +442,9 @@ class MacRosBridge(threading.Thread):
         for xml_item in perception.findall('well'):
             well = Well()
             well.name = xml_item.get('name')
+            team = xml_item.get('team')
+            if team:
+                well.team = team
             lat = xml_item.get('lat')
             lon = xml_item.get('lon')
             if lat and lon:
@@ -706,20 +710,21 @@ class MacRosBridge(threading.Thread):
         :param perception: full perception object
         :type perception: eT  ElementTree
         """
-        has_local_subscribers = self._pub_local_wells.get_num_connections() > 0
-        has_global_subscribers = self._pub_global_wells.get_num_connections() > 0
+        has_local_subscribers = self._pub_local_facilities.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_facilities.get_num_connections() > 0
 
         if has_local_subscribers or has_global_subscribers:
-            well_msg = WellMsg()
-            well_msg.facilities = self._parse_wells(perception)
+            well_msg = FacilityMsg()
+            well_msg.step = int(perception.find('simulation').get('step'))
+            well_msg.wells = self._parse_wells(perception)
             well_msg.timestamp = timestamp
 
             if has_local_subscribers:
-                self._pub_local_wells.publish(well_msg)
+                self._pub_local_facilities.publish(well_msg)
 
             # publish only on the global topic if we have information
-            if has_global_subscribers and len(well_msg.facilities) > 0:
-                self._pub_global_wells.publish(well_msg)
+            if has_global_subscribers and len(well_msg.wells) > 0:
+                self._pub_global_facilities.publish(well_msg)
 
     def _publish_entity(self, timestamp, perception):
         """
@@ -751,20 +756,21 @@ class MacRosBridge(threading.Thread):
         :type perception: eT  ElementTree
         """
 
-        has_local_subscribers = self._pub_local_resource.get_num_connections() > 0
-        has_global_subscribers = self._pub_global_resource.get_num_connections() > 0
+        has_local_subscribers = self._pub_local_facilities.get_num_connections() > 0
+        has_global_subscribers = self._pub_global_facilities.get_num_connections() > 0
 
         if has_local_subscribers or has_global_subscribers:
-            msg = ResourceMsg()
+            msg = FacilityMsg()
             msg.timestamp = timestamp
-            msg.facilities = self._parse_resources(perception)
+            msg.step = int(perception.find('simulation').get('step'))
+            msg.resources = self._parse_resources(perception)
 
-        if has_local_subscribers:
-            self._pub_local_resource.publish(msg)
+            if has_local_subscribers:
+                self._pub_local_facilities.publish(msg)
 
-        # publish only on the global topic if we have information
-        if has_global_subscribers and len(msg.facilities) > 0:
-            self._pub_global_resource.publish(msg)
+            # publish only on the global topic if we have information
+            if has_global_subscribers and len(msg.resources) > 0:
+                self._pub_global_facilities.publish(msg)
 
     def _publish_facilities(self, timestamp, perception):
         """

@@ -1,6 +1,7 @@
 import random
 import time
 
+import rospy
 from mapc_rhbp_ettlinger.msg import Task
 
 from common_utils import etti_logging
@@ -42,25 +43,24 @@ class ChooseWellToBuildDecision(object):
         # If we are currently out of bounds we build the best available well at the current position
         if self._simulation_provider.out_of_bounds(agent.pos) and current_well_task_mechanism.value is None and not agent.in_facility:
             well_type = self.choose_well_type()
-
-            task = Task(
-                id=int(time.time() / 17),
-                type=CurrentTaskDecision.TYPE_BUILD_WELL,
-                agent_name=self._agent_name,
-                items=[],
-                pos=agent.pos,
-                destination_name="none",
-                task=well_type
-            )
-            return task
+            if well_type is not None:
+                task = Task(
+                    id=int(time.time() / 17),
+                    type=CurrentTaskDecision.TYPE_BUILD_WELL,
+                    agent_name=self._agent_name,
+                    items=[],
+                    pos=agent.pos,
+                    destination_name="none",
+                    task=well_type
+                )
+                return task
         return None
 
     def choose_well_type(self):
 
         res_type = None
         res_cost = 99999
-        # TODO: Choose it more elegantly
-        massium = self.stats_provider.get_expected_massium()
+        massium = self.stats_provider.get_current_massium()
         massium -= self.get_massium_for_current_well_tasks()
         for type, well in self.well_provider.possible_wells.iteritems():
             if well.cost < massium and well.cost < res_cost:

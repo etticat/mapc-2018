@@ -10,7 +10,7 @@ from urllib2 import URLError
 
 import rospy
 from mac_ros_bridge.msg import SimStart, Position, Agent, ShopMsg, DumpMsg, StorageMsg, WorkshopMsg, WellMsg, \
-    ChargingStationMsg, SimEnd, ResourceMsg
+    ChargingStationMsg, SimEnd, ResourceMsg, FacilityMsg
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import etti_logging
@@ -34,6 +34,7 @@ class DistanceProvider(object):
 
     def __init__(self, agent_name):
 
+        self._initialised = False
         self._agent_name = agent_name
 
         self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
@@ -58,8 +59,7 @@ class DistanceProvider(object):
         rospy.Subscriber('/dump', DumpMsg, self.callback_facility)
         rospy.Subscriber('/storage', StorageMsg, self.callback_facility)
         rospy.Subscriber('/workshop', WorkshopMsg, self.callback_facility)
-        # rospy.Subscriber('/well', WellMsg, self.callback_facility)
-        rospy.Subscriber('/resource', ResourceMsg, self.callback_facility)
+        rospy.Subscriber('/facilities', FacilityMsg, self.callback_resource_well_facilities)
 
     def callback_facility(self, facility_msg):
         """
@@ -69,6 +69,17 @@ class DistanceProvider(object):
         """
 
         for facility in facility_msg.facilities:
+            self._facility_positions[facility.name] = facility.pos
+
+    def callback_resource_well_facilities(self, facility_msg):
+        """
+        Keeps track of all positions of resource and well facilities
+        :param facility_msg:
+        :type facility_msg: FacilityMsg
+        :return:
+        """
+
+        for facility in facility_msg.resources + facility_msg.wells:
             self._facility_positions[facility.name] = facility.pos
 
 
@@ -122,8 +133,10 @@ class DistanceProvider(object):
             Position(long=self.min_lon, lat=mean_lat),
             Position(long=self.max_lon, lat=mean_lat)
         )
+        self._initialised = True
 
     def callback_sim_end(self, sim_end):
+        self._initialised = False
         self._facility_positions.clear()
 
     def calculate_distance(self, endPosition):
@@ -140,13 +153,13 @@ class DistanceProvider(object):
             return air_distance
         else:
             # if agent can't fly return road distance
-            # try:
-            #     return self.calculate_distance_street(self.agent_pos, endPosition)
-            # except LookupError as e:
-            #     ettilog.logerr(e)
-            # except Exception as e:
-            #     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-            #     ettilog.logerr(traceback.format_exc())
+            try:
+                return self.calculate_distance_street(self.agent_pos, endPosition)
+            except LookupError as e:
+                ettilog.logerr(e)
+            except Exception as e:
+                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+                ettilog.logerr(traceback.format_exc())
 
             return self.calculate_distance_air(self.agent_pos, endPosition) * 2  # Fallback
 
@@ -385,3 +398,11 @@ class DistanceProvider(object):
 
     def same_location(self, pos1, pos2):
         return self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity
+
+    @property
+    def initialised(self):
+        return self._initialised
+
+    @property
+    def agent_vision(self):
+        return self._agent_vision

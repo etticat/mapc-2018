@@ -41,7 +41,7 @@ class DebugUtils:
             rsMsg.facilities.append(r)
 
         facility_provider = FacilityProvider(agent_name=agent_name)
-        facility_provider.resources_callback(rsMsg)
+        facility_provider.facilities_callback(rsMsg)
 
     @staticmethod
     def print_precondition_states(behaviour):
