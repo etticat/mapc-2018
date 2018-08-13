@@ -80,31 +80,22 @@ class ShouldBidForAssemblyDecision(object):
         """
 
         if not self._initialized:
-            # In case we haven't gotten the first agent callback already, return None
+            # In case we haven't gotten the first agent callback yet, return None
             ettilog.loginfo("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
             return None
 
-        ingredient_fullness = float(self._load_ingredients) / self._max_load
-        general_fullness = float(self._load) / self._max_load
-        steps_to_destination = self._distance_provider.calculate_steps(request.destination)
+        activation = self._max_load - self._load
 
-        activation = ingredient_fullness * ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD \
-                     + general_fullness * ShouldBidForAssemblyDecision.WEIGHT_LOAD \
-                     + steps_to_destination * ShouldBidForAssemblyDecision.WEIGHT_STEPS
-
-        if activation > ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD:
-            return TaskBid(
-                id=request.id,
-                bid=activation,
-                agent_name=self._agent_name,
-                items=self._product_provider.get_item_list(),
-                role=self.role,
-                capacity=self._product_provider.load_free,
-                skill=self._agent_info_provider.skill,
-                speed=self._distance_provider.speed,
-                finished_product_factor=self._product_provider.finished_product_load_factor(),
-                request=request,
-                expected_steps=steps_to_destination
-            )
-        else:
-            return None
+        return TaskBid(
+            id=request.id,
+            bid=-activation,
+            agent_name=self._agent_name,
+            items=self._product_provider.get_item_list(),
+            role=self.role,
+            pos=self._agent_info_provider.pos,
+            capacity=self._product_provider.load_free,
+            skill=self._agent_info_provider.skill,
+            speed=self._distance_provider.speed,
+            finished_product_factor=self._product_provider.finished_product_load_factor(),
+            request=request
+        )

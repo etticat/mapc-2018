@@ -68,7 +68,6 @@ class ExistingOpponentWellsDecision(MapDecision):
                 self._agent_name, well.name, well_last_seen, last_time_at_well_position)
 
             if well_last_seen >= last_time_at_well_position:
-                rospy.logerr("well exists")
                 existing_wells.append(well)
 
         # Either let every agent go to the same one

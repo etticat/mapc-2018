@@ -74,7 +74,8 @@ class GoToDestinationBehaviour(DecisionBehaviour):
             # This allows to reuse the mechanism for other purposes. In this case use the attribute
             if not isinstance(self.destination, Position) and self.destination is not None:
                 self.destination = self.destination.pos
-            ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%.3f, %3f)", self.name, self.destination.lat, self.destination.long)
+            if self.destination is not None:
+                ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%.3f, %3f)", self.name, self.destination.lat, self.destination.long)
 
         if self.destination is not None:
             self._action_provider.action_go_to_destination(self.destination)

@@ -8,6 +8,7 @@ from math import sin, cos, sqrt, atan2, radians
 from numpy import mean
 from urllib2 import URLError
 
+import numpy as np
 import rospy
 from mac_ros_bridge.msg import SimStart, Position, Agent, ShopMsg, DumpMsg, StorageMsg, WorkshopMsg, WellMsg, \
     ChargingStationMsg, SimEnd, ResourceMsg, FacilityMsg
@@ -50,9 +51,12 @@ class DistanceProvider(object):
         self._facility = None
         self._in_facility = False
 
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart, self.callback_sim_start)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.callback_sim_end)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="agent"), Agent, self.callback_agent)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart,
+                         self.callback_sim_start)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self.callback_sim_end)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="agent"), Agent,
+                         self.callback_agent)
 
         rospy.Subscriber('/shop', ShopMsg, self.callback_facility)
         rospy.Subscriber('/charging_station', ChargingStationMsg, self.callback_facility)
@@ -82,7 +86,6 @@ class DistanceProvider(object):
         for facility in facility_msg.resources + facility_msg.wells:
             self._facility_positions[facility.name] = facility.pos
 
-
     def callback_agent(self, msg):
         """
 
@@ -108,7 +111,6 @@ class DistanceProvider(object):
         self._can_fly = "drone" == sim_start.role.name
         self._speed = sim_start.role.base_speed
         self._proximity = sim_start.proximity
-
 
         # The agent often gets stuck at the boarders, avoid this by adding a slight margin around the borders that we do not want to touch
         self.min_lat = sim_start.min_lat + SimulationProvider.COORDINATES_MARGIN
@@ -139,7 +141,7 @@ class DistanceProvider(object):
         self._initialised = False
         self._facility_positions.clear()
 
-    def calculate_distance(self, endPosition):
+    def calculate_distance(self, endPosition, start_position=None, can_fly=None):
         """
         Calculates the distance between two position.
         Depending on the agent abilities, this returns either air or road distance
@@ -147,35 +149,46 @@ class DistanceProvider(object):
         :param endPosition:
         :return:
         """
-        if self._can_fly:
+        if can_fly is None:
+            can_fly = self._can_fly
+
+        if start_position is None:
+            start_position = self.agent_pos
+
+        if can_fly:
             # If agent can fly, return air distance
-            air_distance = self.calculate_distance_air(self.agent_pos, endPosition)
+            air_distance = self.calculate_distance_air(start_position, endPosition)
             return air_distance
         else:
             # if agent can't fly return road distance
             try:
-                return self.calculate_distance_street(self.agent_pos, endPosition)
+                return self.calculate_distance_street(start_position, endPosition)
             except LookupError as e:
                 ettilog.logerr(e)
             except Exception as e:
                 ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
                 ettilog.logerr(traceback.format_exc())
 
-            return self.calculate_distance_air(self.agent_pos, endPosition) * 2  # Fallback
+            return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
 
-    def calculate_steps(self, pos2, use_in_facility_flag = True):
+    def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None):
         """
         Returns the step needed between two positions.
-        :param pos1:
-        :param pos2:
+        :param can_fly:
+        :param start_position:
+        :param use_in_facility_flag:
+        :param end_position:
         :return:
         """
-        if self.at_destination(pos2, use_in_facility_flag):
+        if self.at_destination(end_position, use_in_facility_flag, start_position):
             # If the distance is lower than proximity, agent is at destination.
             return 0
 
+        if speed is None:
+            speed = self._speed
+
         # calculate the air distance
-        size_ = self.calculate_distance(pos2) / (self._speed * self._cell_size)
+        size_ = self.calculate_distance(end_position, start_position=start_position, can_fly=can_fly) / (speed * self._cell_size)
 
         # Round up to next int value.
         # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
@@ -232,7 +245,8 @@ class DistanceProvider(object):
         """
         request = 'http://localhost:{}/route?instructions=false&calc_points=false&' \
                   'points_encoded=false&point={},{}&point={},{}'.format(self.graphhopper_port,
-                                                                        position1.lat, position1.long, position2.lat, position2.long)
+                                                                        position1.lat, position1.long, position2.lat,
+                                                                        position2.long)
         try:
             connection = urllib2.urlopen(request, timeout=DistanceProvider.GRAPHHOPPER_URL_REQUEST_TIMEOUT)
             response = connection.read().decode()
@@ -286,28 +300,31 @@ class DistanceProvider(object):
             return None
 
         # Return closest facility
-        return min(facilities, key=lambda facility:self.calculate_steps(facility.pos))
+        return min(facilities, key=lambda facility: self.calculate_steps(facility.pos))
 
-    def at_destination(self, destination_pos, use_in_facility_flag):
+    def at_destination(self, destination_pos, use_in_facility_flag, start_position=None):
         """
         Returns if pos1 and pos2 are at same location as defined in server.
         :param destination_pos:
         :return:
         """
 
-        if use_in_facility_flag:
+        if use_in_facility_flag and start_position is not None:
             if self._in_facility:
                 if self._facility in self._facility_positions:
                     pos = self._facility_positions[self._facility]
                     destination_reached = pos.lat == destination_pos.lat and pos.long == destination_pos.long
 
-                    rospy.loginfo("DistanceProvider(%s):: at facility %s, destination reached: %r", self._agent_name, self._facility, destination_reached)
+                    rospy.loginfo("DistanceProvider(%s):: at facility %s, destination reached: %r", self._agent_name,
+                                  self._facility, destination_reached)
                     if destination_reached:
                         return True
                 else:
                     rospy.logerr("DistanceProvider(%s):: current faciliy unknown: %s", self._agent_name, self._facility)
         else:
-            return self.same_location(self.agent_pos, destination_pos)
+            if start_position is None:
+                start_position = self.agent_pos
+            return self.same_location(start_position, destination_pos)
 
         return False
 
@@ -374,7 +391,7 @@ class DistanceProvider(object):
 
         return max(min(lat, self.max_lat), self.min_lat)
 
-    def position_from_xy(self, x,y):
+    def position_from_xy(self, x, y):
         """
         Converts x and y values from the self organisation framework to a Position object for the massim simulation
         :param x:
@@ -406,3 +423,20 @@ class DistanceProvider(object):
     @property
     def agent_vision(self):
         return self._agent_vision
+
+    def get_steps_to_closest_facility(self, pos_speed_role_list, facility_list):
+        best_facility = None
+        overall_max_step = np.inf
+
+        for facility in facility_list:
+            max_step_to_facility = 0
+
+            for pos, speed, role in pos_speed_role_list:
+                overall_max_step = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False)
+                max_step_to_facility = max(max_step_to_facility, overall_max_step)
+
+            if max_step_to_facility < overall_max_step:
+                overall_max_step = max_step_to_facility
+                best_facility = facility
+
+        return overall_max_step, best_facility

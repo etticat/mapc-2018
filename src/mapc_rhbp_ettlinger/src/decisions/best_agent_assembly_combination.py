@@ -8,6 +8,7 @@ import rospy
 from common_utils import etti_logging
 from common_utils.calc import CalcUtil
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
+from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 
@@ -18,6 +19,7 @@ class BestAgentAssemblyCombinationDecision(object):
     """
     Selects the combination of agents that together can perform the most valuable assembly tasks
     """
+    MIN_ITEMS = 5
     PREFERRED_AGENT_COUNT = 4
     PRIORITY_EXPONENT = 2  # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
@@ -34,13 +36,13 @@ class BestAgentAssemblyCombinationDecision(object):
     ACTIVATION_THRESHOLD = 1000
 
     def __init__(self, agent_name):
+        self.distance_provider = DistanceProvider(agent_name=agent_name)
         self._init_config()
 
         self.finished_products = None
         self.products = None
         self.finished_item_list = None
         self._finished_product_goals = {}
-        # TODO: This maybe should be made dynamic. According to scenario those stay the same.
         self._roles = ["car", "motorcycle", "drone", "truck"]
 
         self._facility_provider = FacilityProvider(agent_name=agent_name)
@@ -104,6 +106,8 @@ class BestAgentAssemblyCombinationDecision(object):
         :type bids: TaskBid[]
         :return:
         """
+        bids.sort(key=lambda bid: bid.activation)
+
         if self.finished_products is None:
             self.init_finished_products()
 
@@ -139,8 +143,8 @@ class BestAgentAssemblyCombinationDecision(object):
 
                     if len(combination) > 0:
 
-                        # The number of step until all agents can be at the workshop
-                        max_step_count = max([bid.expected_steps for bid in bid_subset])
+                        # The number of step until all agents can be at the closest workshop
+                        max_step_count, destination = self.distance_provider.get_steps_to_closest_facility([(bid.pos, bid.speed, bid.role) for bid in bid_subset], self._facility_provider.workshops.values())
 
                         # If max nr of steps is too high, ignore combination
                         if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS:
@@ -155,8 +159,9 @@ class BestAgentAssemblyCombinationDecision(object):
                         value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
                                                       number_of_agents)
 
-                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD:
-                            best_combinations += [(bid_subset, combination, value)]
+                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD and \
+                                len(combination) > BestAgentAssemblyCombinationDecision.MIN_ITEMS:
+                            best_combinations += [(bid_subset, combination, value, destination)]
                 if number_of_agents >= BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT and len(
                         best_combinations) > 0:
                     # we only try combinations with more than PREFERRED_AGENT_COUNT agents if we could not find anything with less

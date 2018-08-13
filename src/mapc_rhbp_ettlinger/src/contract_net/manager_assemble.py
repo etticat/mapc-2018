@@ -3,7 +3,6 @@ import copy
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
 from common_utils import etti_logging
-from common_utils.calc import CalcUtil
 from contract_net.manager import ContractNetManager
 from decisions.main_assemble_agent import MainAssembleAgentDecision
 from decisions.current_task import CurrentTaskDecision
@@ -34,18 +33,12 @@ class AssembleManager(ContractNetManager):
         :return:
         """
 
-        workshop = self._facility_provider.get_random_workshop()
-        if workshop is not None:
-            request = TaskRequest(
-                destination=workshop.pos,
-                items=[]
-            )
+        request = TaskRequest(
+            items=[]
+        )
 
-            # Start coordination here
-            return self.request_help(request)
-        else:
-            # If workshops are not initialised yet, end coordination right away
-            return False
+        # Start coordination here
+        return self.request_help(request)
 
     def get_assignments(self, bids):
         """

@@ -9,3 +9,4 @@ uint32                              finished_product_factor
 string[]                            items
 uint32                              expected_steps
 mapc_rhbp_ettlinger/TaskRequest     request
+mac_ros_bridge/Position             pos
