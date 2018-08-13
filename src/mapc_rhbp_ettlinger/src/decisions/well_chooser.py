@@ -1,6 +1,7 @@
 import random
 import time
 
+import numpy as np
 import rospy
 from mapc_rhbp_ettlinger.msg import Task
 
@@ -59,11 +60,11 @@ class ChooseWellToBuildDecision(object):
     def choose_well_type(self):
 
         res_type = None
-        res_cost = 99999
+        res_cost = -np.inf
         massium = self.stats_provider.get_current_massium()
         massium -= self.get_massium_for_current_well_tasks()
         for type, well in self.well_provider.possible_wells.iteritems():
-            if well.cost < massium and well.cost < res_cost:
+            if well.cost < massium and well.cost > res_cost:
                 res_type = type
                 res_cost = well.cost
 
