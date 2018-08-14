@@ -1,4 +1,8 @@
 #!/usr/bin/env python2
+from diagnostic_msgs.msg import KeyValue
+from mapc_rhbp_ettlinger.msg import AgentConfig
+
+from threading import Thread
 
 from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
 
@@ -28,7 +32,7 @@ class RhbpAgent:
     Main class of an agent, taking care of the main interaction with the mac_ros_bridge
     """
 
-    MAX_DECISION_MAKING_TIME = 3.9
+    MAX_DECISION_MAKING_TIME = 17.9
     BUILD_WELL_ENABLED = False
 
     def __init__(self):
@@ -73,9 +77,34 @@ class RhbpAgent:
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
         rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
+        rospy.Subscriber("/agentConfig", AgentConfig, self._callback_agent_config)
+        # rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
 
         ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
+
+    def _callback_agent_config(self, agent_conf):
+        """
+
+        :param agent_conf:
+        :type agent_conf: AgentConfig
+        :return:
+        """
+
+        ettilog.logerr("RhbpAgent(%s):: Received agent conf:  %s", self._agent_name, str(agent_conf))
+
+        for config in agent_conf.configs:
+            type, value = config.value.split(",")
+
+            if "int" in type:
+                value = int(value)
+            elif "float" in type:
+                value = float(value)
+            elif "bool" in type:
+                value = bool(value)
+            else:
+                ettilog.logerr("RhbpAgent(%s):: invalid config for %s", self._agent_name, config.key)
+
+            rospy.set_param(config.key, value)
 
     def _init_config(self):
         """
@@ -89,10 +118,12 @@ class RhbpAgent:
         else:
             self._agent_name = rospy.get_param('~agent_name')
         self._should_bid_for_auctions = rospy.get_param('~bid_for_auctions', False)
-        RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("~RhbpAgent.MAX_DECISION_MAKING_TIME",
+        RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("/RhbpAgent.MAX_DECISION_MAKING_TIME",
                                                              RhbpAgent.MAX_DECISION_MAKING_TIME)
         RhbpAgent.BUILD_WELL_ENABLED = rospy.get_param("~RhbpAgent.BUILD_WELL_ENABLED",
                                                        RhbpAgent.BUILD_WELL_ENABLED)
+        test_param = rospy.get_param("RhbpAgent.MAX_DECISION_MAKING_TIME", -1.0)
+        rospy.logerr("RhbpAgent.MAX_DECISION_MAKING_TIME: %d", test_param)
 
     def _sim_start_callback(self, sim_start):
         """
@@ -100,6 +131,7 @@ class RhbpAgent:
         :param sim_start:  the message
         :type sim_start: SimStart
         """
+        self._init_config()
 
         if not self._sim_started:
             self._sim_started = True

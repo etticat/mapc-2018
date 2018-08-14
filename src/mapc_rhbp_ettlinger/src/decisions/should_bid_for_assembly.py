@@ -1,4 +1,4 @@
-from mac_ros_bridge.msg import Agent
+from mac_ros_bridge.msg import Agent, SimStart
 from mapc_rhbp_ettlinger.msg import TaskBid
 
 import rospy
@@ -41,16 +41,18 @@ class ShouldBidForAssemblyDecision(object):
         self._distance_provider = DistanceProvider(agent_name=agent_name)
 
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-
-    def _init_config(self):
-        ShouldBidForAssemblyDecision.WEIGHT_LOAD = rospy.get_param("~ShouldBidForAssembly.WEIGHT_LOAD",
+    def _init_config(self, sim_start=None):
+        ShouldBidForAssemblyDecision.WEIGHT_LOAD = rospy.get_param("ShouldBidForAssembly.WEIGHT_LOAD",
                                                                    ShouldBidForAssemblyDecision.WEIGHT_LOAD)
-        ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD = rospy.get_param("~ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD",
+        ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD = rospy.get_param("ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD",
                                                                               ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD)
-        ShouldBidForAssemblyDecision.WEIGHT_STEPS = rospy.get_param("~ShouldBidForAssembly.WEIGHT_STEPS",
+        ShouldBidForAssemblyDecision.WEIGHT_STEPS = rospy.get_param("ShouldBidForAssembly.WEIGHT_STEPS",
                                                                     ShouldBidForAssemblyDecision.WEIGHT_STEPS)
-        ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD = rospy.get_param("~ShouldBidForAssembly.ACTIVATION_THRESHOLD",
+        ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD = rospy.get_param("ShouldBidForAssembly.ACTIVATION_THRESHOLD",
                                                                             ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD)
 
     def _callback_agent(self, agent):

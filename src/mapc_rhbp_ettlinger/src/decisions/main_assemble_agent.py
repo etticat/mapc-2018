@@ -2,8 +2,10 @@
 import copy
 
 import rospy
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from provider.product_provider import ProductProvider
 
@@ -23,14 +25,16 @@ class MainAssembleAgentDecision(object):
         self._product_provider = ProductProvider(agent_name=agent_name)
 
         self._init_config()
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-    def _init_config(self):
+    def _init_config(self, sim_start=None):
         MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR = rospy.get_param(
-            "~MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR",
+            "MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR",
             MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR)
-        MainAssembleAgentDecision.WEIGHT_BID_SKILL = rospy.get_param("~MainAssembleAgentDecision.WEIGHT_BID_SKILL",
+        MainAssembleAgentDecision.WEIGHT_BID_SKILL = rospy.get_param("MainAssembleAgentDecision.WEIGHT_BID_SKILL",
                                                                      MainAssembleAgentDecision.WEIGHT_BID_SKILL)
-        MainAssembleAgentDecision.WEIGHT_BID_SPEED = rospy.get_param("~MainAssembleAgentDecision.WEIGHT_BID_SPEED",
+        MainAssembleAgentDecision.WEIGHT_BID_SPEED = rospy.get_param("MainAssembleAgentDecision.WEIGHT_BID_SPEED",
                                                                      MainAssembleAgentDecision.WEIGHT_BID_SPEED)
 
     def generate_assembly_instructions(self, accepted_bids, finished_products):

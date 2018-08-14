@@ -6,3 +6,5 @@ mapc_rhbp_ettlinger/TaskAssignment      assignment
 mapc_rhbp_ettlinger/TaskAcknowledgement acknowledgement
 mapc_rhbp_ettlinger/TaskProgress        progress
 mapc_rhbp_ettlinger/TaskStop            stop
+mapc_rhbp_ettlinger/StockItem           stock
+so_data/SoMessage                       so_data

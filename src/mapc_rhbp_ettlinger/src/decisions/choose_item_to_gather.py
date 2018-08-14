@@ -1,7 +1,7 @@
 import operator
 
 import numpy as np
-from mac_ros_bridge.msg import Agent
+from mac_ros_bridge.msg import Agent, SimStart
 
 import rospy
 
@@ -51,20 +51,22 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
 
         super(ChooseItemToGatherMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-    def _init_config(self):
-        ChooseItemToGatherMechanism.WEIGHT_STEPS = rospy.get_param("~ChooseItemToGatherMechanism.WEIGHT_STEPS",
+    def _init_config(self, sim_start=None):
+        ChooseItemToGatherMechanism.WEIGHT_STEPS = rospy.get_param("ChooseItemToGatherMechanism.WEIGHT_STEPS",
                                                                    ChooseItemToGatherMechanism.WEIGHT_STEPS)
         ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH = rospy.get_param(
-            "~ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH",
+            "ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH",
             ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH)
         ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT = rospy.get_param(
-            "~ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT",
+            "ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT",
             ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT)
-        ChooseItemToGatherMechanism.WEIGHT_PRIORITY = rospy.get_param("~ChooseItemToGatherMechanism.WEIGHT_PRIORITY",
+        ChooseItemToGatherMechanism.WEIGHT_PRIORITY = rospy.get_param("ChooseItemToGatherMechanism.WEIGHT_PRIORITY",
                                                                       ChooseItemToGatherMechanism.WEIGHT_PRIORITY)
         ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION = rospy.get_param(
-            "~ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION",
+            "ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION",
             ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION)
 
     def calc_value(self):

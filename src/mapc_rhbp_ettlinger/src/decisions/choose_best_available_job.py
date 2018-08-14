@@ -4,7 +4,7 @@ from diagnostic_msgs.msg import KeyValue
 from mapc_rhbp_ettlinger.msg import StockItem, KeyIntValue, TaskStop
 
 import rospy
-from mac_ros_bridge.msg import Job
+from mac_ros_bridge.msg import Job, SimStart
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -57,9 +57,10 @@ class ChooseBestAvailableJobDecision(object):
                                                         queue_size=10)
         self._pub_job_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop",
                                          task_type=CurrentTaskDecision.TYPE_DELIVER, queue_size=10)
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-
-    def init_conf(self):
+    def _init_config(self, sim_start=None):
         ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL = rospy.get_param(
             "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL",
             ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL)

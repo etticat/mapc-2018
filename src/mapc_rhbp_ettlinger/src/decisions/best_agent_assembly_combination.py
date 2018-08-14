@@ -2,10 +2,12 @@ import itertools
 import numpy as np
 import re
 
+from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.msg import StockItem
 
 import rospy
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
 from provider.distance_provider import DistanceProvider
@@ -50,41 +52,43 @@ class BestAgentAssemblyCombinationDecision(object):
 
         rospy.Subscriber(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,
                          callback=self._planner_goal_callback)
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-    def _init_config(self):
+    def _init_config(self, sim_start=None):
         BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT",
+            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT",
             BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT)
         BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT",
             BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT)
         BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY",
             BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY)
         BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS",
             BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS)
         BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION",
             BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION)
         BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS",
             BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS)
         BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT",
+            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT",
             BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT)
         BestAgentAssemblyCombinationDecision.MAX_AGENTS = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)
         BestAgentAssemblyCombinationDecision.MIN_AGENTS = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.MIN_AGENTS", BestAgentAssemblyCombinationDecision.MIN_AGENTS)
+            "BestAgentAssemblyCombinationDecision.MIN_AGENTS", BestAgentAssemblyCombinationDecision.MIN_AGENTS)
         BestAgentAssemblyCombinationDecision.MAX_STEPS = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.MAX_STEPS", BestAgentAssemblyCombinationDecision.MAX_STEPS)
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS", BestAgentAssemblyCombinationDecision.MAX_STEPS)
         BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT",
+            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT",
             BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT)
 
         BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD = rospy.get_param(
-            "~BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD",
+            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD",
             BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD)
 
     def _planner_goal_callback(self, stock_item):

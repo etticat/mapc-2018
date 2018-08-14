@@ -86,7 +86,6 @@ class MapDecision(DecisionPattern):
         # create the map if it has not existed yet
         if self.environment_array is None:
             self.environment_array = np.zeros([simple_size_x, simple_size_y, ])
-            rospy.logerr("MapDecision:: environment_array  created with shape %s", str(self.environment_array.shape))
 
         # Go through all soMessages
         for so_message in so_messages:

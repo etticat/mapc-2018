@@ -3,6 +3,7 @@ import time
 from abc import abstractmethod
 
 import rospy
+from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.msg import TaskStop, TaskRequest, TaskBid, TaskAssignment, TaskAcknowledgement
 
 from common_utils import etti_logging
@@ -47,15 +48,17 @@ class ContractNetManager(object):
         self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-    def _init_config(self):
+    def _init_config(self, sim_start=None):
         """
         Initialises the config parameters from the rospy config
         :return:
         """
-        ContractNetManager.DEADLINE_BIDS = rospy.get_param('~ContractNetManager.DEADLINE_BIDS',
+        ContractNetManager.DEADLINE_BIDS = rospy.get_param('ContractNetManager.DEADLINE_BIDS',
                                                            ContractNetManager.DEADLINE_BIDS)
-        ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('~ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
+        ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
                                                                       ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
 
     def reset_manager(self):

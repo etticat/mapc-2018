@@ -7,6 +7,7 @@ import rospy
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
 from provider.distance_provider import DistanceProvider
+from self_organisation.massim_so_broadcaster import MassimSoBroadcaster
 from self_organisation.massim_so_buffer import MassimSoBuffer
 from self_organisation.posegradienttf import CallbackEntityTopicGradientTf
 from so_data.msg import SoMessage
@@ -28,7 +29,7 @@ class SelfOrganisationProvider(object):
         self._value_key = 'value_' + agent_name
         self._frame_agent = "agent"
 
-        self._broadcast = SoBroadcaster()
+        self._broadcast = MassimSoBroadcaster()
 
         self._so_buffer = MassimSoBuffer(id=agent_name, pose_frame=self._frame_agent,
                                          view_distance=np.inf, moving_storage_size=np.inf, agent_name=agent_name)

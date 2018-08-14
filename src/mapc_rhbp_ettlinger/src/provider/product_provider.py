@@ -9,6 +9,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from common_utils.singleton import Singleton
+from my_subscriber import MyPublisher, MySubscriber
 from provider.facility_provider import FacilityProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.product')
@@ -22,7 +23,6 @@ class ProductProvider(object):
     __metaclass__ = Singleton
 
     STORAGE_TOPIC = "/storage"
-    STOCK_ITEM_TOPIC = "/stockitem/status"
 
     STOCK_ITEM_TYPE_STOCK = "stock"
     STOCK_ITEM_TYPE_STORAGE_STOCK = "stock"
@@ -49,12 +49,14 @@ class ProductProvider(object):
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.init_runtime_variables)
 
         # Init subscribers and publishers
-        self._pub_stock_item = rospy.Publisher(ProductProvider.STOCK_ITEM_TOPIC, StockItem, queue_size=10)
+        topic = AgentUtils.get_coordination_topic()
+        self._pub_stock_item = MyPublisher(topic, message_type="stock", task_type="stock", queue_size=10)
+        MySubscriber(topic, message_type="stock", task_type="stock", callback=self._callback_stock_item)
+
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=agent_name) + "start", SimStart,
                          self._callback_sim_start)
-        rospy.Subscriber(ProductProvider.STOCK_ITEM_TOPIC, StockItem, self._callback_stock_item)
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
-        rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
+        # rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
 
     def init_runtime_variables(self, sim_end=None):
         self.hoarding_destination = None

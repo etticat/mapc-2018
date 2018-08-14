@@ -1,7 +1,10 @@
 import numpy as np
 
 import rospy
+from mac_ros_bridge.msg import Agent, SimStart
+
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
@@ -34,12 +37,15 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
 
         super(ChooseStorageForHoardingDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
 
-    def _init_config(self):
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+
+    def _init_config(self, sim_start=None):
 
         ChooseStorageForHoardingDecision.WEIGHT_STEPS = rospy.get_param(
-            "~ChooseStorageForHoardingDecision.WEIGHT_STEPS", ChooseStorageForHoardingDecision.WEIGHT_STEPS)
+            "ChooseStorageForHoardingDecision.WEIGHT_STEPS", ChooseStorageForHoardingDecision.WEIGHT_STEPS)
         ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE = rospy.get_param(
-            "~ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE",
+            "ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE",
             ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE)
 
     def calc_value(self):

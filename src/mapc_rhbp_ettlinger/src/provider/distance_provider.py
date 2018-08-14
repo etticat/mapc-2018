@@ -272,7 +272,6 @@ class DistanceProvider(object):
         Taken from 2017
         :param map: name of map to configure
         """
-        ettilog.logerr("DistanceProvider(%s):: Setting map %s", self._agent_name, map)
         try:
             set_map = rospy.ServiceProxy(GraphhopperProcessHandler.MAP_SERVICE_NAME, SetGraphhopperMap)
             res = set_map(map)

@@ -2,8 +2,10 @@ import copy
 import itertools
 
 import rospy
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -33,8 +35,10 @@ class ChooseBestJobAgentCombinationDecision(object):
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
+        # Reload config after each simulation start
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
-    def _init_conf(self):
+    def _init_config(self, sim_start=None):
 
         ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER = rospy.get_param(
             "ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER",

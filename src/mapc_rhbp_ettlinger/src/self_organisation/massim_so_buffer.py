@@ -1,3 +1,5 @@
+from common_utils.agent_utils import AgentUtils
+from my_subscriber import MySubscriber
 from provider.simulation_provider import SimulationProvider
 from so_data.sobuffer import SoBuffer
 
@@ -23,4 +25,9 @@ class MassimSoBuffer(SoBuffer):
         :return:
         """
         return self.simulation_provider.step
+
+    def init_subscriber(self):
+
+        topic = AgentUtils.get_coordination_topic()
+        return MySubscriber(topic, message_type="so_data", task_type="so_data", callback=self.store_data)
 

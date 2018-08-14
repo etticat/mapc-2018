@@ -15,6 +15,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
+from self_organisation.massim_so_broadcaster import MassimSoBroadcaster
 from so_data.topicgradienttf import TopicGradientTf
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.so.topic_gradient_tf')
@@ -102,3 +103,6 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
 
             # send gradient
             self.send()
+
+    def init_so_broadcaster(self):
+        return MassimSoBroadcaster()
