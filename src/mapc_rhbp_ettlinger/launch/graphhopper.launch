@@ -8,7 +8,7 @@
     <!--Infrastructure Nodes-->
     <node pkg="mapc_rhbp_ettlinger" type="graphhopper.py" name ="graphhopper_node" output="screen">
         <!--List the preloaded maps separated by comma in start_maps-->
-        <param name="start_maps" value="paris,london,hannover" />
+        <param name="start_maps" value="hannover,london,mexico-city,paris,tokyo" />
         <param name="initial_port" value="$(arg initial_port)" />
     </node>
 

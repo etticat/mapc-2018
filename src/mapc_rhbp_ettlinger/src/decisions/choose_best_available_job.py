@@ -125,6 +125,11 @@ class ChooseBestAvailableJobDecision(object):
         and gathering
         :return:
         """
+
+        # If the factors have just reset, do not coordinatate anything, just wait until the first jobs come in and try again
+        if len(self.factors) == 0:
+            return None, None
+
         job_to_try = None
         items_to_take_from_storage = []
         best_activation = ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD

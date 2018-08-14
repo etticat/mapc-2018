@@ -37,6 +37,11 @@ class WellProvider(object):
         :type sim_start: SimStart
         :return:
         """
+        # Reset known wells for the new simulation
+        self._existing_wells = {}
+        self._possible_wells = {}
+
+        # Safe all wells that can be built
         for well in sim_start.wells:
             self._possible_wells[well.name] = well
 

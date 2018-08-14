@@ -47,6 +47,7 @@ class DistanceProvider(object):
         self._agent_vision = 300
         self._road_distance_cache = {}
         self._facility_positions = {}
+        self._map = None
 
         self._facility = None
         self._in_facility = False
@@ -107,6 +108,7 @@ class DistanceProvider(object):
         :type sim_start: SimStart
         :return:
         """
+
         self._cell_size = sim_start.cell_size
         self._can_fly = "drone" == sim_start.role.name
         self._speed = sim_start.role.base_speed
@@ -136,6 +138,7 @@ class DistanceProvider(object):
             Position(long=self.max_lon, lat=mean_lat)
         )
         self._initialised = True
+        self.set_map(sim_start.map)
 
     def callback_sim_end(self, sim_end):
         self._initialised = False
@@ -161,15 +164,15 @@ class DistanceProvider(object):
             return air_distance
         else:
             # if agent can't fly return road distance
-            try:
+            # try:
                 return self.calculate_distance_street(start_position, endPosition)
-            except LookupError as e:
-                ettilog.logerr(e)
-            except Exception as e:
-                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                ettilog.logerr(traceback.format_exc())
+            # except LookupError as e:
+            #     ettilog.logerr(e)
+            # except Exception as e:
+            #     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+            #     ettilog.logerr(traceback.format_exc())
 
-            return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
+            # return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
 
     def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None):
         """
@@ -269,6 +272,7 @@ class DistanceProvider(object):
         Taken from 2017
         :param map: name of map to configure
         """
+        ettilog.logerr("DistanceProvider(%s):: Setting map %s", self._agent_name, map)
         try:
             set_map = rospy.ServiceProxy(GraphhopperProcessHandler.MAP_SERVICE_NAME, SetGraphhopperMap)
             res = set_map(map)
@@ -432,8 +436,8 @@ class DistanceProvider(object):
             max_step_to_facility = 0
 
             for pos, speed, role in pos_speed_role_list:
-                overall_max_step = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False)
-                max_step_to_facility = max(max_step_to_facility, overall_max_step)
+                steps = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False)
+                max_step_to_facility = max(max_step_to_facility, steps)
 
             if max_step_to_facility < overall_max_step:
                 overall_max_step = max_step_to_facility

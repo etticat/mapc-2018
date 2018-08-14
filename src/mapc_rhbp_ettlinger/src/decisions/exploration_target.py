@@ -2,7 +2,9 @@ import random
 
 import rospy
 from diagnostic_msgs.msg import KeyValue
+from mac_ros_bridge.msg import SimEnd
 
+from common_utils.agent_utils import AgentUtils
 from decisions.map_decisions import PickClosestDestinationWithLowestValue, MapDecision
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
@@ -43,7 +45,8 @@ class ExplorationDecision(PickClosestDestinationWithLowestValue):
         x = int(round(self.distance_provider.lat_to_x(pos.lat)))
         y = int(round(self.distance_provider.lon_to_y(pos.long)))
 
-        self.environment_array[x / self.granulariy,y / self.granulariy] = 100000
+        if self.environment_array is not None:
+            self.environment_array[x / self.granulariy,y / self.granulariy] = 100000
 
         self._self_organisation_provider.send_msg(pos=pos, frame="no_route", parent_frame="agent",
                                                   time=100000, payload=[
@@ -65,8 +68,15 @@ class ExploreCornersDecision(DecisionPattern):
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
         super(ExploreCornersDecision, self).__init__(buffer=buffer)
 
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self.callback_sim_end)
+
     def calc_value(self):
         corners = self._simulation_provider.get_corners()
 
         # TODO: Go to neighbouring corner
         return [random.choice(corners), self.state]
+
+
+    def callback_sim_end(self, sim_end=None):
+        self.value = None

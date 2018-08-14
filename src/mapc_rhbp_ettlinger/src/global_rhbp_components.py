@@ -1,5 +1,5 @@
 import rospy
-from mac_ros_bridge.msg import Agent
+from mac_ros_bridge.msg import Agent, SimEnd
 
 from behaviour_components.activators import ThresholdActivator, LinearActivator, BooleanActivator
 from behaviour_components.condition_elements import Effect

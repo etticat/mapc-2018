@@ -213,7 +213,7 @@ class MassimRhbpComponents(object):
         )
 
         ####################### Find Well Location Network Behaviour ########################
-        self.exploration_network = ExplorationNetworkBehaviour(
+        self.find_well_location_network_behaviour = ExplorationNetworkBehaviour(
             name=self._agent_name + '/welllocation',
             plannerPrefix=self._agent_name,
             exploration_mechanism=ExploreCornersDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
@@ -222,14 +222,36 @@ class MassimRhbpComponents(object):
             global_rhbp_components=self._global_rhbp_components,
             max_parallel_behaviours=1)
 
-        self.exploration_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
-        self.exploration_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
-        self.exploration_network.add_precondition(self._global_rhbp_components.enough_massium_to_build_well_cond)
+        self.find_well_location_network_behaviour.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
+        self.find_well_location_network_behaviour.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
+        self.find_well_location_network_behaviour.add_precondition(self._global_rhbp_components.enough_massium_to_build_well_cond)
 
-        self.exploration_network.add_effect(
+        self.find_well_location_network_behaviour.add_effect(
             Effect(
                 sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
                 indicator=2.0,
+                sensor_type=float
+            )
+        )
+
+        ####################### Idle Network Behaviour ########################
+        self.idle_network_behaviour = ExplorationNetworkBehaviour(
+            name=self._agent_name + '/idle',
+            plannerPrefix=self._agent_name,
+            exploration_mechanism=ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
+            priority=1,
+            agent_name=self._agent_name,
+            global_rhbp_components=self._global_rhbp_components,
+            max_parallel_behaviours=1)
+
+        self.idle_network_behaviour.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
+        self.idle_network_behaviour.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
+        self.idle_network_behaviour.add_precondition(self._global_rhbp_components.resources_of_all_items_discovered_condition)
+
+        self.idle_network_behaviour.add_effect(
+            Effect(
+                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
+                indicator=0.5,
                 sensor_type=float
             )
         )

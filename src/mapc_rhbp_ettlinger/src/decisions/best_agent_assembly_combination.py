@@ -33,7 +33,7 @@ class BestAgentAssemblyCombinationDecision(object):
     MIN_AGENTS = 1
     MAX_STEPS = 20
 
-    ACTIVATION_THRESHOLD = 1000
+    ACTIVATION_THRESHOLD = -5000
 
     def __init__(self, agent_name):
         self.distance_provider = DistanceProvider(agent_name=agent_name)
@@ -106,7 +106,7 @@ class BestAgentAssemblyCombinationDecision(object):
         :type bids: TaskBid[]
         :return:
         """
-        bids.sort(key=lambda bid: bid.activation)
+        bids.sort(key=lambda bid: bid.bid)
 
         if self.finished_products is None:
             self.init_finished_products()
@@ -144,7 +144,10 @@ class BestAgentAssemblyCombinationDecision(object):
                     if len(combination) > 0:
 
                         # The number of step until all agents can be at the closest workshop
-                        max_step_count, destination = self.distance_provider.get_steps_to_closest_facility([(bid.pos, bid.speed, bid.role) for bid in bid_subset], self._facility_provider.workshops.values())
+                        pos_speed_role = [(bid.pos, bid.speed, bid.role) for bid in bid_subset]
+                        workshops = self._facility_provider.workshops.values()
+                        max_step_count, destination = self.distance_provider.get_steps_to_closest_facility(pos_speed_role,
+                                                                                                           workshops)
 
                         # If max nr of steps is too high, ignore combination
                         if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS:

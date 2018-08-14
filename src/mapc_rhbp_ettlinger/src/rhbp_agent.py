@@ -173,7 +173,7 @@ class RhbpAgent:
 
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.loginfo("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
+            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
                             self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback

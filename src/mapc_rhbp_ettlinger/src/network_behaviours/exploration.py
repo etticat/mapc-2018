@@ -3,7 +3,6 @@ from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition
 from behaviour_components.goals import GoalBase
 from behaviours.movement import GoToDestinationBehaviour
-from decisions.exploration_target import ExplorationDecision
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
 

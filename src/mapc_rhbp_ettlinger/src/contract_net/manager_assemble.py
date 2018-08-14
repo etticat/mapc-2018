@@ -48,6 +48,7 @@ class AssembleManager(ContractNetManager):
         """
         accepted_bids = None
         finished_products = None
+        best_destination = None
         assembly_instructions = None
 
         # Get best combinations possible from the bids in order of priority
@@ -58,7 +59,7 @@ class AssembleManager(ContractNetManager):
             return None
 
         # Try possible combinations until we find one, where the capacity of all involved agents allows to start assembly
-        for bids, products, activation in bids_products_array:
+        for bids, products, activation, destination in bids_products_array:
 
             # Generate assemly instructions for all involved agents
             assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bids, products)
@@ -67,6 +68,7 @@ class AssembleManager(ContractNetManager):
             if assembly_instructions is not None:
                 finished_products = products
                 accepted_bids = bids
+                best_destination = destination
 
                 ettilog.logerr("AssembleManager:: Assembling %s activation: %f", str(finished_products), activation)
 
@@ -83,6 +85,7 @@ class AssembleManager(ContractNetManager):
         assignments = []
         agents = [bid.agent_name for bid in accepted_bids]
         for bid in accepted_bids:
+            bid.request.destination = best_destination.pos
             assignment = TaskAssignment(
                 id=bid.id,
                 bid=bid,

@@ -2,7 +2,7 @@ import numpy as np
 import random
 import traceback
 
-from mac_ros_bridge.msg import SimEnd
+from mac_ros_bridge.msg import SimEnd, SimStart
 
 import rospy
 from common_utils import etti_logging
@@ -58,11 +58,12 @@ class MapDecision(DecisionPattern):
         self.last_messages = []
 
         # Reset variables when simulation ends
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.reset_environment_array)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart, self.sim_end_callback)
 
 
-    def reset_environment_array(self, sim_end=None):
+    def sim_end_callback(self, sim_end=None):
         self.environment_array = None
+        self.value = None
 
     def calc_value(self):
         """
@@ -85,6 +86,7 @@ class MapDecision(DecisionPattern):
         # create the map if it has not existed yet
         if self.environment_array is None:
             self.environment_array = np.zeros([simple_size_x, simple_size_y, ])
+            rospy.logerr("MapDecision:: environment_array  created with shape %s", str(self.environment_array.shape))
 
         # Go through all soMessages
         for so_message in so_messages:
