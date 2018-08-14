@@ -37,7 +37,7 @@ class ChooseBestAvailableJobDecision(object):
     WEIGHT_TIME_OVER = -0.4
 
     def __init__(self, agent_name):
-        self.init_conf()
+        self._init_config()
 
         self.coordinated_jobs = []
         self.active_jobs = []

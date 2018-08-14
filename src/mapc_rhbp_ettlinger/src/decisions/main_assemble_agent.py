@@ -88,6 +88,7 @@ class MainAssembleAgentDecision(object):
                     # Change bid items to reflect assembly
                     bid.items = CalcUtil.list_diff(bid.items, used_items)
                     bid.items += [item]  # This is important as we may need the item for further assembly in same turn
+                    bid.capacity = capacity_after_assembly
 
                     items_needed = CalcUtil.list_diff(items_needed, used_items)
 

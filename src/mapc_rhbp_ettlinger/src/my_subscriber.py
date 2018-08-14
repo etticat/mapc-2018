@@ -24,10 +24,10 @@ class MyPublisher(Publisher):
 class MySubscriber(Subscriber):
 
     def __init__(self, name, callback, message_type, task_type, **kwargs):
-        super(MySubscriber, self).__init__(name, data_class=TaskCoordinationMessage, callback=self.my_callback, **kwargs)
         self.my_message_type = message_type
         self.my_task_type = task_type
         self.client_callback = callback
+        super(MySubscriber, self).__init__(name, data_class=TaskCoordinationMessage, callback=self.my_callback, **kwargs)
 
     def my_callback(self, msg):
         """

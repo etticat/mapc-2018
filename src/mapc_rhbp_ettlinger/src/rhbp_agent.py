@@ -118,12 +118,10 @@ class RhbpAgent:
         else:
             self._agent_name = rospy.get_param('~agent_name')
         self._should_bid_for_auctions = rospy.get_param('~bid_for_auctions', False)
-        RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("/RhbpAgent.MAX_DECISION_MAKING_TIME",
+        RhbpAgent.MAX_DECISION_MAKING_TIME = rospy.get_param("RhbpAgent.MAX_DECISION_MAKING_TIME",
                                                              RhbpAgent.MAX_DECISION_MAKING_TIME)
-        RhbpAgent.BUILD_WELL_ENABLED = rospy.get_param("~RhbpAgent.BUILD_WELL_ENABLED",
+        RhbpAgent.BUILD_WELL_ENABLED = rospy.get_param("RhbpAgent.BUILD_WELL_ENABLED",
                                                        RhbpAgent.BUILD_WELL_ENABLED)
-        test_param = rospy.get_param("RhbpAgent.MAX_DECISION_MAKING_TIME", -1.0)
-        rospy.logerr("RhbpAgent.MAX_DECISION_MAKING_TIME: %d", test_param)
 
     def _sim_start_callback(self, sim_start):
         """
@@ -188,11 +186,13 @@ class RhbpAgent:
 
 
         # Build a well if we are currently out of bounds.
-        well_task = self.global_rhbp_components._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
-                                                               request_action.agent)
-        if well_task is not None:
-            ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
-            self.global_rhbp_components.well_task_mechanism.start_task(well_task)
+
+        if RhbpAgent.BUILD_WELL_ENABLED:
+            well_task = self.global_rhbp_components._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
+                                                                   request_action.agent)
+            if well_task is not None:
+                ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
+                self.global_rhbp_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
         time_passed = 0
@@ -201,7 +201,7 @@ class RhbpAgent:
             self._manager.step(guarantee_decision=True)
 
             manager_steps += 1
-            time_passed = (rospy.get_rostime() - self.request_time).to_sec()
+            time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
 
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
