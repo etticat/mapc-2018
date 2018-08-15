@@ -25,8 +25,6 @@ class AssembleManager(ContractNetManager):
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._product_provider = ProductProvider(agent_name=agent_name)
 
-        self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
-
     def request_assembly(self):
         """
         Creates a request object
@@ -46,40 +44,20 @@ class AssembleManager(ContractNetManager):
         :param bids:
         :return:
         """
-        accepted_bids = None
-        finished_products = None
-        best_destination = None
-        assembly_instructions = None
 
         # Get best combinations possible from the bids in order of priority
-        bids_products_array = self._assembly_combination_decision.choose_best_combinations(bids)
+        res = self._assembly_combination_decision.choose_best_combinations(bids)
+        if res is None:
+            return
 
-        if len(bids_products_array) < 1:
-            # We can't make anything from those bids.
-            return None
+        bids, products, activation, destination, assembly_instructions = res
 
-        # Try possible combinations until we find one, where the capacity of all involved agents allows to start assembly
-        for bids, products, activation, destination in bids_products_array:
+        finished_products = products
+        accepted_bids = bids
+        best_destination = destination
 
-            # Generate assemly instructions for all involved agents
-            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bids, products)
+        ettilog.logerr("AssembleManager:: Assembling %s activation: %f", str(finished_products), activation)
 
-            # If we found a combination that we can assemble, stop the loop
-            if assembly_instructions is not None:
-                finished_products = products
-                accepted_bids = bids
-                best_destination = destination
-
-                ettilog.logerr("AssembleManager:: Assembling %s activation: %f", str(finished_products), activation)
-
-                break
-            else:
-                ettilog.loginfo("AssembleManager:: Cannot assemble %s, no capacity", str(finished_products))
-
-        if assembly_instructions is None:
-            # None of the cominations that we found is possible due to capacity
-            ettilog.logerr("AssembleManager::No one has enough capacity to assemble")
-            return None
 
         # Create assignments for all accepted bids
         assignments = []

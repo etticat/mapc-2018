@@ -10,6 +10,7 @@ from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
+from decisions.main_assemble_agent import MainAssembleAgentDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -38,6 +39,7 @@ class BestAgentAssemblyCombinationDecision(object):
     ACTIVATION_THRESHOLD = -5000
 
     def __init__(self, agent_name):
+        self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
         self.distance_provider = DistanceProvider(agent_name=agent_name)
         self._init_config()
 
@@ -115,8 +117,6 @@ class BestAgentAssemblyCombinationDecision(object):
         if self.finished_products is None:
             self.init_finished_products()
 
-        best_combinations = []
-
         finished_item_priority = self.finished_items_priority_dict()
 
         # Create numpy arrays of items of each bid for faster calculation
@@ -145,7 +145,7 @@ class BestAgentAssemblyCombinationDecision(object):
                     # Get the best combination to build with the current subset
                     combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority)
 
-                    if len(combination) > 0:
+                    if len(combination) >= BestAgentAssemblyCombinationDecision.MIN_ITEMS:
 
                         # The number of step until all agents can be at the closest workshop
                         pos_speed_role = [(bid.pos, bid.speed, bid.role) for bid in bid_subset]
@@ -166,17 +166,10 @@ class BestAgentAssemblyCombinationDecision(object):
                         value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
                                                       number_of_agents)
 
-                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD and \
-                                len(combination) > BestAgentAssemblyCombinationDecision.MIN_ITEMS:
-                            best_combinations += [(bid_subset, combination, value, destination)]
-                if number_of_agents >= BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT and len(
-                        best_combinations) > 0:
-                    # we only try combinations with more than PREFERRED_AGENT_COUNT agents if we could not find anything with less
-                    break
-
-        # We return all the combinations that match our criteria, sorted by their activation
-        best_combinations.sort(key=lambda tuple_: tuple_[2], reverse=True)
-        return best_combinations
+                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD:
+                            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bids, combination)
+                            return (bid_subset, combination, value, destination, assembly_instructions)
+        return None
 
     def init_finished_products(self):
         """

@@ -187,8 +187,6 @@ class ProductProvider(object):
         self.role = msg.role.name
         self.useful_items_for_assembly = []
 
-        rospy.logerr("Init Product PRovider : %s ------------------", str([p.name for p in msg.products]))
-
         for product in msg.products:
             self._product_infos[product.name] = product
             if len(product.consumed_items) > 0:
