@@ -24,7 +24,7 @@ class MapDecision(DecisionPattern):
     MODE_OLDEST_VISITED = "oldest_visited"
     MODE_SEEN_COUNT = "seen_count"
 
-    def __init__(self, agent_name, buffer, frame, key, target_frames, mode, granulariy=500, value=None, state=None, moving=True,
+    def __init__(self, agent_name, buffer, frame, key, target_frames, mode, granulariy=50, value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
                  ev_factor=0.0, ev_time=5):
         """
@@ -45,6 +45,8 @@ class MapDecision(DecisionPattern):
         :param ev_factor:
         :param ev_time:
         """
+        self.og_cache = {}
+        self.mask_cache = {}
         self.simulation_provider = SimulationProvider(agent_name=agent_name)
         self.granulariy = granulariy
         self.mode = mode
@@ -90,7 +92,7 @@ class MapDecision(DecisionPattern):
         # Go through all soMessages
         for so_message in so_messages:
             # only take the ones into account that have not been processed yet.
-            if so_message.diffusion > 0 and so_messages not in self.last_messages:
+            if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
                 mask = self.generate_round_array_mask(simple_size_x, simple_size_y,
                                                       so_message.p.x / self.granulariy, so_message.p.y / self.granulariy,
                                                       so_message.diffusion / self.granulariy)
@@ -101,7 +103,7 @@ class MapDecision(DecisionPattern):
                 else:
                     rospy.logerr("MapDecision:: Invalid mode %s", str(self.mode))
 
-        self.last_messages = so_messages
+        self.last_messages = [msg.p.z for msg in so_messages]
 
         return [self.environment_array, self.state]
 
@@ -124,8 +126,13 @@ class MapDecision(DecisionPattern):
         :param r: the radius of the circle
         :return:
         """
-        y, x = np.ogrid[-x:size_x - x, -y:size_y - y]
-        mask = x * x + y * y <= r * r
+        if (size_x, size_y, x, y, r) in self.mask_cache:
+            return self.mask_cache[(size_x, size_y, x, y, r)]
+        if (x, size_x, y, size_y) not in self.og_cache:
+            self.og_cache[(x, size_x, y, size_y)] = np.ogrid[-x:size_x - x, -y:size_y - y]
+        y_og, x_og = self.og_cache[(x, size_x, y, size_y)]
+        mask = x_og * x_og + y_og * y_og <= r * r
+        self.mask_cache[(size_x, size_y, x, y, r)] = mask
         return mask
 
 class PickClosestDestinationWithLowestValue(MapDecision):
@@ -134,7 +141,7 @@ class PickClosestDestinationWithLowestValue(MapDecision):
     If no cell has value 0, it returns a random value that is among the 10% of oldest palces.
     """
 
-    def __init__(self, agent_name, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=500,
+    def __init__(self, agent_name, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED, granulariy=50,
                  value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
                  ev_factor=0.0, ev_time=5, pick_random_of_lowest_values=False):

@@ -15,6 +15,7 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
         self.exploration_mechanism = exploration_mechanism
         super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_mechanism, name=name,
                                                           agent_name=agent_name,
+                                                          min_charge=5,
                                                           use_in_facility_flag=False,
                                                           global_rhbp_components=global_rhbp_components,
                                                           **kwargs)
@@ -62,7 +63,7 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
         :return:
         """
         self.goal = GoalBase(
-            name='exploration_goal',
+            name=self.get_manager_prefix() + 'exploration_goal',
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Condition(

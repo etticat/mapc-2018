@@ -43,10 +43,11 @@ class MassimRhbpComponents(object):
         :return:
         """
         ####################### Exploration Network Behaviour ########################
+        exploration_decision = ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name)
         self.exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/explore',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
+            exploration_mechanism=exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             global_rhbp_components=self._global_rhbp_components,
@@ -251,7 +252,7 @@ class MassimRhbpComponents(object):
         self.idle_network_behaviour = ExplorationNetworkBehaviour(
             name=self._agent_name + '/idle',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
+            exploration_mechanism=exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             global_rhbp_components=self._global_rhbp_components,
@@ -264,7 +265,7 @@ class MassimRhbpComponents(object):
         self.idle_network_behaviour.add_effect(
             Effect(
                 sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
-                indicator=0.5,
+                indicator=1.0,
                 sensor_type=float
             )
         )

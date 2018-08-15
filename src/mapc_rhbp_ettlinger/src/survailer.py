@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 import random
+import time
 
 import rospy
 from mac_ros_bridge.msg import SimEnd, SimStart
@@ -39,9 +40,9 @@ class ControlAgent(object):
             "ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH": (-10, 2.5, 25),
             "ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT": (-10, 0.5, 50),
             "ChooseItemToGatherMechanism.WEIGHT_PRIORITY": (-10, 200, 1000),
-            "ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION": (-5, 15, 100),
+            "ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION": (0, 1.9, 10),
 
-            "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL": (-10, 5, 50),
+            "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL": (-10, 1, 50),
             "ChooseBestAvailableJobDecision.BID_PERCENTILE": (30, 50, 90),
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD": (-1000, -50, 1000),
             "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
@@ -65,7 +66,7 @@ class ControlAgent(object):
             "MainAssembleAgentDecision.WEIGHT_BID_SKILL": (-1000, -100, 1000),
             "MainAssembleAgentDecision.WEIGHT_BID_SPEED": (-1000, 100, 1000),
 
-            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" : (0.2, 2, 10),
+            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" : (0.2, 1, 1.5),
             "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT" : (-10, -2.1, 10),
             "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY" : (-1, 10, 100),
             "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" : (-100, -10, 100),
@@ -88,9 +89,16 @@ class ControlAgent(object):
         """
         end_massium = self.stas_provider.massium
         current_config = self.current_config
-        fitness = end_massium
+        current_fitness = end_massium
+        current_config["___fitness"] = current_fitness
+        current_config["___timestamp"] = str(time.time())
+        self.configs.append((current_fitness, current_config))
 
-        self.configs.append((fitness, current_config))
+        # Sort by fitness
+        self.configs.sort(key=lambda k: k['fitness'], reverse=True)
+
+        # Only keep 10 best configs
+        self.configs = self.configs[:10]
 
         fitness, config = random.choice(self.configs)
 
@@ -130,7 +138,7 @@ class ControlAgent(object):
 
         for key, value in config.iteritems():
             range = self.default_conf[key][2] - self.default_conf[key][0]
-            max_mutation = 0.1 * range
+            max_mutation = 0.05 * range
 
             value += random.uniform(-max_mutation, max_mutation)
             value = max(self.default_conf[key][0], value)

@@ -20,6 +20,9 @@ class AssembleProductBehaviour(DecisionBehaviour):
     Behaviour, that allows to execute the assemble and assist_assemble commands
     """
 
+    ERROR_THRESHOLD_DURING = 4
+    ERROR_THRESHOLD_START = 25
+
     def __init__(self, mechanism, name, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \
             .__init__(mechanism=mechanism, name=name,
@@ -31,6 +34,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         self._task = None
         self._last_action = None
         self._last_target = None
+        self.error_count = 0
 
         # Init providers
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -84,26 +88,47 @@ class AssembleProductBehaviour(DecisionBehaviour):
         """
         # if our last task was assemble and the last_action in the simulation was assemble too
         if self._last_action == "assemble" and agent.last_action == "assemble":
-            ettilog.loginfo("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+            ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
 
-            if agent.last_action_result == "failed_capacity":
-                # Only in a few edge cases this can happen. Generally we can ignore it and pretend it was succesful
-                step = self._get_assemble_step()
-                total_steps = len(self._task.task.split(","))
-                ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity at step %d/%d", self._agent_name, step, total_steps)
-                self.perform_next_task()
-            elif agent.last_action_result == "failed_item_amount" and self.all_agents_reached_destination():
-                # If all agents have reached but still don't have all items, go on to next task
-                step = self._get_assemble_step()
-                total_steps = len(self._task.task.split(","))
-                ettilog.logerr("AssembleProductBehaviour(%s)::Failed failed_item_amount with all agents presentat step %d/%d", self._agent_name, step, total_steps)
-                self.perform_next_task()
-            elif agent.last_action_result == "successful":
+            if agent.last_action_result == "successful":
                 # Update the assemble step of the assemble task
+                self.error_count = 0
                 self.perform_next_task()
             else:
-                # For all other error messages, wo just try again
-                pass
+                self.error_count += 1
+                if agent.last_action_result == "failed_capacity":
+                    # Only in a few edge cases this can happen. Generally we can ignore it and pretend it was succesful
+                    step = self._get_assemble_step()
+                    total_steps = len(self._task.task.split(","))
+                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity at step %d/%d", self._agent_name, step, total_steps)
+                    self.perform_next_task()
+                elif agent.last_action_result == "failed_item_amount" and self.all_agents_reached_destination():
+                    # If all agents have reached but still don't have all items, go on to next task
+                    step = self._get_assemble_step()
+                    total_steps = len(self._task.task.split(","))
+                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed failed_item_amount with all agents presentat step %d/%d", self._agent_name, step, total_steps)
+                    self.perform_next_task()
+                    self.error_count += 1
+                else:
+                    # For all other error messages, wo just try again
+                    pass
+            self.check_errors()
+            rospy.logerr("Assemble: %d %d", self.error_count, self._get_assemble_step())
+        elif self._last_action == "assist" and agent.last_action == "assist_assemble":
+
+            if agent.last_action_result == "successful":
+                self.error_count = 0
+            else:
+                self.error_count += 1
+            self.check_errors()
+        else:
+            self.error_count = 0
+
+    def check_errors(self):
+        if self.error_count > AssembleProductBehaviour.ERROR_THRESHOLD_START or \
+                (self.error_count > AssembleProductBehaviour.ERROR_THRESHOLD_DURING and self._get_assemble_step() > 0):
+            self.mechanism.end_task(notify_others=True)
+            self.error_count = 0
 
     def perform_next_task(self):
         step = self._get_assemble_step()
@@ -111,7 +136,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         total_steps = len(self._task.task.split(",")) - 1
         if step < total_steps:
             # If there are still tasks to do, inform all agents that the next task will be performed
-            ettilog.loginfo(
+            ettilog.logerr(
                 "AssembleProductBehaviour(%s):: Assembled item %d/%d, going on to next task ....",
                 self._agent_name, next_assemble_step, total_steps + 1)
             assemble_task_coordination = TaskProgress(
@@ -202,3 +227,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :return: int
         """
         return self._task_progress_dict.get(self._task.id, 0)
+
+    def start(self):
+        super(AssembleProductBehaviour, self).start()
+        self.error_count = 0

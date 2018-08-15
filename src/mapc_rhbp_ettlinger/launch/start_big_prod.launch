@@ -242,7 +242,7 @@
     <param name="activation_algorithm" type="string" value="default"/>
     <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
 
-    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="18.9"/>
+    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="7"/>
     <param name="RhbpAgent.BUILD_WELL_ENABLED" type="bool" value="False"/>
 
 
@@ -258,10 +258,10 @@
     <param name="ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH"  value="2.5" type="double"/>
     <param name="ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT"  value="0.5" type="double"/>
     <param name="ChooseItemToGatherMechanism.WEIGHT_PRIORITY"  value="200" type="double"/>
-    <param name="ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION"  value="15" type="double"/>
+    <param name="ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION"  value="3" type="double"/>
 
 
-    <param name="ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL"  value="5" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL"  value="1" type="double"/>
     <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="50" type="double"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD"  value="-50" type="double"/>
     <param name="ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD"  value="0" type="double"/>
@@ -285,7 +285,7 @@
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
 
-    <param name="BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="2"/>
+    <param name="BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="1"/>
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT"  value="-2.1" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY"  value="10" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS"  value="-10" type="double"/>

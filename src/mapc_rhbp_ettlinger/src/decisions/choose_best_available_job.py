@@ -26,7 +26,7 @@ class ChooseBestAvailableJobDecision(object):
     """
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
 
-    DEFAULT_FINISHED_PRODUCT_GOAL = 5
+    DEFAULT_FINISHED_PRODUCT_GOAL = 1
     BID_PERCENTILE = 50
     ACTIVATION_THRESHOLD = -50
     IMPORTANT_JOB_THRESHOLD = 0
@@ -185,8 +185,7 @@ class ChooseBestAvailableJobDecision(object):
 
             if time_left <= ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START:
                 # If less than 30 steps are available start biasing against this job as it will get harder and harder to finish it
-                activation += (
-                                          ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START - time_left) * ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER
+                activation += (ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START - time_left) * ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER
 
             ettilog.loginfo("activation: %f, ", activation)
 
@@ -202,8 +201,7 @@ class ChooseBestAvailableJobDecision(object):
                 activation_surpluss = activation - ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD
                 for item in job.items:
                     desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + \
-                                                                (
-                                                                            activation_surpluss * item.amount * ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
+                            (activation_surpluss * item.amount * ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
 
         # Publish the desired finished products to all agents
         desired_stock = StockItem(entity="planner")

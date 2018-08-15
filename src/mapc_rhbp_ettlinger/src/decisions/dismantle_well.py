@@ -24,7 +24,7 @@ class ExistingOpponentWellsDecision(MapDecision):
     """
 
     def __init__(self, agent_name, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED,
-                 granulariy=500,
+                 granulariy=50,
                  value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
                  ev_factor=0.0, ev_time=5, pick_random_of_lowest_values=False):

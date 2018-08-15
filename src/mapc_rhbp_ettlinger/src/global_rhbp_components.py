@@ -188,7 +188,7 @@ class GlobalRhbpComponents(object):
         self.enough_battery_to_move_cond = Condition(
             sensor=self.charge_sensor,
             activator=ThresholdActivator(
-                thresholdValue=1,
+                thresholdValue=2,
                 isMinimum=True))
 
         # Movement decreases charge

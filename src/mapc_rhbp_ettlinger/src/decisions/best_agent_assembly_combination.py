@@ -23,7 +23,7 @@ class BestAgentAssemblyCombinationDecision(object):
     """
     MIN_ITEMS = 5
     PREFERRED_AGENT_COUNT = 4
-    PRIORITY_EXPONENT = 2  # [ .05 - 10]
+    PRIORITY_EXPONENT = 1  # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
     WEIGHT_PRIORITY = 100
     WEIGHT_NUMBER_OF_AGENTS = -10
@@ -264,12 +264,12 @@ class BestAgentAssemblyCombinationDecision(object):
 
         for key in self._product_provider._assemblable_items.keys():
             # Priority value
-            priority = 1.0 - (float(finished_stock_items.get(key, 0)) / self._finished_product_goals.get(key,
-                                                                                                         ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL))
+            # priority = 1.0 - (float(finished_stock_items.get(key, 0)) / self._finished_product_goals.get(key,
+            #                                                                                              ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL))
             # priority can not be lower than 0 -> this would mean we want to destroy finished products
-            priority = max(priority, 0.0)
-            res[
-                key] = priority ** BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT  # Square it to really emphasize the importance of items with few
+            # priority = max(priority, 0.0) **
+            priority = self._finished_product_goals.get(key, ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL) - finished_stock_items.get(key, 0)
+            res[key] = priority ** BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT  # Square it to really emphasize the importance of items with few
         return res
 
     def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):
@@ -313,8 +313,12 @@ class BestAgentAssemblyCombinationDecision(object):
         """
         res = 0
 
+        # Keep track of occurances of each item in the assembly list to assign proper priorities
+        occurances = {}
+
         for item in item_list:
-            res += priorities[item] * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY
+            occurances[item] = occurances.get(item, -1) + 1
+            res += (priorities[item] -1) * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY
 
         return res
 

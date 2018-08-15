@@ -1,5 +1,6 @@
+from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation, Disjunction
+from behaviour_components.conditions import Negation, Disjunction, Condition
 from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.generic_action import GenericActionBehaviour
@@ -13,7 +14,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
     """
     Base Network behaviour that contains all components for Battery handling
     """
-    def __init__(self, agent_name, global_rhbp_components, name, **kwargs):
+    def __init__(self, agent_name, global_rhbp_components, name, min_charge=None, **kwargs):
 
         super(BatteryChargingNetworkBehaviour, self).__init__(name=name, guarantee_decision=True, **kwargs)
 
@@ -39,9 +40,16 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
                 indicator=-1.0,  # 1 step at a time
                 sensor_type=float))
 
-        go_to_charging_station_behaviour.add_precondition(
-            precondition=self._global_rhbp_components.enough_battery_to_move_cond
-        )
+        go_to_charging_station_behaviour.add_precondition(self._global_rhbp_components.enough_battery_to_move_cond)
+
+        if min_charge is not None:
+            self.enough_battery_to_move_cond = Condition(
+                sensor=self._global_rhbp_components.charge_sensor,
+                activator=ThresholdActivator(
+                    thresholdValue=min_charge,
+                    isMinimum=True))
+        else:
+            self.enough_battery_to_move_cond = self._global_rhbp_components.enough_battery_to_move_cond
 
         self._go_to_charging_station_behaviour = go_to_charging_station_behaviour
 
@@ -60,14 +68,15 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         self._charge_behaviour = charge_behaviour
 
         # Recharge (through solar)
-        recharge_behaviour = GenericActionBehaviour(
-            plannerPrefix=self.get_manager_prefix(),
-            agent_name=self._agent_name,
-            action_type=Action.RECHARGE,
-            name=self.get_manager_prefix() + '/recharge_behaviour')
-        recharge_behaviour.add_effect(self._global_rhbp_components.recharge_effect)
+        # recharge_behaviour = GenericActionBehaviour(
+        #     plannerPrefix=self.get_manager_prefix(),
+        #     agent_name=self._agent_name,
+        #     action_type=Action.RECHARGE,
+        #     name=self.get_manager_prefix() + '/recharge_behaviour')
+        # recharge_behaviour.add_effect(self._global_rhbp_components.recharge_effect)
 
-        self._recharge_behaviour = recharge_behaviour
+        # self._recharge_behaviour = recharge_behaviour
+        # recharge_behaviour.add_precondition(self._global_rhbp_components.battery_empty_cond)
 
         # do not look for charging station if we are already at one
         go_to_charging_station_behaviour.add_precondition(
@@ -77,7 +86,6 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         go_to_charging_station_behaviour.add_precondition(
             Negation(self._global_rhbp_components.battery_empty_cond))
 
-        recharge_behaviour.add_precondition(self._global_rhbp_components.battery_empty_cond)
         go_to_charging_station_behaviour.add_precondition(self._global_rhbp_components.require_charging_cond)
 
         self.charge_goal = GoalBase(
@@ -101,7 +109,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
                 sensor_type=float))
 
         movement_behaviour.add_precondition(
-            precondition=self._global_rhbp_components.enough_battery_to_move_cond
+            precondition=self.enough_battery_to_move_cond
         )
 
         movement_behaviour.add_precondition(

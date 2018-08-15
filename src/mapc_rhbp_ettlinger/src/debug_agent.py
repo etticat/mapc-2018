@@ -75,7 +75,7 @@ class DebugAgent(object):
         gfp_ = self.choose_best_assembly_combination.finished_items_priority_dict()
         gf_ = self.choose_best_assembly_combination.finished_product_goals
 
-        for i in range(0, 11):
+        for i in range(0, len(self.product_provider.product_infos.keys())):
             item = "item" + str(i)
             rospy.logerr(
                 "%7s: agents:[s:%-3s g:%-3s a:%-3s h:%-3s d:%-3s] storage:[s:%-3s d:%-3s h:%-3s] goal:[i:%2.2f f:%2.2f ip:%2.2f fp:%2.2f]",

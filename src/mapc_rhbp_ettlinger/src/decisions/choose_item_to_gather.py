@@ -26,7 +26,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
     Chooses an item to gather next by looking at which items are needed most
     """
 
-    FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION = 15
+    FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION = 1.9
     WEIGHT_STEPS = -1
     WEIGHT_ASSEMBLY_ROLE_MATCH = 2.5
     WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT = 0.5
@@ -225,3 +225,6 @@ class ChooseItemToGatherMechanism(DecisionPattern):
                     best_resource = resource
 
         return min_steps, best_resource
+
+    def destination_not_found(self, pos):
+        pass
