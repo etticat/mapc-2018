@@ -164,15 +164,15 @@ class DistanceProvider(object):
             return air_distance
         else:
             # if agent can't fly return road distance
-            # try:
+            try:
                 return self.calculate_distance_street(start_position, endPosition)
-            # except LookupError as e:
-            #     ettilog.logerr(e)
-            # except Exception as e:
-            #     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-            #     ettilog.logerr(traceback.format_exc())
+            except LookupError as e:
+                ettilog.logerr(e)
+            except Exception as e:
+                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+                ettilog.logerr(traceback.format_exc())
 
-            # return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
+            return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
 
     def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None):
         """
