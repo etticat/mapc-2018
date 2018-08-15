@@ -27,7 +27,10 @@ class SmallestGatherableItemVolumeSensor(Sensor):
         gatherable_items = set([resource.item.name for resource in resources.values()])
 
         for item in gatherable_items:
-            volume = self.product_provider.get_product_by_name(item).volume
+            item = self.product_provider.get_product_by_name(item)
+            if item is None:
+                continue
+            volume = item.volume
             if volume < smallest_item_volume:
                 smallest_item_volume = volume
 

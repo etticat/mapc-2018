@@ -131,6 +131,7 @@ class RhbpAgent:
         :param sim_start:  the message
         :type sim_start: SimStart
         """
+        rospy.logerr("sim_start performed")
         self._init_config()
 
         if not self._sim_started:
@@ -142,6 +143,8 @@ class RhbpAgent:
                                                                       global_rhbp_components=self.global_rhbp_components,
                                                                       role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
+
+        rospy.logerr("sim_start performed done")
         self._sim_started = True
 
     def _sim_end_callback(self, sim_end):
