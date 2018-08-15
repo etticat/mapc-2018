@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+import time
+
 from diagnostic_msgs.msg import KeyValue
 from mapc_rhbp_ettlinger.msg import AgentConfig
 
@@ -132,7 +134,6 @@ class RhbpAgent:
         self._init_config()
 
         if not self._sim_started:
-            self._sim_started = True
 
             # Init coordination manager only once. Even when restarting simulation
             if self._coordination_manager is None:
@@ -141,6 +142,7 @@ class RhbpAgent:
                                                                       global_rhbp_components=self.global_rhbp_components,
                                                                       role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
+        self._sim_started = True
 
     def _sim_end_callback(self, sim_end):
         """
@@ -198,10 +200,13 @@ class RhbpAgent:
         time_passed = 0
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
-            self._manager.step(guarantee_decision=True)
+            if self._sim_started:
+                self._manager.step(guarantee_decision=True)
 
-            manager_steps += 1
-            time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
+                manager_steps += 1
+                time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
+            else:
+                time.sleep(0.5)
 
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
