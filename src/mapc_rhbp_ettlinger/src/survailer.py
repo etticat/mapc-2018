@@ -27,7 +27,7 @@ class ControlAgent(object):
         
         self.configs = []
         
-        self.default_conf = {
+        self.all_config = {
             "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30,30,300),
             "ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD": (-30,100,1000),
             "ShouldBidForAssemblyDecision.WEIGHT_STEPS": (-100,-3, 5),
@@ -80,6 +80,21 @@ class ControlAgent(object):
             "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT" : (1,4,10),
         }
 
+        self.conf_to_adjust = {
+            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 1.5),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT": (-10, -2.1, 10),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 10, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-100, -10, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, -30, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -30, 10),
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 5, 17),
+            "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
+            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD": (-2000, 300, -2000),
+            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT": (1, 4, 10),
+        }
+
     def _sim_end_callback(self, sim_end):
         """
 
@@ -128,7 +143,7 @@ class ControlAgent(object):
 
     def _read_config(self):
         res = {}
-        for key in self.default_conf.keys():
+        for key in self.conf_to_adjust.keys():
             res[key] = rospy.get_param(key)
 
         return res
@@ -137,12 +152,12 @@ class ControlAgent(object):
         new_config = {}
 
         for key, value in config.iteritems():
-            range = self.default_conf[key][2] - self.default_conf[key][0]
+            range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
             max_mutation = 0.05 * range
 
             value += random.uniform(-max_mutation, max_mutation)
-            value = max(self.default_conf[key][0], value)
-            value = min(self.default_conf[key][2], value)
+            value = max(self.conf_to_adjust[key][0], value)
+            value = min(self.conf_to_adjust[key][2], value)
 
             new_config[key] = value
 
