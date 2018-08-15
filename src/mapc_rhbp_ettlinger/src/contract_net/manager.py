@@ -87,6 +87,8 @@ class ContractNetManager(object):
         ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager start---------------------------",
                         self._task_type)
 
+        self.start_time = rospy.get_rostime()
+
         self.reset_manager()
 
         # Inject a new Id and the deadline for the request
@@ -202,9 +204,10 @@ class ContractNetManager(object):
                            self._id, str([assignment.bid.agent_name for assignment in self._assignments]))
 
             self._on_task_acknowledged(self._acknowledgements[0].id)
+            time_passed = (rospy.get_rostime() - self.start_time).to_sec()
             ettilog.loginfo(
-                "ContractNetManager(%s):: ---------------------------Manager stop---------------------------",
-                self._task_type)
+                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
+                self._task_type, time_passed)
             return True
         else:
             # If not all assignments got acknowledged, Stop the whole task and end coordination.
@@ -215,9 +218,11 @@ class ContractNetManager(object):
                                 self._acknowledgements]))
 
             self._pub_task_stop.publish(TaskStop(id=self._id, reason='acknowledgements failed'))
+
+            time_passed = (rospy.get_rostime() - self.start_time).to_sec()
             ettilog.loginfo(
-                "ContractNetManager(%s):: ---------------------------Manager stop---------------------------",
-                self._task_type)
+                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
+                self._task_type, time_passed)
             return False
 
     @abstractmethod
