@@ -90,6 +90,8 @@ class MassimRhbpComponents(object):
                 indicator=1.0,
                 sensor_type=float
             ))
+        self._gathering_network.add_precondition(
+            Negation(self._global_rhbp_components.is_forever_exploring_agent_cond))
 
         ######################## HOARDING Network Behaviour ########################
         self._hoarding_network = HoardingNetworkBehaviour(
@@ -203,6 +205,7 @@ class MassimRhbpComponents(object):
         self.dismantle_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
         self.dismantle_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
         self.dismantle_network.add_precondition(self._global_rhbp_components.opponent_well_exists_cond)
+        self.dismantle_network.add_precondition(Negation(self._global_rhbp_components.is_forever_exploring_agent_cond))
 
         self.dismantle_network.add_effect(
             effect=Effect(
@@ -213,10 +216,16 @@ class MassimRhbpComponents(object):
         )
 
         ####################### Find Well Location Network Behaviour ########################
+        if self._agent_name in ["agentA1", "agentB2", "agentB3", "agentB4"]:
+            find_well_exploration_decision =  ExploreCornersDecision(
+                self._self_organisation_provider.so_buffer, agent_name=self._agent_name)
+        else:
+            find_well_exploration_decision = self.exploration_network.exploration_mechanism
+
         self.find_well_location_network_behaviour = ExplorationNetworkBehaviour(
             name=self._agent_name + '/welllocation',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=ExploreCornersDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name),
+            exploration_mechanism=find_well_exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             global_rhbp_components=self._global_rhbp_components,
@@ -225,6 +234,10 @@ class MassimRhbpComponents(object):
         self.find_well_location_network_behaviour.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
         self.find_well_location_network_behaviour.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
         self.find_well_location_network_behaviour.add_precondition(self._global_rhbp_components.enough_massium_to_build_well_cond)
+        self.find_well_location_network_behaviour.add_precondition(Disjunction(
+            Negation(self._global_rhbp_components.can_fit_more_ingredients_cond),
+            self._global_rhbp_components.is_forever_exploring_agent_cond
+        ))
 
         self.find_well_location_network_behaviour.add_effect(
             Effect(

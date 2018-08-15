@@ -88,3 +88,16 @@ class OldestCellLastSeenSensor(GradientSensor):
 
         super(OldestCellLastSeenSensor, self).__init__(name, self.discovery_progress_decision, thread, time,
                                                        initial_value, sensor_type)
+
+class ForeverExploringAgentSensor(Sensor):
+
+    def __init__(self, agent_name, name=None, optional=False, initial_value=None):
+        super(ForeverExploringAgentSensor, self).__init__(name=name, optional=optional, initial_value=initial_value)
+        self.agent_name = agent_name
+
+    def sync(self):
+
+        result = self.agent_name in ["agentA1"]
+
+        self.update(result)
+        return super(ForeverExploringAgentSensor, self).sync()

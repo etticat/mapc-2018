@@ -18,7 +18,8 @@ from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.agent import StorableItemsLoadSensor
-from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor
+from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor, \
+    ForeverExploringAgentSensor
 from sensor.gather import SmallestGatherableItemVolumeSensor
 from sensor.general import FactorSensor, SubtractionSensor
 from sensor.movement import StepDistanceSensor
@@ -41,9 +42,9 @@ class GlobalRhbpComponents(object):
         self.init_load_sensors()
         self.init_battery_sensors()
         self.init_resource_sensor(agent_name=agent_name)
+        self.init_well_sensors(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
         self.init_exploration_sensor(agent_name=agent_name)
-        self.init_well_sensors(agent_name=agent_name)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(self.agent_name), Agent, self.callback_agent)
 
@@ -228,6 +229,15 @@ class GlobalRhbpComponents(object):
                 isMinimum=True))
 
     def init_task_sensor(self, agent_name):
+        self.is_forever_exploring_agent_sensor = ForeverExploringAgentSensor(
+            agent_name=self.agent_name,
+            name="is_forever_exploring_agent_sensor"
+        )
+
+        self.is_forever_exploring_agent_cond = Condition(
+            sensor=self.is_forever_exploring_agent_sensor,
+            activator=BooleanActivator()
+        )
 
 
         self.assemble_task_sensor = GradientSensor(
