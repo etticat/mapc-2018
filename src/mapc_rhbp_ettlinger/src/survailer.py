@@ -33,7 +33,7 @@ class ControlAgent(object):
             "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30,30,300),
             "ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD": (-30,100,1000),
             "ShouldBidForAssemblyDecision.WEIGHT_STEPS": (-100,-3, 5),
-            "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-1000, 0, 1000),
+            "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
 
             "ChooseStorageForHoardingDecision.WEIGHT_STEPS": (-10, -1, 10),
             "ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE": (-10, -1, 10),
@@ -93,6 +93,7 @@ class ControlAgent(object):
             "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
             "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
             "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
+            "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
         }
 
     def _sim_end_callback(self, sim_end):

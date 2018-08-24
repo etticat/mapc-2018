@@ -4,6 +4,7 @@ import time
 from diagnostic_msgs.msg import KeyValue
 from mapc_rhbp_ettlinger.msg import AgentConfig
 
+from behaviour_components.behaviours import Behaviour
 from threading import Thread
 
 from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
@@ -25,6 +26,7 @@ from provider.simulation_provider import SimulationProvider
 from global_rhbp_components import GlobalRhbpComponents
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
+import cProfile as profile
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.agent')
 
@@ -171,6 +173,11 @@ class RhbpAgent:
         :type request_action: RequestAction
         :return:
         """
+
+        self.prrrrrrrr = profile.Profile()
+        Behaviour.profiler = profile.Profile()
+        Behaviour.profiler.disable()
+
         self.request_time = rospy.get_rostime()
 
     def _callback_action_request_after_sensors(self, request_action):
@@ -194,7 +201,7 @@ class RhbpAgent:
 
         if RhbpAgent.BUILD_WELL_ENABLED:
             well_task = self.global_rhbp_components._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
-                                                                   request_action.agent)
+                                                                                          request_action.agent)
             if well_task is not None:
                 ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
                 self.global_rhbp_components.well_task_mechanism.start_task(well_task)
@@ -211,10 +218,19 @@ class RhbpAgent:
             else:
                 time.sleep(0.5)
 
+        self.prrrrrrrr.disable()
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
             ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
-                            self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+            try:
+                self.prrrrrrrr.dump_stats("stats-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
+            except Exception:
+                pass
+            try:
+                Behaviour.profiler.dump_stats("stats-behaviour-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
+            except Exception:
+                pass
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
