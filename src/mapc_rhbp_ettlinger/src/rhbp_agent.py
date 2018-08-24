@@ -175,7 +175,7 @@ class RhbpAgent:
         """
 
         self.prrrrrrrr = profile.Profile()
-        self.prrrrrrrr.enable()
+        self.prrrrrrrr.disable()
         Behaviour.profiler = profile.Profile()
         Behaviour.profiler.disable()
 
@@ -190,6 +190,8 @@ class RhbpAgent:
         :return:
         """
         # We run until an action is found. reset flag here
+
+        self.prrrrrrrr.enable()
         self._action_provider.reset_action_response_found()
 
         # If current agent is responsible for auction bidding, do so
