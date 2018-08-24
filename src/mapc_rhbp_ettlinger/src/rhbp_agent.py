@@ -175,6 +175,7 @@ class RhbpAgent:
         """
 
         self.prrrrrrrr = profile.Profile()
+        self.prrrrrrrr.enable()
         Behaviour.profiler = profile.Profile()
         Behaviour.profiler.disable()
 

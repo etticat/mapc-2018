@@ -193,7 +193,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
         combination_found = best_combination is not None
         time_passed = (rospy.get_rostime() - start_time).to_sec()
-        ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s", time_passed, str(combination_found))
+        ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s bids: %d", time_passed, str(combination_found), len(bids))
         if combination_found:
             bid_subset, combination, value, destination, assembly_instructions = best_combination
             items = {}
