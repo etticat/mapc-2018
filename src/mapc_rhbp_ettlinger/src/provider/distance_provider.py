@@ -45,6 +45,7 @@ class DistanceProvider(object):
         self._proximity = 0.01
         self._agent_pos = None
         self._agent_vision = 300
+        self._air_distance_cache = {}
         self._road_distance_cache = {}
         self._facility_positions = {}
         self._map = None
@@ -209,18 +210,24 @@ class DistanceProvider(object):
         :return:
         """
 
-        lat1 = radians(pos1.lat)
-        lon1 = radians(pos1.long)
-        lat2 = radians(pos2.lat)
-        lon2 = radians(pos2.long)
+        key = (pos1.lat, pos1.long, pos2.lat, pos2.long)
 
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
+        if key not in self._air_distance_cache:
 
-        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            lat1 = radians(pos1.lat)
+            lon1 = radians(pos1.long)
+            lat2 = radians(pos2.lat)
+            lon2 = radians(pos2.long)
 
-        return DistanceProvider.RADIUS_EARTH_METERS * c
+            dlon = lon2 - lon1
+            dlat = lat2 - lat1
+
+            a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+            c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            self._air_distance_cache[key] = DistanceProvider.RADIUS_EARTH_METERS * c
+
+
+        return self._air_distance_cache[key]
 
     def calculate_distance_street(self, a, b):
         """
