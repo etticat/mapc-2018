@@ -144,7 +144,7 @@ class DistanceProvider(object):
         self._initialised = False
         self._facility_positions.clear()
 
-    def calculate_distance(self, endPosition, start_position=None, can_fly=None):
+    def calculate_distance(self, endPosition, start_position=None, can_fly=None, estimate=False):
         """
         Calculates the distance between two position.
         Depending on the agent abilities, this returns either air or road distance
@@ -163,18 +163,19 @@ class DistanceProvider(object):
             air_distance = self.calculate_distance_air(start_position, endPosition)
             return air_distance
         else:
-            # if agent can't fly return road distance
-            try:
-                return self.calculate_distance_street(start_position, endPosition)
-            except LookupError as e:
-                ettilog.logerr(e)
-            except Exception as e:
-                ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                ettilog.logerr(traceback.format_exc())
+            if not estimate:
+                # if agent can't fly return road distance
+                try:
+                    return self.calculate_distance_street(start_position, endPosition)
+                except LookupError as e:
+                    ettilog.logerr(e)
+                except Exception as e:
+                    ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
+                    ettilog.logerr(traceback.format_exc())
 
             return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
 
-    def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None):
+    def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None, estimate=False):
         """
         Returns the step needed between two positions.
         :param can_fly:
@@ -191,7 +192,7 @@ class DistanceProvider(object):
             speed = self._speed
 
         # calculate the air distance
-        size_ = self.calculate_distance(end_position, start_position=start_position, can_fly=can_fly) / (speed * self._cell_size)
+        size_ = self.calculate_distance(end_position, start_position=start_position, can_fly=can_fly, estimate=estimate) / (speed * self._cell_size)
 
         # Round up to next int value.
         # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
@@ -435,7 +436,7 @@ class DistanceProvider(object):
             max_step_to_facility = 0
 
             for pos, speed, role in pos_speed_role_list:
-                steps = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False)
+                steps = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False, estimate=True)
                 max_step_to_facility = max(max_step_to_facility, steps)
 
             if max_step_to_facility < overall_max_step:
