@@ -230,7 +230,7 @@ class DistanceProvider(object):
         :return:
         """
 
-        key = str(a) + str(b)
+        key = (a, b)
 
         if key not in self._road_distance_cache.keys():
             self._road_distance_cache[key] = self._request_street_distance(a, b)
