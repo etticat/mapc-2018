@@ -131,6 +131,17 @@ class BestAgentAssemblyCombinationDecision(object):
             bid_array = self.bid_to_numpy_array(bid)
             bid_with_array.append((bid, bid_array))
 
+
+        workshop_distances = {}
+
+        workshops = self._facility_provider.workshops.values()
+
+        for bid in bids:
+            workshop_distances[bid] = {}
+            for facility in workshops:
+                workshop_distances[bid][facility] = self.distance_provider.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=bid.pos,
+                                can_fly=bid.role == "drone", estimate=True, speed=bid.speed)
+
         start_time = rospy.get_rostime()
 
         prrrrrrrr = profile.Profile()
@@ -163,10 +174,20 @@ class BestAgentAssemblyCombinationDecision(object):
                     if len(combination) >= BestAgentAssemblyCombinationDecision.MIN_ITEMS or desperate:
 
                         # The number of step until all agents can be at the closest workshop
-                        pos_speed_role = [(bid.pos, bid.speed, bid.role) for bid in bid_subset]
-                        workshops = self._facility_provider.workshops.values()
-                        max_step_count, destination = self.distance_provider.get_steps_to_closest_facility(pos_speed_role,
-                                                                                                           workshops)
+                        max_step_count = np.inf
+                        destination = None
+
+                        for workshop in workshops:
+                            workshop_distance = -np.inf
+
+                            for bid in bid_subset:
+                                distance = workshop_distance[bid][workshop]
+                                workshop_distance = max(workshop_distance, distance)
+
+                            if workshop_distance < max_step_count:
+                                max_step_count = workshop_distance
+                                destination = workshop
+
 
                         # If max nr of steps is too high, ignore combination
                         if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS and not desperate:

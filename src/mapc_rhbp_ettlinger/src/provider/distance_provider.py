@@ -434,20 +434,3 @@ class DistanceProvider(object):
     @property
     def agent_vision(self):
         return self._agent_vision
-
-    def get_steps_to_closest_facility(self, pos_speed_role_list, facility_list):
-        best_facility = None
-        overall_max_step = np.inf
-
-        for facility in facility_list:
-            max_step_to_facility = 0
-
-            for pos, speed, role in pos_speed_role_list:
-                steps = self.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=pos, can_fly=False, estimate=True)
-                max_step_to_facility = max(max_step_to_facility, steps)
-
-            if max_step_to_facility < overall_max_step:
-                overall_max_step = max_step_to_facility
-                best_facility = facility
-
-        return overall_max_step, best_facility
