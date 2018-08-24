@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import re
+import time
 
 from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.msg import StockItem
@@ -14,6 +15,7 @@ from decisions.main_assemble_agent import MainAssembleAgentDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
+import cProfile as profile
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
@@ -131,6 +133,10 @@ class BestAgentAssemblyCombinationDecision(object):
 
         start_time = rospy.get_rostime()
 
+        prrrrrrrr = profile.Profile()
+        prrrrrrrr.disable()
+        prrrrrrrr.enable()
+
         # If min number of agents bid for assembly try all combinations
         if len(bid_with_array) >= BestAgentAssemblyCombinationDecision.MIN_AGENTS:
             # Go through all combinations
@@ -202,6 +208,8 @@ class BestAgentAssemblyCombinationDecision(object):
                 items = CalcUtil.dict_sum(items, CalcUtil.dict_from_string_list(bid.items))
                 roles += bid.role
 
+
+        prrrrrrrr.dump_stats("stats-assembly-chooser-%.2fs---%f.pstat"%(time_passed, time.time()))
 
         return best_combination
 
