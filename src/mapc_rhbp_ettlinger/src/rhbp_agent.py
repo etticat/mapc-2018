@@ -34,7 +34,7 @@ class RhbpAgent:
     Main class of an agent, taking care of the main interaction with the mac_ros_bridge
     """
 
-    MAX_DECISION_MAKING_TIME = 7
+    MAX_DECISION_MAKING_TIME = 14
     BUILD_WELL_ENABLED = False
 
     def __init__(self):

@@ -26,6 +26,8 @@ class ControlAgent(object):
         self.pub_config = rospy.Publisher("/agentConfig", AgentConfig, queue_size=10)
         
         self.configs = []
+        self.sim_start = None
+
         
         self.all_config = {
             "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30,30,300),
@@ -81,18 +83,16 @@ class ControlAgent(object):
         }
 
         self.conf_to_adjust = {
-            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 1.5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT": (-10, -2.1, 10),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 10, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-100, -10, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, -30, 100),
+            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 2),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 100, 1000),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-50, -4, 5),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, 30, 100),
             "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -30, 10),
-            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 5, 17),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -2, 10),
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 7, 17),
             "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
             "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
-            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD": (-2000, 300, -2000),
-            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT": (1, 4, 10),
+            "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
         }
 
     def _sim_end_callback(self, sim_end):
@@ -123,9 +123,9 @@ class ControlAgent(object):
             rospy.set_param(key, value)
 
         fh = open("results.txt", "a")
-        fh.write(str(fitness) + ">>>")
         for key, value in current_config.iteritems():
             fh.write(key +":" + str(value) + ",")
+        fh.write("sim_start:" + str(self.sim_start))
         fh.write("\n")
         fh.close()
 
@@ -138,6 +138,7 @@ class ControlAgent(object):
         """
 
         rospy.logerr("Starting simulation: %s (%s)", sim_start.map, sim_start.simulation_id)
+        self.sim_start = sim_start
         self.current_config = self._read_config()
 
 

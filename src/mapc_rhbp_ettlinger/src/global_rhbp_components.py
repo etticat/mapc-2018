@@ -201,7 +201,7 @@ class GlobalRhbpComponents(object):
         # Recharging has effect on charge_behaviour sensor
         self.recharge_effect = Effect(
             sensor_name=self.charge_sensor.name,
-            indicator=0.3, # It fails 30% of time. At least in test config
+            indicator=0.001, # It fails often. Only do when no other choice
             sensor_type=float)
 
         self.charge_behaviour_effect = Effect(

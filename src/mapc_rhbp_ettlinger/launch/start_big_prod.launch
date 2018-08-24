@@ -252,7 +252,7 @@
     <param name="ShouldBidForAssemblyDecision.WEIGHT_LOAD" type="double" value="30"/>
     <param name="ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD" type="double" value="100"/>
     <param name="ShouldBidForAssemblyDecision.WEIGHT_STEPS" type="double" value="-3"/>
-    <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="0"/>
+    <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="-15"/>
 
     <param name="ChooseStorageForHoardingDecision.WEIGHT_STEPS"  value="-1" type="double"/>
     <param name="ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE"  value="-1" type="double"/>
@@ -295,8 +295,8 @@
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION"  value="30" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS"  value="-3" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-30" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="5" type="int"/>
-    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="1" type="int"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="7" type="int"/>
+    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="2" type="int"/>
     <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS"  value="10" type="int"/>
     <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>

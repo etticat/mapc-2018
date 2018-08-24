@@ -20,7 +20,7 @@ class ShouldBidForAssemblyDecision(object):
     WEIGHT_INGREDIENT_LOAD = 100
     WEIGHT_STEPS = -3 # In production this should be way smaller (Because close ones should be preferred)
 
-    ACTIVATION_THRESHOLD = 0
+    ACTIVATION_THRESHOLD = -15
 
     def __init__(self, agent_name, role):
         self._agent_name = agent_name
@@ -86,18 +86,22 @@ class ShouldBidForAssemblyDecision(object):
             ettilog.loginfo("ShouldBidForAssembly(%s):: not initialized", self._agent_name)
             return None
 
-        activation = self._max_load - self._load
+        activation = -(self._max_load - self._load)
 
-        return TaskBid(
-            id=request.id,
-            bid=-activation,
-            agent_name=self._agent_name,
-            items=self._product_provider.get_item_list(),
-            role=self.role,
-            pos=self._agent_info_provider.pos,
-            capacity=self._product_provider.load_free,
-            skill=self._agent_info_provider.skill,
-            speed=self._distance_provider.speed,
-            finished_product_factor=self._product_provider.finished_product_load_factor(),
-            request=request
-        )
+        if activation >= ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD:
+
+            return TaskBid(
+                id=request.id,
+                bid=activation,
+                agent_name=self._agent_name,
+                items=self._product_provider.get_item_list(),
+                role=self.role,
+                pos=self._agent_info_provider.pos,
+                capacity=self._product_provider.load_free,
+                skill=self._agent_info_provider.skill,
+                speed=self._distance_provider.speed,
+                finished_product_factor=self._product_provider.finished_product_load_factor(),
+                request=request
+            )
+        else:
+            return None

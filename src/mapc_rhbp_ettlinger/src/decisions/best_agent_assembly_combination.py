@@ -22,15 +22,16 @@ class BestAgentAssemblyCombinationDecision(object):
     """
     Selects the combination of agents that together can perform the most valuable assembly tasks
     """
-    MIN_ITEMS = 5
+    WEIGHT_AGENT_BID = 4
+    MIN_ITEMS = 3
     PREFERRED_AGENT_COUNT = 4
     PRIORITY_EXPONENT = 1  # [ .05 - 10]
     WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
     WEIGHT_PRIORITY = 100
-    WEIGHT_NUMBER_OF_AGENTS = -10
+    WEIGHT_NUMBER_OF_AGENTS = -4
     WEIGHT_PRIORITISATION_ACTIVATION = 30
-    WEIGHT_IDLE_STEPS = -3
-    WEIGHT_MAX_STEP_COUNT = -100
+    WEIGHT_IDLE_STEPS = -1
+    WEIGHT_MAX_STEP_COUNT = -2
 
     MAX_AGENTS = 7
     MIN_AGENTS = 1
@@ -119,11 +120,16 @@ class BestAgentAssemblyCombinationDecision(object):
 
         finished_item_priority = self.finished_items_priority_dict()
 
+        best_combination_activation = -np.inf
+        best_combination = None
+
         # Create numpy arrays of items of each bid for faster calculation
         bid_with_array = []
         for bid in bids:
             bid_array = self.bid_to_numpy_array(bid)
             bid_with_array.append((bid, bid_array))
+
+        start_time = rospy.get_rostime()
 
         # If min number of agents bid for assembly try all combinations
         if len(bid_with_array) >= BestAgentAssemblyCombinationDecision.MIN_AGENTS:
@@ -145,7 +151,10 @@ class BestAgentAssemblyCombinationDecision(object):
                     # Get the best combination to build with the current subset
                     combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority)
 
-                    if len(combination) >= BestAgentAssemblyCombinationDecision.MIN_ITEMS:
+                    # If no agent has space for many more items, the combination is desperate
+                    desperate = sum([bid.bid < -8 for bid in bid_subset]) <= 1
+
+                    if len(combination) >= BestAgentAssemblyCombinationDecision.MIN_ITEMS or desperate:
 
                         # The number of step until all agents can be at the closest workshop
                         pos_speed_role = [(bid.pos, bid.speed, bid.role) for bid in bid_subset]
@@ -154,7 +163,7 @@ class BestAgentAssemblyCombinationDecision(object):
                                                                                                            workshops)
 
                         # If max nr of steps is too high, ignore combination
-                        if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS:
+                        if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS and not desperate:
                             continue
 
                         # Number of steps agents will have to wait at storage until the last agent arrives
@@ -162,14 +171,35 @@ class BestAgentAssemblyCombinationDecision(object):
 
                         prioritisation_activation = self.item_list_activation(combination,
                                                                               priorities=finished_item_priority)
+                        # If prioritisation is negative -> do not assemble
+                        if prioritisation_activation <= 0:
+                            continue
+
+                        # Number of steps agents will have to wait at storage until the last agent arrives
+                        agent_bid =  sum([bid.bid for bid in bid_subset])
 
                         value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
-                                                      number_of_agents)
+                                                      number_of_agents, agent_bid)
 
-                        if value > BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD:
-                            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bids, combination)
-                            return (bid_subset, combination, value, destination, assembly_instructions)
-        return None
+                        if value > best_combination_activation:
+                            # TODO: Timeout
+                            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bid_subset, combination)
+                            rospy.logerr("assembly instructions: %s", str(assembly_instructions))
+                            if assembly_instructions is not None:
+                                best_combination_activation = value
+                                best_combination = (bid_subset, combination, value, destination, assembly_instructions)
+
+                    time_passed = (rospy.get_rostime() - start_time).to_sec()
+        if best_combination is not None:
+            bid_subset, combination, value, destination, assembly_instructions = best_combination
+            items = {}
+            roles = []
+            for bid in bid_subset:
+                items = CalcUtil.dict_sum(items, CalcUtil.dict_from_string_list(bid.items))
+                roles += bid.role
+
+
+        return best_combination
 
     def init_finished_products(self):
         """
@@ -265,7 +295,7 @@ class BestAgentAssemblyCombinationDecision(object):
             res[key] = priority ** BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT  # Square it to really emphasize the importance of items with few
         return res
 
-    def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents):
+    def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents, agent_bid):
         """
         Returns an activation value rating a combination of items to assemble
         :param max_step_count:
@@ -277,7 +307,8 @@ class BestAgentAssemblyCombinationDecision(object):
         return max_step_count * BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT + \
                idle_steps * BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS + \
                prioritisation_activation * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION + \
-               number_of_agents * BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS
+               number_of_agents * BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS + \
+               agent_bid *  BestAgentAssemblyCombinationDecision.WEIGHT_AGENT_BID
 
     def bid_to_numpy_array(self, bid):
         """
@@ -311,7 +342,8 @@ class BestAgentAssemblyCombinationDecision(object):
 
         for item in item_list:
             occurances[item] = occurances.get(item, -1) + 1
-            res += (priorities[item] -1) * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY
+            # Take negative priorities and treat them like 0
+            res += max((priorities[item] -1), 0) * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY
 
         return res
 
