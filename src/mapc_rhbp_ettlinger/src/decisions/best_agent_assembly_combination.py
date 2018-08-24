@@ -139,7 +139,7 @@ class BestAgentAssemblyCombinationDecision(object):
         for bid in bids:
             workshop_distances[bid] = {}
             for facility in workshops:
-                [bid.aget_name][facility.name] = self.distance_provider.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=bid.pos,
+                workshop_distances[bid][facility] = self.distance_provider.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=bid.pos,
                                 can_fly=bid.role == "drone", estimate=True, speed=bid.speed)
 
         start_time = rospy.get_rostime()
@@ -181,7 +181,7 @@ class BestAgentAssemblyCombinationDecision(object):
                             workshop_distance = -np.inf
 
                             for bid in bid_subset:
-                                distance = workshop_distance[bid.aget_name][workshop.name]
+                                distance = workshop_distances[bid][workshop]
                                 workshop_distance = max(workshop_distance, distance)
 
                             if workshop_distance < max_step_count:
