@@ -96,6 +96,9 @@ class BestAgentAssemblyCombinationDecision(object):
         BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD = rospy.get_param(
             "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD",
             BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD)
+        BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT = rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT",
+            BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT)
 
     def _planner_goal_callback(self, stock_item):
         """
