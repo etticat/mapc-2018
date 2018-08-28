@@ -24,6 +24,7 @@ class BestAgentAssemblyCombinationDecision(object):
     """
     Selects the combination of agents that together can perform the most valuable assembly tasks
     """
+    DECISION_TIMEOUT = 10
     WEIGHT_AGENT_BID = 4
     MIN_ITEMS = 3
     PREFERRED_AGENT_COUNT = 4
@@ -143,6 +144,7 @@ class BestAgentAssemblyCombinationDecision(object):
                                 can_fly=bid.role == "drone", estimate=True, speed=bid.speed)
 
         start_time = rospy.get_rostime()
+        time_passed = 0
 
         prrrrrrrr = profile.Profile()
         prrrrrrrr.disable()
@@ -217,20 +219,15 @@ class BestAgentAssemblyCombinationDecision(object):
                                 best_combination = (bid_subset, combination, value, destination, assembly_instructions)
 
                     time_passed = (rospy.get_rostime() - start_time).to_sec()
+                    if time_passed > BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT:
+                        break
+                if time_passed > BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT:
+                    break
 
         combination_found = best_combination is not None
         time_passed = (rospy.get_rostime() - start_time).to_sec()
         ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s bids: %d", time_passed, str(combination_found), len(bids))
-        if combination_found:
-            bid_subset, combination, value, destination, assembly_instructions = best_combination
-            items = {}
-            roles = []
-            for bid in bid_subset:
-                items = CalcUtil.dict_sum(items, CalcUtil.dict_from_string_list(bid.items))
-                roles += bid.role
-
-
-        prrrrrrrr.dump_stats("stats-assembly-chooser-%.2fs---%f.pstat"%(time_passed, time.time()))
+        # prrrrrrrr.dump_stats("stats-assembly-chooser-%.2fs---%f.pstat"%(time_passed, time.time()))
 
         return best_combination
 
