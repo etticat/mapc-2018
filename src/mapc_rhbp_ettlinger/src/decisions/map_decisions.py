@@ -62,10 +62,14 @@ class MapDecision(DecisionPattern):
         # Reset variables when simulation ends
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart, self.sim_end_callback)
 
+        buffer.register_listener(self.target_frames, self.process_so_message)
+
 
     def sim_end_callback(self, sim_end=None):
         self.environment_array = None
         self.value = None
+        self.simple_size_x = None
+        self.simple_size_y = None
 
     def calc_value(self):
         """
@@ -73,39 +77,45 @@ class MapDecision(DecisionPattern):
         :return: maximum number
         """
 
-        sizex = self.distance_provider.total_distance_x
-        sizey = self.distance_provider.total_distance_y
-
-        if sizex == 0 or sizey == 0:
+        if self.distance_provider.total_distance_x == 0 or self.distance_provider.total_distance_y == 0:
             rospy.logerr("MapDecision:: Could not create map. distance provider not initialized yet")
             return None
 
-        so_messages = self._buffer.agent_set(self.target_frames, include_own=True)
 
-        simple_size_x = int(sizex / self.granulariy)
-        simple_size_y = int(sizey / self.granulariy)
+        self.simple_size_x = int(self.distance_provider.total_distance_x / self.granulariy)
+        self.simple_size_y = int(self.distance_provider.total_distance_y / self.granulariy)
 
         # create the map if it has not existed yet
         if self.environment_array is None:
-            self.environment_array = np.zeros([simple_size_x, simple_size_y, ])
+            self.init_environment_array()
 
-        # Go through all soMessages
-        for so_message in so_messages:
-            # only take the ones into account that have not been processed yet.
-            if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
-                mask = self.generate_round_array_mask(simple_size_x, simple_size_y,
-                                                      so_message.p.x / self.granulariy, so_message.p.y / self.granulariy,
-                                                      so_message.diffusion / self.granulariy)
-                if self.mode == MapDecision.MODE_SEEN_COUNT:
-                    self.environment_array[mask] += 1
-                elif self.mode == MapDecision.MODE_OLDEST_VISITED:
-                    self.environment_array = np.maximum(mask * so_message.ev_stamp.secs, self.environment_array)
-                else:
-                    rospy.logerr("MapDecision:: Invalid mode %s", str(self.mode))
-
-        self.last_messages = [msg.p.z for msg in so_messages]
+            so_messages = self._buffer.agent_set(self.target_frames, include_own=True)
+            # Go through all soMessages when initialising it for the first time
+            for so_message in so_messages:
+                # only take the ones into account that have not been processed yet.
+                self.process_so_message(so_message)
 
         return [self.environment_array, self.state]
+
+    def process_so_message(self, so_message):
+
+        # If the map doesnt exist yet, return without doing anything
+        if self.environment_array is None:
+            return
+
+        if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
+            mask = self.generate_round_array_mask(self.simple_size_x, self.simple_size_y,
+                                                  so_message.p.x / self.granulariy, so_message.p.y / self.granulariy,
+                                                  so_message.diffusion / self.granulariy)
+            if self.mode == MapDecision.MODE_SEEN_COUNT:
+                self.environment_array[mask] += 1
+            elif self.mode == MapDecision.MODE_OLDEST_VISITED:
+                self.environment_array = np.maximum(mask * so_message.ev_stamp.secs, self.environment_array)
+            else:
+                rospy.logerr("MapDecision:: Invalid mode %s", str(self.mode))
+
+    def init_environment_array(self):
+        self.environment_array = np.zeros([self.simple_size_x, self.simple_size_y, ])
 
     def create_message(self, val):
         """
