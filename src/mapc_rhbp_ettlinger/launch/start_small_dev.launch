@@ -125,5 +125,5 @@
     <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS"  value="10" type="int"/>
     <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT"  value="10" type="double"/>
+    <param name="BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT"  value="17" type="double"/>
 </launch>
