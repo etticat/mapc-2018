@@ -144,6 +144,10 @@ class ContractNetManager(object):
         if assignments is None or len(assignments) == 0:
             ettilog.loginfo("ContractNetManager(%s):: No useful bid combination found in %d bids", self._task_type,
                             len(self._bids))
+            time_passed = (rospy.get_rostime() - self.start_time).to_sec()
+            ettilog.loginfo(
+                "ContractNetManager(%s):: ---------------------------Manager failed: %.2f seconds---------------------------",
+                self._task_type, time_passed)
             return False
 
         ettilog.loginfo("ContractNetManager(%s):: Bids processed: Accepted bids from %s", self._task_type,
