@@ -95,30 +95,30 @@ class MassimRhbpComponents(object):
             Negation(self._global_rhbp_components.is_forever_exploring_agent_cond))
 
         ######################## HOARDING Network Behaviour ########################
-        self._hoarding_network = HoardingNetworkBehaviour(
-            name=self._agent_name + '/hoarding',
-            plannerPrefix=self._agent_name,
-            agent_name=self._agent_name,
-            priority=2,
-            global_rhbp_components=self._global_rhbp_components,
-            max_parallel_behaviours=1)
-
-        # Only hoard when stock is full
-        self._hoarding_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
-
-        # Only hoard when there is no task assigned
-        self._hoarding_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
-
-        # Only hoard if there are finished products, that need to be stored
-        self._hoarding_network.add_precondition(self._global_rhbp_components.has_finished_products_to_store)
-
-        # TODO: This effect is false. With the correct effect its really hard to make the planner do exactly what we want
-        self._hoarding_network.add_effect(
-            Effect(
-                sensor_name=self._global_rhbp_components.load_factor_sensor.name,
-                indicator=1.0,
-                sensor_type=float
-            ))
+        # self._hoarding_network = HoardingNetworkBehaviour(
+        #     name=self._agent_name + '/hoarding',
+        #     plannerPrefix=self._agent_name,
+        #     agent_name=self._agent_name,
+        #     priority=2,
+        #     global_rhbp_components=self._global_rhbp_components,
+        #     max_parallel_behaviours=1)
+        #
+        # # Only hoard when stock is full
+        # self._hoarding_network.add_precondition(Negation(self._global_rhbp_components.can_fit_more_ingredients_cond))
+        #
+        # # Only hoard when there is no task assigned
+        # self._hoarding_network.add_precondition(self._global_rhbp_components.has_no_task_assigned_cond)
+        #
+        # # Only hoard if there are finished products, that need to be stored
+        # self._hoarding_network.add_precondition(self._global_rhbp_components.has_finished_products_to_store)
+        #
+        # # TODO: This effect is false. With the correct effect its really hard to make the planner do exactly what we want
+        # self._hoarding_network.add_effect(
+        #     Effect(
+        #         sensor_name=self._global_rhbp_components.load_factor_sensor.name,
+        #         indicator=1.0,
+        #         sensor_type=float
+        #     ))
 
         ####################### Assembly Network Behaviour ########################
         self._assembly_network = AssembleNetworkBehaviour(
