@@ -174,7 +174,6 @@ class RhbpAgent:
         :return:
         """
 
-        DebugUtils.instant_find_resources(self._agent_name)
         self.prrrrrrrr = profile.Profile()
         self.prrrrrrrr.disable()
         Behaviour.profiler = profile.Profile()
