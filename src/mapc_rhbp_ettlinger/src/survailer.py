@@ -81,6 +81,7 @@ class ControlAgent(object):
             "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD" :  (-2000, 300, -2000),
             "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT" : (1,4,10),
             "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT" : (1,10,100),
+            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
         }
 
         self.conf_to_adjust = {
@@ -96,6 +97,7 @@ class ControlAgent(object):
             "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
             "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
             "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT": (1, 10, 100),
+            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
         }
 
     def _sim_end_callback(self, sim_end):

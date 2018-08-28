@@ -100,6 +100,9 @@ class BestAgentAssemblyCombinationDecision(object):
         BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT = rospy.get_param(
             "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT",
             BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT)
+        BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER = rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER",
+            BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER)
 
     def _planner_goal_callback(self, stock_item):
         """
@@ -227,7 +230,7 @@ class BestAgentAssemblyCombinationDecision(object):
                         prioritisation_activation = self.item_list_activation(combination,
                                                                               priorities=finished_item_priority)
                         # If prioritisation is negative -> do not assemble
-                        if prioritisation_activation <= 0:
+                        if prioritisation_activation < 0:
                             continue
 
                         # Number of steps agents will have to wait at storage until the last agent arrives

@@ -184,4 +184,5 @@
     <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
     <param name="BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT"  value="17" type="double"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER"  value="17" type="double"/>
 </launch>
