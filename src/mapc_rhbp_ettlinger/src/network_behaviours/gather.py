@@ -63,3 +63,10 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
         super(GatheringNetworkBehaviour, self).stop()
         # Deleting task and cleaning up goals
         self._global_rhbp_components.gather_decision_mechanism.end_gathering()
+    def do_step(self):
+        """
+        Pick best gather option each step
+        :return:
+        """
+        self._global_rhbp_components.gather_decision_mechanism.calc_value()
+        super(GatheringNetworkBehaviour, self).do_step()

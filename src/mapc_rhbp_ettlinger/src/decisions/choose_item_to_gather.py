@@ -92,6 +92,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         else:
             self._product_provider.remove_gathering_goal()
 
+        self.value = self._chosen_resource
         return [self._chosen_resource, self.state]
 
     def end_gathering(self):
