@@ -170,9 +170,9 @@ class DistanceProvider(object):
                     return self.calculate_distance_street(start_position, endPosition)
                 except LookupError as e:
                     ettilog.logerr(e)
+                    traceback.format_exc()
                 except Exception as e:
                     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
-                    ettilog.logerr(traceback.format_exc())
 
             return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
 
@@ -238,7 +238,7 @@ class DistanceProvider(object):
         :return:
         """
 
-        key = (a, b)
+        key = (a.long, b.long, a.lat, b.lat)
 
         if key not in self._road_distance_cache.keys():
             self._road_distance_cache[key] = self._request_street_distance(a, b)

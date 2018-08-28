@@ -113,7 +113,6 @@ class AssembleProductBehaviour(DecisionBehaviour):
                     # For all other error messages, wo just try again
                     pass
             self.check_errors()
-            rospy.logerr("Assemble: %d %d", self.error_count, self._get_assemble_step())
         elif self._last_action == "assist" and agent.last_action == "assist_assemble":
 
             if agent.last_action_result == "successful":
