@@ -2,7 +2,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
@@ -48,7 +48,7 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
 
         self.init_do_behaviour(self.gather_behviour)
 
-        self.gather_goal = GoalBase(
+        self.gather_goal = OfflineGoal(
             name='gather_goal',
             permanent=True,
             priority=50,

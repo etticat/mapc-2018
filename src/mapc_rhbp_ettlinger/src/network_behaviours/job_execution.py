@@ -1,6 +1,6 @@
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.job import DeliverJobBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
@@ -28,7 +28,7 @@ class DeliverJobNetworkBehaviour(GoAndDoNetworkBehaviour):
             sensor_name=global_rhbp_components.has_deliver_task_sensor.name,
             indicator=-1.0
         ))
-        self.delivery_goal = GoalBase(
+        self.delivery_goal = OfflineGoal(
             name='delivery_goal',
             permanent=True,
             priority=50,

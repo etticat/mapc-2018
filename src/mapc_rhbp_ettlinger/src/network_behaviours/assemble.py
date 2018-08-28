@@ -1,6 +1,6 @@
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.assemble import AssembleProductBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
@@ -34,7 +34,7 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        self.assemble_goal = GoalBase(
+        self.assemble_goal = OfflineGoal(
             name='assemble_goal',
             permanent=True,
             priority=100,

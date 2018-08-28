@@ -1,7 +1,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
