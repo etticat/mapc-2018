@@ -211,10 +211,12 @@ class RhbpAgent:
 
         manager_steps = 0
         time_passed = 0
+        step_res = None
+
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
             if self._sim_started:
-                self._manager.step(guarantee_decision=True)
+                step_res = self._manager.step(guarantee_decision=True)
 
                 manager_steps += 1
                 time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
@@ -224,8 +226,8 @@ class RhbpAgent:
         self.prrrrrrrr.disable()
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s, durations: %s",
+                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found, str(step_res))
             try:
                 self.prrrrrrrr.dump_stats("stats-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
             except Exception:
