@@ -90,7 +90,7 @@
 
 
     <param name="ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL"  value="1" type="double"/>
-    <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="50" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="95" type="double"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD"  value="-50" type="double"/>
     <param name="ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD"  value="0" type="double"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION"  value="0.2" type="double"/>

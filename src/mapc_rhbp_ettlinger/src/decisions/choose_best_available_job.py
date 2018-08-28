@@ -197,11 +197,11 @@ class ChooseBestAvailableJobDecision(object):
 
             # if we don't have all items but the job is really good (probably because of the fine), tell the assemblers
             # that the items of this job should be prefered.
-            if not has_all_items and activation > ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD:
+            if not has_all_items and percentile > 0.95:
                 activation_surpluss = activation - ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD
                 for item in job.items:
                     desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + \
-                            (activation_surpluss * item.amount * ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
+                            (item.amount)
 
         # Publish the desired finished products to all agents
         desired_stock = StockItem(entity="planner")
