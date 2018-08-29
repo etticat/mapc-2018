@@ -146,8 +146,12 @@ class ControlAgent(object):
         """
         free_mem =  commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
         free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
+        agent_mem_usage =  commands.getstatusoutput("ps aux | grep mac_ros_bridge | awk '{print $4}'")
+        bridge_mem_usage =  commands.getstatusoutput("ps aux | grep rhbp_agent.py | awk '{print $4}'")
         ettilog.logerr("Survailer:: Memory free %s", free_mem)
         ettilog.logerr("Survailer:: Swap free %s", free_swap)
+        ettilog.logerr("Survailer:: agent_mem_usage %s", agent_mem_usage)
+        ettilog.logerr("Survailer:: bridge_mem_usage %s", bridge_mem_usage)
 
         h = hpy()
 
