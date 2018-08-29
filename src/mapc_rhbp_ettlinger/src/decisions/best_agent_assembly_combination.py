@@ -165,9 +165,9 @@ class BestAgentAssemblyCombinationDecision(object):
         start_time = rospy.get_rostime()
         time_passed = 0
 
-        prrrrrrrr = profile.Profile()
-        prrrrrrrr.disable()
-        prrrrrrrr.enable()
+        # prrrrrrrr = profile.Profile()
+        # prrrrrrrr.disable()
+        # prrrrrrrr.enable()
 
         # If min number of agents bid for assembly try all combinations
         if len(bid_with_array) >= BestAgentAssemblyCombinationDecision.MIN_AGENTS:

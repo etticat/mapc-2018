@@ -27,7 +27,7 @@ from provider.simulation_provider import SimulationProvider
 from global_rhbp_components import GlobalRhbpComponents
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
-import cProfile as profile
+# import cProfile as profile
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.agent')
 
@@ -175,10 +175,10 @@ class RhbpAgent:
         :return:
         """
 
-        self.prrrrrrrr = profile.Profile()
-        self.prrrrrrrr.disable()
-        Behaviour.profiler = profile.Profile()
-        Behaviour.profiler.disable()
+        # self.prrrrrrrr = profile.Profile()
+        # self.prrrrrrrr.disable()
+        # Behaviour.profiler = profile.Profile()
+        # Behaviour.profiler.disable()
 
         self.request_time = rospy.get_rostime()
 
@@ -192,7 +192,7 @@ class RhbpAgent:
         """
         # We run until an action is found. reset flag here
 
-        self.prrrrrrrr.enable()
+        # self.prrrrrrrr.enable()
         self._action_provider.reset_action_response_found()
 
         # If current agent is responsible for auction bidding, do so
@@ -212,31 +212,30 @@ class RhbpAgent:
 
         manager_steps = 0
         time_passed = 0
-        step_res = None
 
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
             if self._sim_started:
-                step_res = self._manager.step(guarantee_decision=True)
+                self._manager.step(guarantee_decision=True)
 
                 manager_steps += 1
                 time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
             else:
                 time.sleep(0.5)
 
-        self.prrrrrrrr.disable()
+        # self.prrrrrrrr.disable()
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s, durations: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found, str(step_res))
-            try:
-                self.prrrrrrrr.dump_stats("stats-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
-            except Exception:
-                pass
-            try:
-                Behaviour.profiler.dump_stats("stats-behaviour-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
-            except Exception:
-                pass
+            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
+                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+            # try:
+                # self.prrrrrrrr.dump_stats("stats-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
+            # except Exception:
+            #     pass
+            # try:
+            #     Behaviour.profiler.dump_stats("stats-behaviour-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
+            # except Exception:
+            #     pass
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
