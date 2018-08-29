@@ -8,8 +8,8 @@
     <include file="$(find mapc_rhbp_ettlinger)/launch/graphhopper.launch">
         <arg name="initial_port" value="8989" />
     </include>
-    <include file="$(find mapc_rhbp_ettlinger)/launch/survailer.launch" pass_all_args="true">
-    </include>
+    <!--<include file="$(find mapc_rhbp_ettlinger)/launch/survailer.launch" pass_all_args="true">-->
+    <!--</include>-->
 
 
     <!-- Drones -->

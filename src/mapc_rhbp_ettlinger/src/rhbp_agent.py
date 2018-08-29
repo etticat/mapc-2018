@@ -2,6 +2,7 @@
 import time
 
 from diagnostic_msgs.msg import KeyValue
+from guppy import hpy
 from mapc_rhbp_ettlinger.msg import AgentConfig
 
 from behaviour_components.behaviours import Behaviour
@@ -240,6 +241,12 @@ class RhbpAgent:
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
             self._action_provider.send_action(action_type=Action.RECHARGE)
+
+
+
+        h = hpy()
+        rospy.logerr("Rhbpagent(%s):: Memory usage at step %d: %s", self._agent_name, request_action.simulation_step, h.heap())
+
 
 
 if __name__ == '__main__':

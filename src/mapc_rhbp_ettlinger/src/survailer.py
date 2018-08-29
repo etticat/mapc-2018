@@ -1,14 +1,16 @@
 #!/usr/bin/env python2
+import commands
 import random
 import time
 
 import rospy
-from mac_ros_bridge.msg import SimEnd, SimStart
+from mac_ros_bridge.msg import SimEnd, SimStart, RequestAction
 from mapc_rhbp_ettlinger.msg import AgentConfig
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from provider.stats_provider import StatsProvider
+from guppy import hpy
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
@@ -21,8 +23,6 @@ class ControlAgent(object):
         self.stas_provider = StatsProvider(agent_name=agent_name)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 
-        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
         self.pub_config = rospy.Publisher("/agentConfig", AgentConfig, queue_size=10)
         
         self.configs = []
@@ -85,20 +85,24 @@ class ControlAgent(object):
         }
 
         self.conf_to_adjust = {
-            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 2),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 100, 1000),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-50, -4, 5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, 30, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -2, 10),
-            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 7, 17),
-            "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
-            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
-            "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
-            "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
-            "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT": (1, 10, 100),
-            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
+            # "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 2),
+            # "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 100, 1000),
+            # "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-50, -4, 5),
+            # "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, 30, 100),
+            # "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
+            # "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -2, 10),
+            # "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 7, 17),
+            # "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
+            # "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
+            # "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
+            # "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
+            # "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT": (1, 10, 100),
+            # "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
         }
+
+        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._request_action_callback)
+        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
+        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
 
     def _sim_end_callback(self, sim_end):
         """
@@ -133,6 +137,19 @@ class ControlAgent(object):
         fh.write("sim_start:" + str(self.sim_start))
         fh.write("\n")
         fh.close()
+
+    def _request_action_callback(self, requestAction):
+        """
+
+        :param requestAction: RequestAction
+        :return:
+        """
+        free_mem =  commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
+        ettilog.logerr("Survailer:: Memory free %s", free_mem)
+
+        h = hpy()
+
+        rospy.logerr(h.heap())
 
     def _sim_start_callback(self, sim_start):
         """
