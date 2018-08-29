@@ -4,7 +4,7 @@
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 
     <!--Infrastructure Nodes-->
-    <node pkg="mapc_rhbp_ettlinger" type="survailer.py" name ="survailer_node" output="screen">
+    <node pkg="mapc_rhbp_ettlinger" type="survailer.py" name ="survailer_node" output="screen" respawn="true">
 
     </node>
 
