@@ -145,7 +145,9 @@ class ControlAgent(object):
         :return:
         """
         free_mem =  commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
+        free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
         ettilog.logerr("Survailer:: Memory free %s", free_mem)
+        ettilog.logerr("Survailer:: Swap free %s", free_swap)
 
         h = hpy()
 
