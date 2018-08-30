@@ -45,8 +45,6 @@ class MapDecision(DecisionPattern):
         :param ev_factor:
         :param ev_time:
         """
-        self.og_cache = {}
-        self.mask_cache = {}
         self.simulation_provider = SimulationProvider(agent_name=agent_name)
         self.granulariy = granulariy
         self.mode = mode
@@ -136,13 +134,9 @@ class MapDecision(DecisionPattern):
         :param r: the radius of the circle
         :return:
         """
-        if (size_x, size_y, x, y, r) in self.mask_cache:
-            return self.mask_cache[(size_x, size_y, x, y, r)]
-        if (x, size_x, y, size_y) not in self.og_cache:
-            self.og_cache[(x, size_x, y, size_y)] = np.ogrid[-x:size_x - x, -y:size_y - y]
-        y_og, x_og = self.og_cache[(x, size_x, y, size_y)]
+
+        y_og, x_og = np.ogrid[-x:size_x - x, -y:size_y - y]
         mask = x_og * x_og + y_og * y_og <= r * r
-        self.mask_cache[(size_x, size_y, x, y, r)] = mask
         return mask
 
 class PickClosestDestinationWithLowestValue(MapDecision):
