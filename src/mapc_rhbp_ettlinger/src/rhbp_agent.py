@@ -177,7 +177,6 @@ class RhbpAgent:
         # Behaviour.profiler.disable()
 
         self.request_time = rospy.get_rostime()
-        ettilog.logfatal("RhbpAgent(%s): Proider update start")
 
     def _callback_action_request_after_sensors(self, request_action):
         """
@@ -188,7 +187,6 @@ class RhbpAgent:
         :return:
         """
         # We run until an action is found. reset flag here
-        ettilog.logfatal("RhbpAgent(%s): Manager took start")
 
         # self.prrrrrrrr.enable()
         self._action_provider.reset_action_response_found()
