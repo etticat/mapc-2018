@@ -320,7 +320,7 @@ class DistanceProvider(object):
         :return:
         """
 
-        if use_in_facility_flag and start_position is not None:
+        if use_in_facility_flag and start_position is None:
             if self._in_facility:
                 if self._facility in self._facility_positions:
                     pos = self._facility_positions[self._facility]
