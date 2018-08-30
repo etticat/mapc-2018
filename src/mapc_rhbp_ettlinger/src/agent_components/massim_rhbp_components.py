@@ -3,7 +3,7 @@ from rospy.impl.registration import RegManager
 
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction, Conjunction
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from decisions.exploration_target import ExplorationDecision, ExploreCornersDecision
@@ -22,7 +22,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class MassimRhbpComponents(object):
 
-    def __init__(self, agent_name, global_rhbp_components):
+    def __init__(self, agent_name, global_rhbp_components, manager):
         """
         Manager that is responsible for all actions on the massim simulation
         :param agent_name:
@@ -31,6 +31,7 @@ class MassimRhbpComponents(object):
         """
         self._agent_name = agent_name
         self._global_rhbp_components = global_rhbp_components
+        self._manager = manager
 
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
@@ -278,24 +279,27 @@ class MassimRhbpComponents(object):
         """
 
         # Tasks need to be fulfilled
-        self.task_fulfillment_goal = GoalBase(
+        self.task_fulfillment_goal = OfflineGoal(
             name='task_fulfillment_goal',
             permanent=True,
             priority=200,
             planner_prefix=self._agent_name,
             conditions=[self._global_rhbp_components.has_no_task_assigned_cond])
+        self._manager.add_goal(self.task_fulfillment_goal)
 
         # We want to gather items otherwise
-        self._gather_goal = GoalBase(
+        self._gather_goal = OfflineGoal(
             name='fill_load_goal',
             permanent=True,
             priority=50,
             planner_prefix=self._agent_name,
             conditions=[self._global_rhbp_components.load_fullness_condition])
+        self._manager.add_goal(self._gather_goal)
 
         # We want to destroy all opposing wells
-        self._dismantle_goal = GoalBase(
+        self._dismantle_goal = OfflineGoal(
             name='dismantle_goal',
             permanent=True,
             planner_prefix=self._agent_name,
             conditions=[Negation(self._global_rhbp_components.opponent_well_exists_cond)])
+        self._manager.add_goal(self._dismantle_goal)

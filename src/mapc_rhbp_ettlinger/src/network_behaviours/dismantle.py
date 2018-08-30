@@ -1,7 +1,7 @@
 from behaviour_components.activators import GreedyActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
+from behaviour_components.goals import OfflineGoal
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
 from decisions.dismantle_well import ExistingOpponentWellsDecision
@@ -56,8 +56,9 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
         Initialise the exploration goal
         :return:
         """
-        self.goal = GoalBase(
+        self.goal = OfflineGoal(
             name='dismantle_goal',
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._global_rhbp_components.opponent_well_exists_cond)])
+        self.add_goal(self.goal)

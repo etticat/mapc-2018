@@ -2,7 +2,6 @@
 import time
 
 from diagnostic_msgs.msg import KeyValue
-from guppy import hpy
 from mapc_rhbp_ettlinger.msg import AgentConfig
 
 from behaviour_components.behaviours import Behaviour
@@ -68,7 +67,7 @@ class RhbpAgent:
         ettilog.loginfo("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
         self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
         self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name,
-                                                            global_rhbp_components=self.global_rhbp_components)
+                                    global_rhbp_components=self.global_rhbp_components, manager=self._manager)
         self._coordination_manager = None  # Will be initialised once simulation is started
         ettilog.loginfo("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
 
@@ -134,7 +133,6 @@ class RhbpAgent:
         :param sim_start:  the message
         :type sim_start: SimStart
         """
-        rospy.logerr("sim_start performed")
         self._init_config()
 
         if not self._sim_started:
@@ -146,8 +144,6 @@ class RhbpAgent:
                                                                       global_rhbp_components=self.global_rhbp_components,
                                                                       role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
-
-        rospy.logerr("sim_start performed done")
         self._sim_started = True
 
     def _sim_end_callback(self, sim_end):
@@ -181,6 +177,7 @@ class RhbpAgent:
         # Behaviour.profiler.disable()
 
         self.request_time = rospy.get_rostime()
+        ettilog.logfatal("RhbpAgent(%s): Proider update start")
 
     def _callback_action_request_after_sensors(self, request_action):
         """
@@ -191,6 +188,7 @@ class RhbpAgent:
         :return:
         """
         # We run until an action is found. reset flag here
+        ettilog.logfatal("RhbpAgent(%s): Manager took start")
 
         # self.prrrrrrrr.enable()
         self._action_provider.reset_action_response_found()
@@ -225,17 +223,10 @@ class RhbpAgent:
 
         # self.prrrrrrrr.disable()
         # If decision making took too long -> log
+        ettilog.logfatal("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
+                       self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.logerr("RhbpAgent(%s): Manager took too long: %.2fs for %d steps. Action found: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
-            # try:
-                # self.prrrrrrrr.dump_stats("stats-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
-            # except Exception:
-            #     pass
-            # try:
-            #     Behaviour.profiler.dump_stats("stats-behaviour-%s-%d-%.2fs.pstat"%(self._agent_name, request_action.simulation_step, time_passed))
-            # except Exception:
-            #     pass
+            pass
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
@@ -243,8 +234,6 @@ class RhbpAgent:
 
 
 
-        h = hpy()
-        rospy.logerr("Rhbpagent(%s):: Memory usage at step %d: %s", self._agent_name, request_action.simulation_step, h.heap())
 
 
 

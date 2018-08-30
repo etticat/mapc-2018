@@ -24,11 +24,11 @@ class ControlAgent(object):
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
 
         self.pub_config = rospy.Publisher("/agentConfig", AgentConfig, queue_size=10)
-        
+
         self.configs = []
         self.sim_start = None
 
-        
+
         self.all_config = {
             "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30,30,300),
             "ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD": (-30,100,1000),
@@ -45,7 +45,7 @@ class ControlAgent(object):
             "ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION": (0, 1.9, 10),
 
             "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL": (-10, 1, 50),
-            "ChooseBestAvailableJobDecision.BID_PERCENTILE": (30, 50, 90),
+            "ChooseBestAvailableJobDecision.BID_PERCENTILE": (30, 50, 99),
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD": (-1000, -50, 1000),
             "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
             "ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION": (0.0, 0.2, 4),
@@ -145,17 +145,15 @@ class ControlAgent(object):
         :return:
         """
         free_mem =  commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
-        free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
-        agent_mem_usage =  commands.getstatusoutput("ps aux | grep mac_ros_bridge | awk '{print $4}'")
-        bridge_mem_usage =  commands.getstatusoutput("ps aux | grep rhbp_agent.py | awk '{print $4}'")
+        # free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
+        # agent_mem_usage =  commands.getstatusoutput("ps aux | grep mac_ros_bridge | awk '{print $4}'")
+        # bridge_mem_usage =  commands.getstatusoutput("ps aux | grep rhbp_agent.py | awk '{print $4}'")
         ettilog.logerr("Survailer:: Memory free %s", free_mem)
-        ettilog.logerr("Survailer:: Swap free %s", free_swap)
-        ettilog.logerr("Survailer:: agent_mem_usage %s", agent_mem_usage)
-        ettilog.logerr("Survailer:: bridge_mem_usage %s", bridge_mem_usage)
+        # ettilog.logerr("Survailer:: Swap free %s", free_swap)
+        # ettilog.logerr("Survailer:: agent_mem_usage %s", agent_mem_usage)
+        # ettilog.logerr("Survailer:: bridge_mem_usage %s", bridge_mem_usage)
 
-        h = hpy()
-
-        rospy.logerr(h.heap())
+        pass
 
     def _sim_start_callback(self, sim_start):
         """

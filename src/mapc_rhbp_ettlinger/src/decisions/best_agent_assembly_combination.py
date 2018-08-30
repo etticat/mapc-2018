@@ -101,9 +101,9 @@ class BestAgentAssemblyCombinationDecision(object):
         BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT = rospy.get_param(
             "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT",
             BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT)
-        BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER = round(rospy.get_param(
+        BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER = int(round(rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER",
-            BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER))
+            BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER)))
 
     def _planner_goal_callback(self, stock_item):
         """

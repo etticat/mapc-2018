@@ -64,8 +64,8 @@ class ChooseBestAvailableJobDecision(object):
         ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL = rospy.get_param(
             "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL",
             ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL)
-        ChooseBestAvailableJobDecision.BID_PERCENTILE = rospy.get_param("ChooseBestAvailableJobDecision.BID_PERCENTILE",
-                                                                        ChooseBestAvailableJobDecision.BID_PERCENTILE)
+        ChooseBestAvailableJobDecision.BID_PERCENTILE = int(round(rospy.get_param(
+            "ChooseBestAvailableJobDecision.BID_PERCENTILE", ChooseBestAvailableJobDecision.BID_PERCENTILE)))
         ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD = rospy.get_param(
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD",
             ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD)
@@ -228,6 +228,9 @@ class ChooseBestAvailableJobDecision(object):
         :param job:
         :return:
         """
+        if len(self.factors) == 0:
+            return 0
+
         factor = np.percentile(self.factors, ChooseBestAvailableJobDecision.BID_PERCENTILE)
 
         ingredient_count = self.get_base_ingredient_count(job.items)
