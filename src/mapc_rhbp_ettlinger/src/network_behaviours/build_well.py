@@ -1,7 +1,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import OfflineGoal
+from behaviour_components.goals import GoalBase
 from behaviours.well import BuildWellBehaviour, FinishBuildWellBehaviour
 from common_utils import etti_logging
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
@@ -31,13 +31,12 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
         self.init_build_behaviour(global_rhbp_components)
         self.init_finish_build_behaviour(global_rhbp_components)
 
-        self.task_fulfillment_goal = OfflineGoal(
+        self.task_fulfillment_goal = GoalBase(
             name='task_fulfillment_goal',
             permanent=True,
             priority=200,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._global_rhbp_components.has_build_well_task_assigned_cond)])
-        self.add_goal(self.task_fulfillment_goal)
 
 
 

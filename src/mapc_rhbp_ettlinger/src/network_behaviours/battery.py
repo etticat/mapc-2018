@@ -1,7 +1,7 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction, Condition
-from behaviour_components.goals import OfflineGoal
+from behaviour_components.goals import GoalBase
 from behaviour_components.network_behavior import NetworkBehaviour
 from behaviours.generic_action import GenericActionBehaviour
 from behaviours.movement import GoToDestinationBehaviour
@@ -86,12 +86,11 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
         go_to_charging_station_behaviour.add_precondition(self._global_rhbp_components.require_charging_cond)
 
-        self.charge_goal = OfflineGoal(
+        self.charge_goal = GoalBase(
             name='charge_goal',
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._global_rhbp_components.require_charging_cond)])
-        self.add_goal(self.charge_goal)
 
     def apply_charging_restrictions(self, movement_behaviour):
         """
