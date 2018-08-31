@@ -37,6 +37,7 @@ class ChooseBestAvailableJobDecision(object):
     WEIGHT_TIME_OVER = -0.4
 
     def __init__(self, agent_name):
+        self.desired_finished_product_stock = {}
         self._init_config()
 
         self.coordinated_jobs = []
@@ -136,11 +137,11 @@ class ChooseBestAvailableJobDecision(object):
         best_activation = ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD
 
         # Get all items that agents have available for delivery and that are not already promised to other jobs
-        all_available_items = self._product_provider.get_agent_stock_items(types=[
+        all_available_items_for_missions = self._product_provider.get_agent_stock_items(types=[
             ProductProvider.STOCK_ITEM_TYPE_STOCK, ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
 
-        # create an array of default finished products that is filled later
-        desired_finished_product_stock = self.generate_default_desired_finished_product_stock()
+        # For regular jobs we do not use the items that are reserved for missions
+        all_available_items_for_job = CalcUtil.dict_diff(all_available_items_for_missions, self.desired_finished_product_stock, normalize_to_zero=True)
 
         for job in self.active_jobs:
 
@@ -159,21 +160,14 @@ class ChooseBestAvailableJobDecision(object):
             # Get all items that need to be fulfilled by the target storage
             job_items_from_storage = CalcUtil.dict_diff(job_items, job_items_from_agents)
 
-            job_activation = self.get_job_activation(job=job)
+            percentile = self.get_percentile(job)
 
-            # get the percentile of the job activation
-            percentile = float(sum(i <= job_activation for i in self.factors)) / len(self.factors)
-
-            # Check if all items can be found in agents and storages
-            has_all_items = CalcUtil.contains_items(all_available_items, job_items_from_agents)
 
             time_left = job.end - self._simulation_provider._step
             time_passed = self._simulation_provider._step - job.start
 
             ettilog.loginfo("%s, ", job.id)
             ettilog.loginfo("->percentile: %f, ", percentile)
-            ettilog.loginfo("->reward_quality: %f, ", job_activation)
-            ettilog.loginfo("->has_all_items: %s, ", str(has_all_items))
             ettilog.loginfo("->time_left: %f, ", time_left)
             ettilog.loginfo("->time_passed: %f, ", time_passed)
 
@@ -183,6 +177,14 @@ class ChooseBestAvailableJobDecision(object):
                 # The opponent might already do this job, therefore we bias against old jobs
                 activation += time_passed * ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED
 
+                # Check if all items can be found in agents and storages
+                has_all_items = CalcUtil.contains_items(all_available_items_for_job, job_items_from_agents)
+            else:
+
+                # Check if all items can be found in agents and storages
+                has_all_items = CalcUtil.contains_items(all_available_items_for_missions, job_items_from_agents)
+
+
             if time_left <= ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START:
                 # If less than 30 steps are available start biasing against this job as it will get harder and harder to finish it
                 activation += (ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START - time_left) * ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER
@@ -190,26 +192,18 @@ class ChooseBestAvailableJobDecision(object):
             ettilog.loginfo("activation: %f, ", activation)
 
             # if all items are available and job is better than all previous ones, pick this job
-            if has_all_items and activation > best_activation:
+            if has_all_items and activation > best_activation and percentile > 0.7:
                 best_activation = activation
                 job_to_try = job
                 items_to_take_from_storage = job_items_from_storage
 
-            # if we don't have all items but the job is really good (probably because of the fine), tell the assemblers
-            # that the items of this job should be prefered.
-            if not has_all_items and percentile > 0.95:
-                activation_surpluss = activation - ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD
-                for item in job.items:
-                    desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + \
-                            (item.amount)
-
-        # Publish the desired finished products to all agents
-        desired_stock = StockItem(entity="planner")
-        for key, value in desired_finished_product_stock.iteritems():
-            desired_stock.amounts.append(KeyIntValue(key=key, value=value))
-        self._pub_desired_finished_products.publish(desired_stock)
-
         return job_to_try, items_to_take_from_storage
+
+    def get_percentile(self, job):
+        job_activation = self.get_job_activation(job=job)
+        # get the percentile of the job activation
+        percentile = float(sum(i <= job_activation for i in self.factors)) / len(self.factors)
+        return percentile
 
     def generate_default_desired_finished_product_stock(self):
         """
@@ -280,6 +274,22 @@ class ChooseBestAvailableJobDecision(object):
                 # If job was removed (oponent was quicker, time is up, ...) -> Notify everyone to stop persuing it
                 self._pub_job_stop.publish(TaskStop(job_id=job.id, reason="Job was removed"))
 
+        # create an array of default finished products that is filled later
+        desired_finished_product_stock = self.generate_default_desired_finished_product_stock()
+        for job in all_jobs_new:
+            # Prioritise items that are needed for missions and auction jobs
+            percentile = self.get_percentile(job)
+            if job.type is not "job" and percentile > 0.90:
+                for item in job.items:
+                    desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + (item.amount)
+
+        # Publish the desired finished products to all agents
+        desired_stock = StockItem(entity="planner")
+        for key, value in desired_finished_product_stock.iteritems():
+            desired_stock.amounts.append(KeyIntValue(key=key, value=value))
+        self._pub_desired_finished_products.publish(desired_stock)
+
+        self.desired_finished_product_stock = desired_finished_product_stock
         self.active_jobs = all_jobs_new
 
     def process_auction_jobs(self, auction_jobs):

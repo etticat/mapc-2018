@@ -175,7 +175,10 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         max_value = max(priority_dict.values())
 
         for key, value in priority_dict.iteritems():
-            priority_dict[key] = (value - min_value) / max((max_value-min_value), 0.01)
+            if max_value-min_value < 0.01:
+                priority_dict[key] = 1.0
+            else:
+                priority_dict[key] = (value - min_value) / (max_value-min_value)
 
         return priority_dict
 
