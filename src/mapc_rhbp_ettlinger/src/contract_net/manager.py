@@ -56,10 +56,10 @@ class ContractNetManager(object):
         Initialises the config parameters from the rospy config
         :return:
         """
-        ContractNetManager.DEADLINE_BIDS = rospy.get_param('ContractNetManager.DEADLINE_BIDS',
-                                                           ContractNetManager.DEADLINE_BIDS)
-        ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
-                                                                      ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
+        # ContractNetManager.DEADLINE_BIDS = rospy.get_param('ContractNetManager.DEADLINE_BIDS',
+        #                                                    ContractNetManager.DEADLINE_BIDS)
+        # ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
+        #                                                               ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
 
     def reset_manager(self):
         """

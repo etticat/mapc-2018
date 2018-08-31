@@ -168,6 +168,8 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         # Calculate the highest percentage of items that are gathered of the goal
         max_percentage = 0.01  # ignore everything lower than 1%
         for item in desired_ingredients.keys():
+            if desired_ingredients.get(item, 0) < 0:
+                desired_ingredients[item] = 0
             current_stock[item] = stock_items.get(item, 0)
             # We should probably ignore stored items here as this can lead to a deadlock of items being ignored when too
             # many are in an undesirable store

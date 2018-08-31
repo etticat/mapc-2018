@@ -169,6 +169,9 @@ class BestAgentAssemblyCombinationDecision(object):
             # try all combinations using MIN_AGENTS to MAX_AGENTS agents.
             for number_of_agents in range(BestAgentAssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1,
                                                                                                BestAgentAssemblyCombinationDecision.MAX_AGENTS)):
+
+                rospy.loginfo("BestAgentAssemblyCombinationDecision:: Trying with %d agents", number_of_agents)
+
                 # For each subset of bids find the best possible combination
                 for subset in itertools.combinations(bid_with_array, number_of_agents):
 
@@ -337,10 +340,10 @@ class BestAgentAssemblyCombinationDecision(object):
         for key in assemblable_items_keys:
             finished_product_goal = self._finished_product_goals.get(key, 0)
 
-            for consumed_item in self._product_provider.get_product_by_name(key).consumed_items:
-                intermediary_finished_product_goal[consumed_item.name] = intermediary_finished_product_goal.get(consumed_item.name, 0) + finished_product_goal * consumed_item.amount - finished_stock_items.get(consumed_item.name, 0)
-
             priority = self._finished_product_goals.get(key, 0) - finished_stock_items.get(key, 0) + intermediary_finished_product_goal.get(key, 0)
+            for consumed_item in self._product_provider.get_product_by_name(key).consumed_items:
+                intermediary_finished_product_goal[consumed_item.name] = intermediary_finished_product_goal.get(consumed_item.name, 0) + max(priority, 0) * consumed_item.amount
+
             res[key] = priority
         return res
 
@@ -398,7 +401,7 @@ class BestAgentAssemblyCombinationDecision(object):
             else:
                 max_value_not_needed_item = 0.30
                 max_count_not_needed_item = 7
-                res += (priority*max_value_not_needed_item/(max_count_not_needed_item)) + 0.30
+                res += max((priority*max_value_not_needed_item/(max_count_not_needed_item)) + 0.30, 0.001)
 
             occurances[item] = occurances.get(item, 0) + 1
         return res
