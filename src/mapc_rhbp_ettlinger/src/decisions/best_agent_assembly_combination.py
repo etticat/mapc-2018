@@ -1,6 +1,8 @@
 import itertools
+import json
 import math
 import numpy as np
+import pickle
 import re
 import time
 
@@ -116,7 +118,7 @@ class BestAgentAssemblyCombinationDecision(object):
         for goal in stock_item.amounts:
             self._finished_product_goals[goal.key] = goal.value
 
-    def choose_best_combinations(self, bids):
+    def best_combination(self, bids):
         """
         Returns a sorted list of combinations of bids, that together can create products that we currently need.
         Sorting according to activation
@@ -129,29 +131,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
         finished_item_priority = self.finished_items_priority_dict()
 
-        best_combination_activation = -np.inf
-        best_combination = None
-
-        workshop_distances = {}
-        workshops = self._facility_provider.workshops.values()
-
-        best_facility = None
-        best_facility_value = np.inf
-
-        for facility in workshops:
-            workshop_distances[facility] = {}
-            for bid in bids:
-                workshop_distances[facility][bid] = self.distance_provider.calculate_steps(end_position=facility.pos, use_in_facility_flag=False, start_position=bid.pos,
-                                                                                           can_fly=bid.role == "drone", estimate=True, speed=bid.speed)
-
-            workshop_distance_values = workshop_distances[facility].values()
-            workshop_distance_values.sort()
-
-            workshop_value = sum(workshop_distance_values[:BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER])
-            if workshop_value < best_facility_value:
-                best_facility_value = workshop_value
-                best_facility = facility
-
+        workshop_distances, best_facility = self.find_best_workshop(bids)
 
         bids.sort(key=lambda bid: workshop_distances[best_facility][bid])
 
@@ -161,15 +141,25 @@ class BestAgentAssemblyCombinationDecision(object):
             bid_array = self.bid_to_numpy_array(bid)
             bid_with_array.append((bid, bid_array))
 
-
-
-        start_time = rospy.get_rostime()
-        time_passed = 0
-
         # prrrrrrrr = profile.Profile()
         # prrrrrrrr.disable()
         # prrrrrrrr.enable()
 
+
+
+        best_combination = self.find_best_combination(best_facility, bid_with_array, finished_item_priority)
+
+        inputs = [workshop_distances, bid_with_array, finished_item_priority, best_combination]
+
+        pickle.dump(inputs, open('simple-%f.pkl'%(time.time()), 'w'))
+
+        return best_combination
+
+    def find_best_combination(self, best_facility, bid_with_array, finished_item_priority):
+        start_time = rospy.get_rostime()
+        time_passed = 0
+        best_combination_activation = -np.inf
+        best_combination = None
         # If min number of agents bid for assembly try all combinations
         if len(bid_with_array) >= BestAgentAssemblyCombinationDecision.MIN_AGENTS:
             # Go through all combinations
@@ -194,11 +184,12 @@ class BestAgentAssemblyCombinationDecision(object):
                         if min(products) >= 0:
                             finished_item_list.append(finished_item)
 
-                    if len(finished_item_list) <=0:
+                    if len(finished_item_list) <= 0:
                         continue
 
                     # Get the best combination to build with the current subset
-                    combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority, finished_item_list=finished_item_list)
+                    combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority,
+                                                      finished_item_list=finished_item_list)
 
                     # If no agent has space for many more items, the combination is desperate
                     desperate = sum([bid.bid < -8 for bid in bid_subset]) <= 1
@@ -207,19 +198,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
                         # The number of step until all agents can be at the closest workshop
                         max_step_count = np.inf
-                        destination = None
-
-                        for workshop in workshops:
-                            workshop_distance = -np.inf
-
-                            for bid in bid_subset:
-                                distance = workshop_distances[workshop][bid]
-                                workshop_distance = max(workshop_distance, distance)
-
-                            if workshop_distance < max_step_count:
-                                max_step_count = workshop_distance
-                                destination = workshop
-
+                        destination = best_facility
 
                         # If max nr of steps is too high, ignore combination
                         if max_step_count > BestAgentAssemblyCombinationDecision.MAX_STEPS and not desperate:
@@ -235,14 +214,15 @@ class BestAgentAssemblyCombinationDecision(object):
                             continue
 
                         # Number of steps agents will have to wait at storage until the last agent arrives
-                        agent_bid =  sum([bid.bid for bid in bid_subset])
+                        agent_bid = sum([bid.bid for bid in bid_subset])
 
                         value = self.rate_combination(max_step_count, idle_steps, prioritisation_activation,
                                                       number_of_agents, agent_bid)
 
                         if value > best_combination_activation:
                             # TODO: Timeout
-                            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(bid_subset, combination)
+                            assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(
+                                bid_subset, combination)
                             rospy.logerr("assembly instructions: %s", str(assembly_instructions))
                             if assembly_instructions is not None:
                                 best_combination_activation = value
@@ -253,13 +233,34 @@ class BestAgentAssemblyCombinationDecision(object):
                         break
                 if time_passed > BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT:
                     break
-
-        combination_found = best_combination is not None
-        time_passed = (rospy.get_rostime() - start_time).to_sec()
-        ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s bids: %d", time_passed, str(combination_found), len(bids))
-        # prrrrrrrr.dump_stats("stats-assembly-chooser-%.2fs---%f.pstat"%(time_passed, time.time()))
-
+        ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s bids: %d",
+                       time_passed, str(best_combination is not None), len(bid_with_array))
         return best_combination
+
+    def find_best_workshop(self, bids):
+        workshop_distances = {}
+        workshops = self._facility_provider.workshops.values()
+        best_facility = None
+        best_facility_value = np.inf
+        for facility in workshops:
+            workshop_distances[facility] = {}
+            for bid in bids:
+                workshop_distances[facility][bid] = self.distance_provider.calculate_steps(end_position=facility.pos,
+                                                                                           use_in_facility_flag=False,
+                                                                                           start_position=bid.pos,
+                                                                                           can_fly=bid.role == "drone",
+                                                                                           estimate=True,
+                                                                                           speed=bid.speed)
+
+            workshop_distance_values = workshop_distances[facility].values()
+            workshop_distance_values.sort()
+
+            workshop_value = sum(
+                workshop_distance_values[:BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER])
+            if workshop_value < best_facility_value:
+                best_facility_value = workshop_value
+                best_facility = facility
+        return workshop_distances, best_facility
 
     def init_finished_products(self):
         """

@@ -111,6 +111,7 @@ class ControlAgent(object):
         :type sim_end: SimEnd
         :return:
         """
+        rospy.logerr("Survailer:: Ending simulation: %s (%s)", self.sim_start.map, self.sim_start.simulation_id)
         end_massium = self.stas_provider.massium
         current_config = self.current_config
         current_fitness = end_massium
@@ -131,12 +132,14 @@ class ControlAgent(object):
         for key, value in config.iteritems():
             rospy.set_param(key, value)
 
+        current_config["sim_start"] = self.sim_start
+
         fh = open("results.txt", "a")
         for key, value in current_config.iteritems():
             fh.write(key +":" + str(value) + ",")
-        fh.write("sim_start:" + str(self.sim_start))
         fh.write("\n")
         fh.close()
+
 
     def _request_action_callback(self, requestAction):
         """
@@ -163,7 +166,7 @@ class ControlAgent(object):
         :return:
         """
 
-        rospy.logerr("Starting simulation: %s (%s)", sim_start.map, sim_start.simulation_id)
+        rospy.logerr("Survailer:: Starting simulation: %s (%s)", sim_start.map, sim_start.simulation_id)
         self.sim_start = sim_start
         self.current_config = self._read_config()
 

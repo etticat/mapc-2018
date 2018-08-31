@@ -46,7 +46,7 @@ class AssembleManager(ContractNetManager):
         """
 
         # Get best combinations possible from the bids in order of priority
-        res = self._assembly_combination_decision.choose_best_combinations(bids)
+        res = self._assembly_combination_decision.best_combination(bids)
         if res is None:
             return
 
