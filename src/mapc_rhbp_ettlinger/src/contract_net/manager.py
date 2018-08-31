@@ -84,7 +84,7 @@ class ContractNetManager(object):
         if not self.enabled:
             return False
 
-        ettilog.loginfo("ContractNetManager(%s):: ---------------------------Manager start---------------------------",
+        ettilog.logerr("ContractNetManager(%s):: ---------------------------Manager start---------------------------",
                         self._task_type)
 
         self.start_time = rospy.get_rostime()
@@ -136,6 +136,7 @@ class ContractNetManager(object):
         # Return if the manager got disabled in the meantime
         if not self.enabled:
             return False
+        ettilog.logerr("ContractNetManager(%s):: Processing %d bids", self._task_type, len(self._bids))
 
         # Retrive the assignments. This method has to be implemented by an overriding class.
         assignments = self.get_assignments(self._bids)
@@ -145,7 +146,7 @@ class ContractNetManager(object):
             ettilog.loginfo("ContractNetManager(%s):: No useful bid combination found in %d bids", self._task_type,
                             len(self._bids))
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
-            ettilog.loginfo(
+            ettilog.logerr(
                 "ContractNetManager(%s):: ---------------------------Manager failed: %.2f seconds---------------------------",
                 self._task_type, time_passed)
             return False
@@ -209,7 +210,7 @@ class ContractNetManager(object):
 
             self._on_task_acknowledged(self._acknowledgements[0].id)
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
-            ettilog.loginfo(
+            ettilog.logerr(
                 "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
                 self._task_type, time_passed)
             return True
@@ -224,7 +225,7 @@ class ContractNetManager(object):
             self._pub_task_stop.publish(TaskStop(id=self._id, reason='acknowledgements failed'))
 
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
-            ettilog.loginfo(
+            ettilog.logerr(
                 "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
                 self._task_type, time_passed)
             return False

@@ -219,6 +219,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
 
         else:
             ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Assembly is executed after all tasks are finished", self._agent_name)
+            self.mechanism.end_task(notify_others=False)
 
     def _get_assemble_step(self):
         """

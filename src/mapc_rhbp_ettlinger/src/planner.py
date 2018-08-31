@@ -106,8 +106,8 @@ class Planner(object):
 
         # If job is found -> Try to perform it
         if job is not None:
-            ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s", job.id,
-                           CalcUtil.get_dict_from_items(job.items), items_to_pickup)
+            ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s reward : %d, fine: %d", job.id,
+                           CalcUtil.get_dict_from_items(job.items), items_to_pickup, job.reward, job.fine)
             # Try to find agents to perform job using contract net. This may take a few seconds
             successful = self._manager_deliver.request_job(job)
             if successful:

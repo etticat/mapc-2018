@@ -26,7 +26,7 @@ class ChooseBestAvailableJobDecision(object):
     """
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
 
-    DEFAULT_FINISHED_PRODUCT_GOAL = 1
+    DEFAULT_FINISHED_PRODUCT_GOAL = 0
     BID_PERCENTILE = 50
     ACTIVATION_THRESHOLD = -50
     IMPORTANT_JOB_THRESHOLD = 0

@@ -97,7 +97,7 @@ class MainAssembleAgentDecision(object):
 
             if selected_agent is None:
                 # No agent has the capacity to assemble the item -> continue with next
-                ettilog.logerr("ChooseAgentsToAssemble:: No agent has the capacity to assemble the item -> continue with next")
+                ettilog.loginfo("ChooseAgentsToAssemble:: No agent has the capacity to assemble the item -> continue with next")
                 continue
 
             items_to_assemble += 1
