@@ -154,41 +154,29 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         for assembly of further items.
         :return:
         """
-        current_stock = {}
-
         # Get currently desired ingredients
         desired_ingredients = self.get_desired_ingredients(consider_intermediate_ingredients=False)
         # Stock items that we currently have or are in the process of gathering
         stock_items = self._product_provider.get_agent_stock_items(types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
 
-        # Get all items in a storage
-        # TODO: This could lead to problems. taking it out for now..
-        # stored_items = self._product_provider.get_stored_items()
-
-        # Calculate the highest percentage of items that are gathered of the goal
-        max_percentage = 0.01  # ignore everything lower than 1%
-        for item in desired_ingredients.keys():
-            if desired_ingredients.get(item, 0) < 0:
-                desired_ingredients[item] = 0
-            current_stock[item] = stock_items.get(item, 0)
-            # We should probably ignore stored items here as this can lead to a deadlock of items being ignored when too
-            # many are in an undesirable store
-            # current_stock[item] += stored_items.get(item, 0)
-            percentage = (current_stock[item] + 1) / (desired_ingredients.get(item, 0) + 1)
-            if percentage > max_percentage:
-                max_percentage = percentage
-
         # Calculate the priority by dividing the current percentage by the max percentage
         priority_dict = {}
         for item in desired_ingredients.keys():
-            if current_stock[item] == 0:
+
+            if stock_items.get(item, 0) == 0:
                 priority = 1.0
             elif desired_ingredients.get(item, 0) == 0:
                 priority = 0.0
             else:
-                priority = 1.0 - (float(current_stock[item]) / (desired_ingredients.get(item, 0) * max_percentage))
-
+                priority = 1.0 - (float(stock_items.get(item, 0)) / desired_ingredients.get(item, 0))
             priority_dict[item] = priority
+
+        min_value = min(priority_dict.values())
+        max_value = max(priority_dict.values())
+
+        for key, value in priority_dict.iteritems():
+            priority_dict[key] = (value - min_value) / max((max_value-min_value), 0.01)
+
         return priority_dict
 
     def get_desired_ingredients(self, consider_intermediate_ingredients):
@@ -199,7 +187,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         """
 
         # Get the desired finished product stock
-        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict()
+        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict(normalize_to_zero=True)
 
         finished_product_desired_stock = CalcUtil.multiply_dict_by_factor(finished_product_priority,
                                       ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION)
@@ -207,6 +195,10 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         # Check how many ingredients we need to assemble the stock
         desired_ingredients = self._product_provider.get_gatherable_ingredients_of_dict(finished_product_desired_stock,
                                             consider_intermediate_ingredients=consider_intermediate_ingredients)
+
+        for key, value in desired_ingredients.iteritems():
+            desired_ingredients[key] += 30
+
         return desired_ingredients
 
     def steps_to_closest_resource(self, resources, item):

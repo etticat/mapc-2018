@@ -323,7 +323,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
         return res
 
-    def finished_items_priority_dict(self):
+    def finished_items_priority_dict(self, normalize_to_zero=False):
         """
         Returns a dictionary with priorities from 0 to 1 of how much each finished product is needed.
         :return:
@@ -338,9 +338,11 @@ class BestAgentAssemblyCombinationDecision(object):
         assemblable_items_keys = self._product_provider._assemblable_items.keys()
         assemblable_items_keys.sort(reverse=True, key=CalcUtil.natural_keys)
         for key in assemblable_items_keys:
-            finished_product_goal = self._finished_product_goals.get(key, 0)
-
             priority = self._finished_product_goals.get(key, 0) - finished_stock_items.get(key, 0) + intermediary_finished_product_goal.get(key, 0)
+
+            if normalize_to_zero and priority < 0:
+                priority = 0
+
             for consumed_item in self._product_provider.get_product_by_name(key).consumed_items:
                 intermediary_finished_product_goal[consumed_item.name] = intermediary_finished_product_goal.get(consumed_item.name, 0) + max(priority, 0) * consumed_item.amount
 
@@ -401,7 +403,7 @@ class BestAgentAssemblyCombinationDecision(object):
             else:
                 max_value_not_needed_item = 0.30
                 max_count_not_needed_item = 7
-                res += max((priority*max_value_not_needed_item/(max_count_not_needed_item)) + 0.30, 0.001)
+                res += (priority*max_value_not_needed_item/(max_count_not_needed_item)) + 0.30
 
             occurances[item] = occurances.get(item, 0) + 1
         return res
