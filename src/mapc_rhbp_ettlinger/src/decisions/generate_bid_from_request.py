@@ -22,13 +22,19 @@ class GenerateBidFromRequestDecision(object):
         self._agent_name = agent_name
         self._step_provider = DistanceProvider(agent_name=agent_name)
 
-    def generate_bid(self, request):
+    def generate_bid(self, request, has_assembly_task):
         """
         Creats the bid from the request
         :param request:
         :type request: TaskRequest
         :return: JobRequest
         """
+
+        if has_assembly_task:
+            bid = 0
+        else:
+            bid = 1
+
         own_items = self._product_provider.get_item_list()
         useful_items = CalcUtil.list_intersect(request.items, own_items)
         # TODO: If storage has all items, maybe agents who can't provide items should also bid.
@@ -36,6 +42,7 @@ class GenerateBidFromRequestDecision(object):
         if len(useful_items) > 0 or len(request.items) == 0:
             return TaskBid(
                 id=request.id,
+                bid=bid,
                 agent_name=self._agent_name,
                 expected_steps=self._step_provider.calculate_steps(self._facility_provider.get_storage_by_name(request.destination_name).pos),
                 items=useful_items,

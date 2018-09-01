@@ -21,7 +21,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
     """
 
     ERROR_THRESHOLD_DURING = 4
-    ERROR_THRESHOLD_START = 25
+    ERROR_THRESHOLD_START = 100
 
     def __init__(self, mechanism, name, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \

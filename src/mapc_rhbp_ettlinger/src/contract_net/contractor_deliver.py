@@ -51,7 +51,7 @@ class DeliverContractor(ContractNetContractorBehaviour):
         :param request:
         :return:
         """
-        return self.job_bid_decider.generate_bid(request)
+        return self.job_bid_decider.generate_bid(request, self.assemble_task_mechanism.has_task())
 
     def _on_task_finished(self, finish):
         """

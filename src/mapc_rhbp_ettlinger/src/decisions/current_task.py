@@ -74,6 +74,9 @@ class CurrentTaskDecision(DecisionPattern):
         """
         self.end_task(notify_others=False)
 
+    def has_task(self):
+        return self.value is not None
+
 
 class AssembleTaskDecision(CurrentTaskDecision):
     """

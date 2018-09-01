@@ -48,6 +48,10 @@ class DeliverJobBehaviour(DecisionBehaviour):
         :type agent: Agent
         :return:
         """
+
+        if agent.last_action is Action.DELIVER_JOB:
+            ettilog.logerr("DeliverJobBehaviour(%s):: Performed job delivery with status", self._agent_name, agent.last_action_result)
+
         if self._current_task is not None :
             if agent.last_action == Action.DELIVER_JOB:
                 # If there are no more items to be delivered, end task but keep job tasks of other agents active, so
@@ -98,12 +102,13 @@ class DeliverJobBehaviour(DecisionBehaviour):
 
         # Calculate items that we still need to pick up from storage
         self.items_from_storage = CalcUtil.dict_diff(self._current_task.items, self._product_provider.get_stock_items(), normalize_to_zero=True)
-        ettilog.logerr("DeliverJobBehaviour(%s):: From storage still needed: %s", self._agent_name, self.items_from_storage)
+
 
         # Find an item that we still need and if we find one, send the pick up item stock, if not, go on to deliver
         # In the case where we can't pick up anything because the capacity is full, just go on to deliver free up space
         # to pick up items in the next round
         if sum(self.items_from_storage.values()) > 0:
+            ettilog.logerr("DeliverJobBehaviour(%s):: From storage still needed: %s", self._agent_name, self.items_from_storage)
             item_to_pick_up, count = self.get_item_to_pickup()
             if item_to_pick_up is not None:
                 self.pick_up_item(item_to_pick_up, count)
@@ -118,6 +123,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
         # If we reach this code, retrival was not neccessary, therefore reset the value
         self._items_to_retrieve = None
 
+        ettilog.logerr("DeliverJobBehaviour(%s):: Performing job %s", self._agent_name, str(self._current_task.task))
         # start deliver action
         self._action_provider.send_action(action_type=Action.DELIVER_JOB, params=[
             KeyValue("Job", str(self._current_task.task))])

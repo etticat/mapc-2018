@@ -64,8 +64,7 @@ class ChooseBestJobAgentCombinationDecision(object):
         :param bids:
         :return:
         """
-        best_agent_subset = None
-        items_needed_from_storage = None
+        best_agent_combination = None
         best_value = -1000
 
         items_in_storage = self._product_provider.get_stored_items(storage_name=job.storage_name,
@@ -86,20 +85,22 @@ class ChooseBestJobAgentCombinationDecision(object):
                                                                              normalize_to_zero=True)
                     can_fulfill_job = sum(items_needed_after_storage_emptying.values()) == 0
 
+                    interrupted_agents = sum([1-bid.bid for bid in subset])
+
                     if can_fulfill_job:
-                        value = self.generate_activation(subset, job, can_fulfill_job_without_storage_items)
+                        value = self.generate_activation(subset, job, can_fulfill_job_without_storage_items, interrupted_agents=interrupted_agents)
 
                         if value > best_value:
                             best_value = value
 
-                        best_agent_subset = subset
-                        items_needed_from_storage = still_required_items
+                            best_agent_combination = (subset, still_required_items)
 
                 if best_value > ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD:
                     # we only try combinations with more, if we could not find anything with less
                     break
 
-        return best_agent_subset, items_needed_from_storage
+        return best_agent_combination
+
 
     def get_still_needed_items_after_bid_execution(self, job_items, bids):
         """
@@ -118,7 +119,7 @@ class ChooseBestJobAgentCombinationDecision(object):
 
         return CalcUtil.dict_from_string_list(job_items)
 
-    def generate_activation(self, subset, job, can_fulfill_job_without_storage_items):
+    def generate_activation(self, subset, job, can_fulfill_job_without_storage_items, interrupted_agents):
         """
         Generates the activation for a job
         :param subset:
@@ -137,6 +138,8 @@ class ChooseBestJobAgentCombinationDecision(object):
 
         if can_fulfill_job_without_storage_items:
             activation += ChooseBestJobAgentCombinationDecision.WEIGHT_NO_STORAGE_NEEDED
+
+        activation += interrupted_agents * -10000
 
         return activation
 
