@@ -25,7 +25,7 @@ class Planner(object):
 
     def __init__(self):
 
-        rospy.init_node(name='planner', log_level=rospy.FATAL)
+        rospy.init_node(name='planner', log_level=rospy.ERROR)
         agent_name = rospy.get_param('~agent_name', "agentA1")
 
         # Initialise providers

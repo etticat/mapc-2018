@@ -43,7 +43,7 @@ class RhbpAgent:
 
         self._sim_started = False
 
-        rospy.init_node('agent_node', anonymous=True, log_level=rospy.FATAL)
+        rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
         self._init_config()
 
         ettilog.loginfo("RhbpAgent(%s):: Starting", self._agent_name)
