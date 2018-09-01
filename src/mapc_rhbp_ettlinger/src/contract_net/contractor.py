@@ -160,7 +160,7 @@ class ContractNetContractorBehaviour(object):
         :return:
         """
         if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.id == finish.id:
-            ettilog.logerr("DeliverContractor(%s):: Task finished %s", self._task_type)
+            ettilog.logerr("DeliverContractor(%s):: Task finished %s", self._task_type, str(self._current_task_mechanism.value.id))
             self._current_task_mechanism.end_task()
 
     @abstractmethod
