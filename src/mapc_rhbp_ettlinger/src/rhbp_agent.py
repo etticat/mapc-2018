@@ -43,7 +43,7 @@ class RhbpAgent:
 
         self._sim_started = False
 
-        rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
+        rospy.init_node('agent_node', anonymous=True, log_level=rospy.FATAL)
         self._init_config()
 
         ettilog.loginfo("RhbpAgent(%s):: Starting", self._agent_name)
@@ -221,10 +221,9 @@ class RhbpAgent:
 
         # self.prrrrrrrr.disable()
         # If decision making took too long -> log
-        ettilog.logfatal("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
-                       self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            pass
+            ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
+                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:

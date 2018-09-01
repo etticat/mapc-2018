@@ -89,15 +89,16 @@
     <param name="ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION"  value="15" type="double"/>
 
 
-    <param name="ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL"  value="1" type="double"/>
-    <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="95" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB"  value="0.7" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="50" type="int"/>
+    <param name="ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START"  value="30" type="int"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD"  value="-50" type="double"/>
-    <param name="ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD"  value="0" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE"  value="0.95" type="double"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION"  value="0.2" type="double"/>
-    <param name="ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE"  value="10" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE"  value="10.0" type="double"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED"  value="-0.3" type="double"/>
-    <param name="ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START"  value="30" type="double"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER"  value="-0.4" type="double"/>
+
 
     <param name="ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER"  value="5" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_LOAD"  value="8" type="double"/>
@@ -113,18 +114,12 @@
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
 
-    <param name="BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" type="double" value="1"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT"  value="-2.1" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY"  value="10" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS"  value="-10" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION"  value="30" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS"  value="-3" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT"  value="-30" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS"  value="7" type="int"/>
-    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS"  value="2" type="int"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS"  value="30" type="int"/>
-    <param name="BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD"  value="300" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT"  value="4" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT"  value="17" type="double"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER"  value="17" type="double"/>
+    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
+
+    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
+    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
 </launch>

@@ -14,6 +14,7 @@ from guppy import hpy
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
+
 class ControlAgent(object):
 
     def __init__(self):
@@ -28,11 +29,10 @@ class ControlAgent(object):
         self.configs = []
         self.sim_start = None
 
-
         self.all_config = {
-            "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30,30,300),
-            "ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD": (-30,100,1000),
-            "ShouldBidForAssemblyDecision.WEIGHT_STEPS": (-100,-3, 5),
+            "ShouldBidForAssemblyDecision.WEIGHT_LOAD": (-30, 30, 300),
+            "ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD": (-30, 100, 1000),
+            "ShouldBidForAssemblyDecision.WEIGHT_STEPS": (-100, -3, 5),
             "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
 
             "ChooseStorageForHoardingDecision.WEIGHT_STEPS": (-10, -1, 10),
@@ -68,36 +68,38 @@ class ControlAgent(object):
             "MainAssembleAgentDecision.WEIGHT_BID_SKILL": (-1000, -100, 1000),
             "MainAssembleAgentDecision.WEIGHT_BID_SPEED": (-1000, 100, 1000),
 
-            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT" : (0.2, 1, 1.5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT" : (-10, -2.1, 10),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY" : (-1, 10, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" : (-100, -10, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION" : (-10, -30, 100),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS" : (-10, -3, 5),
-            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT" : (-100, -30, 10),
-            "BestAgentAssemblyCombinationDecision.MAX_AGENTS" : (1,5,17),
-            "BestAgentAssemblyCombinationDecision.MIN_AGENTS" : (1,1,4),
-            "BestAgentAssemblyCombinationDecision.MAX_STEPS" :  (4,10,30),
-            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD" :  (-2000, 300, -2000),
-            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT" : (1,4,10),
-            "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT" : (1,10,100),
-            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
+            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 1.5),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT": (-10, -2.1, 10),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 10, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-100, -10, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, -30, 100),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -30, 10),
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 5, 17),
+            "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
+            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD": (-2000, 300, -2000),
+            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT": (1, 4, 10),
+            "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT": (1, 10, 100),
+            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER": (7, 17, 34),
         }
 
         self.conf_to_adjust = {
-            # "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT": (0.2, 1, 2),
-            # "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY": (-1, 100, 1000),
-            # "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-50, -4, 5),
-            # "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION": (-10, 30, 100),
-            # "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS": (-10, -3, 5),
-            # "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT": (-100, -2, 10),
-            # "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (1, 7, 17),
-            # "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (1, 1, 4),
-            # "BestAgentAssemblyCombinationDecision.MAX_STEPS": (4, 10, 30),
-            # "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD": (-200, 0, 1000),
-            # "ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD": (-100, -15, 0),
-            # "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT": (1, 10, 100),
-            # "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" : (7,17,34),
+            "ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB": (0.65, 0.79, 0.99, "double"),
+            "ChooseBestAvailableJobDecision.BID_PERCENTILE": (50, 85, 99, "int"),
+            "ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START": (25, 30, 50, "int"),
+            "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD": (-200, -50, 10, "double"),
+            "ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE": (0.7, 0.95, 0.999, "double"),
+            "ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE": (0.0, 10.0, 20.0, "double"),
+            "ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED": (-4.0, -0.3, -0.01, "double"),
+            "ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER": (-4.0, -0.4, -0.01, "double"),
+            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-0.9, -0.2, -0.00, "double"),
+            "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER": (7, 17, 34, "int"),
+            "BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS": (0.05, 0.30, 0.90, "double"),
+            "BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS": (3, 7, 15, "int"),
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (4, 7, 8, "int"),
+            "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (2, 3, 4, "int"),
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (8, 20, 30, "int")
         }
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._request_action_callback)
@@ -117,15 +119,15 @@ class ControlAgent(object):
         current_fitness = end_massium
         current_config["___fitness"] = current_fitness
         current_config["___timestamp"] = str(time.time())
-        self.configs.append((current_fitness, current_config))
+        self.configs.append(current_config)
 
         # Sort by fitness
-        self.configs.sort(key=lambda k: k['fitness'], reverse=True)
+        self.configs.sort(key=lambda k: k['___fitness'], reverse=True)
 
         # Only keep 10 best configs
         self.configs = self.configs[:10]
 
-        fitness, config = random.choice(self.configs)
+        config = random.choice(self.configs)
 
         config = self.mutate(config)
 
@@ -134,12 +136,8 @@ class ControlAgent(object):
 
         current_config["sim_start"] = self.sim_start
 
-        fh = open("results.txt", "a")
         for key, value in current_config.iteritems():
-            fh.write(key +":" + str(value) + ",")
-        fh.write("\n")
-        fh.close()
-
+            rospy.logerr("Survailer:: -- Config param %s: %s", key, str(value))
 
     def _request_action_callback(self, requestAction):
         """
@@ -147,11 +145,11 @@ class ControlAgent(object):
         :param requestAction: RequestAction
         :return:
         """
-        free_mem =  commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
+        # free_mem = commands.getstatusoutput("free | grep Mem | awk '{print $4/$2 * 100.0}'")
         # free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
         # agent_mem_usage =  commands.getstatusoutput("ps aux | grep mac_ros_bridge | awk '{print $4}'")
         # bridge_mem_usage =  commands.getstatusoutput("ps aux | grep rhbp_agent.py | awk '{print $4}'")
-        ettilog.logerr("Survailer:: Memory free %s", free_mem)
+        # ettilog.logerr("Survailer:: Memory free %s", free_mem)
         # ettilog.logerr("Survailer:: Swap free %s", free_swap)
         # ettilog.logerr("Survailer:: agent_mem_usage %s", agent_mem_usage)
         # ettilog.logerr("Survailer:: bridge_mem_usage %s", bridge_mem_usage)
@@ -170,7 +168,6 @@ class ControlAgent(object):
         self.sim_start = sim_start
         self.current_config = self._read_config()
 
-
     def _read_config(self):
         res = {}
         for key in self.conf_to_adjust.keys():
@@ -182,12 +179,22 @@ class ControlAgent(object):
         new_config = {}
 
         for key, value in config.iteritems():
+            if key not in self.conf_to_adjust:
+                continue
             range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
             max_mutation = 0.05 * range
 
             value += random.uniform(-max_mutation, max_mutation)
             value = max(self.conf_to_adjust[key][0], value)
             value = min(self.conf_to_adjust[key][2], value)
+
+            if self.conf_to_adjust[key][3] == "int":
+                int_value = int(value)
+
+                prob_to_add = (value - int_value)
+                int_value += random.random() < prob_to_add
+
+                value = int_value
 
             new_config[key] = value
 
@@ -202,4 +209,3 @@ if __name__ == '__main__':
 
     except rospy.ROSInterruptException:
         ettilog.logerr("program interrupted before completion")
-

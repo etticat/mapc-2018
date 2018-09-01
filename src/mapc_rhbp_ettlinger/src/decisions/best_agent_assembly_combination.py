@@ -27,25 +27,14 @@ class BestAgentAssemblyCombinationDecision(object):
     """
     Selects the combination of agents that together can perform the most valuable assembly tasks
     """
-    MIN_ACTIVATION = 3
+    WEIGHT_NUMBER_OF_AGENTS = -0.2
     MAX_NR_OF_AGENTS_TO_CONSIDER = 17
-    DECISION_TIMEOUT = 15
-    WEIGHT_AGENT_BID = 4
-    MIN_ITEMS = 3
-    PREFERRED_AGENT_COUNT = 4
-    PRIORITY_EXPONENT = 1  # [ .05 - 10]
-    WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = -2.1
-    WEIGHT_PRIORITY = 100
-    WEIGHT_NUMBER_OF_AGENTS = -4
-    WEIGHT_PRIORITISATION_ACTIVATION = 30
-    WEIGHT_IDLE_STEPS = -1
-    WEIGHT_MAX_STEP_COUNT = -2
+    MAX_PRIORITY_NOT_NEEDED_ITEMS = 0.30
+    MAX_COUNT_NOT_NEEDED_ITEMS = 7
 
     MAX_AGENTS = 7
     MIN_AGENTS = 3
     MAX_STEPS = 20
-
-    ACTIVATION_THRESHOLD = -5000
 
     def __init__(self, agent_name):
         self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
@@ -59,7 +48,7 @@ class BestAgentAssemblyCombinationDecision(object):
         self._roles = ["car", "motorcycle", "drone", "truck"]
 
         self._facility_provider = FacilityProvider(agent_name=agent_name)
-        self._product_provider = ProductProvider(agent_name=agent_name)  # TODO: make independent from agent
+        self._product_provider = ProductProvider(agent_name=agent_name)
 
         rospy.Subscriber(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,
                          callback=self._planner_goal_callback)
@@ -67,46 +56,21 @@ class BestAgentAssemblyCombinationDecision(object):
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
     def _init_config(self, sim_start=None):
-        BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT",
-            BestAgentAssemblyCombinationDecision.PRIORITY_EXPONENT)
-        BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT",
-            BestAgentAssemblyCombinationDecision.WEIGHT_AFTER_ASSEMBLY_ITEM_COUNT)
-        BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY",
-            BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITY)
-        BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS",
-            BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS)
-        BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION",
-            BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION)
-        BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS",
-            BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS)
-        BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT",
-            BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT)
-        BestAgentAssemblyCombinationDecision.MAX_AGENTS = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)
-        BestAgentAssemblyCombinationDecision.MIN_AGENTS = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.MIN_AGENTS", BestAgentAssemblyCombinationDecision.MIN_AGENTS)
-        BestAgentAssemblyCombinationDecision.MAX_STEPS = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.MAX_STEPS", BestAgentAssemblyCombinationDecision.MAX_STEPS)
-        BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT",
-            BestAgentAssemblyCombinationDecision.PREFERRED_AGENT_COUNT)
-
-        BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD",
-            BestAgentAssemblyCombinationDecision.ACTIVATION_THRESHOLD)
-        BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT = rospy.get_param(
-            "BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT",
-            BestAgentAssemblyCombinationDecision.DECISION_TIMEOUT)
+        BestAgentAssemblyCombinationDecision.MAX_AGENTS = int(round(rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)))
+        BestAgentAssemblyCombinationDecision.MIN_AGENTS = int(round(rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MIN_AGENTS", BestAgentAssemblyCombinationDecision.MIN_AGENTS)))
+        BestAgentAssemblyCombinationDecision.MAX_STEPS = int(round(rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS", BestAgentAssemblyCombinationDecision.MAX_STEPS)))
         BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER = int(round(rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER",
             BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER)))
+        BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS = int(round(rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS",
+            BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)))
+        BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS = int(round(rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS",
+            BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS)))
 
     def _planner_goal_callback(self, stock_item):
         """
@@ -142,12 +106,6 @@ class BestAgentAssemblyCombinationDecision(object):
             if bid.expected_steps <= BestAgentAssemblyCombinationDecision.MAX_STEPS:
                 bid_array = self.bid_to_numpy_array(bid)
                 bid_with_array.append((bid, bid_array))
-
-        # prrrrrrrr = profile.Profile()
-        # prrrrrrrr.disable()
-        # prrrrrrrr.enable()
-
-
 
         best_combination = self.find_best_combination(best_facility, bid_with_array, finished_item_priority)
 
@@ -191,16 +149,16 @@ class BestAgentAssemblyCombinationDecision(object):
                     # The number of step until all agents can be at the closest workshop
                     destination = best_facility
 
-                    prioritisation_activation = self.item_list_activation(combination, priorities=finished_item_priority)
+                    activation = self.item_list_activation(combination, priorities=finished_item_priority)
 
-                    value = prioritisation_activation - number_of_agents * 0.2
+                    activation += number_of_agents * BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS
 
-                    if value > best_combination_activation:
+                    if activation > best_combination_activation:
                         assembly_instructions = self._assembly_agent_chooser.generate_assembly_instructions(
                             bid_subset, combination)
                         if assembly_instructions is not None:
-                            best_combination_activation = value
-                            best_combination = (bid_subset, combination, value, destination, assembly_instructions)
+                            best_combination_activation = activation
+                            best_combination = (bid_subset, combination, activation, destination, assembly_instructions)
 
                     time_passed = (rospy.get_rostime() - start_time).to_sec()
         ettilog.logerr("BestAgentAssemblyCombinationDecision:: Time to decide: %.2fs Combination found: %s bids: %d",
@@ -349,21 +307,6 @@ class BestAgentAssemblyCombinationDecision(object):
             res[key] = priority
         return res
 
-    def rate_combination(self, max_step_count, idle_steps, prioritisation_activation, number_of_agents, agent_bid):
-        """
-        Returns an activation value rating a combination of items to assemble
-        :param max_step_count:
-        :param idle_steps:
-        :param prioritisation_activation:
-        :param number_of_agents:
-        :return:
-        """
-        return max_step_count * BestAgentAssemblyCombinationDecision.WEIGHT_MAX_STEP_COUNT + \
-               idle_steps * BestAgentAssemblyCombinationDecision.WEIGHT_IDLE_STEPS + \
-               prioritisation_activation * BestAgentAssemblyCombinationDecision.WEIGHT_PRIORITISATION_ACTIVATION + \
-               number_of_agents * BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS + \
-               agent_bid *  BestAgentAssemblyCombinationDecision.WEIGHT_AGENT_BID
-
     def bid_to_numpy_array(self, bid):
         """
         creates a numpy array out of a bid
@@ -401,9 +344,7 @@ class BestAgentAssemblyCombinationDecision(object):
             if priority > 0:
                 res += priorities[item]
             else:
-                max_value_not_needed_item = 0.30
-                max_count_not_needed_item = 7
-                res += (priority*max_value_not_needed_item/(max_count_not_needed_item)) + 0.30
+                res += (priority * BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS / (BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)) + 0.30
 
             occurances[item] = occurances.get(item, 0) + 1
         return res

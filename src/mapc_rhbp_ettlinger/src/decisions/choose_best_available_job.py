@@ -26,14 +26,13 @@ class ChooseBestAvailableJobDecision(object):
     """
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
 
-    DEFAULT_FINISHED_PRODUCT_GOAL = 0
+    PERCNTILE_TO_TRY_JOB = 0.7
     BID_PERCENTILE = 50
+    TIME_LEFT_WEIGHT_START = 30
     ACTIVATION_THRESHOLD = -50
-    IMPORTANT_JOB_THRESHOLD = 0
-    ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = 0.2
+    IMPORTANT_JOB_PERCENTILE = 0.95
     WEIGHT_PERCENTILE = 10
     WEIGHT_TIME_PASSED = -0.3
-    TIME_LEFT_WEIGHT_START = 30  # Steps
     WEIGHT_TIME_OVER = -0.4
 
     def __init__(self, agent_name):
@@ -62,20 +61,14 @@ class ChooseBestAvailableJobDecision(object):
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
 
     def _init_config(self, sim_start=None):
-        ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL = rospy.get_param(
-            "ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL",
-            ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL)
         ChooseBestAvailableJobDecision.BID_PERCENTILE = int(round(rospy.get_param(
             "ChooseBestAvailableJobDecision.BID_PERCENTILE", ChooseBestAvailableJobDecision.BID_PERCENTILE)))
         ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD = rospy.get_param(
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD",
             ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD)
-        ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD = rospy.get_param(
-            "ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD",
-            ChooseBestAvailableJobDecision.IMPORTANT_JOB_THRESHOLD)
-        ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION = rospy.get_param(
-            "ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION",
-            ChooseBestAvailableJobDecision.ACTIVATION_TO_DESIRED_PRODUCT_CONVERSION)
+        ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE = rospy.get_param(
+            "ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE",
+            ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE)
         ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE = rospy.get_param(
             "ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE", ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE)
         ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED = rospy.get_param(
@@ -192,7 +185,7 @@ class ChooseBestAvailableJobDecision(object):
             ettilog.loginfo("activation: %f, ", activation)
 
             # if all items are available and job is better than all previous ones, pick this job
-            if has_all_items and activation > best_activation and percentile > 0.7:
+            if has_all_items and activation > best_activation and percentile > ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB:
                 best_activation = activation
                 job_to_try = job
                 items_to_take_from_storage = job_items_from_storage
@@ -213,7 +206,7 @@ class ChooseBestAvailableJobDecision(object):
         """
         desired_finished_product_stock = {}
         for product in self._product_provider._assemblable_items.keys():
-            desired_finished_product_stock[product] = ChooseBestAvailableJobDecision.DEFAULT_FINISHED_PRODUCT_GOAL
+            desired_finished_product_stock[product] = 0
         return desired_finished_product_stock
 
     def get_auction_job_bid(self, job):
@@ -279,7 +272,7 @@ class ChooseBestAvailableJobDecision(object):
         for job in all_jobs_new:
             # Prioritise items that are needed for missions and auction jobs
             percentile = self.get_percentile(job)
-            if job.type is not "job" and percentile > 0.90:
+            if job.type is not "job" and percentile > ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE:
                 for item in job.items:
                     desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + (item.amount)
 
