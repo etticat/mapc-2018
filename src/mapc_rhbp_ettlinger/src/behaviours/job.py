@@ -57,7 +57,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
                 # If there are no more items to be delivered, end task but keep job tasks of other agents active, so
                 # they can finish it
                 if sum(self.items_from_storage.values()) == 0:
-                    ettilog.loginfo("DeliverJobBehaviour(%s):: Finished job delivery. Status: %s", self._agent_name, agent.last_action_result)
+                    ettilog.logerr("DeliverJobBehaviour(%s):: Finished job delivery. Status: %s", self._agent_name, agent.last_action_result)
                     self.mechanism.end_task(notify_others =False)
                     self._current_task = None
 

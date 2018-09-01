@@ -97,7 +97,7 @@ class AssembleTaskDecision(CurrentTaskDecision):
         """
         super(AssembleTaskDecision, self).end_task(notify_others)
 
-        rospy.logerr("AssembleTaskDecision(%s):: Ending task (notify=%s) Task: %s             stacktrace: %s", self.agent_name, str(notify_others), str(self.value), str(inspect.stack()))
+        rospy.logerr("AssembleTaskDecision(%s):: Ending task (notify=%s) Task: %s", self.agent_name, str(notify_others), str(self.value))
 
         if self.value is None:
             self._product_provider.stop_assembly()

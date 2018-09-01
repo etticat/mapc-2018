@@ -62,6 +62,7 @@ class DeliverContractor(ContractNetContractorBehaviour):
         """
         super(DeliverContractor, self)._on_task_finished(finish)
         if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.task == finish.job_id:
+            ettilog.logerr("DeliverContractor:: delivery finished")
             self._current_task_mechanism.end_task()
 
     def _on_assignment_confirmed(self, assignment):
@@ -71,4 +72,6 @@ class DeliverContractor(ContractNetContractorBehaviour):
         :param assignment:
         :return:
         """
+        if self.assemble_task_mechanism.has_task():
+            ettilog.logerr("DeliverContractor(%S):: ending assembly task")
         self.assemble_task_mechanism.end_task(notify_others=True)
