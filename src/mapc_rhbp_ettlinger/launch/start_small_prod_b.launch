@@ -104,6 +104,8 @@
     <param name="ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE"  value="10.0" type="double"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED"  value="-0.3" type="double"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER"  value="-0.4" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS"  value="true" type="bool"/>
+    <param name="ChooseBestAvailableJobDecision.WEIGHT_MISSION_JOB_PRIORITY"  value="2.0" type="double"/>
 
     <param name="ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER"  value="5" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_LOAD"  value="8" type="double"/>

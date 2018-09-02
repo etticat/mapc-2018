@@ -64,7 +64,7 @@ class ChooseBestJobAgentCombinationDecision(object):
         :param bids:
         :return:
         """
-        best_agent_combination = None
+        best_agent_combination = None, None
         best_value = -1000
 
         items_in_storage = self._product_provider.get_stored_items(storage_name=job.storage_name,

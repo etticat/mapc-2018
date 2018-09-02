@@ -2,7 +2,6 @@ import itertools
 import json
 import math
 import numpy as np
-import pickle
 import re
 import time
 
@@ -31,6 +30,7 @@ class BestAgentAssemblyCombinationDecision(object):
     MAX_NR_OF_AGENTS_TO_CONSIDER = 17
     MAX_PRIORITY_NOT_NEEDED_ITEMS = 0.30
     MAX_COUNT_NOT_NEEDED_ITEMS = 7
+    WEIGHT_MISSION_JOB_PRIORITY = 2.0
 
     MAX_AGENTS = 7
     MIN_AGENTS = 3
@@ -68,9 +68,12 @@ class BestAgentAssemblyCombinationDecision(object):
         BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS = int(round(rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS",
             BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)))
-        BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS = int(round(rospy.get_param(
+        BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS = rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS",
-            BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS)))
+            BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS)
+        BestAgentAssemblyCombinationDecision.WEIGHT_MISSION_JOB_PRIORITY = rospy.get_param(
+            "BestAgentAssemblyCombinationDecision.WEIGHT_MISSION_JOB_PRIORITY",
+            BestAgentAssemblyCombinationDecision.WEIGHT_MISSION_JOB_PRIORITY)
 
     def _planner_goal_callback(self, stock_item):
         """
@@ -109,9 +112,6 @@ class BestAgentAssemblyCombinationDecision(object):
 
         best_combination = self.find_best_combination(best_facility, bid_with_array, finished_item_priority)
 
-        inputs = [workshop_distances, bid_with_array, finished_item_priority, best_combination]
-
-        pickle.dump(inputs, open('simple-%f.pkl'%(time.time()), 'w'))
 
         return best_combination
 
@@ -342,7 +342,7 @@ class BestAgentAssemblyCombinationDecision(object):
             # Take negative priorities and treat them like 0
             priority = priorities[item] - occurances.get(item, 0)
             if priority > 0:
-                res += priorities[item]
+                res += priorities[item] * BestAgentAssemblyCombinationDecision.WEIGHT_MISSION_JOB_PRIORITY
             else:
                 res += (priority * BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS / (BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)) + 0.30
 

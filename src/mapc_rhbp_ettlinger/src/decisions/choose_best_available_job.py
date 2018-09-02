@@ -34,6 +34,7 @@ class ChooseBestAvailableJobDecision(object):
     WEIGHT_PERCENTILE = 10
     WEIGHT_TIME_PASSED = -0.3
     WEIGHT_TIME_OVER = -0.4
+    PRIORITISE_MISSION_JOBS = True
 
     def __init__(self, agent_name):
         self.desired_finished_product_stock = {}
@@ -133,8 +134,11 @@ class ChooseBestAvailableJobDecision(object):
         all_available_items_for_missions = self._product_provider.get_agent_stock_items(types=[
             ProductProvider.STOCK_ITEM_TYPE_STOCK, ProductProvider.STOCK_ITEM_TYPE_DELIVERY_GOAL])
 
-        # For regular jobs we do not use the items that are reserved for missions
-        all_available_items_for_job = CalcUtil.dict_diff(all_available_items_for_missions, self.desired_finished_product_stock, normalize_to_zero=True)
+        if ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS:
+            # For regular jobs we do not use the items that are reserved for missions
+            all_available_items_for_job = CalcUtil.dict_diff(all_available_items_for_missions, self.desired_finished_product_stock, normalize_to_zero=True)
+        else:
+            all_available_items_for_job = all_available_items_for_missions
 
         for job in self.active_jobs:
 
@@ -323,6 +327,7 @@ class ChooseBestAvailableJobDecision(object):
         """
         if task_stop.job_id in self.coordinated_jobs:
             self.coordinated_jobs.remove(task_stop.job_id)
+            ettilog.logerr("ChooseBestAvailableJobDecision:: Stopped task %s because '%s'", task_stop.job_id, task_stop.reason)
 
     def reset_decider(self):
         self.factors = []

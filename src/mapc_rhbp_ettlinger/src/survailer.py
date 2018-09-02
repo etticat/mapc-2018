@@ -85,7 +85,7 @@ class ControlAgent(object):
         }
 
         self.conf_to_adjust = {
-            "ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB": (0.65, 0.79, 0.99, "double"),
+            "ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB": (0.45, 0.70, 0.99, "double"),
             "ChooseBestAvailableJobDecision.BID_PERCENTILE": (50, 85, 99, "int"),
             "ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START": (25, 30, 50, "int"),
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD": (-200, -50, 10, "double"),
@@ -93,6 +93,8 @@ class ControlAgent(object):
             "ChooseBestAvailableJobDecision.WEIGHT_PERCENTILE": (0.0, 10.0, 20.0, "double"),
             "ChooseBestAvailableJobDecision.WEIGHT_TIME_PASSED": (-4.0, -0.3, -0.01, "double"),
             "ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER": (-4.0, -0.4, -0.01, "double"),
+            "ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS": (False, True, False, "bool"),
+            "ChooseBestAvailableJobDecision.WEIGHT_MISSION_JOB_PRIORITY": (0.7, 2.0, 4.0, "double"),
             "BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS": (-0.9, -0.2, -0.00, "double"),
             "BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER": (7, 17, 34, "int"),
             "BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS": (0.05, 0.30, 0.90, "double"),
@@ -181,22 +183,28 @@ class ControlAgent(object):
         for key, value in config.iteritems():
             if key not in self.conf_to_adjust:
                 continue
-            range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
-            max_mutation = 0.05 * range
+            MUTATION_RATE = 0.05
 
-            value += random.uniform(-max_mutation, max_mutation)
-            value = max(self.conf_to_adjust[key][0], value)
-            value = min(self.conf_to_adjust[key][2], value)
+            if self.conf_to_adjust[key][3] == "bool":
+                if random.random() < MUTATION_RATE:
+                    value = not value
+            elif self.conf_to_adjust[key][3] in ["int", "double"]:
+                range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
+                max_mutation = MUTATION_RATE * range
 
-            if self.conf_to_adjust[key][3] == "int":
-                int_value = int(value)
+                value += random.uniform(-max_mutation, max_mutation)
+                value = max(self.conf_to_adjust[key][0], value)
+                value = min(self.conf_to_adjust[key][2], value)
 
-                prob_to_add = (value - int_value)
-                int_value += random.random() < prob_to_add
+                if self.conf_to_adjust[key][3] == "int":
+                    int_value = int(value)
 
-                value = int_value
+                    prob_to_add = (value - int_value)
+                    int_value += random.random() < prob_to_add
 
-            new_config[key] = value
+                    value = int_value
+
+                new_config[key] = value
 
         return new_config
 

@@ -75,15 +75,20 @@ class DebugAgent(object):
         gfp_ = self.choose_best_assembly_combination.finished_items_priority_dict()
         gf_ = self.choose_best_assembly_combination.finished_product_goals
 
+        printed_fp = False
+
         for i in range(0, len(self.product_provider.product_infos.keys())):
             item = "item" + str(i)
+            product = self.product_provider.product_infos[item]
+            if len(product.consumed_items) > 0  and not printed_fp:
+                printed_fp = True
+                rospy.logerr("Finished products:")
             rospy.logerr(
                 "%7s: agents:[s:%-3s g:%-3s a:%-3s h:%-3s d:%-3s] storage:[s:%-3s d:%-3s h:%-3s] goal:[i:%2.2f f:%2.2f ip:%2.2f fp:%2.2f]",
                 item, as_.get(item, 0), ag_.get(item, 0), aa_.get(item, 0), ah_.get(item, 0), ad_.get(item, 0),
                 ss_.get(item, 0), sd_.get(item, 0), sh_.get(item, 0), gi_.get(item, 0), gf_.get(item, 0),
                 gip_.get(item, 0), gfp_.get(item, 0))
-            if i == 4:
-                rospy.logerr("Finished products:")
+
 
 
 if __name__ == '__main__':
