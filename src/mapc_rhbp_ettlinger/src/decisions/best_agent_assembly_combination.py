@@ -53,9 +53,17 @@ class BestAgentAssemblyCombinationDecision(object):
         rospy.Subscriber(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL, StockItem, queue_size=10,
                          callback=self._planner_goal_callback)
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self.reset)
 
-    def _init_config(self, sim_start=None):
+    def reset(self, sim_start=None):
+
+        self.finished_products = None
+        self.products = None
+        self.finished_item_list = None
+        self._finished_product_goals = {}
+        self._init_config()
+
+    def _init_config(self):
         BestAgentAssemblyCombinationDecision.MAX_AGENTS = int(round(rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)))
         BestAgentAssemblyCombinationDecision.MIN_AGENTS = int(round(rospy.get_param(

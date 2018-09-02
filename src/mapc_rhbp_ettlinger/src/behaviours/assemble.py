@@ -182,6 +182,11 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :return:
         """
         task = super(AssembleProductBehaviour, self).do_step()
+
+        if self._task is None:
+            ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly task not available during assembly.")
+            return
+
         if task != self._task:
             self._task = task
             # When a new task executed, tell all other agents. This allows them to determine if all agents are at the
@@ -194,10 +199,6 @@ class AssembleProductBehaviour(DecisionBehaviour):
             )
             self._pub_assemble_progress.publish(assemble_task_coordination)
 
-
-        if self._task is None:
-            ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly task not available during assembly.")
-            return
 
         # Action list contains all assemble, and assist_assemble actions of a task
         action_list = self._task.task.split(",")
