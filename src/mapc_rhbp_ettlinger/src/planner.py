@@ -93,8 +93,14 @@ class Planner(object):
         """
 
         while self.coordination_thread is threading.current_thread():
-            self.coordinate_jobs()
-            self.coordinate_assembly()
+            try:
+                self.coordinate_jobs()
+            except Exception as e:
+                print(e)
+            try:
+                self.coordinate_assembly()
+            except Exception as e:
+                print(e)
 
     def coordinate_jobs(self):
         """

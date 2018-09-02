@@ -123,6 +123,11 @@ class MainAssembleAgentDecision(object):
                     # Adjust still needed items -> for next round
                     items_needed = CalcUtil.list_diff(items_needed, used_items)
 
+            if len(items_needed) != 0:
+                ettilog.logerr("----------------------len(items_needed) > 0-------------------\n"
+                               "accepted_bids: %s\n"
+                               "finished_products: %s\n"
+                               "product_infos: %s", str(accepted_bids), str(finished_products), str(self._product_provider.product_infos))
             assert len(items_needed) == 0
 
         # If we were not able to distribute any assembly instructions at all, return None (e.g. No one has the capacity)
