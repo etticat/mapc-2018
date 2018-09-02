@@ -26,7 +26,8 @@ class ChooseBestJobAgentCombinationDecision(object):
     WEIGHT_NO_STORAGE_NEEDED = 20
     WEIGHT_STEPS = -1
 
-    ACTIVATION_THRESHOLD = -1000
+    ACTIVATION_THRESHOLD = -30000
+    PRIORITY_ACTIVATION_THRESHOLD = -9000
 
     def __init__(self, agent_name):
 
@@ -56,6 +57,9 @@ class ChooseBestJobAgentCombinationDecision(object):
         ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD = rospy.get_param(
             "ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD",
             ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD)
+        ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD = rospy.get_param(
+            "ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD",
+            ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD)
 
     def choose_best_agent_combination(self, job, bids):
         """
@@ -65,7 +69,7 @@ class ChooseBestJobAgentCombinationDecision(object):
         :return:
         """
         best_agent_combination = None, None
-        best_value = -1000
+        best_value = ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD
 
         items_in_storage = self._product_provider.get_stored_items(storage_name=job.storage_name,
                                                                    include_hoarding_goal=False)
@@ -95,8 +99,8 @@ class ChooseBestJobAgentCombinationDecision(object):
 
                             best_agent_combination = (subset, still_required_items)
 
-                if best_value > ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD:
-                    # we only try combinations with more, if we could not find anything with less
+                if best_value > ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD:
+                    # we only try combinations with more, if we could not find any combination that doesnt interrupt assembly
                     break
 
         return best_agent_combination

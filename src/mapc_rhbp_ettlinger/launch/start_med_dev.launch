@@ -164,7 +164,8 @@
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_INGREDIENT_LOAD"  value="8" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_NO_STORAGE_NEEDED"  value="20" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_STEPS"  value="-1" type="double"/>
-    <param name="ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD"  value="-1000" type="double"/>
+    <param name="ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD"  value="-9000" type="double"/>
+    <param name="ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD"  value="-30000" type="double"/>
 
     <param name="ContractNetManager.DEADLINE_BIDS"  value="2" type="double"/>
     <param name="ContractNetManager.DEADLINE_ACKNOWLEDGEMENT"  value="2" type="double"/>

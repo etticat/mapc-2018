@@ -48,6 +48,7 @@ class DeliverManager(ContractNetManager):
 
         if accepted_bids is None or len(accepted_bids) == 0:
             ettilog.logerr("DeliverManager:: Unable to find suitable combination for %s", self._job.id)
+            accepted_bids, item_needed_from_storage = self._job_combination.choose_best_agent_combination(self._job, bids=bids)  # TODO
             ettilog.loginfo("DeliverManager:: Job items: %s", str(CalcUtil.get_dict_from_items(self._job.items)))
             ettilog.loginfo("DeliverManager:: Still needed items: %s", str(item_needed_from_storage))
             ettilog.loginfo("DeliverManager:: Bids:")

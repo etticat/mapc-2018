@@ -101,7 +101,9 @@ class ControlAgent(object):
             "BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS": (3, 7, 15, "int"),
             "BestAgentAssemblyCombinationDecision.MAX_AGENTS": (4, 7, 8, "int"),
             "BestAgentAssemblyCombinationDecision.MIN_AGENTS": (2, 3, 4, "int"),
-            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (8, 20, 30, "int")
+            "BestAgentAssemblyCombinationDecision.MAX_STEPS": (8, 20, 30, "int"),
+            "ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD": (-20000, -9000, -1000, "int"),
+            "ChooseBestJobAgentCombinationDecision.ACTIVATION_THRESHOLD": (-100000, -30000, -5000, "int")
         }
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._request_action_callback)
