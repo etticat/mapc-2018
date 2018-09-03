@@ -81,10 +81,20 @@ class RhbpAgent:
 
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
         rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
+        rospy.Subscriber(self._agent_topic_prefix + "agent", Agent, self._agent_callback)
         rospy.Subscriber("/agentConfig", AgentConfig, self._callback_agent_config)
         # rospy.Subscriber(self._agent_topic_prefix + "bye", Bye, self._bye_callback)
 
         ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
+
+    def _agent_callback(self, agent):
+        """
+
+        :param agent:
+        :type agent: Agent
+        :return:
+        """
+        ettilog.logerr("RhbpAgent(%s):: Action %s performed with result: %s", self._agent_name, agent.last_action, agent.last_action_result)
 
     def _callback_agent_config(self, agent_conf):
         """
@@ -186,7 +196,6 @@ class RhbpAgent:
         :type request_action: RequestAction
         :return:
         """
-        # We run until an action is found. reset flag here
 
         # self.prrrrrrrr.enable()
         self._action_provider.reset_action_response_found()
@@ -221,8 +230,8 @@ class RhbpAgent:
 
         # self.prrrrrrrr.disable()
         # If decision making took too long -> log
-        if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
-            ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
+        # if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
+        ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
                            self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
 
         # If no action was found at all -> use recharge as fallback
