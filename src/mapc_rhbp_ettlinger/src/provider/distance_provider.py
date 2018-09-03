@@ -38,7 +38,7 @@ class DistanceProvider(object):
         self._initialised = False
         self._agent_name = agent_name
 
-        self.graphhopper_port = DistanceProvider.GRAPHHOPPER_DEFAULT_PORT
+        self.graphhopper_port = rospy.get_param("DistanceProvider.GRAPHHOPPER_DEFAULT_PORT", DistanceProvider.GRAPHHOPPER_DEFAULT_PORT)
         self._cell_size = 0.01
         self._can_fly = False
         self._speed = 1

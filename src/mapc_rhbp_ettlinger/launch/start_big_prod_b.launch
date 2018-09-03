@@ -5,7 +5,7 @@
 
     <!--Infrastructure Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/graphhopper.launch">
-        <arg name="initial_port" value="8989" />
+        <arg name="initial_port" value="9989" />
     </include>
 
     <!--Planner Nodes-->
@@ -299,4 +299,7 @@
     <param name="BestagentBssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
     <param name="BestagentBssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
     <param name="BestagentBssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
+
+    <param name="DistanceProvider.GRAPHHOPPER_DEFAULT_PORT" type="int" value="9989"/>
+
 </launch>
