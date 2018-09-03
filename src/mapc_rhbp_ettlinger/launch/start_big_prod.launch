@@ -166,7 +166,6 @@
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA13" />
-        <arg name="bid_for_auctions" value="True" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA14" />
