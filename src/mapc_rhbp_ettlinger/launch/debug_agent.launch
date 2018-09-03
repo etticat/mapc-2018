@@ -1,10 +1,12 @@
 <launch>
+    <arg name="agent_name" default="agentA1" />
 
     <!-- Enable custom logger configuration-->
     <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find mapc_rhbp_ettlinger)/launch/python_logging.conf"/>
 
     <!--Infrastructure Nodes-->
     <node pkg="mapc_rhbp_ettlinger" type="debug_agent.py" name ="debug_node" output="screen" respawn="true">
+            <param name="agent_name" value="$(arg agent_name)" />
     </node>
 
 </launch>
