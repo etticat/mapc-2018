@@ -10,12 +10,15 @@
 
     <!--Planner Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/planner.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentB1" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/survailer.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentB1" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/debug_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="agentB1" />
     </include>
 
 
