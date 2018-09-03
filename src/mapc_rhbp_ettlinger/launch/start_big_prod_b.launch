@@ -293,14 +293,14 @@
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
 
-    <param name="BestagentBssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
-    <param name="BestagentBssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
-    <param name="BestagentBssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
-    <param name="BestagentBssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
+    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
 
-    <param name="BestagentBssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
-    <param name="BestagentBssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
-    <param name="BestagentBssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
+    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
 
     <param name="DistanceProvider.GRAPHHOPPER_DEFAULT_PORT" type="int" value="9989"/>
 
