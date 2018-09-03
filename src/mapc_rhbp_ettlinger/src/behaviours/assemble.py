@@ -183,7 +183,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         """
         task = super(AssembleProductBehaviour, self).do_step()
 
-        if self._task is None:
+        if task is None:
             ettilog.logerr("AssembleProductBehaviour:: ERROR: Assembly task not available during assembly.")
             return
 
