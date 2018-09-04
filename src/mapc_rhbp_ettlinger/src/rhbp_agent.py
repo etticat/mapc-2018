@@ -106,6 +106,10 @@ class RhbpAgent:
         else:
             self._steps_without_action = 0
 
+        if agent.last_action_result == "failed_location":
+            ettilog.logerr("RhbpAgent(%s):: Failed to perform %s (failed_location) in_facility: %s, facility: %s", self._agent_name, agent.last_action, str(agent.in_facility), str(agent.facility))
+
+
 
     def _callback_agent_config(self, agent_conf):
         """
