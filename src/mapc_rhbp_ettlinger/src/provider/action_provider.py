@@ -96,3 +96,8 @@ class ActionProvider(object):
 
     def reset_action_response_found(self):
         self._action_response_found = False
+
+    def action_go_to_facility(self, name):
+        self.send_action(action_type=Action.GO_TO, params=[
+            KeyValue("Facility", str(name))
+        ])

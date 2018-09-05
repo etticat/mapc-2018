@@ -16,6 +16,7 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=agent_name,
             global_rhbp_components=global_rhbp_components,
             name=name,
+            use_name_for_movement=True,
             mechanism=global_rhbp_components.assemble_task_mechanism,
             **kwargs)
 

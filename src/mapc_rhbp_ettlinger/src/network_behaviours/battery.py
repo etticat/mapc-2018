@@ -28,6 +28,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         go_to_charging_station_behaviour = GoToDestinationBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + "/go_to_charging_station_behaviour",
+            use_name_for_movement=True,
             mechanism=self._global_rhbp_components.closest_charging_station_decision,
             agent_name=self._agent_name)
         go_to_charging_station_behaviour.add_effect(

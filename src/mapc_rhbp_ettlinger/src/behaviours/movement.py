@@ -21,13 +21,15 @@ class GoToDestinationBehaviour(DecisionBehaviour):
     Behaviour, that moves towards a destination, provided by a mechanism
     """
 
-    def __init__(self, agent_name, mechanism, recalculate_destination_every_step=False,
+    def __init__(self, agent_name, mechanism, recalculate_destination_every_step=False, use_name_for_movement=False,
                  **kwargs):
         super(GoToDestinationBehaviour, self).__init__(mechanism=mechanism, requires_execution_steps=True, **kwargs)
 
         self._agent_name = agent_name
         self.destination_decision = mechanism
         self.recalculate_destination_every_step = recalculate_destination_every_step
+
+        self.use_name_for_movement = use_name_for_movement
 
         self.destination = None
 
@@ -70,15 +72,16 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         if self.destination is None or self.recalculate_destination_every_step:
             self.destination = super(GoToDestinationBehaviour, self).do_step()
 
-            # Some behaviours do not provide positions but rather other objects, which have a pos attribute
-            # This allows to reuse the mechanism for other purposes. In this case use the attribute
-            if not isinstance(self.destination, Position) and self.destination is not None:
-                self.destination = self.destination.pos
             if self.destination is not None:
-                ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%.3f, %3f)", self.name, self.destination.lat, self.destination.long)
+                ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%s)", self.name, str(self.destination))
 
         if self.destination is not None:
-            self._action_provider.action_go_to_destination(self.destination)
+            # Some behaviours do not provide positions but rather other objects, which have a pos attribute
+            # This allows to reuse the mechanism for other purposes. In this case use the attribute
+            if self.use_name_for_movement:
+                self._action_provider.action_go_to_facility(self.destination.name)
+            else:
+                self._action_provider.action_go_to_destination(self.destination)
         else:
             ettilog.logerr("GoToDestinationBehaviour(%s):: Could not decide for destination", self.name)
 
