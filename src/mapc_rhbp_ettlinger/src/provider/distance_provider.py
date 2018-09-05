@@ -198,7 +198,14 @@ class DistanceProvider(object):
         # Round up to next int value.
         # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
         # The exact step size is not of utmost importance. 1 Step off is fine
-        return math.ceil((size_ / 1000) - 0.002)  # round up except when its really close
+        steps = math.ceil((size_ / 1000) - 0.002)
+
+        # If the facility flag is enabled and the facility flag is not set currently, the resulting
+        # step has to be at least 1, as we are currently not in the facility. (but maybe reallly close)
+        if use_in_facility_flag:
+            steps = max(steps, 1)
+
+        return steps  # round up except when its really close
         # TODO Maype this can be better approximated using proximity. But then need to convert from latlong eucliedian to meters
 
     def calculate_distance_air(self, pos1, pos2):
