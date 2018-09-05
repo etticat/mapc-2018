@@ -6,6 +6,7 @@ from __future__ import division  # force floating point division when using plai
 import rospy
 from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import GenericAction, Agent, Position
+from mapc_rhbp_ettlinger.msg import Task
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -79,7 +80,11 @@ class GoToDestinationBehaviour(DecisionBehaviour):
             # Some behaviours do not provide positions but rather other objects, which have a pos attribute
             # This allows to reuse the mechanism for other purposes. In this case use the attribute
             if self.use_name_for_movement:
-                self._action_provider.action_go_to_facility(self.destination.name)
+                if isinstance(self.destination, Task):
+                    name = self.destination.destination_name
+                else:
+                    name = self.destination.name
+                self._action_provider.action_go_to_facility(name)
             else:
                 self._action_provider.action_go_to_destination(self.destination)
         else:

@@ -64,6 +64,7 @@ class AssembleManager(ContractNetManager):
         agents = [bid.agent_name for bid in accepted_bids]
         for bid in accepted_bids:
             bid.request.destination = best_destination.pos
+            bid.request.destination_name = best_destination.name
             assignment = TaskAssignment(
                 id=bid.id,
                 bid=bid,
