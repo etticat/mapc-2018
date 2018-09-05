@@ -31,21 +31,12 @@ class AssembleProductBehaviour(DecisionBehaviour):
         # Constructor parameters
         self._agent_name = agent_name
 
-        self._task = None
-        self._last_action = None
-        self._last_target = None
-        self.error_count = 0
 
         # Init providers
         self._product_provider = ProductProvider(agent_name=agent_name)
         self.action_provider = ActionProvider(agent_name=agent_name)
 
-        # Dictionary, that keeps track of all assembly progresses.
-        # We not only track our own, to avoid missing out on information, when the assembly behaviour did not
-        # get the information in time from the mechanism.
-        self._task_progress_dict = {}
-        # Dictionary, that keeps track of which agents have arrived at their destination
-        self._task_destination_reached_dict = {}
+        self.init_runtime_variables()
 
         # Initialise subscribers and publishers
         topic = AgentUtils.get_coordination_topic()
@@ -57,6 +48,20 @@ class AssembleProductBehaviour(DecisionBehaviour):
                                               queue_size=10)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
+        rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "end", Agent,
+                         self.init_runtime_variables)
+
+    def init_runtime_variables(self, sim_end=None):
+        self._task = None
+        self._last_action = None
+        self._last_target = None
+        self.error_count = 0
+        # Dictionary, that keeps track of all assembly progresses.
+        # We not only track our own, to avoid missing out on information, when the assembly behaviour did not
+        # get the information in time from the mechanism.
+        self._task_progress_dict = {}
+        # Dictionary, that keeps track of which agents have arrived at their destination
+        self._task_destination_reached_dict = {}
 
     def _callback_task_progress(self, task_progres):
         """
