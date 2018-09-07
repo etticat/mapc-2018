@@ -19,6 +19,7 @@ from provider.simulation_provider import SimulationProvider
 from agent_components.shared_components import SharedComponents
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
+
 # import cProfile as profile
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.agent')
@@ -30,7 +31,7 @@ class RhbpAgent(object):
     """
 
     MAX_DECISION_MAKING_TIME = 14
-    BUILD_WELL_ENABLED = False
+    BUILD_WELL_ENABLED = True
 
     def __init__(self):
 
@@ -39,7 +40,6 @@ class RhbpAgent(object):
 
         rospy.init_node('agent_node', anonymous=True, log_level=rospy.ERROR)
         self._init_config()
-
 
         ettilog.loginfo("RhbpAgent(%s):: Starting", self._agent_name)
 
@@ -60,7 +60,9 @@ class RhbpAgent(object):
         # initialise all components
         self._shared_components = SharedComponents(agent_name=self._agent_name)
         self._massim_rhbp_components = MassimRhbpComponent(agent_name=self._agent_name,
-                               shared_components=self._shared_components, manager=Manager(prefix=self._agent_name, max_parallel_behaviours=1))
+                                                           shared_components=self._shared_components,
+                                                           manager=Manager(prefix=self._agent_name,
+                                                                           max_parallel_behaviours=1))
         self._coordination_component = None  # Will be initialised once simulation is started
 
         # One agent has the task of bidding for auctions
@@ -92,14 +94,13 @@ class RhbpAgent(object):
                            agent.last_action_result)
 
             if self._steps_without_action >= 3000:
-                rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..."%(self._agent_name))
+                rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..." % (self._agent_name))
         else:
             self._steps_without_action = 0
 
         if agent.last_action_result == "failed_location":
-            ettilog.logerr("RhbpAgent(%s):: Failed to perform %s (failed_location) in_facility: %s, facility: %s", self._agent_name, agent.last_action, str(agent.in_facility), str(agent.facility))
-
-
+            ettilog.logerr("RhbpAgent(%s):: Failed to perform %s (failed_location) in_facility: %s, facility: %s",
+                           self._agent_name, agent.last_action, str(agent.in_facility), str(agent.facility))
 
     def _callback_agent_config(self, agent_conf):
         """
@@ -210,12 +211,12 @@ class RhbpAgent(object):
             self._job_decider.save_jobs(request_action)
             self._job_decider.process_auction_jobs(request_action.auction_jobs)
 
-
         # Build a well if we are currently out of bounds.
 
         if RhbpAgent.BUILD_WELL_ENABLED:
-            well_task = self._shared_components._choose_well_to_build_decision.choose(self._shared_components.well_task_mechanism,
-                                                                                      request_action.agent)
+            well_task = self._shared_components._choose_well_to_build_decision.choose(
+                self._shared_components.well_task_mechanism,
+                request_action.agent)
             if well_task is not None:
                 ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
                 self._shared_components.well_task_mechanism.start_task(well_task)
@@ -229,7 +230,7 @@ class RhbpAgent(object):
                 self._massim_rhbp_components.step(guarantee_decision=True)
 
                 manager_steps += 1
-                time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
+                time_passed = (rospy.get_rostime() - self.request_time).to_sec()
             else:
                 time.sleep(0.5)
 
@@ -241,6 +242,7 @@ class RhbpAgent(object):
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
             self._action_provider.send_action(action_type=Action.RECHARGE)
+
 
 if __name__ == '__main__':
 

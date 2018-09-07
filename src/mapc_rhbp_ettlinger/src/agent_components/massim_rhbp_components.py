@@ -187,11 +187,6 @@ class MassimRhbpComponent(object):
             )
         )
 
-        ####################### Explore Corners Network Behaviour ########################
-        # TODO: If massium > min well type
-        # id %5 == 0 (only some do that)
-        # move from corner to corer (ExplorationNetwork with ExploreCornerDecision)
-
         ####################### Dismantle Network Behaviour ########################
         self.dismantle_network = DismantleNetworkBehaviour(
             name=self._agent_name + '/dismantle',
@@ -232,6 +227,7 @@ class MassimRhbpComponent(object):
 
         self.find_well_location_network_behaviour.add_precondition(self._shared_components.has_no_task_assigned_cond)
         self.find_well_location_network_behaviour.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
+        self.find_well_location_network_behaviour.add_precondition(self._shared_components.resources_of_all_items_discovered_condition)
         self.find_well_location_network_behaviour.add_precondition(self._shared_components.enough_massium_to_build_well_cond)
         self.find_well_location_network_behaviour.add_precondition(Disjunction(
             Negation(self._shared_components.can_fit_more_ingredients_cond),

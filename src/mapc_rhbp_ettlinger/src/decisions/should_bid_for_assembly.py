@@ -16,7 +16,7 @@ class ShouldBidForAssemblyDecision(object):
     Decision object, that decisdes if agent should bid for assembly decision
     """
 
-    WEIGHT_LOAD = 30
+    WEIGHT_LOAD = 30 # TODO: Remove all unused stuff
     WEIGHT_INGREDIENT_LOAD = 100
     WEIGHT_STEPS = -3 # In production this should be way smaller (Because close ones should be preferred)
 

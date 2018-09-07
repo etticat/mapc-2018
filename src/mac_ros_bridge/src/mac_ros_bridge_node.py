@@ -459,6 +459,9 @@ class MacRosBridge(threading.Thread):
             if efficiency:
                 well.efficiency = int(efficiency)
             well.integrity = int(xml_item.get('integrity'))
+            type = xml_item.get('type')
+            if type:
+                well.type = type
             wells.append(well)
         return wells
 

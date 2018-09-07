@@ -5,7 +5,6 @@ class WellPositionDecision(PickClosestDestinationWithLowestValueDecision):
     """
     Selects the best position to build a well based on the place where the fewest opponents have been seen
     Sens a message so no one else builds a well there
-    TODO: Prefer places that can only be reached by air
     """
 
     def __init__(self, buffer):

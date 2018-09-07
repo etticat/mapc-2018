@@ -17,7 +17,7 @@ from decisions.well_chooser import ChooseWellToBuildDecision
 from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
-from sensor.agent import StorableItemsLoadSensor
+from sensor.agent import StorableItemsLoadSensor, CanFlySensor
 from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor, \
     ForeverExploringAgentSensor
 from sensor.gather import SmallestGatherableItemVolumeSensor
@@ -45,8 +45,21 @@ class SharedComponents(object):
         self.init_well_sensors(agent_name=agent_name)
         self.init_task_sensor(agent_name=agent_name)
         self.init_exploration_sensor(agent_name=agent_name)
+        self.init_agent_sensors(agent_name=agent_name)
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(self.agent_name), Agent, self.callback_agent)
+
+    def init_agent_sensors(self, agent_name):
+
+        self.can_fly_sensor = CanFlySensor(
+            agent_name=agent_name,
+            name="can_fly_sensor"
+        )
+
+        self.is_road_agent_cond = Condition(
+            sensor=self.can_fly_sensor,
+            activator=BooleanActivator(desiredValue=False)
+        )
 
     def init_load_sensors(self):
         self.max_load_sensor = TopicSensor(
@@ -292,6 +305,10 @@ class SharedComponents(object):
             activator=BooleanActivator(desiredValue=True)
         )
 
+        self.has_priority_job_task_assigned_cond = Disjunction(
+            self.has_deliver_job_task_assigned_cond,
+            self.has_build_well_task_assigned_cond
+        )
         self.has_task_assigned_cond = Disjunction(
             self.has_assemble_task_assigned_cond,
             self.has_deliver_job_task_assigned_cond,

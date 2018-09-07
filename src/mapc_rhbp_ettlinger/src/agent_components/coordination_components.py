@@ -32,5 +32,5 @@ class CoordinationComponent(object):
                                                               current_task_mechanism=self.shared_components.deliver_task_mechanism,
                                                               assemble_task_mechanism=self.shared_components.assemble_task_mechanism,
                                                               ready_for_bid_condition=Negation(
-                                                                  self.shared_components.has_deliver_job_task_assigned_cond))
+                                                                  self.shared_components.has_priority_job_task_assigned_cond))
 

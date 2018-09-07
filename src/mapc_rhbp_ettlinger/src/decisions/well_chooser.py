@@ -60,13 +60,14 @@ class ChooseWellToBuildDecision(object):
     def choose_well_type(self):
 
         res_type = None
-        res_cost = -np.inf
+        res_activation = -np.inf
         massium = self.stats_provider.get_current_massium()
         massium -= self.get_massium_for_current_well_tasks()
         for type, well in self.well_provider.possible_wells.iteritems():
-            if well.cost < massium and well.cost > res_cost:
+            activation = well.efficiency / well.cost
+            if well.cost < massium and activation > res_activation:
                 res_type = type
-                res_cost = well.cost
+                res_activation = activation
 
         return res_type
 

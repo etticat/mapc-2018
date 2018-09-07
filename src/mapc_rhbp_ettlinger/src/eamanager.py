@@ -9,8 +9,11 @@ from mapc_rhbp_ettlinger.msg import AgentConfig
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from provider.facility_provider import FacilityProvider
 from provider.stats_provider import StatsProvider
 from guppy import hpy
+
+from provider.well_provider import WellProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
@@ -21,8 +24,14 @@ class EvolutionaryAlgorithmManagerAgent(object):
         rospy.init_node('debug_node', anonymous=True, log_level=rospy.ERROR)
 
         agent_name = rospy.get_param('~agent_name', "agentA1")
-        self.stas_provider = StatsProvider(agent_name=agent_name)
+
+        # Handle end callback before all others (providers, ...)
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
+        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
+
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
+        self._well_provider = WellProvider(agent_name=agent_name)
+        self._stats_provider = StatsProvider(agent_name=agent_name)
 
         self.pub_config = rospy.Publisher("/agentConfig", AgentConfig, queue_size=10)
 
@@ -108,7 +117,6 @@ class EvolutionaryAlgorithmManagerAgent(object):
 
         rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._request_action_callback)
         rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
 
     def _sim_end_callback(self, sim_end):
         """
@@ -118,9 +126,13 @@ class EvolutionaryAlgorithmManagerAgent(object):
         :return:
         """
         rospy.logerr("EvolutionaryAlgorithmManagerAgent:: Ending simulation: %s (%s)", self.sim_start.map, self.sim_start.simulation_id)
-        end_massium = self.stas_provider.massium
         current_config = self.current_config
-        current_fitness = end_massium
+        current_config["___massium"] = self._stats_provider.massium
+        current_config["___score"] = self._stats_provider.score
+        current_fitness =  self._stats_provider.massium
+        for well in self._facility_provider.own_wells.values():
+            possible_well = self._well_provider.get_well(well.type)
+            current_fitness += possible_well.cost
         current_config["___fitness"] = current_fitness
         current_config["___timestamp"] = str(time.time())
         self.configs.append(current_config)

@@ -5,7 +5,7 @@ import rospy
 from behaviour_components.sensors import Sensor
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
-from decisions.choose_well_to_build import OldestCellAgeDecision, DiscoverProgressDecision
+from decisions.map_progress_decisions import OldestCellAgeDecision, DiscoverProgressDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.self_organisation_provider import SelfOrganisationProvider

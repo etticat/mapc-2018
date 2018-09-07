@@ -28,6 +28,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.init_destination_step_sensor(use_in_facility_flag)
         self.init_go_behaviour()
+        self.init_go_and_do_charing_restrictions()
 
     def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
         """
@@ -111,3 +112,9 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
             activator=ThresholdActivator(
                 thresholdValue=0,
                 isMinimum=False))
+
+    def init_go_and_do_charing_restrictions(self):
+        self._go_to_charging_station_behaviour.add_precondition(
+            Negation(self.at_destination_cond))
+        self._recharge_behaviour.add_precondition(
+            Negation(self.at_destination_cond))

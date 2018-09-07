@@ -43,7 +43,8 @@ class ExistingOpponentWellsDecision(MapDecision):
         self._agent_name = agent_name
 
         self._distance_provider = DistanceProvider(agent_name=agent_name)
-        self.facility_provider = FacilityProvider(agent_name=agent_name)
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
+        self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def calc_value(self):
         """
@@ -56,11 +57,15 @@ class ExistingOpponentWellsDecision(MapDecision):
 
         existing_wells = []
 
-        for well in self.facility_provider.opponent_wells.values():
+        for well in self._facility_provider.opponent_wells.values():
+
+            if self._simulation_provider.out_of_bounds(well.pos):
+                continue
+
             x, y = self.distance_provider.position_to_xy(well.pos)
             simple_pos_x = int(x / self.granulariy)
             simple_pos_y = int(y / self.granulariy)
-            well_last_seen = self.facility_provider.wells_seen_at_step[well.name]
+            well_last_seen = self._facility_provider.wells_seen_at_step[well.name]
             last_time_at_well_position = self.environment_array[simple_pos_x, simple_pos_y]
 
             rospy.loginfo(
