@@ -19,6 +19,7 @@ class GraphhopperProcessHandler(object):
     """
     This class is a graphhopper process wrapper that starts and stops graphhopper services
     depending on the required map
+    Taken from previous years submission
     """
 
     # paths are relative to package graph
@@ -179,24 +180,7 @@ if __name__ == '__main__':
 
     gh = GraphhopperProcessHandler(maps=start_maps, initial_port=initial_port)
 
-    # this is used for stress test debugging
-    # rospy.sleep(0.1)
-    # planner = PathPlanner(role=Role(name='truck', speed=100))
-    # planner.set_map('london')
-    # rospy.sleep(0.1)
-
     r = rospy.Rate(1)  # 1hz
-    # request_cnt=0
     while not rospy.is_shutdown():
         gh._check_state()
-        # this is used for stress test debugging
-        # start = Position(lat=51.4773216248, long=-0.194169998169)
-        # destination=Position(lat=51.4842300415,long=-0.160270005465)
-        # for i in range(100):
-        #     try:
-        #         planner._request_street_distance(start,destination)
-        #         request_cnt+=1
-        #     except Exception as e:
-        #         print(request_cnt)
-        #         print(e)
         r.sleep()

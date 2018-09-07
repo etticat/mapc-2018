@@ -310,7 +310,7 @@ class ChooseBestAvailableJobDecision(object):
                     # We can only bid on one auction each round. Return ...
                     return
 
-    def _on_job_started(self, id):
+    def on_job_started(self, id):
         """
         When a job is started save this information, so we don't try it again in the near future
         :param id:

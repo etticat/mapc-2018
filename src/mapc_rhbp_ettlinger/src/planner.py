@@ -44,17 +44,20 @@ class Planner(object):
                                                  assembly_combination_decision=self._shared_components.assembly_combination_decision)
 
         # Keep reference to coordination thread
-        self.coordination_thread = None
+        self._coordination_thread = None
 
         # Register to topics
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
-        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._callback_action_request)
-        rospy.Subscriber(self._agent_topic_prefix + "start", SimStart, self._sim_start_callback)
-        rospy.Subscriber(self._agent_topic_prefix + "end", SimEnd, self._sim_end_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction,
+                         self._callback_action_request)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart,
+                         self._sim_start_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self._sim_end_callback)
 
     def _sim_start_callback(self, sim_start):
         """
-        When the simulation is started, start the coordination thread
+        When the simulation is started, enable the contract net managers and start the coordination thread
         :param sim_start:  the message
         :type sim_start: SimStart
         """
@@ -62,23 +65,27 @@ class Planner(object):
         self._manager_deliver.enabled = True
         self._manager_assemble.enabled = True
 
-        if self.coordination_thread is None:
-            self.coordination_thread = Thread(target=self.coordinate, name="coordination")
-            self.coordination_thread.start()
+        if self._coordination_thread is None:
+            self._coordination_thread = Thread(target=self.coordinate, name="coordination")
+            self._coordination_thread.start()
 
     def _sim_end_callback(self, sim_end):
+        """
+        Once the simulation ends, stop the coordination thread and reset all values to prepare fore the next round
+        :param sim_end:
+        :return:
+        """
 
-        self.coordination_thread = None
+        self._coordination_thread = None
 
         self._manager_deliver.enabled = False
         self._manager_assemble.enabled = False
 
         self._job_decider.reset_decider()
 
-
     def _callback_action_request(self, request_action):
         """
-        here we just trigger the decision-making and plannig
+        For every step we keep track of the jobs, so we learn which ones are good.
         :param msg: The request for action message
         :type msg: RequestAction
         :return:
@@ -92,7 +99,7 @@ class Planner(object):
         :return: None
         """
 
-        while self.coordination_thread is threading.current_thread():
+        while self._coordination_thread is threading.current_thread():
             try:
                 self.coordinate_jobs()
             except Exception as e:
@@ -104,7 +111,7 @@ class Planner(object):
 
     def coordinate_jobs(self):
         """
-        Tries to coordinate the best job, that is currently available
+        Finds the best job, where every item seems to be available and tries to coordinate it.
         :return:
         """
         # Pick the best job, that currently seems to be possible
@@ -112,17 +119,17 @@ class Planner(object):
 
         # If job is found -> Try to perform it
         if job is not None:
-            ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s reward : %d, fine: %d", job.id,
-                           CalcUtil.get_dict_from_items(job.items), items_to_pickup, job.reward, job.fine)
+            ettilog.logerr("Planner: decided for job: %s agent_items: %s, storage_items %s reward : %d, fine: %d",
+                           job.id, CalcUtil.get_dict_from_items(job.items), items_to_pickup, job.reward, job.fine)
             # Try to find agents to perform job using contract net. This may take a few seconds
             successful = self._manager_deliver.request_job(job)
             if successful:
-                # If distribution was successful, inform the job decider
-                self._job_decider._on_job_started(job.id)
+                # If distribution was successful, inform the job decider, so it isn't taken into account anymore
+                self._job_decider.on_job_started(job.id)
 
     def coordinate_assembly(self):
         """
-        Tries to coordinate assembly.
+        Tries to find a group of agents that can assemble something together.
         :return: None
         """
         # This may take a few seconds

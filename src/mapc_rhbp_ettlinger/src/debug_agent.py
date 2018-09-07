@@ -38,7 +38,7 @@ class DebugAgent(object):
         self.choose_best_assembly_combination = BestAgentAssemblyCombinationDecision(agent_name=agent_name)
 
         self._agent_topic_prefix = AgentUtils.get_bridge_topic_prefix(agent_name=agent_name)
-        rospy.Subscriber(self._agent_topic_prefix + "request_action", RequestAction, self._callback_action_request)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="request_action"), RequestAction, self._callback_action_request)
 
     def _callback_action_request(self, msg):
         """

@@ -8,6 +8,7 @@ from common_utils.singleton import Singleton
 
 
 class Action(object):
+    NO_ACTION = "noAction"
     DISMANTLE = "dismantle"
     BUILD = "build"
     GO_TO = "goto"

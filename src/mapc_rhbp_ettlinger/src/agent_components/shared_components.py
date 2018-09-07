@@ -419,3 +419,7 @@ class SharedComponents(object):
             agent_name=agent_name, target_frames=["agent"], key="destination", frame=None, buffer=self.self_organisation_provider.so_buffer
         )
         self._choose_well_to_build_decision = ChooseWellToBuildDecision(agent_name=agent_name)
+
+    @property
+    def choose_well_to_build_decision(self):
+        return self._choose_well_to_build_decision

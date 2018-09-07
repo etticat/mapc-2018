@@ -37,12 +37,6 @@ class SelfOrganisationProvider(object):
         # Reset variables when simulation ends
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.reset_provider)
 
-
-    def init_entity_listener(self):
-        """
-        Initialises the EntityWatcher
-        :return:
-        """
         # publish robot gradient data (transformation pose topic to soMessage)
         self.pose_tf = CallbackEntityTopicGradientTf(agent_name=self._agent_name, frame=self._frame_agent,
                                                      id=self._agent_name)
