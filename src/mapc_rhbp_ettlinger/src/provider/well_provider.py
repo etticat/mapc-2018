@@ -20,13 +20,8 @@ class WellProvider(object):
     WELL_TOPIC = "/well"
 
     def __init__(self, agent_name):
-        self._existing_wells = {}
         self._possible_wells = {}
 
-
-
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="facilities"), FacilityMsg,
-                         self._callback_facilities)
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart,
                          self.callback_sim_start)
 
@@ -38,23 +33,11 @@ class WellProvider(object):
         :return:
         """
         # Reset known wells for the new simulation
-        self._existing_wells = {}
         self._possible_wells = {}
 
         # Safe all wells that can be built
         for well in sim_start.wells:
             self._possible_wells[well.name] = well
-
-    def _callback_facilities(self, facility_msg):
-        """
-        Keep track of all built wells
-        :param facility_msg:
-        :type facility_msg: FacilityMsg
-        :return:
-        """
-
-        for well in facility_msg.wells:
-            self._existing_wells[well.name] = well
 
     def get_well(self, well_type):
         """
@@ -78,10 +61,6 @@ class WellProvider(object):
         :return:
         """
         return self._possible_wells[well_type].cost
-
-    @property
-    def existing_wells(self):
-        return self._existing_wells
 
     @property
     def possible_wells(self):

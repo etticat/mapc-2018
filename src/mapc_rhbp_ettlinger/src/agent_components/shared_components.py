@@ -26,7 +26,7 @@ from sensor.movement import StepDistanceSensor
 from sensor.well import EnoughMassiumToBuildWellSensor
 
 
-class GlobalRhbpComponents(object):
+class SharedComponents(object):
     """
     Object that initialises sensors, mechanisms and conditions that are used by many different components later.
     """
@@ -353,7 +353,7 @@ class GlobalRhbpComponents(object):
 
         self.oldest_cell_last_seen_sensor = OldestCellLastSeenSensor(
             agent_name=agent_name,
-            initial_value=-GlobalRhbpComponents.DISCOVERY_AGE_FULL_ACTIVATION,
+            initial_value=-SharedComponents.DISCOVERY_AGE_FULL_ACTIVATION,
             name="discovery_completeness_condition")
 
         self.simulation_step_sensor = TopicSensor(
@@ -371,7 +371,7 @@ class GlobalRhbpComponents(object):
             sensor=self.oldest_cell_age_sensor,
             activator=LinearActivator(
                 zeroActivationValue=0,
-                fullActivationValue=GlobalRhbpComponents.DISCOVERY_AGE_FULL_ACTIVATION
+                fullActivationValue=SharedComponents.DISCOVERY_AGE_FULL_ACTIVATION
             )
         )
 

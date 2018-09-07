@@ -89,6 +89,7 @@ class ChooseBestJobAgentCombinationDecision(object):
                                                                              normalize_to_zero=True)
                     can_fulfill_job = sum(items_needed_after_storage_emptying.values()) == 0
 
+                    # Favour agents, that currently do not have an assembly task assigend
                     interrupted_agents = sum([1-bid.bid for bid in subset])
 
                     if can_fulfill_job:

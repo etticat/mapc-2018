@@ -21,6 +21,10 @@
         <param name="createLogFiles" type="bool" value="true"/>
         <param name="activation_algorithm" type="string" value="default"/>
         <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
+
+        <param name="plan_monitoring_all_sensor_changes_by_behaviours" type="bool" value="false"/> <!-- Hier würde er jedes mal replannen wenn sich irgendein Sensor ändert welcher sich nicht durch einen Effect eines ausgeführten Behaviours erklären lässt, dass macht aber eigentlich nur in sehr statischen Umgebungen Sinn -->
+        <param name="plan_monitoring_behaviour_missing_influence" type="bool" value="true"/> <!--Das ist neu und prüft ob das ausgeführte Behaviour einen Effekt in die angebene Richtung realisiert hat-->
+        <param name="plan_monitoring_unexpected_behaviour_finished" type="bool" value="true"/> <!-- Behaviour unerwartet abgebrochen/beendet, sollte in MAPC so oder so keine Rolle spielen-->
     </group>
 
 </launch>

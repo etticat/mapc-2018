@@ -10,7 +10,7 @@ from common_utils.agent_utils import AgentUtils
 from decisions.best_agent_assembly_combination import BestAgentAssemblyCombinationDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
-from global_rhbp_components import GlobalRhbpComponents
+from agent_components.shared_components import SharedComponents
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
@@ -29,7 +29,7 @@ class DebugAgent(object):
         # Init providers
         self.product_provider = ProductProvider(agent_name=agent_name)
         self.facility_provider = FacilityProvider(agent_name=agent_name)
-        self.global_rhbp_components = GlobalRhbpComponents(agent_name=agent_name)
+        self.shared_components = SharedComponents(agent_name=agent_name)
 
         # Sleep just to make sure everything is intitialised. DebugAgent does not use any components, so without this
         # It may lead to errors.
@@ -70,8 +70,8 @@ class DebugAgent(object):
         sh_ = self.product_provider.get_stored_items(include_job_goals=False, include_stock=False,
                                                      include_hoarding_goal=False)
 
-        gip_ = self.global_rhbp_components.gather_decision_mechanism.ingredient_priority_dict()
-        gi_ = self.global_rhbp_components.gather_decision_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
+        gip_ = self.shared_components.gather_decision_mechanism.ingredient_priority_dict()
+        gi_ = self.shared_components.gather_decision_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
         gfp_ = self.choose_best_assembly_combination.finished_items_priority_dict()
         gf_ = self.choose_best_assembly_combination.finished_product_goals
 

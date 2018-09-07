@@ -10,14 +10,14 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
     Network behaviour that is responsible for exploring the environment
     """
-    def __init__(self, agent_name, name, global_rhbp_components, exploration_mechanism, **kwargs):
+    def __init__(self, agent_name, name, shared_components, exploration_mechanism, **kwargs):
 
         self.exploration_mechanism = exploration_mechanism
         super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_mechanism, name=name,
                                                           agent_name=agent_name,
                                                           min_charge=5,
                                                           use_in_facility_flag=False,
-                                                          global_rhbp_components=global_rhbp_components,
+                                                          shared_components=shared_components,
                                                           **kwargs)
 
 
@@ -44,14 +44,14 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
 
         self._reset_destination_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
+                sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 sensor_type=float,
                 indicator=1.0
             )
         )
         self._go_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self._global_rhbp_components.resource_discovery_progress_sensor.name,
+                sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 sensor_type=float,
                 indicator=1.0
             )
@@ -67,6 +67,6 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Condition(
-                sensor=self._global_rhbp_components.resource_discovery_progress_sensor,
+                sensor=self._shared_components.resource_discovery_progress_sensor,
                 activator=GreedyActivator()
             )])

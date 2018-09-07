@@ -15,7 +15,7 @@ from guppy import hpy
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.agent.debug')
 
 
-class ControlAgent(object):
+class EvolutionaryAlgorithmManagerAgent(object):
 
     def __init__(self):
         rospy.init_node('debug_node', anonymous=True, log_level=rospy.ERROR)
@@ -117,7 +117,7 @@ class ControlAgent(object):
         :type sim_end: SimEnd
         :return:
         """
-        rospy.logerr("Survailer:: Ending simulation: %s (%s)", self.sim_start.map, self.sim_start.simulation_id)
+        rospy.logerr("EvolutionaryAlgorithmManagerAgent:: Ending simulation: %s (%s)", self.sim_start.map, self.sim_start.simulation_id)
         end_massium = self.stas_provider.massium
         current_config = self.current_config
         current_fitness = end_massium
@@ -141,7 +141,7 @@ class ControlAgent(object):
         current_config["sim_start"] = self.sim_start
 
         for key, value in current_config.iteritems():
-            rospy.logerr("Survailer:: -- Config param %s: %s", key, str(value))
+            rospy.logerr("EvolutionaryAlgorithmManagerAgent:: -- Config param %s: %s", key, str(value))
 
     def _request_action_callback(self, requestAction):
         """
@@ -153,10 +153,10 @@ class ControlAgent(object):
         # free_swap =  commands.getstatusoutput("free | grep Swap | awk '{print $4/$2 * 100.0}'")
         # agent_mem_usage =  commands.getstatusoutput("ps aux | grep mac_ros_bridge | awk '{print $4}'")
         # bridge_mem_usage =  commands.getstatusoutput("ps aux | grep rhbp_agent.py | awk '{print $4}'")
-        # ettilog.logerr("Survailer:: Memory free %s", free_mem)
-        # ettilog.logerr("Survailer:: Swap free %s", free_swap)
-        # ettilog.logerr("Survailer:: agent_mem_usage %s", agent_mem_usage)
-        # ettilog.logerr("Survailer:: bridge_mem_usage %s", bridge_mem_usage)
+        # ettilog.logerr("EvolutionaryAlgorithmManagerAgent:: Memory free %s", free_mem)
+        # ettilog.logerr("EvolutionaryAlgorithmManagerAgent:: Swap free %s", free_swap)
+        # ettilog.logerr("EvolutionaryAlgorithmManagerAgent:: agent_mem_usage %s", agent_mem_usage)
+        # ettilog.logerr("EvolutionaryAlgorithmManagerAgent:: bridge_mem_usage %s", bridge_mem_usage)
 
         pass
 
@@ -168,7 +168,7 @@ class ControlAgent(object):
         :return:
         """
 
-        rospy.logerr("Survailer:: Starting simulation: %s (%s)", sim_start.map, sim_start.simulation_id)
+        rospy.logerr("EvolutionaryAlgorithmManagerAgent:: Starting simulation: %s (%s)", sim_start.map, sim_start.simulation_id)
         self.sim_start = sim_start
         self.current_config = self._read_config()
 
@@ -214,7 +214,7 @@ class ControlAgent(object):
 if __name__ == '__main__':
 
     try:
-        controler = ControlAgent()
+        controler = EvolutionaryAlgorithmManagerAgent()
         rospy.spin()
 
     except rospy.ROSInterruptException:

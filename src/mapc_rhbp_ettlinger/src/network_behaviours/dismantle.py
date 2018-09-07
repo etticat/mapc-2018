@@ -15,13 +15,13 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
     Network behaviour that is responsible for exploring the environment
     """
-    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
+    def __init__(self, agent_name, name, shared_components, **kwargs):
 
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
-        self._global_rhbp_components = global_rhbp_components
-        super(DismantleNetworkBehaviour, self).__init__(mechanism=global_rhbp_components.opponent_wells_decision, name=name,
+        self._shared_components = shared_components
+        super(DismantleNetworkBehaviour, self).__init__(mechanism=shared_components.opponent_wells_decision, name=name,
                                                         agent_name=agent_name,
-                                                        global_rhbp_components=global_rhbp_components,
+                                                        shared_components=shared_components,
                                                         **kwargs)
 
         self.init_behaviours()
@@ -45,7 +45,7 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
 
         self._dismantle_behaviour.add_effect(
             effect=Effect(
-                sensor_name=self._global_rhbp_components.opponent_wells_sensor.name,
+                sensor_name=self._shared_components.opponent_wells_sensor.name,
                 sensor_type=bool,
                 indicator=-1.0
             )
@@ -60,4 +60,4 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
             name='dismantle_goal',
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
-            conditions=[Negation(self._global_rhbp_components.opponent_well_exists_cond)])
+            conditions=[Negation(self._shared_components.opponent_well_exists_cond)])

@@ -3,7 +3,7 @@ import threading
 from threading import Thread
 
 import rospy
-from mac_ros_bridge.msg import RequestAction, SimStart, Position, SimEnd
+from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -13,7 +13,7 @@ from contract_net.manager_deliver import DeliverManager
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
-from global_rhbp_components import GlobalRhbpComponents
+from agent_components.shared_components import SharedComponents
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.planner')
 
@@ -36,12 +36,12 @@ class Planner(object):
         self._job_decider = ChooseBestAvailableJobDecision(agent_name=agent_name)
 
         # Initialise rhbp components
-        self._global_rhbp_components = GlobalRhbpComponents(agent_name=agent_name)
+        self._shared_components = SharedComponents(agent_name=agent_name)
 
         # Init contract net managers
         self._manager_deliver = DeliverManager(agent_name=agent_name)
         self._manager_assemble = AssembleManager(agent_name=agent_name,
-                                                 assembly_combination_decision=self._global_rhbp_components.assembly_combination_decision)
+                                                 assembly_combination_decision=self._shared_components.assembly_combination_decision)
 
         # Keep reference to coordination thread
         self.coordination_thread = None

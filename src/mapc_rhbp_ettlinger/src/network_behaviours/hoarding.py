@@ -8,13 +8,13 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
     Network behaviour responsible for Bringing finished products to a storage
     """
 
-    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
+    def __init__(self, agent_name, name, shared_components, **kwargs):
         super(HoardingNetworkBehaviour, self).__init__(
             agent_name=agent_name,
-            global_rhbp_components=global_rhbp_components,
+            shared_components=shared_components,
             name=name,
             use_name_for_movement=True,
-            mechanism=global_rhbp_components.choose_hoarding_mechanism,
+            mechanism=shared_components.choose_hoarding_mechanism,
             **kwargs)
 
         self._product_provider = ProductProvider(agent_name=agent_name)
@@ -23,7 +23,7 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
             name="store_behaviour",
             agent_name=agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            mechanism=global_rhbp_components.choose_hoarding_mechanism
+            mechanism=shared_components.choose_hoarding_mechanism
         ))
 
     def stop(self):
@@ -32,4 +32,4 @@ class HoardingNetworkBehaviour(GoAndDoNetworkBehaviour):
         :return:
         """
         super(HoardingNetworkBehaviour, self).stop()
-        self._global_rhbp_components.choose_hoarding_mechanism.reset_value()
+        self._shared_components.choose_hoarding_mechanism.reset_value()

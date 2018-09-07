@@ -10,7 +10,7 @@
 
     <!--Planner Nodes-->
 
-    <include file="$(find mapc_rhbp_ettlinger)/launch/survailer.launch" pass_all_args="true">
+    <include file="$(find mapc_rhbp_ettlinger)/launch/eamanager.launch" pass_all_args="true">
     </include>
 
 

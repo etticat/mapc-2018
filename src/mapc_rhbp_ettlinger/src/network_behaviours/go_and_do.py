@@ -14,10 +14,10 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
     NetworkBehaviour Base class for all network behaviours, that need to go to a destination and perform ana action there
     """
 
-    def __init__(self, agent_name, name, global_rhbp_components, mechanism, use_in_facility_flag=True, use_name_for_movement=False, **kwargs):
+    def __init__(self, agent_name, name, shared_components, mechanism, use_in_facility_flag=True, use_name_for_movement=False, **kwargs):
         super(GoAndDoNetworkBehaviour, self).__init__(
             agent_name=agent_name,
-            global_rhbp_components=global_rhbp_components,
+            shared_components=shared_components,
             name=name, **kwargs)
 
         self.destination_decision = mechanism
@@ -75,7 +75,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         # Worst case scenareo: By moving we move 1 step away from a charging station
         self._go_behaviour.add_effect(
                 Effect(
-                    sensor_name=self._global_rhbp_components.charging_station_step_sensor.name,
+                    sensor_name=self._shared_components.charging_station_step_sensor.name,
                     indicator=1.0,  # 1 step at a time
                     sensor_type=float))
 

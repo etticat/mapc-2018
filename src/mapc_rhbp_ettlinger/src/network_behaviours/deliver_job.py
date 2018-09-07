@@ -10,23 +10,23 @@ class DeliverJobNetworkBehaviour(GoAndDoNetworkBehaviour):
     Network behaviour responsible for delivering items for job completion
     """
 
-    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
+    def __init__(self, agent_name, name, shared_components, **kwargs):
 
         super(DeliverJobNetworkBehaviour, self).__init__(
             agent_name=agent_name,
-            global_rhbp_components=global_rhbp_components,
+            shared_components=shared_components,
             name=name,
             use_name_for_movement=True,
-            mechanism=global_rhbp_components.deliver_task_mechanism,
+            mechanism=shared_components.deliver_task_mechanism,
             **kwargs)
 
         self.deliver_job_behaviour = DeliverJobBehaviour(name="deliver_job_behaviour", agent_name=agent_name,
-                                        mechanism=global_rhbp_components.deliver_task_mechanism,
+                                        mechanism=shared_components.deliver_task_mechanism,
                                         plannerPrefix=self.get_manager_prefix())
         self.init_do_behaviour(self.deliver_job_behaviour)
         self.deliver_job_behaviour.add_effect(Effect(
             sensor_type=bool,
-            sensor_name=global_rhbp_components.has_deliver_task_sensor.name,
+            sensor_name=shared_components.has_deliver_task_sensor.name,
             indicator=-1.0
         ))
         self.delivery_goal = GoalBase(
@@ -34,4 +34,4 @@ class DeliverJobNetworkBehaviour(GoAndDoNetworkBehaviour):
             permanent=True,
             priority=50,
             planner_prefix=self._agent_name,
-            conditions=[Negation(self._global_rhbp_components.has_deliver_job_task_assigned_cond)])
+            conditions=[Negation(self._shared_components.has_deliver_job_task_assigned_cond)])

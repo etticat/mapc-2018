@@ -1,29 +1,22 @@
 #!/usr/bin/env python2
 import time
 
-from diagnostic_msgs.msg import KeyValue
 from mapc_rhbp_ettlinger.msg import AgentConfig
-
-from behaviour_components.behaviours import Behaviour
-from threading import Thread
 
 from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
 
 import rospy
 
-from agent_components.coordination import AgentCoordinationManager
-from agent_components.massim_rhbp_components import MassimRhbpComponents
+from agent_components.coordination_components import CoordinationComponent
+from agent_components.massim_rhbp_components import MassimRhbpComponent
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
-from common_utils.calc import CalcUtil
-from common_utils.debug import DebugUtils
 from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
-from decisions.well_chooser import ChooseWellToBuildDecision
 from provider.action_provider import ActionProvider, Action
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
-from global_rhbp_components import GlobalRhbpComponents
+from agent_components.shared_components import SharedComponents
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
 # import cProfile as profile
@@ -31,7 +24,7 @@ from provider.well_provider import WellProvider
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.node.agent')
 
 
-class RhbpAgent:
+class RhbpAgent(object):
     """
     Main class of an agent, taking care of the main interaction with the mac_ros_bridge
     """
@@ -65,13 +58,10 @@ class RhbpAgent:
         self._self_organisation_provider.init_entity_listener()
 
         # initialise all components
-        self.global_rhbp_components = GlobalRhbpComponents(agent_name=self._agent_name)
-        ettilog.loginfo("RhbpAgent(%s):: GlobalRhbpComponents initialized", self._agent_name)
-        self._manager = Manager(prefix=self._agent_name, max_parallel_behaviours=1)
-        self._massim_rhbp_components = MassimRhbpComponents(agent_name=self._agent_name,
-                                    global_rhbp_components=self.global_rhbp_components, manager=self._manager)
-        self._coordination_manager = None  # Will be initialised once simulation is started
-        ettilog.loginfo("RhbpAgent(%s):: ActionManager initialized", self._agent_name)
+        self._shared_components = SharedComponents(agent_name=self._agent_name)
+        self._massim_rhbp_components = MassimRhbpComponent(agent_name=self._agent_name,
+                               shared_components=self._shared_components, manager=Manager(prefix=self._agent_name, max_parallel_behaviours=1))
+        self._coordination_component = None  # Will be initialised once simulation is started
 
         # One agent has the task of bidding for auctions
         if self._should_bid_for_auctions:
@@ -101,7 +91,7 @@ class RhbpAgent:
             ettilog.logerr("RhbpAgent(%s):: Action %s performed with result: %s", self._agent_name, agent.last_action,
                            agent.last_action_result)
 
-            if self._steps_without_action >= 3:
+            if self._steps_without_action >= 3000:
                 rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..."%(self._agent_name))
         else:
             self._steps_without_action = 0
@@ -163,11 +153,11 @@ class RhbpAgent:
         if not self._sim_started:
 
             # Init coordination manager only once. Even when restarting simulation
-            if self._coordination_manager is None:
+            if self._coordination_component is None:
                 # DebugUtils.instant_find_resources(self._agent_name)
-                self._coordination_manager = AgentCoordinationManager(agent_name=self._agent_name,
-                                                                      global_rhbp_components=self.global_rhbp_components,
-                                                                      role=sim_start.role.name)
+                self._coordination_component = CoordinationComponent(agent_name=self._agent_name,
+                                                                     shared_components=self._shared_components,
+                                                                     role=sim_start.role.name)
                 ettilog.logerr("RhbpAgent(%s):: CoordinationContractors initialised", self._agent_name)
         self._sim_started = True
 
@@ -224,11 +214,11 @@ class RhbpAgent:
         # Build a well if we are currently out of bounds.
 
         if RhbpAgent.BUILD_WELL_ENABLED:
-            well_task = self.global_rhbp_components._choose_well_to_build_decision.choose(self.global_rhbp_components.well_task_mechanism,
-                                                                                          request_action.agent)
+            well_task = self._shared_components._choose_well_to_build_decision.choose(self._shared_components.well_task_mechanism,
+                                                                                      request_action.agent)
             if well_task is not None:
                 ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
-                self.global_rhbp_components.well_task_mechanism.start_task(well_task)
+                self._shared_components.well_task_mechanism.start_task(well_task)
 
         manager_steps = 0
         time_passed = 0
@@ -236,14 +226,13 @@ class RhbpAgent:
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
             if self._sim_started:
-                self._manager.step(guarantee_decision=True)
+                self._massim_rhbp_components.step(guarantee_decision=True)
 
                 manager_steps += 1
                 time_passed = (rospy.get_rostime()   - self.request_time).to_sec()
             else:
                 time.sleep(0.5)
 
-        # self.prrrrrrrr.disable()
         # If decision making took too long -> log
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
             ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
@@ -252,11 +241,6 @@ class RhbpAgent:
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
             self._action_provider.send_action(action_type=Action.RECHARGE)
-
-
-
-
-
 
 if __name__ == '__main__':
 

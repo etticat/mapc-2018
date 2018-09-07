@@ -6,7 +6,6 @@ from mac_ros_bridge.msg import Team, RequestAction
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
-from provider.well_provider import WellProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.stats')
 

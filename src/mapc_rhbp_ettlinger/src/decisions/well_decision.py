@@ -1,7 +1,7 @@
-from decisions.map_decisions import PickClosestDestinationWithLowestValue, MapDecision
+from decisions.map_decisions import PickClosestDestinationWithLowestValueDecision, MapDecision
 
 
-class WellPositionDecision(PickClosestDestinationWithLowestValue):
+class WellPositionDecision(PickClosestDestinationWithLowestValueDecision):
     """
     Selects the best position to build a well based on the place where the fewest opponents have been seen
     Sens a message so no one else builds a well there
@@ -19,7 +19,7 @@ class WellPositionDecision(PickClosestDestinationWithLowestValue):
         :param val:
         :return:
         """
-        msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)
+        msg = super(PickClosestDestinationWithLowestValueDecision, self).create_message(val)
 
         if msg is not None:
             # Inject the intended destination and use it instead of the current position

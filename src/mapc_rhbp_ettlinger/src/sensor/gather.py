@@ -36,26 +36,3 @@ class SmallestGatherableItemVolumeSensor(Sensor):
 
         self.update(smallest_item_volume)
         return super(SmallestGatherableItemVolumeSensor, self).sync()
-
-
-class NextGatheredItemVolumeSensor(GradientSensor):
-    """
-    Sensor that calculates the volume of the next item selected for gathering
-    """
-
-    def __init__(self, name, agent_name, mechanism):
-        super(NextGatheredItemVolumeSensor, self).__init__(name=name, sensor_type=SENSOR.VALUE, mechanism=mechanism)
-
-        self._agent_name = agent_name
-
-        self._product_provider = ProductProvider(agent_name=agent_name)
-
-    def calc(self):
-        task = super(NextGatheredItemVolumeSensor, self).calc()
-        if task is not None:
-            volume = task.volume
-        else:
-            volume = 0
-        ettilog.loginfo("NextIngredientVolumeSensor(%s):: Volume of next item: %d %s", self._agent_name, volume,
-                        str(task))
-        return volume

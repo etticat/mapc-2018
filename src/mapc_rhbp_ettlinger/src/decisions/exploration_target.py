@@ -6,14 +6,14 @@ from diagnostic_msgs.msg import KeyValue
 from mac_ros_bridge.msg import SimEnd, Position, SimStart
 
 from common_utils.agent_utils import AgentUtils
-from decisions.map_decisions import PickClosestDestinationWithLowestValue, MapDecision
+from decisions.map_decisions import PickClosestDestinationWithLowestValueDecision, MapDecision
 from provider.distance_provider import DistanceProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
 from so_data.patterns import DecisionPattern
 
 
-class ExplorationDecision(PickClosestDestinationWithLowestValue):
+class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
     """
     Finds the point to explore next.
     sends out a message, so no one else tries to explore the place too
@@ -28,7 +28,7 @@ class ExplorationDecision(PickClosestDestinationWithLowestValue):
                                                   pick_random_of_lowest_values=True, agent_name=agent_name)
 
     def create_message(self, val):
-        msg = super(PickClosestDestinationWithLowestValue, self).create_message(val)
+        msg = super(PickClosestDestinationWithLowestValueDecision, self).create_message(val)
 
         if msg is not None:
             # Inject the intended destination and use it instead of the current position for the message

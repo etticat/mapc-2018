@@ -19,13 +19,13 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
     Network behaviour responsible for gathering ingredients
     """
 
-    def __init__(self, agent_name, name, global_rhbp_components, **kwargs):
+    def __init__(self, agent_name, name, shared_components, **kwargs):
 
         super(GatheringNetworkBehaviour, self).__init__(
             agent_name=agent_name,
-            global_rhbp_components=global_rhbp_components,
+            shared_components=shared_components,
             name=name,
-            mechanism=global_rhbp_components.gather_decision_mechanism,
+            mechanism=shared_components.gather_decision_mechanism,
             **kwargs)
 
         self._agent_name = self._agent_name
@@ -39,7 +39,7 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
 
         self.gather_behviour.add_effect(
             effect=Effect(
-                sensor_name=self._global_rhbp_components.load_factor_sensor.name,
+                sensor_name=self._shared_components.load_factor_sensor.name,
                 indicator=1.0,
                 sensor_type=float
 
@@ -53,7 +53,7 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
             permanent=True,
             priority=50,
             planner_prefix=self._agent_name,
-            conditions=[self._global_rhbp_components.load_fullness_condition])
+            conditions=[self._shared_components.load_fullness_condition])
 
 
     def stop(self):
@@ -63,11 +63,11 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
         """
         super(GatheringNetworkBehaviour, self).stop()
         # Deleting task and cleaning up goals
-        self._global_rhbp_components.gather_decision_mechanism.end_gathering()
+        self._shared_components.gather_decision_mechanism.end_gathering()
     def do_step(self):
         """
         Pick best gather option each step
         :return:
         """
-        self._global_rhbp_components.gather_decision_mechanism.calc_value()
+        self._shared_components.gather_decision_mechanism.calc_value()
         super(GatheringNetworkBehaviour, self).do_step()
