@@ -8,10 +8,9 @@ from math import sin, cos, sqrt, atan2, radians
 from numpy import mean
 from urllib2 import URLError
 
-import numpy as np
 import rospy
-from mac_ros_bridge.msg import SimStart, Position, Agent, ShopMsg, DumpMsg, StorageMsg, WorkshopMsg, WellMsg, \
-    ChargingStationMsg, SimEnd, ResourceMsg, FacilityMsg
+from mac_ros_bridge.msg import SimStart, Position, Agent, ShopMsg, DumpMsg, StorageMsg, WorkshopMsg, \
+    ChargingStationMsg, SimEnd, FacilityMsg
 from mapc_rhbp_ettlinger.srv import SetGraphhopperMap
 
 from common_utils import etti_logging
@@ -38,7 +37,8 @@ class DistanceProvider(object):
         self._initialised = False
         self._agent_name = agent_name
 
-        self.graphhopper_port = rospy.get_param("DistanceProvider.GRAPHHOPPER_DEFAULT_PORT", DistanceProvider.GRAPHHOPPER_DEFAULT_PORT)
+        self.graphhopper_port = rospy.get_param("DistanceProvider.GRAPHHOPPER_DEFAULT_PORT",
+                                                DistanceProvider.GRAPHHOPPER_DEFAULT_PORT)
         self._cell_size = 0.01
         self._can_fly = False
         self._speed = 1
@@ -70,7 +70,7 @@ class DistanceProvider(object):
     def callback_facility(self, facility_msg):
         """
         Keeps track of all positions of facilities
-        :param facilityMsg:
+        :param facility_msg:
         :return:
         """
 
@@ -115,7 +115,8 @@ class DistanceProvider(object):
         self._speed = sim_start.role.base_speed
         self._proximity = sim_start.proximity
 
-        # The agent often gets stuck at the boarders, avoid this by adding a slight margin around the borders that we do not want to touch
+        # The agent often gets stuck at the boarders, avoid this by adding a slight margin around the borders that we
+        #  do not want to touch
         self.min_lat = sim_start.min_lat + SimulationProvider.COORDINATES_MARGIN
         self.max_lat = sim_start.max_lat - SimulationProvider.COORDINATES_MARGIN
         self.min_lon = sim_start.min_lon + SimulationProvider.COORDINATES_MARGIN
@@ -141,16 +142,18 @@ class DistanceProvider(object):
         self._initialised = True
         self.set_map(sim_start.map)
 
-    def callback_sim_end(self, sim_end):
+    def callback_sim_end(self):
         self._initialised = False
         self._facility_positions.clear()
 
-    def calculate_distance(self, endPosition, start_position=None, can_fly=None, estimate=False):
+    def calculate_distance(self, end_position, start_position=None, can_fly=None, estimate=False):
         """
         Calculates the distance between two position.
         Depending on the agent abilities, this returns either air or road distance
-        :param startPosition:
-        :param endPosition:
+        :param estimate:
+        :param can_fly:
+        :param start_position:
+        :param end_position:
         :return:
         """
         if can_fly is None:
@@ -161,24 +164,27 @@ class DistanceProvider(object):
 
         if can_fly:
             # If agent can fly, return air distance
-            air_distance = self.calculate_distance_air(start_position, endPosition)
+            air_distance = self.calculate_distance_air(start_position, end_position)
             return air_distance
         else:
             if not estimate:
                 # if agent can't fly return road distance
                 try:
-                    return self.calculate_distance_street(start_position, endPosition)
+                    return self.calculate_distance_street(start_position, end_position)
                 except LookupError as e:
                     ettilog.logerr(e)
                     traceback.format_exc()
                 except Exception as e:
                     ettilog.logerr("Graphhopper not started/responding. Distance for the drone used instead." + str(e))
 
-            return self.calculate_distance_air(start_position, endPosition) * 2  # Fallback
+            return self.calculate_distance_air(start_position, end_position) * 2  # Fallback
 
-    def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None, speed=None, estimate=False):
+    def calculate_steps(self, end_position, use_in_facility_flag=True, start_position=None, can_fly=None,
+                        speed=None, estimate=False):
         """
         Returns the step needed between two positions.
+        :param estimate:
+        :param speed:
         :param can_fly:
         :param start_position:
         :param use_in_facility_flag:
@@ -193,20 +199,20 @@ class DistanceProvider(object):
             speed = self._speed
 
         # calculate the air distance
-        size_ = self.calculate_distance(end_position, start_position=start_position, can_fly=can_fly, estimate=estimate) / (speed * self._cell_size)
+        size_ = self.calculate_distance(
+            end_position, start_position=start_position, can_fly=can_fly, estimate=estimate) / (speed * self._cell_size)
 
-        # Round up to next int value.
-        # Agents often walk 1.0001 times the distance they are supposed to go. Therefore we subtract 0.002 to make up for this case.
-        # The exact step size is not of utmost importance. 1 Step off is fine
+        # Round up to next int value. Agents often walk 1.0001 times the distance they are supposed to go. Therefore
+        # we subtract 0.002 to make up for this case. The exact step size is not of utmost importance. 1 Step off is
+        # fine
         steps = math.ceil((size_ / 1000) - 0.002)
 
         # If the facility flag is enabled and the facility flag is not set currently, the resulting
-        # step has to be at least 1, as we are currently not in the facility. (but maybe reallly close)
+        # step has to be at least 1, as we are currently not in the facility. (but maybe really close)
         if use_in_facility_flag:
             steps = max(steps, 1)
 
         return steps  # round up except when its really close
-        # TODO Maype this can be better approximated using proximity. But then need to convert from latlong eucliedian to meters
 
     def calculate_distance_air(self, pos1, pos2):
         """
@@ -220,7 +226,6 @@ class DistanceProvider(object):
         key = (pos1.lat, pos1.long, pos2.lat, pos2.long)
 
         if key not in self._air_distance_cache:
-
             lat1 = radians(pos1.lat)
             lon1 = radians(pos1.long)
             lat2 = radians(pos2.lat)
@@ -232,7 +237,6 @@ class DistanceProvider(object):
             a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
             c = 2 * atan2(sqrt(a), sqrt(1 - a))
             self._air_distance_cache[key] = DistanceProvider.RADIUS_EARTH_METERS * c
-
 
         return self._air_distance_cache[key]
 
@@ -253,7 +257,7 @@ class DistanceProvider(object):
 
     def _request_street_distance(self, position1, position2):
         """"
-        Request street distance between two positions from graphhoppper
+        Request street distance between two positions from graphhopper
         Taken from 2017
         :param position1: position 1
         :type position1: Position
@@ -278,26 +282,27 @@ class DistanceProvider(object):
 
         except URLError as e:
             raise Exception("Graphhopper: URL error message for " + request + " :: " + str(e))
-        except socket.timeout as e:
+        except socket.timeout:
             raise Exception("Graphhopper socket timeout for: " + str(request))
 
-    def set_map(self, map):
+    def set_map(self, new_map):
         """
         Set the current map on the map server using the ROS service interface
         Taken from 2017
-        :param map: name of map to configure
+        :param new_map: name of map to configure
         """
         try:
             set_map = rospy.ServiceProxy(GraphhopperProcessHandler.MAP_SERVICE_NAME, SetGraphhopperMap)
-            res = set_map(map)
-            if self._map != map:  # reset cache on new map
-                self._map = map
+            res = set_map(new_map)
+            if self._map != new_map:  # reset cache on new map
+                self._map = new_map
                 self.graphhopper_port = res.port
                 self._road_distance_cache = {}
         except rospy.ServiceException:
             ettilog.logerr("ROS service exception in set_map_service %s", traceback.format_exc())
 
-    def calculate_positions_eucledian_distance(self, pos1, pos2):
+    @staticmethod
+    def calculate_positions_euclidean_distance(pos1, pos2):
         """
         Taken from 2017
         :param pos1:
@@ -310,7 +315,6 @@ class DistanceProvider(object):
         """
         Returns the closest facility to the agent
         :param facilities:
-        :param position:
         :return:
         """
         # If no facilities provided, return none
@@ -323,6 +327,8 @@ class DistanceProvider(object):
     def at_destination(self, destination_pos, use_in_facility_flag, start_position=None):
         """
         Returns if pos1 and pos2 are at same location as defined in server.
+        :param start_position:
+        :param use_in_facility_flag:
         :param destination_pos:
         :return:
         """
@@ -338,7 +344,8 @@ class DistanceProvider(object):
                     if destination_reached:
                         return True
                 else:
-                    rospy.logerr("DistanceProvider(%s):: current faciliy unknown: %s", self._agent_name, self._facility)
+                    rospy.logerr("DistanceProvider(%s):: current facility unknown: %s",
+                                 self._agent_name, self._facility)
         else:
             if start_position is None:
                 start_position = self.agent_pos
@@ -432,7 +439,7 @@ class DistanceProvider(object):
         return self._in_facility
 
     def same_location(self, pos1, pos2):
-        return self.calculate_positions_eucledian_distance(pos1, pos2) < self._proximity
+        return self.calculate_positions_euclidean_distance(pos1, pos2) < self._proximity
 
     @property
     def initialised(self):

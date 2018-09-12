@@ -17,11 +17,11 @@ class ChooseFinishedProductsToStoreDecision(DecisionPattern):
     Selects the finished products an agent has and is able to put away in storage
     """
 
-    def __init__(self, agent_name, gather_mechanism, assembly_decision_mechanism):
-        self.assembly_decision_mechanism = assembly_decision_mechanism
-        self.gather_mechanism = gather_mechanism
+    def __init__(self, agent_name, gather_decision, assembly_decision_decision):
+        self.assembly_decision_decision = assembly_decision_decision
+        self.gather_decision = gather_decision
 
-        self.product_provider = ProductProvider(agent_name=agent_name)
+        self._product_provider = ProductProvider(agent_name=agent_name)
 
         super(ChooseFinishedProductsToStoreDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
 
@@ -32,20 +32,20 @@ class ChooseFinishedProductsToStoreDecision(DecisionPattern):
         :return:
         """
         # Get all the items that all agents currently have in stock
-        finished_product_stock = self.product_provider.get_agent_stock_items([ProductProvider.STOCK_ITEM_TYPE_STOCK, ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL])
+        finished_product_stock = self._product_provider.get_agent_stock_items([ProductProvider.STOCK_ITEM_TYPE_STOCK, ProductProvider.STOCK_ITEM_TYPE_HOARDING_GOAL])
 
         # Subtract all items that we need for assembly
-        desired_ingredients = self.gather_mechanism.get_desired_ingredients(consider_intermediate_ingredients=True)
+        desired_ingredients = self.gather_decision.get_desired_ingredients(consider_intermediate_ingredients=True)
         finished_products_to_store = CalcUtil.dict_diff(finished_product_stock, desired_ingredients,
                                                         normalize_to_zero=True)
 
         # Subtract all items that we need for delivery
-        desired_finished_products = self.assembly_decision_mechanism.finished_product_goals
+        desired_finished_products = self.assembly_decision_decision.finished_product_goals
         finished_products_to_store = CalcUtil.dict_diff(finished_products_to_store, desired_finished_products,
                                                         normalize_to_zero=True)
 
         # of all the items that require storing, pick the ones that the current agent has
-        finished_product_agent_stock = self.product_provider.get_finished_products_in_stock()
+        finished_product_agent_stock = self._product_provider.get_finished_products_in_stock()
         finished_product_agent_stock = CalcUtil.dict_intersect(finished_products_to_store, finished_product_agent_stock)
 
         if sum(finished_product_agent_stock.values()) == 0:

@@ -1,5 +1,3 @@
-import random
-
 from mapc_rhbp_ettlinger.msg import TaskBid, TaskRequest
 
 from common_utils import etti_logging
@@ -24,7 +22,8 @@ class GenerateBidFromRequestDecision(object):
 
     def generate_bid(self, request, has_assembly_task):
         """
-        Creats the bid from the request
+        Creates the bid from the request
+        :param has_assembly_task:
         :param request:
         :type request: TaskRequest
         :return: JobRequest
@@ -37,14 +36,14 @@ class GenerateBidFromRequestDecision(object):
 
         own_items = self._product_provider.get_item_list()
         useful_items = CalcUtil.list_intersect(request.items, own_items)
-        # TODO: If storage has all items, maybe agents who can't provide items should also bid.
         # Depends on how intensive I use hoarding in last version.
         if len(useful_items) > 0 or len(request.items) == 0:
             return TaskBid(
                 id=request.id,
                 bid=bid,
                 agent_name=self._agent_name,
-                expected_steps=self._step_provider.calculate_steps(self._facility_provider.get_storage_by_name(request.destination_name).pos),
+                expected_steps=self._step_provider.calculate_steps(
+                    self._facility_provider.get_storage_by_name(request.destination_name).pos),
                 items=useful_items,
                 request=request
             )

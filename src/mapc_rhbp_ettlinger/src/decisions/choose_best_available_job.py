@@ -1,10 +1,10 @@
 import numpy as np
 
-from diagnostic_msgs.msg import KeyValue
-from mapc_rhbp_ettlinger.msg import StockItem, KeyIntValue, TaskStop
-
 import rospy
-from mac_ros_bridge.msg import Job, SimStart
+from diagnostic_msgs.msg import KeyValue
+from mac_ros_bridge.msg import SimStart
+from mapc_rhbp_ettlinger.msg import StockItem, KeyIntValue, TaskStop
+from rospy import Publisher
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -15,18 +15,17 @@ from provider.action_provider import ActionProvider, Action
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
-from rospy import Publisher
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_activation')
 
 
 class ChooseBestAvailableJobDecision(object):
     """
-    Picks the best available and doable job
+    Picks the best available job, that can be currently performed according to the stock and goals
     """
     TOPIC_FINISHED_PRODUCT_GOAL = "/planner/job/goals/desired_items"
 
-    PERCNTILE_TO_TRY_JOB = 0.7
+    PERCENTILE_TO_TRY_JOB = 0.7
     BID_PERCENTILE = 50
     TIME_LEFT_WEIGHT_START = 30
     ACTIVATION_THRESHOLD = -50
@@ -52,16 +51,17 @@ class ChooseBestAvailableJobDecision(object):
         MySubscriber(AgentUtils.get_coordination_topic(), message_type="stop",
                      task_type=CurrentTaskDecision.TYPE_DELIVER, callback=self.job_stopped)
 
-
         self._pub_desired_finished_products = Publisher(ChooseBestAvailableJobDecision.TOPIC_FINISHED_PRODUCT_GOAL,
                                                         StockItem,
                                                         queue_size=10)
         self._pub_job_stop = MyPublisher(AgentUtils.get_coordination_topic(), message_type="stop",
                                          task_type=CurrentTaskDecision.TYPE_DELIVER, queue_size=10)
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
         ChooseBestAvailableJobDecision.BID_PERCENTILE = int(round(rospy.get_param(
             "ChooseBestAvailableJobDecision.BID_PERCENTILE", ChooseBestAvailableJobDecision.BID_PERCENTILE)))
         ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD = rospy.get_param(
@@ -82,7 +82,7 @@ class ChooseBestAvailableJobDecision(object):
 
     def get_job_activation(self, job, include_fine=True):
         """
-        Returns the activation of a job by compring it to previous seen jobs
+        Returns the activation of a job by comparing it to previous seen jobs
         :param job:
         :param include_fine:
         :return:
@@ -122,7 +122,8 @@ class ChooseBestAvailableJobDecision(object):
         :return:
         """
 
-        # If the factors have just reset, do not coordinatate anything, just wait until the first jobs come in and try again
+        # If the factors have just reset, do not coordinate anything, just wait until the first jobs come in and
+        # try again
         if len(self.factors) == 0:
             return None, None
 
@@ -136,7 +137,9 @@ class ChooseBestAvailableJobDecision(object):
 
         if ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS:
             # For regular jobs we do not use the items that are reserved for missions
-            all_available_items_for_job = CalcUtil.dict_diff(all_available_items_for_missions, self.desired_finished_product_stock, normalize_to_zero=True)
+            all_available_items_for_job = CalcUtil.dict_diff(all_available_items_for_missions,
+                                                             self.desired_finished_product_stock,
+                                                             normalize_to_zero=True)
         else:
             all_available_items_for_job = all_available_items_for_missions
 
@@ -159,9 +162,8 @@ class ChooseBestAvailableJobDecision(object):
 
             percentile = self.get_percentile(job)
 
-
-            time_left = job.end - self._simulation_provider._step
-            time_passed = self._simulation_provider._step - job.start
+            time_left = job.end - self._simulation_provider.step
+            time_passed = self._simulation_provider.step - job.start
 
             ettilog.loginfo("%s, ", job.id)
             ettilog.loginfo("->percentile: %f, ", percentile)
@@ -181,15 +183,17 @@ class ChooseBestAvailableJobDecision(object):
                 # Check if all items can be found in agents and storages
                 has_all_items = CalcUtil.contains_items(all_available_items_for_missions, job_items_from_agents)
 
-
             if time_left <= ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START:
-                # If less than 30 steps are available start biasing against this job as it will get harder and harder to finish it
-                activation += (ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START - time_left) * ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER
+                # If less than 30 steps are available start biasing against this job as it will get harder and harder
+                #  to finish it
+                activation += (ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START - time_left) * \
+                              ChooseBestAvailableJobDecision.WEIGHT_TIME_OVER
 
             ettilog.loginfo("activation: %f, ", activation)
 
             # if all items are available and job is better than all previous ones, pick this job
-            if has_all_items and activation > best_activation and percentile > ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB:
+            if has_all_items and activation > best_activation and percentile > \
+                    ChooseBestAvailableJobDecision.PERCENTILE_TO_TRY_JOB:
                 best_activation = activation
                 job_to_try = job
                 items_to_take_from_storage = job_items_from_storage
@@ -205,11 +209,11 @@ class ChooseBestAvailableJobDecision(object):
     def generate_default_desired_finished_product_stock(self):
         """
         The desired finished product stock consists of what the planner wants plus a basic number of all items. This
-        function returns the basic item numers
+        function returns the basic item numbers
         :return:
         """
         desired_finished_product_stock = {}
-        for product in self._product_provider._assemblable_items.keys():
+        for product in self._product_provider.assemblable_items.keys():
             desired_finished_product_stock[product] = 0
         return desired_finished_product_stock
 
@@ -268,7 +272,7 @@ class ChooseBestAvailableJobDecision(object):
         for job in self.active_jobs:
             if job not in all_jobs_new:
                 # Job got deleted
-                # If job was removed (oponent was quicker, time is up, ...) -> Notify everyone to stop persuing it
+                # If job was removed (opponent was quicker, time is up, ...) -> Notify everyone to stop performing it
                 self._pub_job_stop.publish(TaskStop(job_id=job.id, reason="Job was removed"))
 
         # create an array of default finished products that is filled later
@@ -278,7 +282,8 @@ class ChooseBestAvailableJobDecision(object):
             percentile = self.get_percentile(job)
             if job.type is not "job" and percentile > ChooseBestAvailableJobDecision.IMPORTANT_JOB_PERCENTILE:
                 for item in job.items:
-                    desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + (item.amount)
+                    desired_finished_product_stock[item.name] = desired_finished_product_stock.get(item.name, 0) + (
+                        item.amount)
 
         # Publish the desired finished products to all agents
         desired_stock = StockItem(entity="planner")
@@ -297,7 +302,7 @@ class ChooseBestAvailableJobDecision(object):
         """
         for auction in auction_jobs:
             # Only handle the not assigned auctions
-            if auction.job.start + auction.auction_time - 1 == self._simulation_provider._step:
+            if auction.job.start + auction.auction_time - 1 == self._simulation_provider.step:
                 bid = self.get_auction_job_bid(auction.job)
 
                 # Bid for the auction
@@ -310,13 +315,13 @@ class ChooseBestAvailableJobDecision(object):
                     # We can only bid on one auction each round. Return ...
                     return
 
-    def on_job_started(self, id):
+    def on_job_started(self, task_id):
         """
         When a job is started save this information, so we don't try it again in the near future
-        :param id:
+        :param task_id:
         :return:
         """
-        self.coordinated_jobs.append(id)
+        self.coordinated_jobs.append(task_id)
 
     def job_stopped(self, task_stop):
         """
@@ -327,7 +332,8 @@ class ChooseBestAvailableJobDecision(object):
         """
         if task_stop.job_id in self.coordinated_jobs:
             self.coordinated_jobs.remove(task_stop.job_id)
-            ettilog.logerr("ChooseBestAvailableJobDecision:: Stopped task %s because '%s'", task_stop.job_id, task_stop.reason)
+            ettilog.logerr("ChooseBestAvailableJobDecision:: Stopped task %s because '%s'", task_stop.job_id,
+                           task_stop.reason)
 
     def reset_decider(self):
         self.factors = []

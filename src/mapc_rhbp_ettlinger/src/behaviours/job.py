@@ -2,7 +2,7 @@ from mapc_rhbp_ettlinger.msg import Task
 
 import rospy
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import GenericAction, Agent, Item
+from mac_ros_bridge.msg import GenericAction, Agent, Item, SimEnd
 
 from behaviour_components.behaviours import BehaviourBase
 from common_utils.calc import CalcUtil
@@ -19,7 +19,7 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class DeliverJobBehaviour(DecisionBehaviour):
     """
-    Behaviour that allows delivering of items to a storage for a specific job
+    Behaviour that allows delivery of items to a storage for a specific job
     """
 
     def __init__(self, name, agent_name, mechanism, **kwargs):
@@ -31,7 +31,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
         # Initialise providers
         self._product_provider = ProductProvider(agent_name=agent_name)
         self._action_provider = ActionProvider(agent_name=agent_name)
-        self.facility_provider = FacilityProvider(agent_name=agent_name)
+        self._facility_provider = FacilityProvider(agent_name=agent_name)
 
         self._current_task = None
         self._items_to_retrieve = None
@@ -39,6 +39,12 @@ class DeliverJobBehaviour(DecisionBehaviour):
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
                          self._action_request_agent)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self._init_values)
+
+    def _init_values(self):
+        self._current_task = None
+        self._items_to_retrieve = None
+        self._items_to_retrieve_count = 0
 
     def _action_request_agent(self, agent):
         """
@@ -50,7 +56,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
         """
 
         if agent.last_action is Action.DELIVER_JOB:
-            ettilog.logerr("DeliverJobBehaviour(%s):: Performed job delivery with status", self._agent_name, agent.last_action_result)
+            ettilog.logerr("DeliverJobBehaviour(%s):: Performed job delivery with status %s", self._agent_name, agent.last_action_result)
 
         if self._current_task is not None :
             if agent.last_action == Action.DELIVER_JOB:
@@ -73,7 +79,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
                     ettilog.loginfo("DeliverJobBehaviour(%s):: Retreived %dx%s status:", self._agent_name, self._items_to_retrieve_count, self._items_to_retrieve, agent.last_action_result)
                     self.items_from_storage[self._items_to_retrieve] = self.items_from_storage.get(self._items_to_retrieve,
                                                                                                    self._items_to_retrieve_count) - self._items_to_retrieve_count
-                    # If something went wrong during retreival, cancel job
+                    # If something went wrong during retrieval, cancel job
                     if agent.last_action_result not in ["successful_partial", "successful"]:
                         ettilog.logerr("DeliverJobBehaviour(%s):: Item retrieval failed. cancelling all. Status: %s", self._agent_name, agent.last_action_result)
                         self.mechanism.end_task(notify_others=True)
@@ -138,7 +144,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
         :return:
         """
         # Get a current instance of the storage object
-        storage = self.facility_provider.get_storage_by_name(self._current_task.destination_name)
+        storage = self._facility_provider.get_storage_by_name(self._current_task.destination_name)
 
         # Pick retrieval method and possible number of items to retrieve
         for item in storage.items:
@@ -177,8 +183,8 @@ class DeliverJobBehaviour(DecisionBehaviour):
         self._items_to_retrieve = item_to_pick_up
         self._items_to_retrieve_count = item_count
         self._action_provider.send_action(action_type=action_type,
-                                          params=[KeyValue(key="Item", value=str(item_to_pick_up)),
-                                                  KeyValue(key="Amount", value=str(item_count))])
+                              params=[KeyValue(key="Item", value=str(item_to_pick_up)),
+                                      KeyValue(key="Amount", value=str(item_count))])
 
     def get_item_to_pickup(self):
         """
@@ -200,10 +206,10 @@ class DeliverJobBehaviour(DecisionBehaviour):
         if item_to_pick_up[0] is None:
             for item, item_count in self.items_from_storage.iteritems():
                 if item_count > 0:
-                    for item, item_count in self.items_from_storage.iteritems():
-                        volume = self._product_provider.get_volume_of_item(item)
-                        # Get the number of items, that fit in agent stock
-                        items_to_retrieve = self._product_provider.load_free / volume
+                    volume = self._product_provider.get_volume_of_item(item)
+                    # Get the number of items, that fit in agent stock
+                    items_to_retrieve = self._product_provider.load_free / volume
+                    if items_to_retrieve > 0:
                         item_to_pick_up = (item, items_to_retrieve)
                         break
 

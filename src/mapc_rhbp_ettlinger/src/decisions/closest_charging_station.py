@@ -1,8 +1,3 @@
-from mac_ros_bridge.msg import Agent
-
-import rospy
-
-from common_utils.agent_utils import AgentUtils
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from so_data.patterns import DecisionPattern

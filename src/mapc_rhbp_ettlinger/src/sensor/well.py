@@ -1,7 +1,6 @@
 from behaviour_components.sensors import Sensor
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
-from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
 
@@ -38,13 +37,13 @@ class WellIntegritySensor(GradientSensor):
 
 class EnoughMassiumToBuildWellSensor(Sensor):
 
-    def __init__(self, well_choser_mechanism, name=None, optional=False, initial_value=None):
-        self._well_choser_mechanism = well_choser_mechanism
+    def __init__(self, well_chooser_decision, name=None, optional=False, initial_value=None):
+        self._well_chooser_decision = well_chooser_decision
 
         super(EnoughMassiumToBuildWellSensor, self).__init__(name, optional, initial_value)
 
     def sync(self):
-        value = self._well_choser_mechanism.choose_well_type() is not None
+        value = self._well_chooser_decision.choose_well_type() is not None
 
         self.update(value)
         return super(EnoughMassiumToBuildWellSensor, self).sync()

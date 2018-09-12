@@ -1,12 +1,11 @@
 import random
 
 import rospy
-from mac_ros_bridge.msg import StorageMsg, WorkshopMsg, ChargingStationMsg, ResourceMsg, SimEnd, RequestAction, \
+from mac_ros_bridge.msg import ChargingStationMsg, SimEnd, RequestAction, \
     FacilityMsg
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
-from common_utils.calc import CalcUtil
 from common_utils.singleton import Singleton
 from provider.simulation_provider import SimulationProvider
 
@@ -15,22 +14,24 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class FacilityProvider(object):
     """
-    Keeps a list of all Facilities readily available for various components to use
+    Keeps dictionaries of all Facilities readily available for various components to use
     """
     __metaclass__ = Singleton
 
     def __init__(self, agent_name):
         self.init_runtime_variables()
-        self.simulation_provider = SimulationProvider(agent_name=agent_name)
+        self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
         # Reset variables when simulation ends
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.init_runtime_variables)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self.init_runtime_variables)
 
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction, self.request_action_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction,
+                         self.request_action_callback)
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
         rospy.Subscriber("/facilities", FacilityMsg, self.facilities_callback)
 
-    def init_runtime_variables(self, sim_end=None):
+    def init_runtime_variables(self):
         self.charging_stations = {}
         self.storages = {}
         self.workshops = {}
@@ -72,7 +73,7 @@ class FacilityProvider(object):
         for resource in facility_msg.resources:
             self.resources[resource.name] = resource
         for well in facility_msg.wells:
-            if well.team == self.simulation_provider.team:
+            if well.team == self._simulation_provider.team:
                 self.own_wells[well.name] = well
             else:
                 self._opponent_wells[well.name] = well

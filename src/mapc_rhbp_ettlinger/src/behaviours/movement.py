@@ -27,12 +27,12 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         super(GoToDestinationBehaviour, self).__init__(mechanism=mechanism, requires_execution_steps=True, **kwargs)
 
         self._agent_name = agent_name
-        self.destination_decision = mechanism
-        self.recalculate_destination_every_step = recalculate_destination_every_step
+        self._destination_decision = mechanism
+        self._recalculate_destination_every_step = recalculate_destination_every_step
 
-        self.use_name_for_movement = use_name_for_movement
+        self._use_name_for_movement = use_name_for_movement
 
-        self.destination = None
+        self._destination = None
 
         # initialise providers
         self._action_provider = ActionProvider(agent_name=agent_name)
@@ -48,21 +48,21 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         :return:
         """
 
-        if self.destination is not None:
+        if self._destination is not None:
             # Sometimes movement doesnt work (e.g. when navigating into a building.)
             # We save this destination into the self organisation component, so we don't try it again later
             if agent.last_action == "goto" and agent.last_action_result == "failed_no_route":
                 # Reset destination, so we can pick a new one in the next round
-                ettilog.logerr("GoToDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self.destination))
-                self.mechanism.destination_not_found(self.destination)
-                self.destination = None
+                ettilog.logerr("GoToDestinationBehaviour(%s):: Could not go to destination (%s), picking new one ...", self.name, str(self._destination))
+                self.mechanism.destination_not_found(self._destination)
+                self._destination = None
 
     def start(self):
         """
         Reset the destination at every start, to avoid using destinations from previous tries
         :return:
         """
-        self.destination = None
+        self._destination = None
         super(GoToDestinationBehaviour, self).start()
 
     def do_step(self):
@@ -70,23 +70,23 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         Retrieves the destination and tries to move there
         :return:
         """
-        if self.destination is None or self.recalculate_destination_every_step:
-            self.destination = super(GoToDestinationBehaviour, self).do_step()
+        if self._destination is None or self._recalculate_destination_every_step:
+            self._destination = super(GoToDestinationBehaviour, self).do_step()
 
-            if self.destination is not None:
-                ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%s)", self.name, str(self.destination))
+            if self._destination is not None:
+                ettilog.loginfo("GoToDestinationBehaviour(%s):: Picked new destination (%s)", self.name, str(self._destination))
 
-        if self.destination is not None:
+        if self._destination is not None:
             # Some behaviours do not provide positions but rather other objects, which have a pos attribute
             # This allows to reuse the mechanism for other purposes. In this case use the attribute
-            if self.use_name_for_movement:
-                if isinstance(self.destination, Task):
-                    name = self.destination.destination_name
+            if self._use_name_for_movement:
+                if isinstance(self._destination, Task):
+                    name = self._destination.destination_name
                 else:
-                    name = self.destination.name
+                    name = self._destination.name
                 self._action_provider.action_go_to_facility(name)
             else:
-                self._action_provider.action_go_to_destination(self.destination)
+                self._action_provider.action_go_to_destination(self._destination)
         else:
             ettilog.logerr("GoToDestinationBehaviour(%s):: Could not decide for destination", self.name)
 
@@ -95,5 +95,5 @@ class GoToDestinationBehaviour(DecisionBehaviour):
         Reset the destination on stop of behaviour
         :return:
         """
-        self.destination = None
+        self._destination = None
         super(GoToDestinationBehaviour, self).stop()

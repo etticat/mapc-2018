@@ -16,13 +16,12 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
 
     def __init__(self, agent_name, name, shared_components, **kwargs):
-
         super(BuildWellNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             shared_components=shared_components,
             use_in_facility_flag=False,
             name=name,
-            mechanism=shared_components.well_task_mechanism,
+            mechanism=shared_components.well_task_decision,
             **kwargs)
 
         self._agent_name = agent_name
@@ -38,8 +37,6 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._shared_components.has_build_well_task_assigned_cond)])
 
-
-
     def init_well_sensors(self, shared_components):
         """
         Initialise well sensors
@@ -50,7 +47,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
         # Sensor to check the integrity of the target well
         self.target_well_integrity_sensor = WellIntegritySensor(
             agent_name=self._agent_name,
-            mechanism=shared_components.well_task_mechanism,
+            mechanism=shared_components.well_task_decision,
             name="target_well_integrity_sensor")
 
         self._target_well_intact_condition = Condition(
@@ -63,7 +60,6 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
 
         self._target_well_damaged_condition = Negation(self._target_well_intact_condition)
 
-
     def init_build_behaviour(self, shared_components):
         """
         Initialise build up well behaviour
@@ -75,7 +71,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             name="build_up_well_behaviour",
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            mechanism=shared_components.well_task_mechanism
+            mechanism=shared_components.well_task_decision
         )
 
         self.build_up_well_bahviour.add_precondition(
@@ -91,7 +87,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        self.init_do_behaviour(self.build_up_well_bahviour, effect_on_goal=False)
+        self.init_do_behaviour(self.build_up_well_bahviour)
 
     def init_finish_build_behaviour(self, shared_components):
         """
@@ -104,7 +100,7 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             name="finish_build_well_behaviour",
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
-            mechanism=shared_components.well_task_mechanism
+            mechanism=shared_components.well_task_decision
         )
 
         self.finish_build_well_behaviour.add_precondition(
@@ -118,4 +114,4 @@ class BuildWellNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        self.init_do_behaviour(self.finish_build_well_behaviour, effect_on_goal=False)
+        self.init_do_behaviour(self.finish_build_well_behaviour)

@@ -17,17 +17,16 @@ class MassimSoBuffer(SoBuffer):
         super(MassimSoBuffer, self).__init__(aggregation=aggregation, aggregation_distance=aggregation_distance, min_diffusion=min_diffusion,
                                              view_distance=view_distance, id=id, moving_storage_size=moving_storage_size, store_all=store_all,
                                              framestorage=framestorage, pose_frame=pose_frame, ev_thread=ev_thread, ev_time=ev_time)
-        self.simulation_provider = SimulationProvider(agent_name=agent_name)
+        self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
     def get_current_time(self):
         """
         Use massim step instead of rospy time
         :return:
         """
-        return self.simulation_provider.step
+        return self._simulation_provider.step
 
     def init_subscriber(self):
 
         topic = AgentUtils.get_coordination_topic()
         return MySubscriber(topic, message_type="so_data", task_type="so_data", callback=self.store_data)
-

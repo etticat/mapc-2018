@@ -11,13 +11,12 @@ class AssembleContractor(ContractNetContractorBehaviour):
     Contractor class for accepting assembly coordination requests
     """
 
-    def __init__(self, agent_name, role, current_task_mechanism, ready_for_bid_condition):
-
+    def __init__(self, agent_name, role, current_task_decision, ready_for_bid_condition):
         self.ready_for_bid_condition = ready_for_bid_condition
         self._assembly_bid_chooser = ShouldBidForAssemblyDecision(agent_name=agent_name, role=role)
 
-        super(AssembleContractor, self).__init__(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE, current_task_mechanism=current_task_mechanism)
-
+        super(AssembleContractor, self).__init__(agent_name=agent_name, task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
+                                                 current_task_decision=current_task_decision)
 
     def bid_possible(self, bid):
         """

@@ -29,8 +29,10 @@ class SimulationProvider(object):
         self._max_long_outer = 0
         self._step = 0
         self._team = None
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start") , SimStart, self.callback_sim_start)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction, self.callback_request_action)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="start"), SimStart,
+                         self.callback_sim_start)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="request_action"), RequestAction,
+                         self.callback_request_action)
 
     def callback_sim_start(self, sim_start):
         """
@@ -61,9 +63,9 @@ class SimulationProvider(object):
         """
         self._step = request_action.simulation_step
 
-    def  out_of_bounds(self, pos):
+    def out_of_bounds(self, pos):
         return pos.lat < self._min_lat_outer or pos.lat > self._max_lat_outer \
-                             or pos.long < self._min_long_outer or pos.long > self._max_long_outer
+               or pos.long < self._min_long_outer or pos.long > self._max_long_outer
 
     def get_random_position(self):
         """
@@ -86,4 +88,4 @@ class SimulationProvider(object):
         return [Position(lat=self._min_lat, long=self._min_long),
                 Position(lat=self._min_lat, long=self._max_long),
                 Position(lat=self._max_lat, long=self._min_long),
-                Position(lat=self._max_lat, long=self._max_long),]
+                Position(lat=self._max_lat, long=self._max_long), ]

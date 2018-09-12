@@ -5,8 +5,8 @@ from rospy import Publisher, Subscriber
 
 class MyPublisher(Publisher):
     """
-    Publisher of rospy uses one thread for each Subscriber. In the case of this project, this results in many thousands of
-    threads. Therefore this Publisher combines multiple topic, who then all share the same thread.
+    Publisher of rospy uses one thread for each Subscriber. In the case of this project, this results in many thousands
+    of threads. Therefore this Publisher combines multiple topic, who then all share the same thread.
     """
 
     def __init__(self, name, message_type, task_type, subscriber_listener=None, tcp_nodelay=False, latch=False,
@@ -27,8 +27,8 @@ class MyPublisher(Publisher):
 
 class MySubscriber(Subscriber):
     """
-    Subscriber of rospy uses one thread for each Publisher. In the case of this project, this results in many thousands of
-    threads. Therefore this Subscriber combines multiple topic, who then all share the same thread.
+    Subscriber of rospy uses one thread for each Publisher. In the case of this project, this results in many thousands
+    of threads. Therefore this Subscriber combines multiple topic, who then all share the same thread.
     """
 
     def __init__(self, name, callback, message_type, task_type, **kwargs):

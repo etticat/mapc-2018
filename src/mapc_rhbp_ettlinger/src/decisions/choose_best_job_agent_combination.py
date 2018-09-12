@@ -10,7 +10,6 @@ from common_utils.calc import CalcUtil
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
 from provider.simulation_provider import SimulationProvider
-from provider.stats_provider import StatsProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.job_combination')
 
@@ -37,9 +36,11 @@ class ChooseBestJobAgentCombinationDecision(object):
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
 
         ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER = rospy.get_param(
             "ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER",
@@ -89,11 +90,12 @@ class ChooseBestJobAgentCombinationDecision(object):
                                                                              normalize_to_zero=True)
                     can_fulfill_job = sum(items_needed_after_storage_emptying.values()) == 0
 
-                    # Favour agents, that currently do not have an assembly task assigend
-                    interrupted_agents = sum([1-bid.bid for bid in subset])
+                    # Favour agents, that currently do not have an assembly task assigned
+                    interrupted_agents = sum([1 - bid.bid for bid in subset])
 
                     if can_fulfill_job:
-                        value = self.generate_activation(subset, job, can_fulfill_job_without_storage_items, interrupted_agents=interrupted_agents)
+                        value = self.generate_activation(subset, job, can_fulfill_job_without_storage_items,
+                                                         interrupted_agents=interrupted_agents)
 
                         if value > best_value:
                             best_value = value
@@ -101,13 +103,14 @@ class ChooseBestJobAgentCombinationDecision(object):
                             best_agent_combination = (subset, still_required_items)
 
                 if best_value > ChooseBestJobAgentCombinationDecision.PRIORITY_ACTIVATION_THRESHOLD:
-                    # we only try combinations with more, if we could not find any combination that doesnt interrupt assembly
+                    # we only try combinations with more, if we could not find any combination that doesnt interrupt
+                    # assembly
                     break
 
         return best_agent_combination
 
-
-    def get_still_needed_items_after_bid_execution(self, job_items, bids):
+    @staticmethod
+    def get_still_needed_items_after_bid_execution(job_items, bids):
         """
         Returns the items that are still needed after all bids are delivered
         :param job_items:
@@ -127,6 +130,7 @@ class ChooseBestJobAgentCombinationDecision(object):
     def generate_activation(self, subset, job, can_fulfill_job_without_storage_items, interrupted_agents):
         """
         Generates the activation for a job
+        :param interrupted_agents:
         :param subset:
         :param job:
         :param can_fulfill_job_without_storage_items:
@@ -136,7 +140,8 @@ class ChooseBestJobAgentCombinationDecision(object):
         # The number of step until all agents can be at the workshop
         max_step_count = max([bid.expected_steps for bid in subset])
 
-        if job.end - self._simulation_provider.step < max_step_count + ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER:
+        if job.end - self._simulation_provider.step < max_step_count + \
+                ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER:
             return 0  # This combination of agents can't make it in time
 
         activation = max_step_count * ChooseBestJobAgentCombinationDecision.WEIGHT_STEPS
@@ -147,4 +152,3 @@ class ChooseBestJobAgentCombinationDecision(object):
         activation += interrupted_agents * -10000
 
         return activation
-

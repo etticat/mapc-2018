@@ -46,7 +46,8 @@ class ProductProvider(object):
         self._facility_provider = FacilityProvider(agent_name=agent_name)
 
         # Reset variables when simulation ends
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self.init_runtime_variables)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd,
+                         self.init_runtime_variables)
 
         # Init subscribers and publishers
         topic = AgentUtils.get_coordination_topic()
@@ -58,7 +59,7 @@ class ProductProvider(object):
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
         # rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
 
-    def init_runtime_variables(self, sim_end=None):
+    def init_runtime_variables(self):
         self.hoarding_destination = None
         self._product_infos = {}
         self._gatherable_items = {}
@@ -83,22 +84,21 @@ class ProductProvider(object):
         self.role = None
         self.useful_items_for_assembly = []
 
-    def storage_callback(self, storageMsg):
+    def storage_callback(self, storage_msg):
         """
         Keeps track of all the storages for later use of storage stock
-        :param storageMsg:
-        :type storageMsg: StorageMsg
+        :param storage_msg:
+        :type storage_msg: StorageMsg
         :return:
         """
 
-        for storage in storageMsg.facilities:
+        for storage in storage_msg.facilities:
             self.storages[storage.name] = storage
 
     def _callback_stock_item(self, stock_item):
         """
         Keep track of all stock items and goals of all agents and storages
         :param stock_item:
-        :param msg: StockItem
         :return:
         """
 
@@ -136,13 +136,13 @@ class ProductProvider(object):
                         items[item.name] = items.get(item.name, 0) + item.stored
                 if include_job_goals:
                     for job_name, job_dict in self._storage_stocks.iteritems():
-                        # Types starting wiht j are job goals
+                        # Types starting with j are job goals
                         if job_name[0] == "j":
                             if storage in job_dict:
                                 items = CalcUtil.dict_sum(items, job_dict[storage])
                 if include_hoarding_goal:
                     for agent_name, hoarding_dict in self._storage_stocks.iteritems():
-                        # Types starting wiht a are hoarding goals of agents
+                        # Types starting with a are hoarding goals of agents
                         if agent_name[0] == "a":
                             if storage in hoarding_dict:
                                 items = CalcUtil.dict_sum(items, hoarding_dict[storage])
@@ -216,7 +216,7 @@ class ProductProvider(object):
         """
         return self._gatherable_items
 
-    def get_assemblable_products(self):
+    def get_assembleable_products(self):
         """
         Returns all items, that can be assembled from other items
         :return:
@@ -268,9 +268,8 @@ class ProductProvider(object):
             task = tasks[i].split(":")
             if task[0] == "assemble":
                 product_name = task[1]
-                # Add the items that we will have after assembly
-                # Not all of them will be deducted from the current agent, but thats ok, as we need this information only
-                # aggregated over all agents
+                # Add the items that we will have after assembly Not all of them will be deducted from the current
+                # agent, but thats ok, as we need this information only aggregated over all agents
                 items_to_assemble[product_name] = items_to_assemble.get(product_name, 0) + 1
 
                 # Subtract the items that we will use for assembly.
@@ -436,9 +435,9 @@ class ProductProvider(object):
 
     def get_agent_stock_items(self, types):
         """
-        Returns a list of all items that any agent owns or expected to has in the near future
-        :param types: Types that should be included in the calculation. e.g. stock itself, delivery goal, gather goal, ...
-        :type types: list
+        Returns a list of all items that any agent owns or expected to has in the near future :param types: Types
+        that should be included in the calculation. e.g. stock itself, delivery goal, gather goal, ... :type types:
+        list
         :return:
         """
         res = {}

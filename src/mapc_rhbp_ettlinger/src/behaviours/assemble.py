@@ -20,8 +20,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
     Behaviour, that allows to execute the assemble and assist_assemble commands
     """
 
-    ERROR_THRESHOLD_DURING = 4
-    ERROR_THRESHOLD_START = 100
+    ERROR_THRESHOLD_DURING_ASSEMBLY = 4
+    ERROR_THRESHOLD_START = 30
 
     def __init__(self, mechanism, name, agent_name, **kwargs):
         super(AssembleProductBehaviour, self) \
@@ -31,10 +31,9 @@ class AssembleProductBehaviour(DecisionBehaviour):
         # Constructor parameters
         self._agent_name = agent_name
 
-
         # Init providers
         self._product_provider = ProductProvider(agent_name=agent_name)
-        self.action_provider = ActionProvider(agent_name=agent_name)
+        self._action_provider = ActionProvider(agent_name=agent_name)
 
         self.init_runtime_variables()
 
@@ -43,7 +42,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         MySubscriber(topic, message_type="progress", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
                      callback=self._callback_task_progress)
         self._pub_assemble_progress = MyPublisher(topic, message_type="progress",
-                                                  task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
+                                              task_type=CurrentTaskDecision.TYPE_ASSEMBLE, queue_size=10)
         self._pub_assemble_stop = MyPublisher(topic, message_type="stop", task_type=CurrentTaskDecision.TYPE_ASSEMBLE,
                                               queue_size=10)
         rospy.Subscriber(AgentUtils.get_bridge_topic_prefix(agent_name=self._agent_name) + "agent", Agent,
@@ -57,7 +56,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         self._last_target = None
         self.error_count = 0
         # Dictionary, that keeps track of all assembly progresses.
-        # We not only track our own, to avoid missing out on information, when the assembly behaviour did not
+        # We not only track our own task progress, but all task progresses, to avoid missing out on information, when the assembly behaviour did not
         # get the information in time from the mechanism.
         self._task_progress_dict = {}
         # Dictionary, that keeps track of which agents have arrived at their destination
@@ -65,7 +64,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
 
     def _callback_task_progress(self, task_progres):
         """
-        Saves the progress of all assemble tasksin a dictionary
+        Saves the progress of all assemble tasks in a dictionary
         :param task_progres:
         :type task_progres: TaskProgress
         :return:
@@ -80,6 +79,11 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 agents_at_destination.append(task_progres.agent_name)
 
     def get_agents_at_destination(self, task_id):
+        """
+        Returns the agents that have already reached the destination to perform a task
+        :param task_id:
+        :return:
+        """
         if task_id not in self._task_destination_reached_dict:
             self._task_destination_reached_dict[task_id] = []
         return self._task_destination_reached_dict[task_id]
@@ -93,7 +97,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
         """
         # if our last task was assemble and the last_action in the simulation was assemble too
         if self._last_action == "assemble" and agent.last_action == "assemble":
-            ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name, agent.last_action_result)
+            ettilog.logerr("AssembleProductBehaviour(%s):: Last assembly: %s", self._agent_name,
+                           agent.last_action_result)
 
             if agent.last_action_result == "successful":
                 # Update the assemble step of the assemble task
@@ -105,13 +110,16 @@ class AssembleProductBehaviour(DecisionBehaviour):
                     # Only in a few edge cases this can happen. Generally we can ignore it and pretend it was succesful
                     step = self._get_assemble_step()
                     total_steps = len(self._task.task.split(","))
-                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity at step %d/%d", self._agent_name, step, total_steps)
+                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed capacity at step %d/%d", self._agent_name,
+                                   step, total_steps)
                     self.perform_next_task()
                 elif agent.last_action_result == "failed_item_amount" and self.all_agents_reached_destination():
                     # If all agents have reached but still don't have all items, go on to next task
                     step = self._get_assemble_step()
                     total_steps = len(self._task.task.split(","))
-                    ettilog.logerr("AssembleProductBehaviour(%s)::Failed failed_item_amount with all agents presentat step %d/%d", self._agent_name, step, total_steps)
+                    ettilog.logerr(
+                        "AssembleProductBehaviour(%s)::Failed failed_item_amount with all agents presentat step %d/%d",
+                        self._agent_name, step, total_steps)
                     self.perform_next_task()
                     self.error_count += 1
                 else:
@@ -130,7 +138,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
 
     def check_errors(self):
         if self.error_count > AssembleProductBehaviour.ERROR_THRESHOLD_START or \
-                (self.error_count > AssembleProductBehaviour.ERROR_THRESHOLD_DURING and self._get_assemble_step() > 0):
+                (
+                        self.error_count > AssembleProductBehaviour.ERROR_THRESHOLD_DURING_ASSEMBLY and self._get_assemble_step() > 0):
             self.mechanism.end_task(notify_others=True)
             self.error_count = 0
 
@@ -158,6 +167,10 @@ class AssembleProductBehaviour(DecisionBehaviour):
             self._pub_assemble_stop.publish(TaskStop(id=self._task.id, reason="assembly finished"))
 
     def all_agents_reached_destination(self):
+        """
+        Returns true if all agents have reached the destination and are ready to perform assembly
+        :return:
+        """
         agents_ = len(self.get_agents_at_destination(self._task.id)) == len(self._task.agents)
         return agents_
 
@@ -168,7 +181,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :type item_to_assemble: str
         :return:
         """
-        self.action_provider.send_action(action_type=Action.ASSEMBLE, params=[
+        self._action_provider.send_action(action_type=Action.ASSEMBLE, params=[
             KeyValue("item", item_to_assemble)])
 
     def action_assist_assemble(self, agent_name):
@@ -178,7 +191,7 @@ class AssembleProductBehaviour(DecisionBehaviour):
         :type agent_name: str
         :return:
         """
-        self.action_provider.send_action(action_type=Action.ASSIST_ASSEMBLE, params=[
+        self._action_provider.send_action(action_type=Action.ASSIST_ASSEMBLE, params=[
             KeyValue("Agent", agent_name)])
 
     def do_step(self):
@@ -204,7 +217,6 @@ class AssembleProductBehaviour(DecisionBehaviour):
             )
             self._pub_assemble_progress.publish(assemble_task_coordination)
 
-
         # Action list contains all assemble, and assist_assemble actions of a task
         action_list = self._task.task.split(",")
 
@@ -224,7 +236,8 @@ class AssembleProductBehaviour(DecisionBehaviour):
                 ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Invalid action", self._agent_name)
 
         else:
-            ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Assembly is executed after all tasks are finished", self._agent_name)
+            ettilog.logerr("AssembleProductBehaviour(%s):: ERROR: Assembly is executed after all tasks are finished",
+                           self._agent_name)
             self.mechanism.end_task(notify_others=False)
 
     def _get_assemble_step(self):
@@ -235,5 +248,9 @@ class AssembleProductBehaviour(DecisionBehaviour):
         return self._task_progress_dict.get(self._task.id, 0)
 
     def start(self):
+        """
+        Whenever starting a new assemble task, reset the error counter
+        :return:
+        """
         super(AssembleProductBehaviour, self).start()
         self.error_count = 0

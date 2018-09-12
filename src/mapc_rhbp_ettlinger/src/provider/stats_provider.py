@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import Team, RequestAction
+from mac_ros_bridge.msg import Team
 
 from common_utils import etti_logging
-from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.stats')
@@ -18,8 +17,7 @@ class StatsProvider(object):
 
     STATS_TOPIC = "/team"
 
-    def __init__(self, agent_name):
-
+    def __init__(self):
         self.massium = 0
         self.score = 0
 
@@ -41,5 +39,4 @@ class StatsProvider(object):
         Returns the current amount of massium
         :return:
         """
-        # TODO: Subtract all already promised massium
         return self.massium

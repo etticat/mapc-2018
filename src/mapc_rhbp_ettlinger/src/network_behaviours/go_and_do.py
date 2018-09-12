@@ -1,7 +1,6 @@
 from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Condition, Negation
-from behaviour_components.goals import GoalBase
 from behaviours.movement import GoToDestinationBehaviour
 from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
@@ -11,10 +10,12 @@ from sensor.movement import StepDistanceSensor
 
 class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
     """
-    NetworkBehaviour Base class for all network behaviours, that need to go to a destination and perform ana action there
+    NetworkBehaviour Base class for all network behaviours, that need to go to a destination and perform ana action
+    there
     """
 
-    def __init__(self, agent_name, name, shared_components, mechanism, use_in_facility_flag=True, use_name_for_movement=False, **kwargs):
+    def __init__(self, agent_name, name, shared_components, mechanism, use_in_facility_flag=True,
+                 use_name_for_movement=False, **kwargs):
         super(GoAndDoNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             shared_components=shared_components,
@@ -30,15 +31,13 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self.init_go_behaviour()
         self.init_go_and_do_charing_restrictions()
 
-    def init_do_behaviour(self, do_behaviour, effect_on_goal=True):
+    def init_do_behaviour(self, do_behaviour):
         """
         Initialises a do behaviour. applies the precondition to be at the target position
         :param do_behaviour: The behaviour to apply the precondition on
         :type do_behaviour: BehaviourBase
-        :param effect_on_goal:
         :return:
         """
-
 
         # Only perform behaviour when at target destination
         self._do_behaviour = do_behaviour
@@ -46,10 +45,6 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self._do_behaviour.add_precondition(
             precondition=self.at_destination_cond)
 
-        if effect_on_goal:
-            pass
-            # TODO: Create goal here to perform task
-            # This didnt really work well because it interfered with other goals. Will try that again
 
     def init_go_behaviour(self):
         """
@@ -73,12 +68,12 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
                 indicator=-1.0,
                 sensor_type=float))
 
-        # Worst case scenareo: By moving we move 1 step away from a charging station
+        # Worst case scenario: By moving we move 1 step away from a charging station
         self._go_behaviour.add_effect(
-                Effect(
-                    sensor_name=self._shared_components.charging_station_step_sensor.name,
-                    indicator=1.0,  # 1 step at a time
-                    sensor_type=float))
+            Effect(
+                sensor_name=self._shared_components.charging_station_step_sensor.name,
+                indicator=1.0,  # 1 step at a time
+                sensor_type=float))
 
         # We can only walk to shop until we are there
         self._go_behaviour.add_precondition(

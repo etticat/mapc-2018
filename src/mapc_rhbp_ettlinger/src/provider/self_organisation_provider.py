@@ -1,8 +1,8 @@
 import numpy as np
 
-from mac_ros_bridge.msg import SimEnd
-
 import rospy
+from mac_ros_bridge.msg import SimEnd
+from so_data.msg import SoMessage
 
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
@@ -10,10 +10,6 @@ from provider.distance_provider import DistanceProvider
 from self_organisation.massim_so_broadcaster import MassimSoBroadcaster
 from self_organisation.massim_so_buffer import MassimSoBuffer
 from self_organisation.posegradienttf import CallbackEntityTopicGradientTf
-from so_data.msg import SoMessage
-
-from so_data.sobroadcaster import SoBroadcaster
-from so_data.sobuffer import SoBuffer
 
 
 class SelfOrganisationProvider(object):
@@ -78,7 +74,7 @@ class SelfOrganisationProvider(object):
     def so_buffer(self):
         return self._so_buffer
 
-    def reset_provider(self, sim_end=None):
+    def reset_provider(self):
         """
         Delete all values in the SoBuffer
         :return:

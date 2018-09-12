@@ -1,7 +1,7 @@
 import numpy as np
 
 import rospy
-from mac_ros_bridge.msg import Agent, SimStart
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -22,11 +22,11 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
     WEIGHT_STEPS = -1
     WEIGHT_ITEMS_ALREADY_THERE = -1
 
-    def __init__(self, agent_name, assembly_decision_mechanism, hoarding_items_decision):
+    def __init__(self, agent_name, assembly_decision_decision, hoarding_items_decision):
 
         self._agent_name = agent_name
         self._hoarding_items_decision = hoarding_items_decision
-        self._assembly_decision_mechanism = assembly_decision_mechanism
+        self._assembly_decision_decision = assembly_decision_decision
 
         self._init_config()
 
@@ -38,9 +38,11 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
         super(ChooseStorageForHoardingDecision, self).__init__(buffer=None, frame=None, requres_pos=False)
 
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
 
         ChooseStorageForHoardingDecision.WEIGHT_STEPS = rospy.get_param(
             "ChooseStorageForHoardingDecision.WEIGHT_STEPS", ChooseStorageForHoardingDecision.WEIGHT_STEPS)
@@ -67,11 +69,11 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
             activation = 0
 
             for product, count in finished_products_to_store.iteritems():
-                activation += count * items_in_storage.get(product,
-                                                           0) * ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE
+                activation += count * items_in_storage.get(product, 0) * \
+                              ChooseStorageForHoardingDecision.WEIGHT_ITEMS_ALREADY_THERE
 
-            activation += self._distance_provider.calculate_steps(self._agent_info_provider.pos,
-                                                                  storage.pos) * ChooseStorageForHoardingDecision.WEIGHT_STEPS
+            activation += self._distance_provider.calculate_steps(
+                self._agent_info_provider.pos, storage.pos) * ChooseStorageForHoardingDecision.WEIGHT_STEPS
 
             if activation > max_activation:
                 max_activation = activation
@@ -80,7 +82,7 @@ class ChooseStorageForHoardingDecision(DecisionPattern):
         self.value = chosen_storage
 
         ettilog.loginfo("ChooseStorageForHoardingDecision(%s):: Choosing storage %s ", self._agent_name,
-                       self.value.name)
+                        self.value.name)
 
         # Update hoarding goal
         self._product_provider.update_hoarding_goal(finished_products_to_store, destination=self.value.name)

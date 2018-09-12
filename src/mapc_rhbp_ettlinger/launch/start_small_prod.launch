@@ -51,9 +51,6 @@
         <arg name="agent_name" value="agentA2" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
-    </include>
-    <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="agentA4" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
@@ -80,9 +77,7 @@
     <param name="RhbpAgent.BUILD_WELL_ENABLED" type="bool" value="True"/>
 
 
-    <param name="ShouldBidForAssemblyDecision.WEIGHT_LOAD" type="double" value="30"/>
-    <param name="ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD" type="double" value="100"/>
-    <param name="ShouldBidForAssemblyDecision.WEIGHT_STEPS" type="double" value="-3"/>
+
     <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="-15"/>
 
     <param name="ChooseStorageForHoardingDecision.WEIGHT_STEPS"  value="-1" type="double"/>
@@ -95,7 +90,7 @@
     <param name="ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION"  value="3" type="double"/>
 
 
-    <param name="ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB"  value="0.7" type="double"/>
+    <param name="ChooseBestAvailableJobDecision.PERCENTILE_TO_TRY_JOB"  value="0.7" type="double"/>
     <param name="ChooseBestAvailableJobDecision.BID_PERCENTILE"  value="50" type="int"/>
     <param name="ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START"  value="30" type="int"/>
     <param name="ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD"  value="-50" type="double"/>

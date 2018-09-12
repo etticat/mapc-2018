@@ -14,6 +14,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
     """
     Base Network behaviour that contains all components for Battery handling
     """
+
     def __init__(self, agent_name, shared_components, name, min_charge=None, **kwargs):
 
         super(BatteryChargingNetworkBehaviour, self).__init__(name=name, guarantee_decision=True, **kwargs)
@@ -56,7 +57,7 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
         charge_behaviour = GenericActionBehaviour(
             plannerPrefix=self.get_manager_prefix(),
             agent_name=self._agent_name,
-          action_type=Action.CHARGE,
+            action_type=Action.CHARGE,
             name=self.get_manager_prefix() + '/charge_behaviour', )
 
         # only charge_behaviour when at charging station
@@ -95,7 +96,8 @@ class BatteryChargingNetworkBehaviour(NetworkBehaviour):
 
     def apply_charging_restrictions(self, movement_behaviour):
         """
-        This method can be used for sub classes to apply effects and preconditions to behaviours, which affect battery life
+        This method can be used for sub classes to apply effects and preconditions to behaviours, which affect
+        battery life
         :param movement_behaviour:
         :return:
         """

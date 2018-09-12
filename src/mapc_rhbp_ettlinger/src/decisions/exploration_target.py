@@ -34,24 +34,24 @@ class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
             # Inject the intended destination and use it instead of the current position for the message
             msg.p.x = val[0][0]
             msg.p.y = val[0][1]
-            msg.diffusion = self.distance_provider.agent_vision
+            msg.diffusion = self._distance_provider.agent_vision
         return msg
 
     def destination_not_found(self, pos):
         """
-        When destinatino can not be reached, pick new one
+        When destination can not be reached, pick new one
         :return:
         """
         # Avoid this place until step 100000
 
-        x = int(round(self.distance_provider.lat_to_x(pos.lat)))
-        y = int(round(self.distance_provider.lon_to_y(pos.long)))
+        x = int(round(self._distance_provider.lat_to_x(pos.lat)))
+        y = int(round(self._distance_provider.lon_to_y(pos.long)))
 
         if self.environment_array is not None:
-            self.environment_array[x / self.granulariy,y / self.granulariy] = 100000
+            self.environment_array[x / self.granularity, y / self.granularity] = 100000
 
-        self._self_organisation_provider.send_msg(pos=pos, frame="no_route", parent_frame="agent",
-                                                  time=100000, payload=[
+        self._self_organisation_provider.send_msg(
+            pos=pos, frame="no_route", parent_frame="agent", time=100000, payload=[
                 KeyValue(key="lat", value=str(pos.lat)),
                 KeyValue(key="long", value=str(pos.long))], diffusion=0.01)
 

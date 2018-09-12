@@ -1,8 +1,7 @@
 import time
 from abc import abstractmethod
 
-import rospy
-from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task, TaskAssignment, TaskBid, TaskStop
+from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAcknowledgement, Task
 
 import utils.rhbp_logging
 from common_utils.agent_utils import AgentUtils
@@ -17,10 +16,10 @@ class ContractNetContractorBehaviour(object):
     Base class for all contractors in contract net.
     """
 
-    def __init__(self, agent_name, task_type, current_task_mechanism):
+    def __init__(self, agent_name, task_type, current_task_decision):
 
         # Save constructor variables
-        self._current_task_mechanism = current_task_mechanism
+        self._current_task_decision = current_task_decision
         self._agent_name = agent_name
         self._task_type = task_type
 
@@ -35,7 +34,8 @@ class ContractNetContractorBehaviour(object):
         MySubscriber(prefix, message_type="request", task_type=self._task_type, callback=self._callback_request)
         self._pub_bid = MyPublisher(prefix, message_type="bid", task_type=self._task_type, queue_size=10)
         MySubscriber(prefix, message_type="assignment", task_type=self._task_type, callback=self._callback_assign)
-        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledgement", task_type=self._task_type, queue_size=10)
+        self._pub_acknowledge = MyPublisher(prefix, message_type="acknowledgement", task_type=self._task_type,
+                                            queue_size=10)
         MySubscriber(prefix, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
     def _callback_request(self, request):
@@ -48,7 +48,8 @@ class ContractNetContractorBehaviour(object):
 
         current_time = time.time()
         if request.deadline < current_time:
-            ettilog.logerr("Contractor(%s-%s):: Deadline over %f - %f", self._agent_name, self._task_type, request.deadline, current_time)
+            ettilog.logerr("Contractor(%s-%s):: Deadline over %f - %f", self._agent_name, self._task_type,
+                           request.deadline, current_time)
             return
 
         should_bid = self.should_bid_for_request(request)
@@ -77,11 +78,12 @@ class ContractNetContractorBehaviour(object):
         if bid is None:
             return
 
-        #publish bid
-        ettilog.loginfo("Contractor(%s-%s):: Publishing bid: %s", self._agent_name, self._task_type, str(bid is not None))
+        # publish bid
+        ettilog.loginfo("Contractor(%s-%s):: Publishing bid: %s", self._agent_name, self._task_type,
+                        str(bid is not None))
         self._pub_bid.publish(bid)
 
-        # Saving the id to make sure we only accept assignemnts for tasks that we bid for
+        # Saving the id to make sure we only accept assignments for tasks that we bid for
         self._current_task_id = request.id
 
     def _callback_assign(self, assignment):
@@ -120,9 +122,9 @@ class ContractNetContractorBehaviour(object):
             )
 
             # notify the current task mechanism
-            self._current_task_mechanism.start_task(task)
+            self._current_task_decision.start_task(task)
 
-            # allow the overrwirding manager to execute additional code after assignemnt
+            # allow the overriding manager to execute additional code after assignment
             self._on_assignment_confirmed(assignment)
 
             # Publish acknowledgement for manager
@@ -159,9 +161,10 @@ class ContractNetContractorBehaviour(object):
         :param finish:
         :return:
         """
-        if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.id == finish.id:
-            ettilog.logerr("DeliverContractor(%s):: Task finished %s", self._task_type, str(self._current_task_mechanism.value.id))
-            self._current_task_mechanism.end_task()
+        if self._current_task_decision.value is not None and self._current_task_decision.value.id == finish.id:
+            ettilog.logerr("DeliverContractor(%s):: Task finished %s", self._task_type,
+                           str(self._current_task_decision.value.id))
+            self._current_task_decision.end_task()
 
     @abstractmethod
     def bid_possible(self, bid):

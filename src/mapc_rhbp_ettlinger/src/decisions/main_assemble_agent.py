@@ -1,4 +1,3 @@
-
 import copy
 
 import rospy
@@ -26,9 +25,11 @@ class MainAssembleAgentDecision(object):
 
         self._init_config()
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
         MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR = rospy.get_param(
             "MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR",
             MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR)
@@ -53,16 +54,18 @@ class MainAssembleAgentDecision(object):
             bids_sorted_lexicographically.append(bid)
 
         # Sort the agents by name because the first one coming in this list are preferred to give items
-        bids_sorted_lexicographically.sort(key=lambda bid: CalcUtil.natural_keys(bid.agent_name))
+        bids_sorted_lexicographically.sort(key=lambda single_bid: CalcUtil.natural_keys(single_bid.agent_name))
 
         # Sort accepted_bids, so that the agents who should be preferred are in front of the list
         # We prefer agents that
         #  * are then likely to be able to move to the delivery destination afterwards fast (speed)
         #  * have low skill -> We should rather use those to gather/build well/dismantle...
         #  * already have many finished_products -> So not everyone has to go to storage afterwards
-        prioritized_bids.sort(key=lambda
-            bid: bid.skill * MainAssembleAgentDecision.WEIGHT_BID_SKILL + bid.speed * MainAssembleAgentDecision.WEIGHT_BID_SPEED +
-                 bid.finished_product_factor * MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR, reverse=True)
+        prioritized_bids.sort(key=lambda single_bid: single_bid.skill * MainAssembleAgentDecision.WEIGHT_BID_SKILL +
+                                                     single_bid.speed * MainAssembleAgentDecision.WEIGHT_BID_SPEED +
+                                                     single_bid.finished_product_factor *
+                                                     MainAssembleAgentDecision.WEIGHT_FINISHED_PRODUCT_FACTOR,
+                              reverse=True)
 
         # From this sorted list pick the ones that have the capacity to hold the assembled item
         for item in finished_products:
@@ -71,7 +74,7 @@ class MainAssembleAgentDecision(object):
 
             items_needed = CalcUtil.get_string_list_from_dict(self._product_provider.get_ingredients_of_product(item))
 
-            # For each agent in prioritised list, try if they can assemble it by checkign
+            # For each agent in prioritised list, try if they can assemble it by checking
             # a) if the finished product fits in stock while subtracting the
             # b) the items that they will use for assembly
             for bid in prioritized_bids:
@@ -97,7 +100,8 @@ class MainAssembleAgentDecision(object):
 
             if selected_agent is None:
                 # No agent has the capacity to assemble the item -> continue with next
-                ettilog.loginfo("ChooseAgentsToAssemble:: No agent has the capacity to assemble the item -> continue with next")
+                ettilog.loginfo(
+                    "ChooseAgentsToAssemble:: No agent has the capacity to assemble the item -> continue with next")
                 continue
 
             items_to_assemble += 1
@@ -112,7 +116,7 @@ class MainAssembleAgentDecision(object):
                     res[agent] = res[agent] + "assemble:" + item
                     # Don't need to calculate anything here as we have done it already above.
                     # This can't be moved in here as assemble agent always has a higher priority to give items than
-                    # lexographically sorted assist agents
+                    # lexicographically sorted assist agents
                 else:
                     res[agent] = res[agent] + "assist:" + selected_agent
 
@@ -127,7 +131,8 @@ class MainAssembleAgentDecision(object):
                 ettilog.logerr("----------------------len(items_needed) > 0-------------------\n"
                                "accepted_bids: %s\n"
                                "finished_products: %s\n"
-                               "product_infos: %s", str(accepted_bids), str(finished_products), str(self._product_provider.product_infos))
+                               "product_infos: %s", str(accepted_bids), str(finished_products),
+                               str(self._product_provider.product_infos))
             assert len(items_needed) == 0
 
         # If we were not able to distribute any assembly instructions at all, return None (e.g. No one has the capacity)

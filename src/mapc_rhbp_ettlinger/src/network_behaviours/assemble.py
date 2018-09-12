@@ -7,7 +7,7 @@ from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 
 class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
-    Network Behaviour responisble for performing assigned assemble tasks
+    Network Behaviour responsible for performing assigned assemble tasks
     """
 
     def __init__(self, agent_name, name, shared_components, **kwargs):
@@ -17,13 +17,13 @@ class AssembleNetworkBehaviour(GoAndDoNetworkBehaviour):
             shared_components=shared_components,
             name=name,
             use_name_for_movement=True,
-            mechanism=shared_components.assemble_task_mechanism,
+            mechanism=shared_components.assemble_task_decision,
             **kwargs)
 
         assemble_behaviour = AssembleProductBehaviour(
             name=self.get_manager_prefix() + "_assemble_product_behaviour",
             agent_name=agent_name,
-            mechanism=shared_components.assemble_task_mechanism,
+            mechanism=shared_components.assemble_task_decision,
             plannerPrefix=self.get_manager_prefix()
         )
 

@@ -2,6 +2,7 @@ import logging
 
 LOGGER_DEFAULT_NAME = 'rosout.etti'
 
+
 class LogManager(object):
     """
     Class enabling the creation of custom loggers, for instance per package, module or class
@@ -11,7 +12,6 @@ class LogManager(object):
     """
 
     def __init__(self, logger_name=LOGGER_DEFAULT_NAME):
-
         self.logdebug = logging.getLogger(logger_name).debug
 
         self.logwarn = logging.getLogger(logger_name).warning

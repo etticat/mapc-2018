@@ -10,16 +10,15 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
     Network behaviour that is responsible for exploring the environment
     """
-    def __init__(self, agent_name, name, shared_components, exploration_mechanism, **kwargs):
 
-        self.exploration_mechanism = exploration_mechanism
-        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_mechanism, name=name,
+    def __init__(self, agent_name, name, shared_components, exploration_decision, **kwargs):
+        self.exploration_decision = exploration_decision
+        super(ExplorationNetworkBehaviour, self).__init__(mechanism=self.exploration_decision, name=name,
                                                           agent_name=agent_name,
                                                           min_charge=5,
                                                           use_in_facility_flag=False,
                                                           shared_components=shared_components,
                                                           **kwargs)
-
 
         self.init_behaviours()
         self.init_goals()
@@ -35,8 +34,8 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + '_do_behaviour',
-            mechanism=self.exploration_mechanism,
-            recalculate_destination_every_step=True
+            mechanism=self.exploration_decision,
+            recalculate_destination_every_step=False
         )
 
         self.init_do_behaviour(self._reset_destination_behaviour)

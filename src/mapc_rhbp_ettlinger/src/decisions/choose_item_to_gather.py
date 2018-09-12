@@ -1,21 +1,16 @@
-import operator
-
 import numpy as np
-from mac_ros_bridge.msg import Agent, SimStart
 
 import rospy
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
-
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
-from decisions.best_agent_assembly_combination import BestAgentAssemblyCombinationDecision
 from provider.action_provider import ActionProvider
 from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
-from provider.simulation_provider import SimulationProvider
 from so_data.patterns import DecisionPattern
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.gathering')
@@ -52,9 +47,11 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
         super(ChooseItemToGatherMechanism, self).__init__(buffer=None, frame=None, requres_pos=False)
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
         ChooseItemToGatherMechanism.WEIGHT_STEPS = rospy.get_param("ChooseItemToGatherMechanism.WEIGHT_STEPS",
                                                                    ChooseItemToGatherMechanism.WEIGHT_STEPS)
         ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH = rospy.get_param(
@@ -71,7 +68,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
     def calc_value(self):
         """
-        Returns the resource whith the highest activation to gather there
+        Returns the resource with the highest activation to gather there
         :return:
         """
         # Calculate a new resource if we currently don't have any or the selected item doesnt fit in the stock
@@ -86,7 +83,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
                                self.agent_name)
                 self._chosen_resource = None
 
-        # Uptdate gather goal every time to reflect changed resource or changed agent load
+        # Update gather goal every time to reflect changed resource or changed agent load
         if self._chosen_resource is not None:
             self._product_provider.update_gathering_goal(self._chosen_resource.item.name)
         else:
@@ -127,9 +124,9 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
                 # Calculate activation of going to that exact resource
                 activation = already_in_stock_items * ChooseItemToGatherMechanism.WEIGHT_PRIORITY + \
-                             steps * ChooseItemToGatherMechanism.WEIGHT_STEPS + \
-                             int(usefulness_for_assembly > 0) * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH + \
-                             usefulness_for_assembly * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT
+                         steps * ChooseItemToGatherMechanism.WEIGHT_STEPS + \
+                         int(usefulness_for_assembly > 0) * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH + \
+                         usefulness_for_assembly * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT
 
                 # If its the best resource until now, choose it
                 if activation > max_activation:
@@ -150,9 +147,8 @@ class ChooseItemToGatherMechanism(DecisionPattern):
 
     def ingredient_priority_dict(self):
         """
-        Returns a dictionary with all products as keys. The values describe how much they are needed on a scale from 0 to 1
-        for assembly of further items.
-        :return:
+        Returns a dictionary with all products as keys. The values describe how much they are needed on a scale from
+        0 to 1 for assembly of further items. :return:
         """
         # Get currently desired ingredients
         desired_ingredients = self.get_desired_ingredients(consider_intermediate_ingredients=False)
@@ -175,10 +171,10 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         max_value = max(priority_dict.values())
 
         for key, value in priority_dict.iteritems():
-            if max_value-min_value < 0.01:
+            if max_value - min_value < 0.01:
                 priority_dict[key] = 1.0
             else:
-                priority_dict[key] = (value - min_value) / (max_value-min_value)
+                priority_dict[key] = (value - min_value) / (max_value - min_value)
 
         return priority_dict
 
@@ -190,14 +186,16 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         """
 
         # Get the desired finished product stock
-        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict(normalize_to_zero=True)
+        finished_product_priority = self.choose_best_assembly_combination.finished_items_priority_dict(
+            normalize_to_zero=True)
 
-        finished_product_desired_stock = CalcUtil.multiply_dict_by_factor(finished_product_priority,
-                                      ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION)
+        finished_product_desired_stock = CalcUtil.multiply_dict_by_factor(
+            finished_product_priority, ChooseItemToGatherMechanism.FINISHED_PRODUCT_PRIORITY_TO_INGREDIENT_CONVERSION)
 
         # Check how many ingredients we need to assemble the stock
-        desired_ingredients = self._product_provider.get_gatherable_ingredients_of_dict(finished_product_desired_stock,
-                                            consider_intermediate_ingredients=consider_intermediate_ingredients)
+        desired_ingredients = self._product_provider.get_gatherable_ingredients_of_dict(
+            finished_product_desired_stock,
+            consider_intermediate_ingredients=consider_intermediate_ingredients)
 
         for key, value in desired_ingredients.iteritems():
             desired_ingredients[key] += 30

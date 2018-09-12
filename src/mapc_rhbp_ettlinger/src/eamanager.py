@@ -3,8 +3,7 @@ import random
 import time
 
 import rospy
-from mac_ros_bridge.msg import SimEnd, SimStart, RequestAction
-from mapc_rhbp_ettlinger.msg import AgentConfig
+from mac_ros_bridge.msg import SimEnd, SimStart
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -35,9 +34,9 @@ class EvolutionaryAlgorithmManagerAgent(object):
         # Init providers
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._well_provider = WellProvider(agent_name=agent_name)
-        self._stats_provider = StatsProvider(agent_name=agent_name)
+        self._stats_provider = StatsProvider()
 
-        # Array of all configs, the alogirhm has tried with its corresponding fitness values
+        # Array of all configs, the algorithm has tried with its corresponding fitness values
         self.configs = []
         self.sim_start = None
 
@@ -48,7 +47,7 @@ class EvolutionaryAlgorithmManagerAgent(object):
         # - [2] -> upper bound
         # - [3] -> data type
         self.conf_to_adjust = {
-            "ChooseBestAvailableJobDecision.PERCNTILE_TO_TRY_JOB": (0.45, 0.70, 0.99, "double"),
+            "ChooseBestAvailableJobDecision.PERCENTILE_TO_TRY_JOB": (0.45, 0.70, 0.99, "double"),
             "ChooseBestAvailableJobDecision.BID_PERCENTILE": (50, 85, 99, "int"),
             "ChooseBestAvailableJobDecision.TIME_LEFT_WEIGHT_START": (25, 30, 50, "int"),
             "ChooseBestAvailableJobDecision.ACTIVATION_THRESHOLD": (-200, -50, 10, "double"),
@@ -76,8 +75,6 @@ class EvolutionaryAlgorithmManagerAgent(object):
         """
         At the end of a simulation, save all config parameters and outcomes (for detailed investigation).
         Also mutate one of the best configs, to find an even better one.
-        :param sim_end:
-        :type sim_end: SimEnd
         :return:
         """
         rospy.logerr("EvolutionaryAlgorithmManagerAgent:: Ending simulation: %s (%s)", self.sim_start.map,
@@ -161,8 +158,8 @@ class EvolutionaryAlgorithmManagerAgent(object):
                     new_config[key] = value
             elif self.conf_to_adjust[key][3] in ["int", "double"]:
                 # For numbers we add/subtract a random value
-                range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
-                max_mutation = EvolutionaryAlgorithmManagerAgent.MUTATION_RATE * range
+                value_range = self.conf_to_adjust[key][2] - self.conf_to_adjust[key][0]
+                max_mutation = EvolutionaryAlgorithmManagerAgent.MUTATION_RATE * value_range
 
                 value += random.uniform(-max_mutation, max_mutation)
                 value = max(self.conf_to_adjust[key][0], value)
@@ -185,7 +182,7 @@ class EvolutionaryAlgorithmManagerAgent(object):
 if __name__ == '__main__':
 
     try:
-        controler = EvolutionaryAlgorithmManagerAgent()
+        controller = EvolutionaryAlgorithmManagerAgent()
         rospy.spin()
 
     except rospy.ROSInterruptException:

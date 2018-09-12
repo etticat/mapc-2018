@@ -28,7 +28,7 @@ class DeliverManager(ContractNetManager):
         :return:
         """
 
-        # Keep an isntance of the job itself for later use in assignments
+        # Keep an instance of the job itself for later use in assignments
         self._job = job
 
         request = TaskRequest(
@@ -40,11 +40,12 @@ class DeliverManager(ContractNetManager):
 
     def get_assignments(self, bids):
         """
-        Generates assignements from bids. finds the combination, that makes most sense.
+        Generates assignments from bids. finds the combination, that makes most sense.
         :param bids:
         :return:
         """
-        accepted_bids, item_needed_from_storage = self._job_combination.choose_best_agent_combination(self._job, bids=bids)  # TODO
+        accepted_bids, item_needed_from_storage = self._job_combination.choose_best_agent_combination(self._job,
+                                                                                                      bids=bids)
 
         if accepted_bids is None or len(accepted_bids) == 0:
             ettilog.logerr("DeliverManager:: Unable to find suitable combination for %s", self._job.id)
@@ -52,7 +53,7 @@ class DeliverManager(ContractNetManager):
             ettilog.loginfo("DeliverManager:: Still needed items: %s", str(item_needed_from_storage))
             ettilog.loginfo("DeliverManager:: Bids:")
             for bid in bids:
-                ettilog.loginfo("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items) ))
+                ettilog.loginfo("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items)))
             return None
 
         assignments = []
@@ -61,7 +62,7 @@ class DeliverManager(ContractNetManager):
         needed_job_items = CalcUtil.get_list_from_items(self._job.items)
 
         # Select the agent that is closest to the storage for picking up the stored items
-        bid_attach_storage_retrival = min(accepted_bids, key=attrgetter('expected_steps'))
+        bid_attach_storage_retrieval = min(accepted_bids, key=attrgetter('expected_steps'))
 
         for bid in accepted_bids:
 
@@ -69,12 +70,11 @@ class DeliverManager(ContractNetManager):
             useful_items = CalcUtil.list_intersect(bid.items, needed_job_items)
 
             # If this bid is responsible for picking up stored items, add those to the items list
-            if bid_attach_storage_retrival == bid:
+            if bid_attach_storage_retrieval == bid:
                 useful_items += item_needed_from_storage
 
-            # remove the assigned items from the stil needed items array
+            # remove the assigned items from the still needed items array
             needed_job_items = CalcUtil.list_diff(needed_job_items, useful_items)
-
 
             assignment = TaskAssignment(
                 id=bid.id,
@@ -84,8 +84,8 @@ class DeliverManager(ContractNetManager):
             )
             assignments.append(assignment)
 
-        # If the chooser chose the correct storage items, the distribution of items should always result in no more items
-        # still needed to be distributed. Therefore, this should never happen.
+        # If the chooser chose the correct storage items, the distribution of items should always result in no more
+        # items still needed to be distributed. Therefore, this should never happen.
         if len(needed_job_items) != 0:
             ettilog.logerr("DeliverManager:: Cant find all needed items. Maybe someone list item in meantime?")
             ettilog.logerr("DeliverManager:: Job items: %s", str(CalcUtil.get_dict_from_items(self._job.items)))
@@ -93,10 +93,10 @@ class DeliverManager(ContractNetManager):
             ettilog.logerr("DeliverManager:: Items from storage: %s", str(item_needed_from_storage))
             ettilog.logerr("DeliverManager:: Accepted bids:")
             for bid in accepted_bids:
-                ettilog.logerr("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items) ))
+                ettilog.logerr("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items)))
             ettilog.logerr("DeliverManager:: Bids:")
             for bid in bids:
-                ettilog.logerr("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items) ))
+                ettilog.logerr("DeliverManager:: --- %s", str(bid.agent_name + ":" + str(bid.items)))
             return None
         return assignments
 

@@ -24,7 +24,7 @@ class AgentInfoProvider(object):
 
     def _callback_agent(self, agent):
         """
-        Retreive agent info after every simulation step
+        Retrieve agent info after every simulation step
         :param agent:
         :type agent: Agent
         :return:

@@ -8,8 +8,7 @@ Module to transform entity topic messages to SoMessages
 
 import copy
 
-import rospy
-from mac_ros_bridge.msg import EntityMsg, Entity, FacilityMsg
+from mac_ros_bridge.msg import EntityMsg, Entity
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -39,8 +38,8 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
 
         entity_topic = AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="entity")
 
-        self.distance_provider = DistanceProvider(agent_name=agent_name)
-        self.simulation_provider = SimulationProvider(agent_name=agent_name)
+        self._distance_provider = DistanceProvider(agent_name=agent_name)
+        self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
         super(CallbackEntityTopicGradientTf, self).__init__(entity_topic, frame, id, message_type,
                                                             attraction=-1,
@@ -49,13 +48,13 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
 
     def callback(self, entity_msg):
         """
-        extract inforamtion from entity messages
+        extract information from entity messages
         :param entity_msg:
         :type entity_msg: EntityMsg
         :return:
         """
 
-        if not self.distance_provider.initialised:
+        if not self._distance_provider.initialised:
             return
 
         # Track each entity we find
@@ -65,12 +64,12 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
             msg = copy.deepcopy(self.create_msg())
 
             # update data based on received information
-            msg.p.x = self.distance_provider.lat_to_x(entity.pos.lat)
-            msg.p.y = self.distance_provider.lon_to_y(entity.pos.long)
+            msg.p.x = self._distance_provider.lat_to_x(entity.pos.lat)
+            msg.p.y = self._distance_provider.lon_to_y(entity.pos.long)
             msg.p.z = 0
 
             # Use the simulation step as time
-            msg.ev_stamp.secs = self.simulation_provider.step
+            msg.ev_stamp.secs = self._simulation_provider.step
 
             # update self._current_gradient
             self._current_msg = msg
@@ -80,9 +79,9 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
                 msg.header.frame_id = "agent"
                 ettilog.logdebug("EntityTopicGradientTf:: Found Agent: %s at %f, %f, %f", entity.name, msg.p.x, msg.p.y,
                                  msg.p.z)
-                msg.diffusion = self.distance_provider._agent_vision
+                msg.diffusion = self._distance_provider.agent_vision
 
-            elif entity.team is not self.simulation_provider.team:
+            elif entity.team is not self._simulation_provider.team:
                 # track the other team
                 msg.header.frame_id = "opponent"
                 ettilog.logdebug("EntityTopicGradientTf:: Found Opponent: %s at %f, %f, %f", entity.name, msg.p.x,
@@ -105,4 +104,8 @@ class CallbackEntityTopicGradientTf(TopicGradientTf):
             self.send()
 
     def init_so_broadcaster(self):
+        """
+        Injects the MassimBroadcaster
+        :return:
+        """
         return MassimSoBroadcaster()

@@ -1,11 +1,7 @@
-from behaviour_components.activators import GreedyActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation
+from behaviour_components.conditions import Negation
 from behaviour_components.goals import GoalBase
 from behaviours.generic_action import GenericActionBehaviour
-from behaviours.movement import GoToDestinationBehaviour
-from decisions.dismantle_well import ExistingOpponentWellsDecision
-from decisions.exploration_target import ExplorationDecision, ExploreCornersDecision
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 from provider.action_provider import Action
 from provider.self_organisation_provider import SelfOrganisationProvider

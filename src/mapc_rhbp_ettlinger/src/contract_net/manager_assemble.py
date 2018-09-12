@@ -1,10 +1,7 @@
-import copy
-
 from mapc_rhbp_ettlinger.msg import TaskRequest, TaskAssignment
 
 from common_utils import etti_logging
 from contract_net.manager import ContractNetManager
-from decisions.main_assemble_agent import MainAssembleAgentDecision
 from decisions.current_task import CurrentTaskDecision
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
@@ -57,7 +54,6 @@ class AssembleManager(ContractNetManager):
         best_destination = destination
 
         ettilog.logerr("AssembleManager:: Assembling %s activation: %f", str(finished_products), activation)
-
 
         # Create assignments for all accepted bids
         assignments = []

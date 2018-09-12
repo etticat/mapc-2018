@@ -1,12 +1,11 @@
 #!/usr/bin/env python2
 
 import rospy
-from mac_ros_bridge.msg import SimStart, WellMsg, RequestAction, FacilityMsg
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.singleton import Singleton
-from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.provider.well')
 

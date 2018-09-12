@@ -1,10 +1,9 @@
-import random
 import time
 from abc import abstractmethod
 
 import rospy
 from mac_ros_bridge.msg import SimStart
-from mapc_rhbp_ettlinger.msg import TaskStop, TaskRequest, TaskBid, TaskAssignment, TaskAcknowledgement
+from mapc_rhbp_ettlinger.msg import TaskStop, TaskRequest
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -42,24 +41,27 @@ class ContractNetManager(object):
         topic = AgentUtils.get_coordination_topic()
         self._pub_task_request = MyPublisher(topic, message_type="request", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="bid", task_type=self._task_type, callback=self._callback_bid)
-        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type,queue_size=10)
+        self._pub_task_assignment = MyPublisher(topic, message_type="assignment", task_type=self._task_type,
+                                                queue_size=10)
         MySubscriber(topic, message_type="acknowledgement", task_type=self._task_type,
                      callback=self._callback_acknowledgement)
         self._pub_task_stop = MyPublisher(topic, message_type="stop", task_type=self._task_type, queue_size=10)
         MySubscriber(topic, message_type="stop", task_type=self._task_type, callback=self._on_task_finished)
 
         # Reload config after each simulation start
-        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart, self._init_config)
+        self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
+                                         self._init_config)
 
-    def _init_config(self, sim_start=None):
+    @staticmethod
+    def _init_config(sim_start=None):
         """
         Initialises the config parameters from the rospy config
         :return:
         """
-        # ContractNetManager.DEADLINE_BIDS = rospy.get_param('ContractNetManager.DEADLINE_BIDS',
-        #                                                    ContractNetManager.DEADLINE_BIDS)
-        # ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
-        #                                                               ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
+        ContractNetManager.DEADLINE_BIDS = rospy.get_param('ContractNetManager.DEADLINE_BIDS',
+                                                           ContractNetManager.DEADLINE_BIDS)
+        ContractNetManager.DEADLINE_ACKNOWLEDGEMENT = rospy.get_param('ContractNetManager.DEADLINE_ACKNOWLEDGEMENT',
+                                                                      ContractNetManager.DEADLINE_ACKNOWLEDGEMENT)
 
     def reset_manager(self):
         """
@@ -85,7 +87,7 @@ class ContractNetManager(object):
             return False
 
         ettilog.logerr("ContractNetManager(%s):: ---------------------------Manager start---------------------------",
-                        self._task_type)
+                       self._task_type)
 
         self.start_time = rospy.get_rostime()
 
@@ -138,7 +140,7 @@ class ContractNetManager(object):
             return False
         ettilog.logerr("ContractNetManager(%s):: Processing %d bids", self._task_type, len(self._bids))
 
-        # Retrive the assignments. This method has to be implemented by an overriding class.
+        # Retrieve the assignments. This method has to be implemented by an overriding class.
         assignments = self.get_assignments(self._bids)
 
         # If no assignments could be created, stop coordination
@@ -147,7 +149,8 @@ class ContractNetManager(object):
                             len(self._bids))
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
             ettilog.logerr(
-                "ContractNetManager(%s):: ---------------------------Manager failed: %.2f seconds---------------------------",
+                "ContractNetManager(%s):: ---------------------------Manager failed: %.2f "
+                "seconds---------------------------",
                 self._task_type, time_passed)
             return False
 
@@ -171,7 +174,7 @@ class ContractNetManager(object):
 
     def _callback_acknowledgement(self, acknowledgement):
         """
-        Receives an acknolwedgement from an agent and saves it into an array.
+        Receives an acknowledgement from an agent and saves it into an array.
         :param acknowledgement:
         :return:
         """
@@ -182,8 +185,9 @@ class ContractNetManager(object):
                            self._task_type, acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
             return
         if acknowledgement.id != self._id:
-            # Ignore acknowledgements, that do not match the current id. This could happen if the agent took soo long to send acknowledgement,
-            # that the manager already started coordinating the next task when the bid arrives.
+            # Ignore acknowledgements, that do not match the current id. This could happen if the agent took soo long
+            #  to send acknowledgement, that the manager already started coordinating the next task when the bid
+            # arrives.
             ettilog.logerr("ContractNetManager(%s):: Received invalid acknowledgement by %s (id:%d, bid-id:%d)",
                            self._task_type,
                            acknowledgement.assignment.bid.agent_name, self._id, acknowledgement.id)
@@ -195,7 +199,7 @@ class ContractNetManager(object):
 
     def _process_acknowledgements(self):
         """
-        Processes all acknowledgements. Checks if all were received succesfully. If not, it cancells the task again.
+        Processes all acknowledgements. Checks if all were received successfully. If not, it cancels the task again.
         :return:
         """
 
@@ -211,7 +215,8 @@ class ContractNetManager(object):
             self._on_task_acknowledged(self._acknowledgements[0].id)
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
             ettilog.logerr(
-                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
+                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f "
+                "seconds---------------------------",
                 self._task_type, time_passed)
             return True
         else:
@@ -226,7 +231,8 @@ class ContractNetManager(object):
 
             time_passed = (rospy.get_rostime() - self.start_time).to_sec()
             ettilog.logerr(
-                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f seconds---------------------------",
+                "ContractNetManager(%s):: ---------------------------Manager stop: %.2f "
+                "seconds---------------------------",
                 self._task_type, time_passed)
             return False
 

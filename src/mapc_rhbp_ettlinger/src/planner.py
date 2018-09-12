@@ -20,7 +20,8 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class Planner(object):
     """
-    Central planner, that keeps track of all jobs and distributes the best ones. Also responsible for Assembly coordination
+    Central planner, that keeps track of all jobs and distributes the best ones. Also responsible for Assembly
+    coordination
     """
 
     def __init__(self):
@@ -40,8 +41,9 @@ class Planner(object):
 
         # Init contract net managers
         self._manager_deliver = DeliverManager(agent_name=agent_name)
-        self._manager_assemble = AssembleManager(agent_name=agent_name,
-                                                 assembly_combination_decision=self._shared_components.assembly_combination_decision)
+        self._manager_assemble = AssembleManager(
+            agent_name=agent_name,
+            assembly_combination_decision=self._shared_components.assembly_combination_decision)
 
         # Keep reference to coordination thread
         self._coordination_thread = None
@@ -58,8 +60,6 @@ class Planner(object):
     def _sim_start_callback(self, sim_start):
         """
         When the simulation is started, enable the contract net managers and start the coordination thread
-        :param sim_start:  the message
-        :type sim_start: SimStart
         """
 
         self._manager_deliver.enabled = True
@@ -72,7 +72,6 @@ class Planner(object):
     def _sim_end_callback(self, sim_end):
         """
         Once the simulation ends, stop the coordination thread and reset all values to prepare fore the next round
-        :param sim_end:
         :return:
         """
 
@@ -86,8 +85,8 @@ class Planner(object):
     def _callback_action_request(self, request_action):
         """
         For every step we keep track of the jobs, so we learn which ones are good.
-        :param msg: The request for action message
-        :type msg: RequestAction
+        :param request_action: The request for action message
+        :type request_action: RequestAction
         :return:
         """
         self._job_decider.save_jobs(request_action)
@@ -95,7 +94,7 @@ class Planner(object):
     def coordinate(self):
         """
         Coordinates delivery jobs, assembly jobs and well building.
-        Warning: Blocking. Has to be run in seperate thread
+        Warning: Blocking. Has to be run in separate thread
         :return: None
         """
 

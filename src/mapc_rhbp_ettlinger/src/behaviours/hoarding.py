@@ -27,7 +27,7 @@ class StoreBehaviour(GenericActionBehaviour):
                       action_type=Action.STORE,
                       **kwargs)
 
-        self._mechanism = mechanism
+        self._decision = mechanism
         self._product_provider = ProductProvider(agent_name=agent_name)
 
     def generate_params(self):
@@ -36,11 +36,11 @@ class StoreBehaviour(GenericActionBehaviour):
         :return:
         """
         # Get all the items to store
-        finished_products_to_store = self._mechanism.calc_value()[0]
+        finished_products_to_store = self._decision.calc_value()[0]
         ettilog.logerr("StoreBehaviour(%s):: storing items: %s", self._agent_name, str(finished_products_to_store))
 
         # Update the hoarding goal
-        self._product_provider.update_hoarding_goal(finished_products_to_store, destination=self._mechanism.value.name)
+        self._product_provider.update_hoarding_goal(finished_products_to_store, destination=self._decision.value.name)
 
         # If there is something to store, return the params for it
         for item, count in finished_products_to_store.iteritems():

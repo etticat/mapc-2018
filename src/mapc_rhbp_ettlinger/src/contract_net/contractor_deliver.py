@@ -1,29 +1,28 @@
 from common_utils import etti_logging
 from contract_net.contractor import ContractNetContractorBehaviour
+from decisions.current_task import CurrentTaskDecision
 from decisions.generate_bid_from_request import GenerateBidFromRequestDecision
-from decisions.current_task import CurrentTaskDecision, AssembleTaskDecision
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.contractor.deliver')
 
 
 class DeliverContractor(ContractNetContractorBehaviour):
 
-    def __init__(self, agent_name, current_task_mechanism, ready_for_bid_condition, assemble_task_mechanism):
+    def __init__(self, agent_name, current_task_decision, ready_for_bid_condition, assemble_task_decision):
         """
 
         :param agent_name:
-        :param current_task_mechanism:
+        :param current_task_decision:
         :param ready_for_bid_condition:
-        :param assemble_task_mechanism: AssembleTaskDecision
+        :param assemble_task_decision: AssembleTaskDecision
         """
         super(DeliverContractor, self).__init__(
-            agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER, current_task_mechanism=current_task_mechanism)
+            agent_name, task_type=CurrentTaskDecision.TYPE_DELIVER, current_task_decision=current_task_decision)
 
-        self.assemble_task_mechanism = assemble_task_mechanism
+        self.assemble_task_decision = assemble_task_decision
         self.ready_for_bid_condition = ready_for_bid_condition
 
         self.job_bid_decider = GenerateBidFromRequestDecision(self._agent_name)
-
 
     def bid_possible(self, bid):
         """
@@ -51,19 +50,17 @@ class DeliverContractor(ContractNetContractorBehaviour):
         :param request:
         :return:
         """
-        return self.job_bid_decider.generate_bid(request, self.assemble_task_mechanism.has_task())
+        return self.job_bid_decider.generate_bid(request, self.assemble_task_decision.has_task())
 
     def _on_task_finished(self, finish):
         """
-        When a task is finished not only check the task id itself, but also check the job id. This allows to send TaskStop
-        messages to job performers with job_id as target.
-        :param finish:
-        :return:
+        When a task is finished not only check the task id itself, but also check the job id. This allows to send
+        TaskStop messages to job performers with job_id as target. :param finish: :return:
         """
         super(DeliverContractor, self)._on_task_finished(finish)
-        if self._current_task_mechanism.value is not None and self._current_task_mechanism.value.task == finish.job_id:
+        if self._current_task_decision.value is not None and self._current_task_decision.value.task == finish.job_id:
             ettilog.logerr("DeliverContractor:: delivery finished")
-            self._current_task_mechanism.end_task()
+            self._current_task_decision.end_task()
 
     def _on_assignment_confirmed(self, assignment):
         """
@@ -72,6 +69,6 @@ class DeliverContractor(ContractNetContractorBehaviour):
         :param assignment:
         :return:
         """
-        if self.assemble_task_mechanism.has_task():
+        if self.assemble_task_decision.has_task():
             ettilog.logerr("DeliverContractor(%S):: ending assembly task")
-        self.assemble_task_mechanism.end_task(notify_others=True)
+        self.assemble_task_decision.end_task(notify_others=True)

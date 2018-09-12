@@ -1,14 +1,10 @@
 import itertools
-import json
-import math
 import numpy as np
-import re
-import time
 
+import rospy
 from mac_ros_bridge.msg import SimStart
 from mapc_rhbp_ettlinger.msg import StockItem
 
-import rospy
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
 from common_utils.calc import CalcUtil
@@ -17,7 +13,6 @@ from decisions.main_assemble_agent import MainAssembleAgentDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.product_provider import ProductProvider
-import cProfile as profile
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.assembly_combination')
 
@@ -38,7 +33,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
     def __init__(self, agent_name):
         self._assembly_agent_chooser = MainAssembleAgentDecision(agent_name=agent_name)
-        self.distance_provider = DistanceProvider(agent_name=agent_name)
+        self._distance_provider = DistanceProvider(agent_name=agent_name)
         self._init_config()
 
         self.finished_products = None
@@ -63,7 +58,8 @@ class BestAgentAssemblyCombinationDecision(object):
         self._finished_product_goals = {}
         self._init_config()
 
-    def _init_config(self):
+    @staticmethod
+    def _init_config():
         BestAgentAssemblyCombinationDecision.MAX_AGENTS = int(round(rospy.get_param(
             "BestAgentAssemblyCombinationDecision.MAX_AGENTS", BestAgentAssemblyCombinationDecision.MAX_AGENTS)))
         BestAgentAssemblyCombinationDecision.MIN_AGENTS = int(round(rospy.get_param(
@@ -109,7 +105,7 @@ class BestAgentAssemblyCombinationDecision(object):
 
         workshop_distances, best_facility = self.find_best_workshop(bids)
 
-        bids.sort(key=lambda bid: workshop_distances[best_facility][bid])
+        bids.sort(key=lambda single_bid: workshop_distances[best_facility][single_bid])
 
         # Create numpy arrays of items of each bid for faster calculation
         bid_with_array = []
@@ -119,7 +115,6 @@ class BestAgentAssemblyCombinationDecision(object):
                 bid_with_array.append((bid, bid_array))
 
         best_combination = self.find_best_combination(best_facility, bid_with_array, finished_item_priority)
-
 
         return best_combination
 
@@ -133,8 +128,8 @@ class BestAgentAssemblyCombinationDecision(object):
             # Go through all combinations
 
             # try all combinations using MIN_AGENTS to MAX_AGENTS agents.
-            for number_of_agents in range(BestAgentAssemblyCombinationDecision.MIN_AGENTS, min(len(bid_with_array) + 1,
-                                                                                               BestAgentAssemblyCombinationDecision.MAX_AGENTS)):
+            for number_of_agents in range(BestAgentAssemblyCombinationDecision.MIN_AGENTS, min(
+                    len(bid_with_array) + 1, BestAgentAssemblyCombinationDecision.MAX_AGENTS)):
 
                 rospy.loginfo("BestAgentAssemblyCombinationDecision:: Trying with %d agents", number_of_agents)
 
@@ -142,7 +137,7 @@ class BestAgentAssemblyCombinationDecision(object):
                 for subset in itertools.combinations(bid_with_array, number_of_agents):
 
                     # Generate an numpy array combining all items of the current subset of bids
-                    array_bid_subset, bid_subset = self.extrac_bids_and_bid_arrays(subset)
+                    array_bid_subset, bid_subset = self.extract_bids_and_bid_arrays(subset)
 
                     finished_item_list = self.get_possible_finished_items(array_bid_subset)
 
@@ -152,7 +147,6 @@ class BestAgentAssemblyCombinationDecision(object):
                     # Get the best combination to build with the current subset
                     combination = self.try_build_item(array_bid_subset, priorities=finished_item_priority,
                                                       finished_item_list=finished_item_list)
-
 
                     # The number of step until all agents can be at the closest workshop
                     destination = best_facility
@@ -173,7 +167,13 @@ class BestAgentAssemblyCombinationDecision(object):
                        time_passed, str(best_combination is not None), len(bid_with_array))
         return best_combination
 
-    def extrac_bids_and_bid_arrays(self, subset):
+    def extract_bids_and_bid_arrays(self, subset):
+        """
+        converts an array of bids with their corresponding array forms into a combined array, describing all items
+        available in those bids
+        :param subset:
+        :return:
+        """
         array_bid_subset = np.zeros(len(self.products) + len(self._roles))
         bid_subset = []
         for bid, array_bid in subset:
@@ -198,7 +198,7 @@ class BestAgentAssemblyCombinationDecision(object):
         for facility in workshops:
             workshop_distances[facility] = {}
             for bid in bids:
-                workshop_distances[facility][bid] = self.distance_provider.calculate_steps(end_position=facility.pos,
+                workshop_distances[facility][bid] = self._distance_provider.calculate_steps(end_position=facility.pos,
                                                                                            use_in_facility_flag=False,
                                                                                            start_position=bid.pos,
                                                                                            can_fly=bid.role == "drone",
@@ -250,6 +250,7 @@ class BestAgentAssemblyCombinationDecision(object):
         """
         Finds the best item combination by trying to build all possible finished products and iteratively invoking
         the next round. This has the benefit that it allows building items, that require other assembled items first
+        :param finished_item_list:
         :param products:
         :param priorities:
         :param item: the item to build. If none provided, build all items and select the best.
@@ -299,18 +300,21 @@ class BestAgentAssemblyCombinationDecision(object):
         finished_stock_items = self._product_provider.get_agent_stock_items(
             types=ProductProvider.STOCK_ITEM_ALL_AGENT_TYPES)
 
-        intermediary_finished_product_goal= {}
+        intermediary_finished_product_goal = {}
 
-        assemblable_items_keys = self._product_provider._assemblable_items.keys()
-        assemblable_items_keys.sort(reverse=True, key=CalcUtil.natural_keys)
-        for key in assemblable_items_keys:
-            priority = self._finished_product_goals.get(key, 0) - finished_stock_items.get(key, 0) + intermediary_finished_product_goal.get(key, 0)
+        assembleable_items_keys = self._product_provider.assemblable_items.keys()
+        assembleable_items_keys.sort(reverse=True, key=CalcUtil.natural_keys)
+        for key in assembleable_items_keys:
+            priority = self._finished_product_goals.get(key, 0) - finished_stock_items.get(
+                key, 0) + intermediary_finished_product_goal.get(
+                key, 0)
 
             if normalize_to_zero and priority < 0:
                 priority = 0
 
             for consumed_item in self._product_provider.get_product_by_name(key).consumed_items:
-                intermediary_finished_product_goal[consumed_item.name] = intermediary_finished_product_goal.get(consumed_item.name, 0) + max(priority, 0) * consumed_item.amount
+                intermediary_finished_product_goal[consumed_item.name] = intermediary_finished_product_goal.get(
+                    consumed_item.name, 0) + max(priority, 0) * consumed_item.amount
 
             res[key] = priority
         return res
@@ -318,7 +322,7 @@ class BestAgentAssemblyCombinationDecision(object):
     def bid_to_numpy_array(self, bid):
         """
         creates a numpy array out of a bid
-        The first n-4 values descirbe thenumber of items an agent holds.
+        The first n-4 values describe the number of items an agent holds.
         The last 4 values match the roles. They are 999 at the index of the current role and 0 otherwise.
         :param bid:
         :type bid: TaskBid
@@ -333,9 +337,10 @@ class BestAgentAssemblyCombinationDecision(object):
 
         return bid_array
 
-    def item_list_activation(self, item_list, priorities):
+    @staticmethod
+    def item_list_activation(item_list, priorities):
         """
-        Returns the activation of assemblig a given list of items
+        Returns the activation of assembling a given list of items
         :param item_list:
         :param priorities:
         :return:
@@ -343,18 +348,19 @@ class BestAgentAssemblyCombinationDecision(object):
 
         res = 0
 
-        # Keep track of occurances of each item in the assembly list to assign proper priorities
-        occurances = {}
+        # Keep track of occurrences of each item in the assembly list to assign proper priorities
+        occurrences = {}
 
         for item in item_list:
             # Take negative priorities and treat them like 0
-            priority = priorities[item] - occurances.get(item, 0)
+            priority = priorities[item] - occurrences.get(item, 0)
             if priority > 0:
                 res += priorities[item] * BestAgentAssemblyCombinationDecision.WEIGHT_MISSION_JOB_PRIORITY
             else:
-                res += (priority * BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS / (BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)) + 0.30
+                res += (priority * BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS / (
+                    BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS)) + 0.30
 
-            occurances[item] = occurances.get(item, 0) + 1
+            occurrences[item] = occurrences.get(item, 0) + 1
         return res
 
     @property

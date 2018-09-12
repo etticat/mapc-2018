@@ -1,14 +1,12 @@
 #!/usr/bin/env python2
 import time
 
-from mapc_rhbp_ettlinger.msg import AgentConfig
-
+import rospy
 from mac_ros_bridge.msg import RequestAction, SimStart, SimEnd, Bye, sys, Agent
 
-import rospy
-
 from agent_components.coordination_components import CoordinationComponent
-from agent_components.massim_rhbp_components import MassimRhbpComponent
+from agent_components.main_rhbp_components import MainRhbpComponent
+from agent_components.shared_components import SharedComponents
 from behaviour_components.managers import Manager
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -16,7 +14,6 @@ from decisions.choose_best_available_job import ChooseBestAvailableJobDecision
 from provider.action_provider import ActionProvider, Action
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
-from agent_components.shared_components import SharedComponents
 from provider.stats_provider import StatsProvider
 from provider.well_provider import WellProvider
 
@@ -45,20 +42,21 @@ class RhbpAgent(object):
 
         ettilog.loginfo("RhbpAgent(%s):: Starting", self._agent_name)
 
-        # Subscribers are served in order they register. These subscribers are called BEFORE all the subscribers from rhbp components
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="request_action"), RequestAction,
-                         self._callback_action_request_first)
+        # Subscribers are served in order they register. These subscribers are called BEFORE all the subscribers from
+        #  rhbp components
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="request_action"),
+                         RequestAction, self._callback_action_request_first)
 
         # initialise providers
         self._simulation_provider = SimulationProvider(agent_name=self._agent_name)
         self._well_provider = WellProvider(agent_name=self._agent_name)
-        self._stats_provider = StatsProvider(agent_name=self._agent_name)
+        self._stats_provider = StatsProvider()
         self._action_provider = ActionProvider(agent_name=self._agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=self._agent_name)
 
         # initialise all components
         self._shared_components = SharedComponents(agent_name=self._agent_name)
-        self._massim_rhbp_components = MassimRhbpComponent(
+        self._main_rhbp_components = MainRhbpComponent(
             agent_name=self._agent_name,
             shared_components=self._shared_components,
             manager=Manager(
@@ -72,20 +70,26 @@ class RhbpAgent(object):
         # One agent has the task of bidding for auctions
         if self._should_bid_for_auctions:
             self._job_decider = ChooseBestAvailableJobDecision(agent_name=self._agent_name)
+        else:
+            self._job_decider = None
 
-        # Subscribers are served in order they register. These subscribers are called AFTER all the subscribers from rhbp components
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="request_action"), RequestAction,
-                         self._callback_action_request_after_sensors)
+        # Subscribers are served in order they register. These subscribers are called AFTER all the subscribers from
+        # rhbp components
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="request_action"),
+                         RequestAction, self._callback_action_request_after_sensors)
 
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="start"), SimStart, self._sim_start_callback)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="end"), SimEnd, self._sim_end_callback)
-        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="agent"), Agent, self._agent_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="start"), SimStart,
+                         self._sim_start_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="end"), SimEnd,
+                         self._sim_end_callback)
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="agent"), Agent,
+                         self._agent_callback)
 
         ettilog.logerr("RhbpAgent(%s):: Initialisation finished", self._agent_name)
 
     def _agent_callback(self, agent):
         """
-        Every step we check the action of the agent. If the agent doesn't provide proper acions for too long restart it.
+        Every step we check the action of the agent. If the agent doesn't provide proper actions for too long restart it
         :param agent:
         :type agent: Agent
         :return:
@@ -96,7 +100,7 @@ class RhbpAgent(object):
             if self._steps_since_last_action >= 5:
                 # If the agent doesn't provide proper actions for 5 steps, something must have gone terribly wrong.
                 # In this case kill the agent, which will tell ros to restart it.
-                rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..." % (self._agent_name))
+                rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..." % self._agent_name)
         else:
             # If a proper action has been provided, reset the counter
             self._steps_since_last_action = 0
@@ -138,25 +142,22 @@ class RhbpAgent(object):
     def _sim_end_callback(self, sim_end):
         """
         Callback after the simulation is over
-        :param sim_end:  the message
-        :type sim_end: SimEnd
         """
         self._simulation_running = False
 
-    def _bye_callback(self, msg):
+    @staticmethod
+    def _bye_callback(msg):
         """
         Callback when all the runs are over
         :param msg:  the message
         :type msg: Bye
         """
-        ettilog.loginfo("RhbpAget(%s):: Bye message received: %s", msg)
+        ettilog.loginfo("RhbpAgent(%s):: Bye message received: %s", msg)
 
     def _callback_action_request_first(self, request_action):
         """
         Action request callback that is called BEFORE all other components, providers, ...
         Just keeps track at what time it was received
-        :param request_action: the message
-        :type request_action: RequestAction
         :return:
         """
 
@@ -171,7 +172,7 @@ class RhbpAgent(object):
         :return:
         """
 
-        # Reset the action response flag so we can interate until we find an action again
+        # Reset the action response flag so we can iterate until we find an action again
         self._action_provider.reset_action_response_found()
 
         # If current agent is responsible for auction bidding, do so
@@ -186,7 +187,7 @@ class RhbpAgent(object):
         # Do this until a component sets the action response flag the max decision making time is exceeded
         while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
             if self._simulation_running:
-                self._massim_rhbp_components.step(guarantee_decision=True)
+                self._main_rhbp_components.step(guarantee_decision=True)
 
                 manager_steps += 1
                 time_passed = (rospy.get_rostime() - self.request_time).to_sec()
@@ -196,7 +197,8 @@ class RhbpAgent(object):
         # If decision making took too long -> log it to the console
         if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
             ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
-                           self._agent_name, time_passed, manager_steps, self._action_provider._action_response_found)
+                           self._agent_name, time_passed, manager_steps,
+                           self._action_provider.action_response_found)
 
         # If no action was found at all -> use recharge as fallback
         if not self._action_provider.action_response_found:
@@ -210,11 +212,11 @@ class RhbpAgent(object):
         """
         if RhbpAgent.BUILD_WELL_ENABLED:
             well_task = self._shared_components.choose_well_to_build_decision.choose(
-                self._shared_components.well_task_mechanism,
+                self._shared_components.well_task_decision,
                 request_action.agent)
             if well_task is not None:
                 ettilog.loginfo("RhbpAgent(%s):: building well", self._agent_name)
-                self._shared_components.well_task_mechanism.start_task(well_task)
+                self._shared_components.well_task_decision.start_task(well_task)
 
     def _handle_auction_job(self, request_action):
         """

@@ -13,12 +13,8 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class ShouldBidForAssemblyDecision(object):
     """
-    Decision object, that decisdes if agent should bid for assembly decision
+    Decision object, that decides if agent should bid for assembly decision
     """
-
-    WEIGHT_LOAD = 30 # TODO: Remove all unused stuff
-    WEIGHT_INGREDIENT_LOAD = 100
-    WEIGHT_STEPS = -3 # In production this should be way smaller (Because close ones should be preferred)
 
     ACTIVATION_THRESHOLD = -15
 
@@ -45,15 +41,10 @@ class ShouldBidForAssemblyDecision(object):
         self._sub_ref = rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name, postfix="start"), SimStart,
                                          self._init_config)
 
-    def _init_config(self, sim_start=None):
-        ShouldBidForAssemblyDecision.WEIGHT_LOAD = rospy.get_param("ShouldBidForAssembly.WEIGHT_LOAD",
-                                                                   ShouldBidForAssemblyDecision.WEIGHT_LOAD)
-        ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD = rospy.get_param("ShouldBidForAssembly.WEIGHT_INGREDIENT_LOAD",
-                                                                              ShouldBidForAssemblyDecision.WEIGHT_INGREDIENT_LOAD)
-        ShouldBidForAssemblyDecision.WEIGHT_STEPS = rospy.get_param("ShouldBidForAssembly.WEIGHT_STEPS",
-                                                                    ShouldBidForAssemblyDecision.WEIGHT_STEPS)
-        ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD = rospy.get_param("ShouldBidForAssembly.ACTIVATION_THRESHOLD",
-                                                                            ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD)
+    @staticmethod
+    def _init_config(sim_start=None):
+        ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD = rospy.get_param(
+            "ShouldBidForAssembly.ACTIVATION_THRESHOLD", ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD)
 
     def _callback_agent(self, agent):
         """

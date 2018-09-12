@@ -23,26 +23,22 @@ class StepDistanceSensor(Sensor):
         super(StepDistanceSensor, self).__init__(
             name=name,
             initial_value=initial_value)
-        self.destination_sensor = destination_sensor
-        self.use_in_facility_flag = use_in_facility_flag
-        self.distance_provider = DistanceProvider(agent_name=agent_name)
-        self.log = False
+        self._destination_sensor = destination_sensor
+        self._use_in_facility_flag = use_in_facility_flag
+        self._distance_provider = DistanceProvider(agent_name=agent_name)
 
     def sync(self):
 
-        destination_position = self.destination_sensor.sync()
+        destination_position = self._destination_sensor.sync()
 
         if destination_position is None:
-            if self.log:
-                rospy.logerr("StepDistanceSensor(%s):: Cant get distance of %s and %s", self.name, str(pos1), str(destination_position))
-
             return self._initial_value
 
-        # This sesor can also take objects that hold a position. Extract it here
+        # This sensor can also take objects that hold a position. Extract it here
         if not isinstance(destination_position, Position):
             destination_position = destination_position.pos
 
-        steps = self.distance_provider.calculate_steps(destination_position, self.use_in_facility_flag)
+        steps = self._distance_provider.calculate_steps(destination_position, self._use_in_facility_flag)
 
         self.update(steps)
 

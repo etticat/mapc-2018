@@ -4,7 +4,9 @@ from so_data.sobroadcaster import SoBroadcaster
 
 
 class MassimSoBroadcaster(SoBroadcaster):
-
+    """
+    So Broadcaster that uses MyPublisher instead of the regular Publisher
+    """
 
     def init_publisher(self):
         topic = AgentUtils.get_coordination_topic()

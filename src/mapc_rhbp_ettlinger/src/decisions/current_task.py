@@ -1,9 +1,5 @@
-import inspect
-import traceback
-
-from mac_ros_bridge.msg import SimEnd
-
 import rospy
+from mac_ros_bridge.msg import SimEnd
 from mapc_rhbp_ettlinger.msg import TaskStop
 
 from common_utils.agent_utils import AgentUtils
@@ -67,7 +63,7 @@ class CurrentTaskDecision(DecisionPattern):
 
         self.value = None
 
-    def callback_simulation_end(self, sim_end):
+    def callback_simulation_end(self):
         """
         Reset task when simulation ends
         :return:
@@ -97,7 +93,8 @@ class AssembleTaskDecision(CurrentTaskDecision):
         """
         super(AssembleTaskDecision, self).end_task(notify_others)
 
-        rospy.logerr("AssembleTaskDecision(%s):: Ending task (notify=%s) Task: %s", self.agent_name, str(notify_others), str(self.value))
+        rospy.logerr("AssembleTaskDecision(%s):: Ending task (notify=%s) Task: %s", self.agent_name,
+                     str(notify_others), str(self.value))
 
         if self.value is None:
             self._product_provider.stop_assembly()
@@ -151,7 +148,7 @@ class DeliveryTaskDecision(CurrentTaskDecision):
 
 class WellTaskDecision(CurrentTaskDecision):
 
-    def destination_not_found(self, pos):
+    def destination_not_found(self):
         """
         Is called when destination is unreachable. Just end task
         :return:

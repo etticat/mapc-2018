@@ -10,8 +10,8 @@ ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME +
 
 class CoordinationComponent(object):
     """
-    Manager, that handles all the coordination on agent level.
-    The word Manager refers to Manager in the context of Manager in rhbp components an not in Context of Contract Net
+    Component, that handles all the coordination on agent side. It instantiates the contract net contractors and keeps 
+    track of them
     """
     def __init__(self, agent_name, shared_components, role):
         """
@@ -21,16 +21,13 @@ class CoordinationComponent(object):
         :type shared_components: SharedComponents
         """
 
-        self._agent_name = agent_name
-        self.shared_components = shared_components
+        self._assemble_contractor = AssembleContractor(
+            agent_name=agent_name, role=role,
+            current_task_decision=shared_components.assemble_task_decision,
+            ready_for_bid_condition=shared_components.has_no_task_assigned_cond)
 
-        self.assemble_contractor_behaviour = AssembleContractor(agent_name=self._agent_name, role=role,
-                                                                current_task_mechanism=self.shared_components.assemble_task_mechanism,
-                                                                ready_for_bid_condition=self.shared_components.has_no_task_assigned_cond)
-
-        self.deliver_contractor_behaviour = DeliverContractor(agent_name=self._agent_name,
-                                                              current_task_mechanism=self.shared_components.deliver_task_mechanism,
-                                                              assemble_task_mechanism=self.shared_components.assemble_task_mechanism,
-                                                              ready_for_bid_condition=Negation(
-                                                                  self.shared_components.has_priority_job_task_assigned_cond))
-
+        self.deliver_contractor = DeliverContractor(
+            agent_name=agent_name,
+            current_task_decision=shared_components.deliver_task_decision,
+            assemble_task_decision=shared_components.assemble_task_decision,
+            ready_for_bid_condition=Negation(shared_components.has_priority_job_task_assigned_cond))

@@ -13,7 +13,7 @@ from mapc_rhbp_ettlinger.srv import SetGraphhopperMap, SetGraphhopperMapResponse
 
 GRAPHHOPPER_DEFAULT_PORT = 8989
 
-ettilog = rospy # TODO: somehow the import does not work. Just use the standard logger for now
+ettilog = rospy
 
 class GraphhopperProcessHandler(object):
     """
@@ -101,7 +101,8 @@ class GraphhopperProcessHandler(object):
             env = environ.copy()
             env['JETTY_PORT'] = str(port)
 
-            process = self._start_process(command=cmd,cwd=self._package_path + GraphhopperProcessHandler.GRAPHHOPPER_PATH, env=env)
+            process = self._start_process(command=cmd,
+                                          cwd=self._package_path + GraphhopperProcessHandler.GRAPHHOPPER_PATH, env=env)
             return process
 
         else:
@@ -117,7 +118,7 @@ class GraphhopperProcessHandler(object):
 
         return response
 
-    def _start_process(self, command, cwd , env):
+    def _start_process(self, command, cwd, env):
         """
         Execute a process command
         :param command: full command string
@@ -150,9 +151,9 @@ class GraphhopperProcessHandler(object):
         for gp in self._processes.values():
             try:
                 ret = gp.process.poll()
-                if ret: # check if the process terminated
+                if ret:  # check if the process terminated
                     ettilog.logerr('Graphhopper has terminated with ret:%d. Trying a restart...', ret)
-                    gp.process = self.start_graphhopper_process(map_name=gp.map_name,port=gp.port)
+                    gp.process = self.start_graphhopper_process(map_name=gp.map_name, port=gp.port)
 
             except Exception as e:
                 if e.errno == 11:  # corresponds to "Resource temporarily unavailable" and indicates we do not have more data

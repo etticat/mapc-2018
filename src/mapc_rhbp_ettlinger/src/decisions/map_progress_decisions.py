@@ -1,14 +1,7 @@
 import numpy as np
-import random
-import traceback
 
-import rospy
 from common_utils import etti_logging
 from decisions.map_decisions import MapDecision
-
-from provider.distance_provider import DistanceProvider
-from provider.simulation_provider import SimulationProvider
-from so_data.patterns import DecisionPattern
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.discovery_progress')
 
@@ -40,7 +33,7 @@ class OldestCellAgeDecision(MapDecision):
     Calculates the max steps that have passed since all cells have been seen last
     """
     def __init__(self, buffer, init_value, agent_name):
-        super(OldestCellAgeDecision, self).__init__(buffer=buffer, frame='noneTODOremove', key='destination',
+        super(OldestCellAgeDecision, self).__init__(buffer=buffer, frame=None, key='destination',
                                                     target_frames=["agent", "exploration_goal", "no_route"],
                                                     mode=MapDecision.MODE_OLDEST_VISITED, agent_name=agent_name)
         self.init_value = init_value

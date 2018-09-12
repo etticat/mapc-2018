@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from agent_components.shared_components import SharedComponents
 from behaviour_components.condition_elements import Effect
 from behaviour_components.conditions import Negation, Disjunction
 from behaviour_components.goals import GoalBase
@@ -7,21 +8,23 @@ from common_utils import etti_logging
 from decisions.exploration_target import ExplorationDecision, ExploreCornersDecision
 from network_behaviours.assemble import AssembleNetworkBehaviour
 from network_behaviours.build_well import BuildWellNetworkBehaviour
+from network_behaviours.deliver_job import DeliverJobNetworkBehaviour
 from network_behaviours.dismantle import DismantleNetworkBehaviour
 from network_behaviours.exploration import ExplorationNetworkBehaviour
 from network_behaviours.gather import GatheringNetworkBehaviour
-from network_behaviours.deliver_job import DeliverJobNetworkBehaviour
-from agent_components.shared_components import SharedComponents
 from provider.self_organisation_provider import SelfOrganisationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.manager.action')
 
 
-class MassimRhbpComponent(object):
+class MainRhbpComponent(object):
+    """
+    MainRhbpComponent keeps track of the first level of Rhbp components, which includes instances of all
+    Network Behaviours
+    """
 
     def __init__(self, agent_name, shared_components, manager):
         """
-        Manager that is responsible for all actions on the massim simulation
         :param agent_name:
         :param shared_components:
         :type shared_components: SharedComponents
@@ -41,21 +44,33 @@ class MassimRhbpComponent(object):
         :return:
         """
         ####################### Exploration Network Behaviour ########################
-        exploration_decision = ExplorationDecision(self._self_organisation_provider.so_buffer, agent_name=self._agent_name)
-        self.exploration_network = ExplorationNetworkBehaviour(
+        # Responsible for finding resource nodes in the beginning of a simulation
+
+        # ExplorationDecision picks the next destination for exploration
+        exploration_decision = ExplorationDecision(
+            self._self_organisation_provider.so_buffer,
+            agent_name=self._agent_name)
+
+        self._exploration_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/explore',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=exploration_decision,
+            exploration_decision=exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        self.exploration_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
+        # Only explore if no task is assigned
+        # It can happen, that during initial exploration, a well position is found and a task is created.
+        # In this case, we stop exploring
+        self._exploration_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
 
-        self.exploration_network.add_precondition(Negation(self._shared_components.resources_of_all_items_discovered_condition))
+        # Only explore until all resources are discovered
+        self._exploration_network.add_precondition(
+            Negation(self._shared_components.exploration_phase_finished_condition))
 
-        self.exploration_network.add_effect(
+        # Exploration increases the percentage of resource nodes, that have been discovered
+        self._exploration_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 indicator=1.0,
@@ -64,6 +79,7 @@ class MassimRhbpComponent(object):
         )
 
         ######################## Gathering Network Behaviour ########################
+        # Gather ingredients
         self._gathering_network = GatheringNetworkBehaviour(
             name=self._agent_name + '/gathering',
             plannerPrefix=self._agent_name,
@@ -73,9 +89,7 @@ class MassimRhbpComponent(object):
             max_parallel_behaviours=1)
 
         # Gather when we know all of the resource nodes already
-        # TODO: We could let certain agents already start earlier, which are not good at exploration (trucks, motorcycles, ..)
-        self._gathering_network.add_precondition(
-            self._shared_components.resources_of_all_items_discovered_condition)
+        self._gathering_network.add_precondition(self._shared_components.exploration_phase_finished_condition)
 
         # Gather only when storage can fit more items
         self._gathering_network.add_precondition(self._shared_components.can_fit_more_ingredients_cond)
@@ -83,6 +97,7 @@ class MassimRhbpComponent(object):
         # Only gather when agent has no tasks assigned
         self._gathering_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
 
+        # Gathering increases the load of items in stock
         self._gathering_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.load_factor_sensor.name,
@@ -93,6 +108,12 @@ class MassimRhbpComponent(object):
             Negation(self._global_rhbp_components.is_forever_exploring_agent_cond))
 
         ######################## HOARDING Network Behaviour ########################
+        # Hoarding is deactivated
+        # -> Hoarding improves the job delivery performance, as more items can be stored
+        # -> The overall efficiency of agents decreases however, as the agents are almost always busy (with either
+        #    hoarding or job delivery
+        # -> This results in less free resources for actions like dismantle/build wells.
+
         # self._hoarding_network = HoardingNetworkBehaviour(
         #     name=self._agent_name + '/hoarding',
         #     plannerPrefix=self._agent_name,
@@ -110,7 +131,6 @@ class MassimRhbpComponent(object):
         # # Only hoard if there are finished products, that need to be stored
         # self._hoarding_network.add_precondition(self._shared_components.has_finished_products_to_store)
         #
-        # # TODO: This effect is false. With the correct effect its really hard to make the planner do exactly what we want
         # self._hoarding_network.add_effect(
         #     Effect(
         #         sensor_name=self._shared_components.load_factor_sensor.name,
@@ -128,15 +148,14 @@ class MassimRhbpComponent(object):
             max_parallel_behaviours=1)
 
         # Only assemble when we have a task assigned
+        self._assembly_network.add_precondition(self._shared_components.has_assemble_task_assigned_cond)
+
+        # Only assemble if we don't have a priority task assigned (delivery or build well)
         self._assembly_network.add_precondition(
-            self._shared_components.has_assemble_task_assigned_cond
+            Negation(self._shared_components.has_priority_job_task_assigned_cond)
         )
 
-        # Only assemble if we don't have a delivery task assigned. they have priority
-        self._assembly_network.add_precondition(
-            Negation(self._shared_components.has_deliver_job_task_assigned_cond)
-        )
-
+        # Assembly has the effect of finishing the assembly task.
         self._assembly_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.has_assemble_task_sensor.name,
@@ -144,8 +163,9 @@ class MassimRhbpComponent(object):
                 sensor_type=bool
             )
         )
+
         ######################## Job Network Behaviour ########################
-        self._job_execution_network = DeliverJobNetworkBehaviour(
+        self._deliver_job_network = DeliverJobNetworkBehaviour(
             name=self._agent_name + '/job',
             plannerPrefix=self._agent_name,
             shared_components=self._shared_components,
@@ -154,11 +174,10 @@ class MassimRhbpComponent(object):
             max_parallel_behaviours=1)
 
         # Only perform delivery, when there is a task assigned
-        self._job_execution_network.add_precondition(
-            self._shared_components.has_deliver_job_task_assigned_cond
-        )
+        self._deliver_job_network.add_precondition(self._shared_components.has_deliver_job_task_assigned_cond)
 
-        self._job_execution_network.add_effect(
+        # Job delivery has the effect of finishing the delivery task
+        self._deliver_job_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.has_deliver_task_sensor.name,
                 indicator=-1.0,
@@ -167,7 +186,7 @@ class MassimRhbpComponent(object):
         )
 
         ####################### Build Well Behaviour ########################
-        self.build_well_network = BuildWellNetworkBehaviour(
+        self._build_well_network = BuildWellNetworkBehaviour(
             name=self._agent_name + '/well',
             plannerPrefix=self._agent_name,
             agent_name=self._agent_name,
@@ -175,11 +194,11 @@ class MassimRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        self.build_well_network.add_precondition(
-            self._shared_components.has_build_well_task_assigned_cond
-        )
+        # Build wells only when a well task is assigned
+        self._build_well_network.add_precondition(self._shared_components.has_build_well_task_assigned_cond)
 
-        self.build_well_network.add_effect(
+        # Building wells has the effect of finishing a well task
+        self._build_well_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.has_well_task_sensor.name,
                 indicator=-1.0,
@@ -196,11 +215,17 @@ class MassimRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
+        # Only dismantle if there is no task assigned
         self.dismantle_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
+
+        # Dismantle when the stock is full
         self.dismantle_network.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
+
+        # Only start dismantling if there are opponent wells
         self.dismantle_network.add_precondition(self._shared_components.opponent_well_exists_cond)
         self.dismantle_network.add_precondition(Negation(self._shared_components.is_forever_exploring_agent_cond))
 
+        # Dismantling has the effect of reducing the opponent wells.
         self.dismantle_network.add_effect(
             effect=Effect(
                 sensor_name=self._shared_components.opponent_wells_sensor.name,
@@ -216,7 +241,7 @@ class MassimRhbpComponent(object):
         else:
             find_well_exploration_decision = self.exploration_network.exploration_mechanism
 
-        self.find_well_location_network_behaviour = ExplorationNetworkBehaviour(
+        self._find_well_location_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/welllocation',
             plannerPrefix=self._agent_name,
             exploration_mechanism=find_well_exploration_decision,
@@ -225,16 +250,33 @@ class MassimRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        self.find_well_location_network_behaviour.add_precondition(self._shared_components.has_no_task_assigned_cond)
-        self.find_well_location_network_behaviour.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
-        self.find_well_location_network_behaviour.add_precondition(self._shared_components.resources_of_all_items_discovered_condition)
-        self.find_well_location_network_behaviour.add_precondition(self._shared_components.enough_massium_to_build_well_cond)
-        self.find_well_location_network_behaviour.add_precondition(Disjunction(
+        # Only do this if there is no task assigned
+        self._find_well_location_network.add_precondition(
+            self._shared_components.has_no_task_assigned_cond)
+
+        # Only do it if agent can't fit more items in stock
+        self._find_well_location_network.add_precondition(
+            Negation(self._shared_components.can_fit_more_ingredients_cond))
+
+        # Only do it if agent has finished exploration phase
+        self._find_well_location_network.add_precondition(
+            self._shared_components.exploration_phase_finished_condition)
+
+        # Only do it if there is enough massium available to build a well
+        self._find_well_location_network.add_precondition(
+            self._shared_components.enough_massium_to_build_well_cond)
+
+        self._find_well_location_network.add_precondition(Disjunction(
             Negation(self._shared_components.can_fit_more_ingredients_cond),
             self._shared_components.is_forever_exploring_agent_cond
         ))
 
-        self.find_well_location_network_behaviour.add_effect(
+        # Only do it when agent is not a drone
+        self._find_well_location_network.add_precondition(self._shared_components.is_road_agent_cond)
+
+        # Technically the effect of this network is to create a well task. As it is hard to create a goal for this,
+        # just use a fake effect (discovery), which is technically also true
+        self._find_well_location_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 indicator=2.0,
@@ -242,28 +284,35 @@ class MassimRhbpComponent(object):
             )
         )
 
-        ####################### Idle Network Behaviour ########################
-        self.idle_network_behaviour = ExplorationNetworkBehaviour(
+        ####################### Find Opponent Well Behaviour ########################
+        self._find_opponent_well_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/idle',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=exploration_decision,
+            exploration_decision=exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        self.idle_network_behaviour.add_precondition(self._shared_components.has_no_task_assigned_cond)
-        self.idle_network_behaviour.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
-        self.idle_network_behaviour.add_precondition(self._shared_components.resources_of_all_items_discovered_condition)
+        # Try to find opponent wells only when no tasks are assigned
+        self._find_opponent_well_network.add_precondition(
+            self._shared_components.has_no_task_assigned_cond)
+        # Only do it when stock is full. (nothing else can be done)
+        self._find_opponent_well_network.add_precondition(
+            Negation(self._shared_components.can_fit_more_ingredients_cond))
+        # Only do it after exploration phase is over
+        self._find_opponent_well_network.add_precondition(
+            self._shared_components.exploration_phase_finished_condition)
 
-        self.idle_network_behaviour.add_effect(
+        # The main effect is to increase the number of known opponent wells. It is hard to create proper goals for this.
+        # Therefore use a fake effect: resource discovery, which is a side effect of this behaviour too.
+        self._find_opponent_well_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 indicator=1.0,
                 sensor_type=float
             )
         )
-
 
     def _init_goals(self):
         """
@@ -275,24 +324,30 @@ class MassimRhbpComponent(object):
         self.task_fulfillment_goal = GoalBase(
             name='task_fulfillment_goal',
             permanent=True,
-            priority=200,
+            priority=3,
             planner_prefix=self._agent_name,
             conditions=[self._shared_components.has_no_task_assigned_cond])
 
-        # We want to gather items otherwise
+        # Otherwise we want to gather items
         self._gather_goal = GoalBase(
             name='fill_load_goal',
             permanent=True,
-            priority=50,
+            priority=2,
             planner_prefix=self._agent_name,
-            conditions=[self._shared_components.load_fullness_condition])
+            conditions=[self._shared_components.load_factor_condition])
 
-        # We want to destroy all opposing wells
+        # If there are opponent wells, we want to destroy them
         self._dismantle_goal = GoalBase(
             name='dismantle_goal',
             permanent=True,
+            priority=1,
             planner_prefix=self._agent_name,
             conditions=[Negation(self._shared_components.opponent_well_exists_cond)])
 
     def step(self, guarantee_decision=True):
+        """
+        For each step in the simulation, a manager step is initiated.
+        :param guarantee_decision:
+        :return:
+        """
         self._manager.step(guarantee_decision=guarantee_decision)

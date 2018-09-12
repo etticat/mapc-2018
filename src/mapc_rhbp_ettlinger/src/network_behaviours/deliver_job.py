@@ -17,13 +17,17 @@ class DeliverJobNetworkBehaviour(GoAndDoNetworkBehaviour):
             shared_components=shared_components,
             name=name,
             use_name_for_movement=True,
-            mechanism=shared_components.deliver_task_mechanism,
+            mechanism=shared_components.deliver_task_decision,
             **kwargs)
 
-        self.deliver_job_behaviour = DeliverJobBehaviour(name="deliver_job_behaviour", agent_name=agent_name,
-                                        mechanism=shared_components.deliver_task_mechanism,
-                                        plannerPrefix=self.get_manager_prefix())
+        self.deliver_job_behaviour = DeliverJobBehaviour(
+            name="deliver_job_behaviour",
+            agent_name=agent_name,
+            mechanism=shared_components.deliver_task_decision,
+            plannerPrefix=self.get_manager_prefix())
+
         self.init_do_behaviour(self.deliver_job_behaviour)
+
         self.deliver_job_behaviour.add_effect(Effect(
             sensor_type=bool,
             sensor_name=shared_components.has_deliver_task_sensor.name,

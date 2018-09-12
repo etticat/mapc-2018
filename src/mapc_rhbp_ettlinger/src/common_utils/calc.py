@@ -1,7 +1,6 @@
 import copy
 import re
 
-from mac_ros_bridge.msg import Item
 from mapc_rhbp_ettlinger.msg import KeyIntValue
 
 
@@ -66,21 +65,21 @@ class CalcUtil(object):
         return list1
 
     @staticmethod
-    def get_dict_from_items(items, attrs=None):
+    def get_dict_from_items(items, attributes=None):
         """
         Turns a dictionary into item objects
         :param items: items
         :type items: Item[]
-        :param attrs: The attributes of the items to consider. by default this is only amount
-        :type attrs: list
+        :param attributes: The attributes of the items to consider. by default this is only amount
+        :type attributes: list
         :return: dict
         """
-        if attrs is None:
-            attrs = ["amount"]
+        if attributes is None:
+            attributes = ["amount"]
 
         res = {}
         for item in items:
-            for attr in attrs:
+            for attr in attributes:
                 res[item.name] = res.get(item.name, 0) + getattr(item, attr)
         return res
 
@@ -130,7 +129,7 @@ class CalcUtil(object):
     @classmethod
     def dict_from_string_list(cls, items):
         """
-        Returns a dictionary made from a list of strings. Values describe the number of occurances in the list
+        Returns a dictionary made from a list of strings. Values describe the number of occurrences in the list
         :param items:
         :return:
         """
@@ -175,7 +174,7 @@ class CalcUtil(object):
         res = []
 
         for key, value in dict_inst.iteritems():
-            res.append(KeyIntValue(key=key,value=value))
+            res.append(KeyIntValue(key=key, value=value))
 
         return res
 
@@ -211,11 +210,11 @@ class CalcUtil(object):
         :param text:
         :return:
         """
-        return [ CalcUtil.atoi(c) for c in re.split('(\d+)', text)]
+        return [CalcUtil.atoi(c) for c in re.split('(\d+)', text)]
 
     @classmethod
     def multiply_dict_by_factor(cls, dict_, factor):
         res = {}
         for key in dict_:
-            res[key] =  dict_[key] * factor
+            res[key] = dict_[key] * factor
         return res

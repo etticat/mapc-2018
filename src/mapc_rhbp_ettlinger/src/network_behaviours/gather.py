@@ -1,17 +1,8 @@
-
-from behaviour_components.activators import ThresholdActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Condition, Negation
 from behaviour_components.goals import GoalBase
 from behaviours.generic_action import GenericActionBehaviour
-from behaviours.movement import GoToDestinationBehaviour
-from network_behaviours.battery import BatteryChargingNetworkBehaviour
 from network_behaviours.go_and_do import GoAndDoNetworkBehaviour
 from provider.action_provider import Action
-from provider.product_provider import ProductProvider
-from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
-from sensor.general import SubtractionSensor
-from sensor.movement import StepDistanceSensor
 
 
 class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
@@ -20,24 +11,23 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
     """
 
     def __init__(self, agent_name, name, shared_components, **kwargs):
-
         super(GatheringNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             shared_components=shared_components,
             name=name,
-            mechanism=shared_components.gather_decision_mechanism,
+            mechanism=shared_components.gather_decision_decision,
             **kwargs)
 
         self._agent_name = self._agent_name
 
-        self.gather_behviour = GenericActionBehaviour(
+        self.gather_behaviour = GenericActionBehaviour(
             name="gather_behaviour",
             action_type=Action.GATHER,
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix()
         )
 
-        self.gather_behviour.add_effect(
+        self.gather_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self._shared_components.load_factor_sensor.name,
                 indicator=1.0,
@@ -46,28 +36,28 @@ class GatheringNetworkBehaviour(GoAndDoNetworkBehaviour):
             )
         )
 
-        self.init_do_behaviour(self.gather_behviour)
+        self.init_do_behaviour(self.gather_behaviour)
 
         self.gather_goal = GoalBase(
             name='gather_goal',
             permanent=True,
             priority=50,
             planner_prefix=self._agent_name,
-            conditions=[self._shared_components.load_fullness_condition])
-
+            conditions=[self._shared_components.load_factor_condition])
 
     def stop(self):
         """
-        When stoping to gather, remove goals
+        When stopping to gather, remove goals
         :return:
         """
         super(GatheringNetworkBehaviour, self).stop()
         # Deleting task and cleaning up goals
-        self._shared_components.gather_decision_mechanism.end_gathering()
+        self._shared_components.gather_decision_decision.end_gathering()
+
     def do_step(self):
         """
         Pick best gather option each step
         :return:
         """
-        self._shared_components.gather_decision_mechanism.calc_value()
+        self._shared_components.gather_decision_decision.calc_value()
         super(GatheringNetworkBehaviour, self).do_step()
