@@ -59,7 +59,7 @@ class ProductProvider(object):
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name), Agent, self._callback_agent)
         # rospy.Subscriber(ProductProvider.STORAGE_TOPIC, StorageMsg, self.storage_callback)
 
-    def init_runtime_variables(self):
+    def init_runtime_variables(self, sim_end=None):
         self.hoarding_destination = None
         self._product_infos = {}
         self._gatherable_items = {}

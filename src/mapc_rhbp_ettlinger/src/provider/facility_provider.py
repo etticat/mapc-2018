@@ -31,7 +31,7 @@ class FacilityProvider(object):
         rospy.Subscriber("/charging_station", ChargingStationMsg, self.charging_station_callback)
         rospy.Subscriber("/facilities", FacilityMsg, self.facilities_callback)
 
-    def init_runtime_variables(self):
+    def init_runtime_variables(self, sim_end=None):
         self.charging_stations = {}
         self.storages = {}
         self.workshops = {}

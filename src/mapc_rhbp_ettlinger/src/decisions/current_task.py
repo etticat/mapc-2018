@@ -63,7 +63,7 @@ class CurrentTaskDecision(DecisionPattern):
 
         self.value = None
 
-    def callback_simulation_end(self):
+    def callback_simulation_end(self, sim_end=None):
         """
         Reset task when simulation ends
         :return:

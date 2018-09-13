@@ -397,7 +397,7 @@ class SharedComponents(object):
         """
         agent_charge_upper_bound = msg.charge_max
 
-        agent_charge_lower_bound = agent_charge_upper_bound * 0.2
+        agent_charge_lower_bound = agent_charge_upper_bound * 0.3
 
         self._require_charge_activator.fullActivationValue = agent_charge_lower_bound
         self._require_charge_activator.zeroActivationValue = agent_charge_upper_bound

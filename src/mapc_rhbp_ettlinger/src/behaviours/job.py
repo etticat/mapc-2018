@@ -41,7 +41,7 @@ class DeliverJobBehaviour(DecisionBehaviour):
                          self._action_request_agent)
         rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=agent_name, postfix="end"), SimEnd, self._init_values)
 
-    def _init_values(self):
+    def _init_values(self, sim_end=None):
         self._current_task = None
         self._items_to_retrieve = None
         self._items_to_retrieve_count = 0

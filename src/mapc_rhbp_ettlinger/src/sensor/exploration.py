@@ -51,7 +51,7 @@ class ResourceDiscoveryProgressSensor(Sensor):
         self.update(result)
         return super(ResourceDiscoveryProgressSensor, self).sync()
 
-    def reset_sensor(self):
+    def reset_sensor(self, sim_end=None):
         """
         Reset the progress when simulation ends
         :return:

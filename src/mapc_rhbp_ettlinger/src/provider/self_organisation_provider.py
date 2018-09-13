@@ -74,7 +74,7 @@ class SelfOrganisationProvider(object):
     def so_buffer(self):
         return self._so_buffer
 
-    def reset_provider(self):
+    def reset_provider(self, sim_end=None):
         """
         Delete all values in the SoBuffer
         :return:

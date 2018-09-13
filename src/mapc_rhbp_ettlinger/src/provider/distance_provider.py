@@ -142,7 +142,7 @@ class DistanceProvider(object):
         self._initialised = True
         self.set_map(sim_start.map)
 
-    def callback_sim_end(self):
+    def callback_sim_end(self, sim_end):
         self._initialised = False
         self._facility_positions.clear()
 
