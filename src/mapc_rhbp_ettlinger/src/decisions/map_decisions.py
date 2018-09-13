@@ -191,6 +191,11 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
 
             mask = self.generate_round_array_mask(simple_size_x, simple_size_y, simple_pos_x, simple_pos_y, r)
 
+            # If no spot of the map is selected, increase radius
+            # This can happen when the agents are far outside the field and their vision doesn't see any spot of the field.
+            if np.amax(mask) < 1:
+                continue
+
             min_val = min(environment_array[mask])
 
             if np.sum(mask > 0) == size:
