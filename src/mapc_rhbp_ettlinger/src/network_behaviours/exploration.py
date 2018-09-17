@@ -35,20 +35,13 @@ class ExplorationNetworkBehaviour(GoAndDoNetworkBehaviour):
             plannerPrefix=self.get_manager_prefix(),
             name=self.get_manager_prefix() + '_do_behaviour',
             mechanism=self.exploration_decision,
-            recalculate_destination_every_step=False
+            recalculate_destination_every_step=True
         )
 
         self.init_do_behaviour(self._reset_destination_behaviour)
-        self.apply_charging_restrictions(self._reset_destination_behaviour)
+        # self.apply_charging_restrictions(self._reset_destination_behaviour)
 
         self._reset_destination_behaviour.add_effect(
-            effect=Effect(
-                sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
-                sensor_type=float,
-                indicator=1.0
-            )
-        )
-        self._go_behaviour.add_effect(
             effect=Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 sensor_type=float,
