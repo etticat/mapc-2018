@@ -183,10 +183,16 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         r = vision * 2
 
         min_val = np.inf
+
+        if self.pick_random_of_lowest_values:
+            quantile = 5
+        else:
+            quantile = 0
+        highest_distance = np.percentile(environment_array, quantile)
         size = np.size(environment_array)
         mask = None
 
-        while min_val != 0:
+        while min_val > highest_distance:
             r = r + vision
 
             mask = self.generate_round_array_mask(simple_size_x, simple_size_y, simple_pos_x, simple_pos_y, r)
@@ -198,14 +204,12 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
 
             min_val = min(environment_array[mask])
 
+            # When we reach a radius that is able to see the whole field, stop increasing radius
             if np.sum(mask > 0) == size:
                 break
 
         array2 = np.zeros([simple_size_x, simple_size_y, ])
-        if min_val == 0 or self.pick_random_of_lowest_values is False:
-            array2[environment_array == min_val] = 1
-        else:
-            array2[environment_array < np.percentile(environment_array, 10)] = 1
+        array2[environment_array <= min_val] = 1
 
         array2[mask == False] *= 0
 
