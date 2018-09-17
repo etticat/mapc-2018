@@ -29,6 +29,7 @@ class RhbpAgent(object):
 
     # Max time the agent should take to find an action, before giving up and just recharging
     MAX_DECISION_MAKING_TIME = 14
+    MAX_MANAGER_STEPS = 3
     # Flag to enable/disable the well building mechanism
     BUILD_WELL_ENABLED = True
 
@@ -185,7 +186,7 @@ class RhbpAgent(object):
         time_passed = 0
 
         # Do this until a component sets the action response flag the max decision making time is exceeded
-        while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME:
+        while (not self._action_provider.action_response_found) and time_passed < RhbpAgent.MAX_DECISION_MAKING_TIME and manager_steps < RhbpAgent.MAX_MANAGER_STEPS:
             if self._simulation_running:
                 self._main_rhbp_components.step(guarantee_decision=True)
 
@@ -195,7 +196,7 @@ class RhbpAgent(object):
                 time.sleep(0.1)
 
         # If decision making took too long -> log it to the console
-        if time_passed > RhbpAgent.MAX_DECISION_MAKING_TIME:
+        if time_passed >= RhbpAgent.MAX_DECISION_MAKING_TIME or manager_steps >= RhbpAgent.MAX_MANAGER_STEPS:
             ettilog.logerr("RhbpAgent(%s): Manager took %.2fs for %d steps. Action found: %s",
                            self._agent_name, time_passed, manager_steps,
                            self._action_provider.action_response_found)

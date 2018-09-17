@@ -247,7 +247,7 @@
     <param name="activation_algorithm" type="string" value="default"/>
     <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
 
-    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="7"/>
+    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="14"/>
     <param name="RhbpAgent.BUILD_WELL_ENABLED" type="bool" value="True"/>
 
 
