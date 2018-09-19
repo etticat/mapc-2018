@@ -1,7 +1,7 @@
 import numpy as np
 
 import rospy
-from mac_ros_bridge.msg import SimEnd
+from mac_ros_bridge.msg import SimEnd, Position
 from so_data.msg import SoMessage
 
 from common_utils.agent_utils import AgentUtils
@@ -57,8 +57,12 @@ class SelfOrganisationProvider(object):
         # When an agent moves to a exploration location defined by the map, the destination is converted to lat lon
         # When converting back (e.g When destination is unreachable, this can result in positions like 1999.9999991241)
         # Therefore rounding to closest int is always the best option here
-        msg.p.x = int(round(self._distance_provider.lat_to_x(pos.lat)))
-        msg.p.y = int(round(self._distance_provider.lon_to_y(pos.long)))
+        if isinstance(pos, Position):
+            msg.p.x = int(round(self._distance_provider.lat_to_x(pos.lat)))
+            msg.p.y = int(round(self._distance_provider.lon_to_y(pos.long)))
+        else:
+            msg.p.x = pos[0]
+            msg.p.y = pos[1]
         msg.attraction = attraction
         msg.diffusion = diffusion
         msg.goal_radius = goal_radius

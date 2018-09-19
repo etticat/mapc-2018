@@ -159,6 +159,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
                                                                             ev_factor=ev_factor, ev_time=ev_time,
                                                                             agent_name=agent_name)
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
+        self.last_simple_pos  = None
 
     def calc_value(self):
         """
@@ -218,6 +219,8 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         res = random.choice(tuple_list)
 
         res = tuple([i * self.granularity for i in res])
+
+        self.last_simple_pos = (res[0], res[1])
 
         destination = self._distance_provider.position_from_xy(res[0], res[1])
 

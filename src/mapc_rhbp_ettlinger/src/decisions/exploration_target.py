@@ -48,12 +48,12 @@ class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
         y = int(round(self._distance_provider.lon_to_y(pos.long)))
 
         if self.environment_array is not None:
-            self.environment_array[x / self.granularity, y / self.granularity] = 100000
+            self.environment_array[self.last_simple_pos[0], self.last_simple_pos[1]] = 1000
 
         self._self_organisation_provider.send_msg(
-            pos=pos, frame="no_route", parent_frame="agent", time=100000, payload=[
+            pos=self.last_simple_pos, frame="no_route", parent_frame="agent", time=1000, payload=[
                 KeyValue(key="lat", value=str(pos.lat)),
-                KeyValue(key="long", value=str(pos.long))], diffusion=0.01)
+                KeyValue(key="long", value=str(pos.long))], diffusion=0.99)
 
         self.calc_value()
 
