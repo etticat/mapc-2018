@@ -5,230 +5,338 @@
 
     <!--Infrastructure Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/graphhopper.launch">
-        <arg name="initial_port" value="8989" />
+        <arg name="initial_port" value="9989" />
     </include>
 
     <!--Planner Nodes-->
+
+    <!--Planner Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/planner.launch" pass_all_args="true">
+        <arg name="agent_name" value="TUBDAI1" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/eamanager.launch" pass_all_args="true">
+        <arg name="agent_name" value="TUBDAI1" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/debug_agent.launch" pass_all_args="true">
+        <arg name="agent_name" value="TUBDAI1" />
     </include>
 
 
     <!-- Drones -->
         <!-- Bridges -->
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
+        <arg name="agent_name" value="TUBDAI1" />
         <arg name="only_agent_specific" value="False" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
+        <arg name="agent_name" value="TUBDAI2" />
+        <arg name="only_agent_specific" value="False" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
+        <arg name="agent_name" value="TUBDAI3" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
 
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA4" />
+        <arg name="agent_name" value="TUBDAI4" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA5" />
+        <arg name="agent_name" value="TUBDAI5" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA6" />
+        <arg name="agent_name" value="TUBDAI6" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA7" />
+        <arg name="agent_name" value="TUBDAI7" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA8" />
+        <arg name="agent_name" value="TUBDAI8" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA9" />
+        <arg name="agent_name" value="TUBDAI9" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA10" />
+        <arg name="agent_name" value="TUBDAI10" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA11" />
+        <arg name="agent_name" value="TUBDAI11" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA12" />
+        <arg name="agent_name" value="TUBDAI12" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA13" />
+        <arg name="agent_name" value="TUBDAI13" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA14" />
+        <arg name="agent_name" value="TUBDAI14" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA15" />
+        <arg name="agent_name" value="TUBDAI15" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA16" />
+        <arg name="agent_name" value="TUBDAI16" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA17" />
+        <arg name="agent_name" value="TUBDAI17" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA18" />
+        <arg name="agent_name" value="TUBDAI18" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA19" />
+        <arg name="agent_name" value="TUBDAI19" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA20" />
+        <arg name="agent_name" value="TUBDAI20" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA21" />
+        <arg name="agent_name" value="TUBDAI21" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA22" />
+        <arg name="agent_name" value="TUBDAI22" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA23" />
+        <arg name="agent_name" value="TUBDAI23" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA24" />
+        <arg name="agent_name" value="TUBDAI24" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA25" />
+        <arg name="agent_name" value="TUBDAI25" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA26" />
+        <arg name="agent_name" value="TUBDAI26" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA27" />
+        <arg name="agent_name" value="TUBDAI27" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA28" />
+        <arg name="agent_name" value="TUBDAI28" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA29" />
+        <arg name="agent_name" value="TUBDAI29" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA30" />
+        <arg name="agent_name" value="TUBDAI30" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA31" />
+        <arg name="agent_name" value="TUBDAI31" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA32" />
+        <arg name="agent_name" value="TUBDAI32" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA33" />
+        <arg name="agent_name" value="TUBDAI33" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA34" />
+        <arg name="agent_name" value="TUBDAI34" />
+        <arg name="server_ip" value="localhost" />
+        <arg name="server_port" value="12300" />
+        <arg name="password" value="xp8Wqm" />
     </include>
 
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA1" />
+        <arg name="agent_name" value="TUBDAI1" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA2" />
+        <arg name="agent_name" value="TUBDAI2" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA3" />
+        <arg name="agent_name" value="TUBDAI3" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA4" />
+        <arg name="agent_name" value="TUBDAI4" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA5" />
+        <arg name="agent_name" value="TUBDAI5" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA6" />
+        <arg name="agent_name" value="TUBDAI6" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA7" />
+        <arg name="agent_name" value="TUBDAI7" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA8" />
+        <arg name="agent_name" value="TUBDAI8" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA9" />
+        <arg name="agent_name" value="TUBDAI9" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA10" />
+        <arg name="agent_name" value="TUBDAI10" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA11" />
+        <arg name="agent_name" value="TUBDAI11" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA12" />
+        <arg name="agent_name" value="TUBDAI12" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA13" />
+        <arg name="agent_name" value="TUBDAI13" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA14" />
+        <arg name="agent_name" value="TUBDAI14" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA15" />
+        <arg name="agent_name" value="TUBDAI15" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA16" />
+        <arg name="agent_name" value="TUBDAI16" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA17" />
+        <arg name="agent_name" value="TUBDAI17" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA18" />
+        <arg name="agent_name" value="TUBDAI18" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA19" />
+        <arg name="agent_name" value="TUBDAI19" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA20" />
+        <arg name="agent_name" value="TUBDAI20" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA21" />
+        <arg name="agent_name" value="TUBDAI21" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA22" />
+        <arg name="agent_name" value="TUBDAI22" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA23" />
+        <arg name="agent_name" value="TUBDAI23" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA24" />
+        <arg name="agent_name" value="TUBDAI24" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA25" />
+        <arg name="agent_name" value="TUBDAI25" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA26" />
+        <arg name="agent_name" value="TUBDAI26" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA27" />
+        <arg name="agent_name" value="TUBDAI27" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA28" />
+        <arg name="agent_name" value="TUBDAI28" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA29" />
+        <arg name="agent_name" value="TUBDAI29" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA30" />
+        <arg name="agent_name" value="TUBDAI30" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA31" />
+        <arg name="agent_name" value="TUBDAI31" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA32" />
+        <arg name="agent_name" value="TUBDAI32" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA33" />
+        <arg name="agent_name" value="TUBDAI33" />
     </include>
     <include file="$(find mapc_rhbp_ettlinger)/launch/rhbp_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="agentA34" />
+        <arg name="agent_name" value="TUBDAI34" />
     </include>
 
 
@@ -244,10 +352,10 @@
     <param name="activation_algorithm" type="string" value="default"/>
     <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
 
-    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="14"/>
+    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="7"/>
     <param name="RhbpAgent.BUILD_WELL_ENABLED" type="bool" value="True"/>
 
-    <param name="ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA" type="bool" value="False"/>
+
 
     <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="-15"/>
 
@@ -273,6 +381,7 @@
     <param name="ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS"  value="true" type="bool"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_MISSION_JOB_PRIORITY"  value="2.0" type="double"/>
 
+
     <param name="ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER"  value="5" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_LOAD"  value="8" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_INGREDIENT_LOAD"  value="8" type="double"/>
@@ -288,12 +397,12 @@
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
 
-    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
 
-    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
-    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
-    <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
+    <param name="BestTUBDAIssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
 </launch>

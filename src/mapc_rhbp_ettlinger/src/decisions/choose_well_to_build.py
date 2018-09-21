@@ -1,6 +1,7 @@
 import numpy as np
 import time
 
+import rospy
 from mapc_rhbp_ettlinger.msg import Task
 
 from common_utils import etti_logging
@@ -18,16 +19,27 @@ class ChooseWellToBuildDecision(object):
     Choose a well type to build.
     """
 
+    BUILD_WELL_OUTSIDE_PLAY_AREA = True
+
     def __init__(self, agent_name):
 
         self._agent_name = agent_name
 
         self.task_prices = {}
+        
+        self._init_config()
 
         self._stats_provider = StatsProvider()
         self._well_provider = WellProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
         self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
+
+
+    @staticmethod
+    def _init_config(sim_start=None):
+
+        ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA = rospy.get_param(
+            "ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA", ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA)
 
     def choose(self, current_well_task_decision, agent):
         """
@@ -38,8 +50,9 @@ class ChooseWellToBuildDecision(object):
         :return:
         """
         # If we are currently out of bounds we build the best available well at the current position
-        if self._simulation_provider.out_of_bounds(agent.pos) and current_well_task_decision.value is None and \
-                not agent.in_facility:
+        out_of_bounds = self._simulation_provider.out_of_bounds(agent.pos)
+        if (out_of_bounds != ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA) \
+                and current_well_task_decision.value is None and not agent.in_facility:
             well_type = self.choose_well_type()
             if well_type is not None:
                 task = Task(
