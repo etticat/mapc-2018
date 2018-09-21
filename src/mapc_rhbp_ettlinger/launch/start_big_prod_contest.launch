@@ -349,10 +349,10 @@
     <param name="activation_algorithm" type="string" value="default"/>
     <param name="max_parallel_behaviours" type="int" value="1"/> <!--Comment or negative for unlimited-->
 
-    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="7"/>
+    <param name="RhbpAgent.MAX_DECISION_MAKING_TIME" type="double" value="4.4"/>
     <param name="RhbpAgent.BUILD_WELL_ENABLED" type="bool" value="True"/>
 
-
+    <param name="ChooseWellToBuildDecision.BUILD_WELL_OUTSIDE_PLAY_AREA" type="bool" value="True"/>
 
     <param name="ShouldBidForAssemblyDecision.ACTIVATION_THRESHOLD" type="double" value="-15"/>
 
@@ -378,7 +378,6 @@
     <param name="ChooseBestAvailableJobDecision.PRIORITISE_MISSION_JOBS"  value="true" type="bool"/>
     <param name="ChooseBestAvailableJobDecision.WEIGHT_MISSION_JOB_PRIORITY"  value="2.0" type="double"/>
 
-
     <param name="ChooseBestJobAgentCombinationDecision.MIN_STEP_BUFFER"  value="5" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_LOAD"  value="8" type="double"/>
     <param name="ChooseBestJobAgentCombinationDecision.WEIGHT_INGREDIENT_LOAD"  value="8" type="double"/>
@@ -394,12 +393,12 @@
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SKILL"  value="-100" type="double"/>
     <param name="MainAssembleAgentDecision.WEIGHT_BID_SPEED"  value="100" type="double"/>
 
-    <param name="BestTUBDAIssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
-    <param name="BestTUBDAIssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
-    <param name="BestTUBDAIssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
-    <param name="BestTUBDAIssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
+    <param name="BestAgentAssemblyCombinationDecision.WEIGHT_NUMBER_OF_AGENTS" type="double" value="-0.2"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_NR_OF_AGENTS_TO_CONSIDER" type="int" value="17"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_PRIORITY_NOT_NEEDED_ITEMS" type="double" value="0.30"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_COUNT_NOT_NEEDED_ITEMS" type="int" value="7"/>
 
-    <param name="BestTUBDAIssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
-    <param name="BestTUBDAIssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
-    <param name="BestTUBDAIssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_AGENTS" type="int" value="7"/>
+    <param name="BestAgentAssemblyCombinationDecision.MIN_AGENTS" type="int" value="3"/>
+    <param name="BestAgentAssemblyCombinationDecision.MAX_STEPS" type="int" value="20"/>
 </launch>
