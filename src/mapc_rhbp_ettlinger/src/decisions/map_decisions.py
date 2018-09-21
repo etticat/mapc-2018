@@ -186,7 +186,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         min_val = np.inf
 
         if self.pick_random_of_lowest_values:
-            quantile = 5
+            quantile = 20
         else:
             quantile = 0
         highest_distance = np.percentile(environment_array, quantile)

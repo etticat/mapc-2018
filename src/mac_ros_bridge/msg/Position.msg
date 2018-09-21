@@ -1,2 +1,2 @@
-float32 lat
-float32 long
+float64 lat
+float64 long
