@@ -104,7 +104,7 @@ class ProductProvider(object):
 
         item_dict = CalcUtil.dict_from_key_int_values(stock_item.amounts)
 
-        if stock_item.entity[0] == "a":
+        if stock_item.entity[0] == "a" or stock_item.entity[0] == "T":
             # Entities starting with a are agents
             self._agent_stocks[stock_item.type][stock_item.entity] = item_dict
         elif stock_item.entity[0] == "s":
@@ -143,7 +143,7 @@ class ProductProvider(object):
                 if include_hoarding_goal:
                     for agent_name, hoarding_dict in self._storage_stocks.iteritems():
                         # Types starting with a are hoarding goals of agents
-                        if agent_name[0] == "a":
+                        if agent_name[0] == "a" or agent_name[0] == "T":
                             if storage in hoarding_dict:
                                 items = CalcUtil.dict_sum(items, hoarding_dict[storage])
         return items
