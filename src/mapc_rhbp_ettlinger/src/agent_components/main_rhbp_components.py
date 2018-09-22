@@ -193,9 +193,6 @@ class MainRhbpComponent(object):
         # Only dismantle if there is no task assigned
         self.dismantle_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
 
-        # Dismantle when the stock is full
-        self.dismantle_network.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
-
         # Only start dismantling if there are opponent wells
         self.dismantle_network.add_precondition(self._shared_components.opponent_well_exists_cond)
         self.dismantle_network.add_precondition(Negation(self._shared_components.is_forever_exploring_agent_cond))
