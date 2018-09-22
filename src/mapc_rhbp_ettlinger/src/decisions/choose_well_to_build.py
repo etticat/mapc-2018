@@ -116,7 +116,7 @@ class ChooseWellToBuildDecision(object):
             wellpositions = self.well_positions.get(self._distance_provider.map_name)
 
             if self._agent_name[0] == "a":
-                wellpositions = reversed(wellpositions)
+                wellpositions = wellpositions[::-1]
 
             next_well_position = wellpositions[number_of_existing_wells]
 
