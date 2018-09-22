@@ -97,6 +97,11 @@ class MainRhbpComponent(object):
         # Only gather when agent has no tasks assigned
         self._gathering_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
 
+        self._gathering_network.add_precondition(Disjunction(
+            Negation(self._shared_components.opponent_well_exists_cond),
+            self._shared_components.at_resource_node_cond
+        ))
+
         # Gathering increases the load of items in stock
         self._gathering_network.add_effect(
             Effect(
@@ -105,38 +110,8 @@ class MainRhbpComponent(object):
                 sensor_type=float
             ))
         self._gathering_network.add_precondition(
-            Negation(self._global_rhbp_components.is_forever_exploring_agent_cond))
+            Negation(self._shared_components.is_forever_exploring_agent_cond))
 
-        ######################## HOARDING Network Behaviour ########################
-        # Hoarding is deactivated
-        # -> Hoarding improves the job delivery performance, as more items can be stored
-        # -> The overall efficiency of agents decreases however, as the agents are almost always busy (with either
-        #    hoarding or job delivery
-        # -> This results in less free resources for actions like dismantle/build wells.
-
-        # self._hoarding_network = HoardingNetworkBehaviour(
-        #     name=self._agent_name + '/hoarding',
-        #     plannerPrefix=self._agent_name,
-        #     agent_name=self._agent_name,
-        #     priority=2,
-        #     shared_components=self._shared_components,
-        #     max_parallel_behaviours=1)
-        #
-        # # Only hoard when stock is full
-        # self._hoarding_network.add_precondition(Negation(self._shared_components.can_fit_more_ingredients_cond))
-        #
-        # # Only hoard when there is no task assigned
-        # self._hoarding_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
-        #
-        # # Only hoard if there are finished products, that need to be stored
-        # self._hoarding_network.add_precondition(self._shared_components.has_finished_products_to_store)
-        #
-        # self._hoarding_network.add_effect(
-        #     Effect(
-        #         sensor_name=self._shared_components.load_factor_sensor.name,
-        #         indicator=1.0,
-        #         sensor_type=float
-        #     ))
 
         ####################### Assembly Network Behaviour ########################
         self._assembly_network = AssembleNetworkBehaviour(
@@ -225,6 +200,8 @@ class MainRhbpComponent(object):
         self.dismantle_network.add_precondition(self._shared_components.opponent_well_exists_cond)
         self.dismantle_network.add_precondition(Negation(self._shared_components.is_forever_exploring_agent_cond))
 
+        self.dismantle_network.add_precondition(Negation(self._shared_components.at_resource_node_cond))
+
         # Dismantling has the effect of reducing the opponent wells.
         self.dismantle_network.add_effect(
             effect=Effect(
@@ -234,12 +211,13 @@ class MainRhbpComponent(object):
             )
         )
 
+
         ####################### Find Well Location Network Behaviour ########################
         if self._agent_name in ["agentA1", "agentB2", "agentB3", "agentB4"]:
             find_well_exploration_decision =  ExploreCornersDecision(
                 self._self_organisation_provider.so_buffer, agent_name=self._agent_name)
         else:
-            find_well_exploration_decision = self.exploration_network.exploration_mechanism
+            find_well_exploration_decision = self._exploration_network.exploration_decision
 
         self._find_well_location_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/welllocation',

@@ -16,10 +16,15 @@ from decisions.dismantle_well import ExistingOpponentWellsDecision
 from decisions.choose_well_to_build import ChooseWellToBuildDecision
 from provider.self_organisation_provider import SelfOrganisationProvider
 from rhbp_selforga.gradientsensor import GradientSensor, SENSOR
+<<<<<<< HEAD
 from rhbp_utils.knowledge_sensors import KnowledgeSensor
 from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor, \
     ForeverExploringAgentSensor
 from sensor.agent import FinishedProductsLoadSensor, CanFlySensor
+=======
+from sensor.agent import FinishedProductsLoadSensor, CanFlySensor, AtResourceNodeSensor
+from sensor.exploration import ResourceDiscoveryProgressSensor, DiscoveryProgressSensor, OldestCellLastSeenSensor
+>>>>>>> 44b78de... TEST: Drone well strategy
 from sensor.gather import SmallestGatherableItemVolumeSensor
 from sensor.general import FactorSensor, SubtractionSensor
 from sensor.movement import StepDistanceSensor
@@ -300,6 +305,16 @@ class SharedComponents(object):
 
         self.is_forever_exploring_agent_cond = Condition(
             sensor=self.is_forever_exploring_agent_sensor,
+            activator=BooleanActivator()
+        )
+
+        self.at_resource_node_sensor = AtResourceNodeSensor(
+            agent_name=agent_name,
+            name="at_resource_node_sensor",
+            initial_value=False)
+
+        self.at_resource_node_cond = Condition(
+            sensor=self.at_resource_node_sensor,
             activator=BooleanActivator()
         )
 

@@ -44,6 +44,7 @@ class DistanceProvider(object):
         self._speed = 1
         self._proximity = 0.01
         self._agent_pos = None
+        self._map_name = "copenhagen"
         self._agent_vision = 300
         self._air_distance_cache = {}
         self._road_distance_cache = {}
@@ -140,6 +141,7 @@ class DistanceProvider(object):
             Position(long=self.max_lon, lat=mean_lat)
         )
         self._initialised = True
+        self._map_name = sim_start.map
         self.set_map(sim_start.map)
 
     def callback_sim_end(self, sim_end):
@@ -448,3 +450,15 @@ class DistanceProvider(object):
     @property
     def agent_vision(self):
         return self._agent_vision
+
+    @property
+    def can_fly(self):
+        return self._can_fly
+
+    @property
+    def map_name(self):
+        return self._map_name
+
+    @property
+    def facility(self):
+        return self._facility
