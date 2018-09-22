@@ -90,10 +90,10 @@ class ExistingOpponentWellsDecision(MapDecision):
         simple_pos_y = int(y / self.granularity)
 
         if self.environment_array is not None:
-            self.environment_array[x / self.granularity, y / self.granularity] = 100000
+            self.environment_array[simple_pos_x, simple_pos_y] = 100000
 
         self._self_organisation_provider.send_msg(
-            pos=(simple_pos_x,simple_pos_y), frame="no_route", parent_frame="agent", time=1000, payload=[
+            pos=(x,y), frame="no_route", parent_frame="agent", time=1000, payload=[
                 KeyValue(key="lat", value=str(pos.lat)),
                 KeyValue(key="long", value=str(pos.long))], diffusion=0.99)
 
