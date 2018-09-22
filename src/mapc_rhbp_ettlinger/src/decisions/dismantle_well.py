@@ -1,9 +1,11 @@
 import rospy
+from diagnostic_msgs.msg import KeyValue
 
 from common_utils import etti_logging
 from decisions.map_decisions import MapDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
+from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
 
 ettilog = etti_logging.LogManager(logger_name=etti_logging.LOGGER_DEFAULT_NAME + '.decisions.map')
@@ -37,6 +39,8 @@ class ExistingOpponentWellsDecision(MapDecision):
         self._distance_provider = DistanceProvider(agent_name=agent_name)
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
+
+        self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
     def calc_value(self):
         """
@@ -73,3 +77,24 @@ class ExistingOpponentWellsDecision(MapDecision):
         # or let every agent go to the closest one
         well = self._distance_provider.get_closest_facility(existing_wells)
         return [well, self.state]
+
+    def destination_not_found(self, pos):
+        """
+        When destination can not be reached, pick new one
+        :return:
+        """
+        # Avoid this place until step 100000
+
+        x, y = self._distance_provider.position_to_xy(pos)
+        simple_pos_x = int(x / self.granularity)
+        simple_pos_y = int(y / self.granularity)
+
+        if self.environment_array is not None:
+            self.environment_array[x / self.granularity, y / self.granularity] = 100000
+
+        self._self_organisation_provider.send_msg(
+            pos=(simple_pos_x,simple_pos_y), frame="no_route", parent_frame="agent", time=1000, payload=[
+                KeyValue(key="lat", value=str(pos.lat)),
+                KeyValue(key="long", value=str(pos.long))], diffusion=0.99)
+
+        self.calc_value()
