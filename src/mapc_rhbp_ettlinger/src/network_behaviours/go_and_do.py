@@ -15,7 +15,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
     """
 
     def __init__(self, agent_name, name, shared_components, mechanism, use_in_facility_flag=True,
-                 use_name_for_movement=False, **kwargs):
+                 recalculate_destination_every_step=False, use_name_for_movement=False, **kwargs):
         super(GoAndDoNetworkBehaviour, self).__init__(
             agent_name=agent_name,
             shared_components=shared_components,
@@ -23,6 +23,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
 
         self.destination_decision = mechanism
         self.use_name_for_movement = use_name_for_movement
+        self._recalculate_destination_every_step = recalculate_destination_every_step
 
         self._go_behaviour = None
         self._do_behaviour = None
@@ -56,6 +57,7 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         self._go_behaviour = GoToDestinationBehaviour(
             agent_name=self._agent_name,
             plannerPrefix=self.get_manager_prefix(),
+            recalculate_destination_every_step=self._recalculate_destination_every_step,
             use_name_for_movement=self.use_name_for_movement,
             name=self.get_manager_prefix() + '_go_behaviour',
             mechanism=self.destination_decision
@@ -87,10 +89,15 @@ class GoAndDoNetworkBehaviour(BatteryChargingNetworkBehaviour):
         :return:
         """
 
+        if self._recalculate_destination_every_step:
+            target_sensor_type = SENSOR.VALUE
+        else:
+            target_sensor_type = SENSOR.CACHED_VALUE
+
         self.target_sensor = GradientSensor(
             mechanism=self.destination_decision,
             name=self.get_manager_prefix() + "_target_sensor",
-            sensor_type=SENSOR.CACHED_VALUE
+            sensor_type=target_sensor_type
         )
 
         # Sensor to check distance to charging station

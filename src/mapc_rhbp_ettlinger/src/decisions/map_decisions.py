@@ -7,6 +7,7 @@ from so_data.msg import SoMessage
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 from provider.distance_provider import DistanceProvider
 from provider.simulation_provider import SimulationProvider
 from so_data.patterns import DecisionPattern
@@ -89,8 +90,8 @@ class MapDecision(DecisionPattern):
             rospy.logerr("MapDecision:: Could not create map. distance provider not initialized yet")
             return None
 
-        self.simple_size_x = int(self._distance_provider.total_distance_x / self.granularity) + 2
-        self.simple_size_y = int(self._distance_provider.total_distance_y / self.granularity) + 2
+        self.simple_size_x = int(self._distance_provider.total_distance_x / self.granularity)
+        self.simple_size_y = int(self._distance_provider.total_distance_y / self.granularity)
 
         # create the map if it has not existed yet
         if self.environment_array is None:
@@ -117,9 +118,18 @@ class MapDecision(DecisionPattern):
             return
 
         if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
+            test_x = (so_message.p.x / self.granularity) + 0.0001
+            test_y = (so_message.p.y / self.granularity) + 0.0001
+
+            simple_pos_x = int(test_x)
+            simple_pos_y = int(test_y)
+
+            simple_pos_x = CalcUtil.value_between(0, simple_pos_x, self.simple_size_x-1)
+            simple_pos_y = CalcUtil.value_between(0, simple_pos_y, self.simple_size_y-1)
+
             mask = self.generate_round_array_mask(self.simple_size_x, self.simple_size_y,
-                                                  int(so_message.p.x / self.granularity),
-                                                  int(so_message.p.y / self.granularity),
+                                                  simple_pos_x,
+                                                  simple_pos_y,
                                                   so_message.diffusion / self.granularity)
             if self.mode == MapDecision.MODE_SEEN_COUNT:
                 self.environment_array[mask] += 1
@@ -176,8 +186,8 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
                                                                             goal_radius=goal_radius,
                                                                             ev_factor=ev_factor, ev_time=ev_time,
                                                                             agent_name=agent_name)
-        self.pick_random_of_lowest_values = pick_random_of_lowest_values
-        self.last_simple_pos = None
+        self._pick_random_of_lowest_values = pick_random_of_lowest_values
+        self._last_simple_pos = None
 
     def calc_value(self):
         """
@@ -196,14 +206,14 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
 
         simple_size_x, simple_size_y = environment_array.shape
         pos_x, pos_y = self._distance_provider.position_to_xy(self._distance_provider.agent_pos)
-        simple_pos_x = int(pos_x / self.granularity)
-        simple_pos_y = int(pos_y / self.granularity)
+        simple_pos_x = int((pos_x / self.granularity) + 0.0001)
+        simple_pos_y = int((pos_y / self.granularity) + 0.0001)
         vision = max(int(self._distance_provider.agent_vision / self.granularity), 1)
         r = vision * 2
 
         min_val = np.inf
 
-        if self.pick_random_of_lowest_values:
+        if self._pick_random_of_lowest_values:
             quantile = 20
         else:
             quantile = 0
@@ -214,7 +224,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         while min_val > highest_distance:
             r = r + vision
 
-            mask = self.generate_round_array_mask(simple_size_x-2, simple_size_y-2, min(simple_pos_x, simple_size_x-2), min(simple_pos_y, simple_size_y-2), r)
+            mask = self.generate_round_array_mask(simple_size_x, simple_size_y, min(simple_pos_x, simple_size_x), min(simple_pos_y, simple_size_y), r)
 
             # If no spot of the map is selected, increase radius
             # This can happen when the agents are far outside the field and their vision doesn't see any spot of the field.
@@ -236,7 +246,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         tuple_list = tuple(zip(*ii))
         res = random.choice(tuple_list)
 
-        self.last_simple_pos = (res[0], res[1])
+        self._last_simple_pos = (res[0], res[1])
 
         res = tuple([i * self.granularity for i in res])
 

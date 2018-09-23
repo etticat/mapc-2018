@@ -197,6 +197,9 @@ class DistanceProvider(object):
             # If the distance is lower than proximity, agent is at destination.
             return 0
 
+        if start_position is None:
+            start_position = self.agent_pos
+
         if speed is None:
             speed = self._speed
 

@@ -218,6 +218,8 @@ class RhbpAgent(object):
             if well_task is not None:
                 ettilog.logerr("RhbpAgent(%s):: building well", self._agent_name)
                 self._shared_components.well_task_decision.start_task(well_task)
+                self._shared_components.deliver_task_decision.end_task(notify_others=True)
+                self._shared_components.assemble_task_decision.end_task(notify_others=True)
 
     def _handle_auction_job(self, request_action):
         """

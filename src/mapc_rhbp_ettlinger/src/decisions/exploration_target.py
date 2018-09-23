@@ -7,6 +7,7 @@ from mac_ros_bridge.msg import SimEnd, Position, SimStart
 
 from common_utils.agent_utils import AgentUtils
 from decisions.map_decisions import PickClosestDestinationWithLowestValueDecision, MapDecision
+from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
 from provider.simulation_provider import SimulationProvider
@@ -20,6 +21,7 @@ class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
     """
 
     def __init__(self, buffer, agent_name):
+        self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
 
         super(ExplorationDecision, self).__init__(buffer=buffer, mode=MapDecision.MODE_OLDEST_VISITED,
@@ -44,12 +46,13 @@ class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
         """
         # Avoid this place until step 100000
 
-        x, y = self._distance_provider.position_to_xy(pos)
+        if self._agent_info_provider.charge >= 1:
+            x, y = self._distance_provider.position_to_xy(pos)
 
-        self._self_organisation_provider.send_msg(
-            pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
-                KeyValue(key="lat", value=str(pos.lat)),
-                KeyValue(key="long", value=str(pos.long))], diffusion=25)
+            self._self_organisation_provider.send_msg(
+                pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
+                    KeyValue(key="lat", value=str(pos.lat)),
+                    KeyValue(key="long", value=str(pos.long))], diffusion=25)
 
         self.calc_value()
 

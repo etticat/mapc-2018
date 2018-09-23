@@ -218,3 +218,13 @@ class CalcUtil(object):
         for key in dict_:
             res[key] = dict_[key] * factor
         return res
+
+    @classmethod
+    def value_between(cls, min_value, value, max_value):
+        res = {}
+        if value < min_value:
+            return min_value
+        if value > max_value:
+            return max_value
+        else:
+            return value

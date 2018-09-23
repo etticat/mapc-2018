@@ -78,3 +78,19 @@ The second option requires that you have once executed `mvn install` in the mass
 * `src/rhbp` git submodule of the RHBP framework.
 * `src/mac_ros_bridge` ROS package that includes a proxy ROS node that works as a bridge between the massim simulation server and ROS. It converts all simulation perception and creates all required topics from the configuration.
 * `src/mac_rhbp_example` example MAPC agent implementation using the mac_ros_bridge, RHBP and ROS.
+
+\section{Files}
+!!! This may not make it into the final thesis but into the readme file of the project
+* data/osm -> contains map data for graphopper distance calculation
+* launch -> contains launch files for different configurations
+** e.g. start \_big \_prod.launch starts 34 agents including all other nodes (ea, planner, debug \_node)
+** start \_small \_dev starts only 6 agents without additional nodes
+** ... (if interresting)
+** python \_logging.conf -> configuration for what should be logged and what not 	
+** Individual node start files: rhbp \_agent.launch, eamanager.launch, debug \_agent.launch 
+* msg contains all Messages that are sent within the project for coordination, ..
+* src contains all souces
+* srv contains all service information (Graphhopper Service)
+* CMakeLists.txt -> make file for the project
+* package.xml -> contains all packages, mantainer infos, ..
+* setup.py -> info on which folders are compiled

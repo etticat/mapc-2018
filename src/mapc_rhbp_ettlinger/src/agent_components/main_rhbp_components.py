@@ -69,6 +69,9 @@ class MainRhbpComponent(object):
         self._exploration_network.add_precondition(
             Negation(self._shared_components.exploration_phase_finished_condition))
 
+        self._exploration_network.add_precondition(
+            Negation(self._shared_components.reachable_opponent_well_exists_cond)
+        )
         # Exploration increases the percentage of resource nodes, that have been discovered
         self._exploration_network.add_effect(
             Effect(
@@ -189,9 +192,6 @@ class MainRhbpComponent(object):
             agent_name=self._agent_name,
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
-
-        # Only dismantle if there is no task assigned
-        self.dismantle_network.add_precondition(self._shared_components.has_no_task_assigned_cond)
 
         # Only start dismantling if there are opponent wells
         self.dismantle_network.add_precondition(self._shared_components.opponent_well_exists_cond)
@@ -315,7 +315,7 @@ class MainRhbpComponent(object):
         self._dismantle_goal = GoalBase(
             name='dismantle_goal',
             permanent=True,
-            priority=1,
+            priority=4,
             planner_prefix=self._agent_name,
             conditions=[Negation(self._shared_components.opponent_well_exists_cond)])
 

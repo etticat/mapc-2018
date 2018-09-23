@@ -115,7 +115,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
         item_priority = self.ingredient_priority_dict()
 
         # Iterate over all ingredient priorities
-        for item, already_in_stock_items in item_priority.iteritems():
+        for item, priority in item_priority.iteritems():
             load_after_gathering = self.load_after_gathering(item)
             usefulness_for_assembly = self._product_provider.usages_for_assembly(item)
             # if another of those items fits in stock and item can be gathered, look for the best resource to gather it
@@ -123,7 +123,7 @@ class ChooseItemToGatherMechanism(DecisionPattern):
                 steps, resource = self.steps_to_closest_resource(resources, item)
 
                 # Calculate activation of going to that exact resource
-                activation = already_in_stock_items * ChooseItemToGatherMechanism.WEIGHT_PRIORITY + \
+                activation = priority * ChooseItemToGatherMechanism.WEIGHT_PRIORITY + \
                          steps * ChooseItemToGatherMechanism.WEIGHT_STEPS + \
                          int(usefulness_for_assembly > 0) * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH + \
                          usefulness_for_assembly * ChooseItemToGatherMechanism.WEIGHT_ASSEMBLY_ROLE_MATCH_COUNT

@@ -19,6 +19,7 @@ class AgentInfoProvider(object):
     def __init__(self, agent_name):
         self._pos = None
         self._skill = None
+        self._charge = 0
 
         rospy.Subscriber(AgentUtils.get_bridge_topic_agent(agent_name=agent_name), Agent, self._callback_agent)
 
@@ -31,6 +32,7 @@ class AgentInfoProvider(object):
         """
         self._pos = agent.pos
         self._skill = agent.skill
+        self._charge = agent.charge
 
     @property
     def pos(self):
@@ -39,3 +41,7 @@ class AgentInfoProvider(object):
     @property
     def skill(self):
         return self._skill
+
+    @property
+    def charge(self):
+        return self._charge

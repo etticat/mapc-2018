@@ -1,10 +1,12 @@
 import rospy
 from diagnostic_msgs.msg import KeyValue
-from mac_ros_bridge.msg import SimStart
+from mac_ros_bridge.msg import SimStart, Agent
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
+from common_utils.calc import CalcUtil
 from decisions.map_decisions import MapDecision
+from provider.agent_info_provider import AgentInfoProvider
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
 from provider.self_organisation_provider import SelfOrganisationProvider
@@ -26,6 +28,8 @@ class ExistingOpponentWellsDecision(MapDecision):
                  ev_factor=0.0, ev_time=5, pick_random_of_lowest_values=False):
 
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
+
+        self._agent_info_provider = AgentInfoProvider(agent_name=agent_name)
 
         super(ExistingOpponentWellsDecision, self).__init__(buffer=buffer, frame=frame, key=key,
                                                             target_frames = ["agent", "no_route"], mode=mode,
@@ -78,10 +82,14 @@ class ExistingOpponentWellsDecision(MapDecision):
                 continue
 
             x, y = self._distance_provider.position_to_xy(well.pos)
-            simple_pos_x = int(x / self.granularity)
-            simple_pos_y = int(y / self.granularity)
+            simple_pos_x = int((x / self.granularity) + 0.0001)
+            simple_pos_y = int((y / self.granularity) + 0.0001)
+
+            simple_pos_x = CalcUtil.value_between(0, simple_pos_x, self.simple_size_x-1)
+            simple_pos_y = CalcUtil.value_between(0, simple_pos_y, self.simple_size_y-1)
+
             well_last_seen = self._facility_provider.wells_seen_at_step[well.name]
-            last_time_at_well_position = self.environment_array[max(simple_pos_x, 0), max(simple_pos_y, 0)]
+            last_time_at_well_position = self.environment_array[simple_pos_x, simple_pos_y]
 
             rospy.loginfo(
                 "ExistingOpponentWellsDecision(%s):: well_name: %s, well_last_seen: %d, last_time_at_well_position: %d",
@@ -106,11 +114,12 @@ class ExistingOpponentWellsDecision(MapDecision):
 
         pos = pos.pos
 
-        x, y = self._distance_provider.position_to_xy(pos)
+        if self._agent_info_provider.charge >= 1:
+            x, y = self._distance_provider.position_to_xy(pos)
 
-        self._self_organisation_provider.send_msg(
-            pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
-                KeyValue(key="lat", value=str(pos.lat)),
-                KeyValue(key="long", value=str(pos.long))], diffusion=25)
+            self._self_organisation_provider.send_msg(
+                pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
+                    KeyValue(key="lat", value=str(pos.lat)),
+                    KeyValue(key="long", value=str(pos.long))], diffusion=25)
 
         self.calc_value()

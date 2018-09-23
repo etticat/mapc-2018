@@ -16,7 +16,7 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
         self.self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
         self._shared_components = shared_components
         super(DismantleNetworkBehaviour, self).__init__(mechanism=shared_components.opponent_wells_decision, name=name,
-                                                        agent_name=agent_name,
+                                                        agent_name=agent_name, recalculate_destination_every_step=True,
                                                         shared_components=shared_components,
                                                         **kwargs)
 
@@ -57,3 +57,7 @@ class DismantleNetworkBehaviour(GoAndDoNetworkBehaviour):
             permanent=True,
             planner_prefix=self.get_manager_prefix(),
             conditions=[Negation(self._shared_components.opponent_well_exists_cond)])
+
+    def do_step(self):
+        self._shared_components.opponent_wells_decision.calc_value()
+        super(DismantleNetworkBehaviour, self).do_step()
