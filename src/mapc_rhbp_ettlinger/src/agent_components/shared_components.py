@@ -364,7 +364,7 @@ class SharedComponents(object):
             activator=BooleanActivator()
         )
 
-        self.has_priority_task_assigned_cond = Disjunction(
+        self.has_priority_job_task_assigned_cond = Disjunction(
             self.has_deliver_job_task_assigned_cond,
             self.has_build_well_task_assigned_cond,
             self.opponent_well_exists_cond,
