@@ -98,7 +98,7 @@ class RhbpAgent(object):
         if agent.last_action == Action.NO_ACTION:
             self._steps_since_last_action += 1
 
-            if self._steps_since_last_action >= 50000:
+            if self._steps_since_last_action >= 5:
                 # If the agent doesn't provide proper actions for 5 steps, something must have gone terribly wrong.
                 # In this case kill the agent, which will tell ros to restart it.
                 rospy.signal_shutdown("RhbpAgent(%s)::Agent stuck, restarting ..." % self._agent_name)
