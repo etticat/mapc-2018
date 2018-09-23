@@ -372,7 +372,9 @@ class SharedComponents(object):
 
         self.has_priority_job_task_assigned_cond = Disjunction(
             self.has_deliver_job_task_assigned_cond,
-            self.has_build_well_task_assigned_cond
+            self.has_build_well_task_assigned_cond,
+            self.opponent_well_exists_cond,
+            self.is_forever_exploring_agent_cond
         )
         self.has_task_assigned_cond = Disjunction(
             self.has_assemble_task_assigned_cond,

@@ -20,6 +20,8 @@ class CoordinationComponent(object):
         :param shared_components:
         :type shared_components: SharedComponents
         """
+        if agent_name == "TUBDAI1":
+            return
 
         self._assemble_contractor = AssembleContractor(
             agent_name=agent_name, role=role,
