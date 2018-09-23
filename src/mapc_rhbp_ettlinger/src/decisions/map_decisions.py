@@ -62,6 +62,17 @@ class MapDecision(DecisionPattern):
         buffer.register_listener(self.target_frames, self.process_so_message)
 
     def sim_end_callback(self, sim_end=None):
+
+        if self.environment_array is not None:
+            i = 0
+            for line in self.environment_array:
+                res = ""
+                for value in line:
+                    res += str(value) + ","
+
+                ettilog.logerr("MapDecision:: Resetting environment array with values %d:%s", i, res)
+                i = i + 1
+
         self.environment_array = None
         self.value = None
 
@@ -107,7 +118,8 @@ class MapDecision(DecisionPattern):
 
         if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
             mask = self.generate_round_array_mask(self.simple_size_x, self.simple_size_y,
-                                                  int(so_message.p.x / self.granularity), int(so_message.p.y / self.granularity),
+                                                  int(so_message.p.x / self.granularity),
+                                                  int(so_message.p.y / self.granularity),
                                                   so_message.diffusion / self.granularity)
             if self.mode == MapDecision.MODE_SEEN_COUNT:
                 self.environment_array[mask] += 1
@@ -165,7 +177,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
                                                                             ev_factor=ev_factor, ev_time=ev_time,
                                                                             agent_name=agent_name)
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
-        self.last_simple_pos  = None
+        self.last_simple_pos = None
 
     def calc_value(self):
         """
@@ -224,7 +236,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         tuple_list = tuple(zip(*ii))
         res = random.choice(tuple_list)
 
-        self.last_simple_pos = (min(res[0], self.simple_size_x-2), min(res[1], self.simple_size_y-2))
+        self.last_simple_pos = (min(res[0], self.simple_size_x - 2), min(res[1], self.simple_size_y - 2))
 
         res = tuple([i * self.granularity for i in res])
 
