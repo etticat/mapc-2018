@@ -214,7 +214,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         while min_val > highest_distance:
             r = r + vision
 
-            mask = self.generate_round_array_mask(simple_size_x, simple_size_y, simple_pos_x, simple_pos_y, r)
+            mask = self.generate_round_array_mask(simple_size_x-2, simple_size_y-2, min(simple_pos_x, simple_size_x-2), min(simple_pos_y, simple_size_y-2), r)
 
             # If no spot of the map is selected, increase radius
             # This can happen when the agents are far outside the field and their vision doesn't see any spot of the field.
@@ -236,7 +236,7 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         tuple_list = tuple(zip(*ii))
         res = random.choice(tuple_list)
 
-        self.last_simple_pos = (min(res[0], self.simple_size_x - 2), min(res[1], self.simple_size_y - 2))
+        self.last_simple_pos = (res[0], res[1])
 
         res = tuple([i * self.granularity for i in res])
 
