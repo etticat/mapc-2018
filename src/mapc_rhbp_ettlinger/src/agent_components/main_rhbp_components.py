@@ -70,7 +70,7 @@ class MainRhbpComponent(object):
             Negation(self._shared_components.exploration_phase_finished_condition))
 
         self._exploration_network.add_precondition(
-            Negation(self._shared_components.reachable_opponent_well_exists_cond)
+            Negation(self._shared_components.opponent_well_exists_cond)
         )
         # Exploration increases the percentage of resource nodes, that have been discovered
         self._exploration_network.add_effect(
