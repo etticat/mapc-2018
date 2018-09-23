@@ -5,19 +5,11 @@
 
     <!--Infrastructure Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/graphhopper.launch">
-        <arg name="initial_port" value="8989" />
+        <arg name="initial_port" value="9989" />
     </include>
 
     <!--Planner Nodes-->
     <include file="$(find mapc_rhbp_ettlinger)/launch/planner.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI1" />
-    </include>
-
-    <include file="$(find mapc_rhbp_ettlinger)/launch/eamanager.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI1" />
-    </include>
-
-    <include file="$(find mapc_rhbp_ettlinger)/launch/debug_agent.launch" pass_all_args="true">
         <arg name="agent_name" value="TUBDAI1" />
     </include>
 
@@ -26,7 +18,7 @@
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="TUBDAI1" />
         <arg name="only_agent_specific" value="False" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
+        <arg name="server_ip" value="agentcontest1.in.tu-clausthal.de" />
         <arg name="server_port" value="12300" />
         <arg name="password" value="xp8Wqm" />
     </include>
@@ -34,201 +26,14 @@
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="TUBDAI2" />
         <arg name="only_agent_specific" value="False" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
+        <arg name="server_ip" value="agentcontest1.in.tu-clausthal.de" />
         <arg name="server_port" value="12300" />
         <arg name="password" value="xp8Wqm" />
     </include>
 
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI3" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI4" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI5" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI6" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI7" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI8" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI9" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI10" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI11" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI12" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI13" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI14" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI15" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI16" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI17" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI18" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI19" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI20" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI21" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI22" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI23" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI24" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI25" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI26" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI27" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI28" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI29" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI30" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI31" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI32" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
-    <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI33" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
-        <arg name="server_port" value="12300" />
-        <arg name="password" value="xp8Wqm" />
-    </include>
     <include file="$(find mac_ros_bridge)/launch/mac_ros_bridge.launch" pass_all_args="true">
         <arg name="agent_name" value="TUBDAI34" />
-        <arg name="server_ip" value="agentcontest2.in.tu-clausthal.de" />
+        <arg name="server_ip" value="localhost" />
         <arg name="server_port" value="12300" />
         <arg name="password" value="xp8Wqm" />
     </include>

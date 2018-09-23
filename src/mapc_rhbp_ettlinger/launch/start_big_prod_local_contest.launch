@@ -15,14 +15,6 @@
         <arg name="agent_name" value="TUBDAI1" />
     </include>
 
-    <include file="$(find mapc_rhbp_ettlinger)/launch/eamanager.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI1" />
-    </include>
-
-    <include file="$(find mapc_rhbp_ettlinger)/launch/debug_agent.launch" pass_all_args="true">
-        <arg name="agent_name" value="TUBDAI1" />
-    </include>
-
 
     <!-- Drones -->
         <!-- Bridges -->
