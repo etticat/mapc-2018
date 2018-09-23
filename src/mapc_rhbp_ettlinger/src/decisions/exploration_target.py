@@ -44,16 +44,12 @@ class ExplorationDecision(PickClosestDestinationWithLowestValueDecision):
         """
         # Avoid this place until step 100000
 
-        x = int(round(self._distance_provider.lat_to_x(pos.lat)))
-        y = int(round(self._distance_provider.lon_to_y(pos.long)))
-
-        if self.environment_array is not None:
-            self.environment_array[x / self.granularity, y / self.granularity] = 100000
+        x, y = self._distance_provider.position_to_xy(pos)
 
         self._self_organisation_provider.send_msg(
-            pos=self.last_simple_pos, frame="no_route", parent_frame="agent", time=1000, payload=[
+            pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
                 KeyValue(key="lat", value=str(pos.lat)),
-                KeyValue(key="long", value=str(pos.long))], diffusion=0.99)
+                KeyValue(key="long", value=str(pos.long))], diffusion=25)
 
         self.calc_value()
 

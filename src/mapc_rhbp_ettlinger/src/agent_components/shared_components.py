@@ -97,7 +97,7 @@ class SharedComponents(object):
 
         # Decision responsible for finding an existing opponent well for dismanteling
         self.opponent_wells_decision = ExistingOpponentWellsDecision(
-            agent_name=agent_name, target_frames=["agent", "no_route"], key="destination",
+            agent_name=agent_name, key="destination",
             frame=None, buffer=self.self_organisation_provider.so_buffer
         )
 

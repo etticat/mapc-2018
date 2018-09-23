@@ -70,7 +70,16 @@ class ChooseWellToBuildDecision(object):
         ]
 
         self.positions_berlin = [
-            Position(lat=52.487, long=13.49876),
+            Position(lat=52.487, long=13.4999),
+            Position(lat=52.486, long=13.4999),
+            Position(lat=52.485, long=13.4999),
+            Position(lat=52.484, long=13.4999),
+            Position(lat=52.483, long=13.4999),
+            Position(lat=52.482, long=13.4999),
+            Position(lat=52.481, long=13.4999),
+            Position(lat=52.480, long=13.4999),
+            Position(lat=52.479, long=13.4999),
+
             Position(lat=52.486, long=13.49876),
             Position(lat=52.485, long=13.49876),
             Position(lat=52.484, long=13.49876),
@@ -79,6 +88,7 @@ class ChooseWellToBuildDecision(object):
             Position(lat=52.481, long=13.49876),
             Position(lat=52.480, long=13.49876),
             Position(lat=52.479, long=13.49876),
+            Position(lat=52.487, long=13.49876),
         ]
         self.positions_saopaolo = []
         for lat in np.linspace(-23.64574, -23.64888, 3):
@@ -115,7 +125,7 @@ class ChooseWellToBuildDecision(object):
 
             wellpositions = self.well_positions.get(self._distance_provider.map_name)
 
-            if self._agent_name[0] == "a":
+            if self._agent_name[5] == "A":
                 wellpositions = wellpositions[::-1]
 
             next_well_position = wellpositions[number_of_existing_wells]

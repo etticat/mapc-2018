@@ -3,6 +3,7 @@ import random
 
 import rospy
 from mac_ros_bridge.msg import SimStart
+from so_data.msg import SoMessage
 
 from common_utils import etti_logging
 from common_utils.agent_utils import AgentUtils
@@ -60,7 +61,6 @@ class MapDecision(DecisionPattern):
 
         buffer.register_listener(self.target_frames, self.process_so_message)
 
-
     def sim_end_callback(self, sim_end=None):
         self.environment_array = None
         self.value = None
@@ -78,8 +78,8 @@ class MapDecision(DecisionPattern):
             rospy.logerr("MapDecision:: Could not create map. distance provider not initialized yet")
             return None
 
-        self.simple_size_x = int(self._distance_provider.total_distance_x / self.granularity)
-        self.simple_size_y = int(self._distance_provider.total_distance_y / self.granularity)
+        self.simple_size_x = int(self._distance_provider.total_distance_x / self.granularity) + 2
+        self.simple_size_y = int(self._distance_provider.total_distance_y / self.granularity) + 2
 
         # create the map if it has not existed yet
         if self.environment_array is None:
@@ -94,14 +94,20 @@ class MapDecision(DecisionPattern):
         return [self.environment_array, self.state]
 
     def process_so_message(self, so_message):
+        """
+
+        :param so_message:
+        :type so_message: SoMessage
+        :return:
+        """
 
         # If the map doesnt exist yet, return without doing anything
-        if self.environment_array is None:
+        if self.environment_array is None or so_message.header.frame_id not in self.target_frames:
             return
 
         if so_message.diffusion > 0 and so_message.p.z not in self.last_messages:
             mask = self.generate_round_array_mask(self.simple_size_x, self.simple_size_y,
-                                                  so_message.p.x / self.granularity, so_message.p.y / self.granularity,
+                                                  int(so_message.p.x / self.granularity), int(so_message.p.y / self.granularity),
                                                   so_message.diffusion / self.granularity)
             if self.mode == MapDecision.MODE_SEEN_COUNT:
                 self.environment_array[mask] += 1
@@ -218,9 +224,9 @@ class PickClosestDestinationWithLowestValueDecision(MapDecision):
         tuple_list = tuple(zip(*ii))
         res = random.choice(tuple_list)
 
-        res = tuple([i * self.granularity for i in res])
+        self.last_simple_pos = (min(res[0], self.simple_size_x-2), min(res[1], self.simple_size_y-2))
 
-        self.last_simple_pos = (res[0], res[1])
+        res = tuple([i * self.granularity for i in res])
 
         destination = self._distance_provider.position_from_xy(res[0], res[1])
 

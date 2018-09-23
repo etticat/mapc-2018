@@ -1,7 +1,9 @@
 import rospy
 from diagnostic_msgs.msg import KeyValue
+from mac_ros_bridge.msg import SimStart
 
 from common_utils import etti_logging
+from common_utils.agent_utils import AgentUtils
 from decisions.map_decisions import MapDecision
 from provider.distance_provider import DistanceProvider
 from provider.facility_provider import FacilityProvider
@@ -17,7 +19,7 @@ class ExistingOpponentWellsDecision(MapDecision):
     If no cell has value 0, it returns a random value that is among the 10% of oldest places.
     """
 
-    def __init__(self, agent_name, buffer, frame, key, target_frames, mode=MapDecision.MODE_OLDEST_VISITED,
+    def __init__(self, agent_name, buffer, frame, key, mode=MapDecision.MODE_OLDEST_VISITED,
                  granularity=50,
                  value=None, state=None, moving=True,
                  static=False, diffusion=600, goal_radius=0.5,
@@ -26,7 +28,7 @@ class ExistingOpponentWellsDecision(MapDecision):
         self.pick_random_of_lowest_values = pick_random_of_lowest_values
 
         super(ExistingOpponentWellsDecision, self).__init__(buffer=buffer, frame=frame, key=key,
-                                                            target_frames=target_frames, mode=mode,
+                                                            target_frames = ["agent", "no_route"], mode=mode,
                                                             granularity=granularity,
                                                             value=value,
                                                             state=state, moving=moving, static=static,
@@ -41,6 +43,23 @@ class ExistingOpponentWellsDecision(MapDecision):
         self._simulation_provider = SimulationProvider(agent_name=agent_name)
 
         self._self_organisation_provider = SelfOrganisationProvider(agent_name=agent_name)
+
+        rospy.Subscriber(AgentUtils.get_bridge_topic(agent_name=self._agent_name, postfix="start"), SimStart,
+                         self._sim_start_callback)
+
+    def _sim_start_callback(self, sim_start):
+        """
+
+        :param sim_start:
+        :type sim_start: SimStart
+        :return:
+        """
+
+        if sim_start.role.name == "drone":
+            self.target_frames = ["agent"]
+        else:
+            # If agent is road agent, avoid locations that are unreachable by road
+            self.target_frames = ["agent", "no_route"]
 
     def calc_value(self):
         """
@@ -62,7 +81,7 @@ class ExistingOpponentWellsDecision(MapDecision):
             simple_pos_x = int(x / self.granularity)
             simple_pos_y = int(y / self.granularity)
             well_last_seen = self._facility_provider.wells_seen_at_step[well.name]
-            last_time_at_well_position = self.environment_array[simple_pos_x, simple_pos_y]
+            last_time_at_well_position = self.environment_array[max(simple_pos_x, 0), max(simple_pos_y, 0)]
 
             rospy.loginfo(
                 "ExistingOpponentWellsDecision(%s):: well_name: %s, well_last_seen: %d, last_time_at_well_position: %d",
@@ -85,16 +104,13 @@ class ExistingOpponentWellsDecision(MapDecision):
         """
         # Avoid this place until step 100000
 
-        x, y = self._distance_provider.position_to_xy(pos)
-        simple_pos_x = int(x / self.granularity)
-        simple_pos_y = int(y / self.granularity)
+        pos = pos.pos
 
-        if self.environment_array is not None:
-            self.environment_array[simple_pos_x, simple_pos_y] = 100000
+        x, y = self._distance_provider.position_to_xy(pos)
 
         self._self_organisation_provider.send_msg(
-            pos=(x,y), frame="no_route", parent_frame="agent", time=1000, payload=[
+            pos=(max(x, 0), max(y, 0)), frame="no_route", parent_frame="agent", time=10000, payload=[
                 KeyValue(key="lat", value=str(pos.lat)),
-                KeyValue(key="long", value=str(pos.long))], diffusion=0.99)
+                KeyValue(key="long", value=str(pos.long))], diffusion=25)
 
         self.calc_value()
