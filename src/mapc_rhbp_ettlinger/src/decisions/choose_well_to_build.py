@@ -121,14 +121,14 @@ class ChooseWellToBuildDecision(object):
         if self._distance_provider.can_fly and current_well_task_decision.value is None and not agent.in_facility:
             well_type = self.choose_well_type()
 
-            number_of_existing_wells = len(self._facility_provider.own_wells.keys())
-
             wellpositions = self.well_positions.get(self._distance_provider.map_name)
+
+            well_index = self._simulation_provider.step % len(wellpositions)
 
             if self._agent_name[5] == "A":
                 wellpositions = wellpositions[::-1]
 
-            next_well_position = wellpositions[number_of_existing_wells]
+            next_well_position = wellpositions[well_index]
 
             if well_type is not None:
                 task = Task(
