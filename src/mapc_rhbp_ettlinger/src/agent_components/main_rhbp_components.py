@@ -172,9 +172,6 @@ class MainRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        # Build wells only when a well task is assigned
-        self._build_well_network.add_precondition(self._shared_components.has_build_well_task_assigned_cond)
-
         # Building wells has the effect of finishing a well task
         self._build_well_network.add_effect(
             Effect(
@@ -219,69 +216,27 @@ class MainRhbpComponent(object):
         self._find_well_location_network = ExplorationNetworkBehaviour(
             name=self._agent_name + '/welllocation',
             plannerPrefix=self._agent_name,
-            exploration_mechanism=find_well_exploration_decision,
-            priority=1,
-            agent_name=self._agent_name,
-            shared_components=self._shared_components,
-            max_parallel_behaviours=1)
-
-        # Only do this if there is no task assigned
-        self._find_well_location_network.add_precondition(
-            self._shared_components.has_no_task_assigned_cond)
-
-        # Only do it if agent can't fit more items in stock
-        self._find_well_location_network.add_precondition(
-            Negation(self._shared_components.can_fit_more_ingredients_cond))
-
-        # Only do it if agent has finished exploration phase
-        self._find_well_location_network.add_precondition(
-            self._shared_components.exploration_phase_finished_condition)
-
-        # Only do it if there is enough massium available to build a well
-        self._find_well_location_network.add_precondition(
-            self._shared_components.enough_massium_to_build_well_cond)
-
-        self._find_well_location_network.add_precondition(Disjunction(
-            Negation(self._shared_components.can_fit_more_ingredients_cond),
-            self._shared_components.is_forever_exploring_agent_cond
-        ))
-
-        # Only do it when agent is not a drone
-        self._find_well_location_network.add_precondition(self._shared_components.is_road_agent_cond)
-
-        # Technically the effect of this network is to create a well task. As it is hard to create a goal for this,
-        # just use a fake effect (discovery), which is technically also true
-        self._find_well_location_network.add_effect(
-            Effect(
-                sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
-                indicator=2.0,
-                sensor_type=float
-            )
-        )
-
-        ####################### Find Opponent Well Behaviour ########################
-        self._find_opponent_well_network = ExplorationNetworkBehaviour(
-            name=self._agent_name + '/idle',
-            plannerPrefix=self._agent_name,
-            exploration_decision=exploration_decision,
+            exploration_decision=find_well_exploration_decision,
             priority=1,
             agent_name=self._agent_name,
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
         # Try to find opponent wells only when no tasks are assigned
-        self._find_opponent_well_network.add_precondition(
+        self._find_well_location_network.add_precondition(
             self._shared_components.has_no_task_assigned_cond)
         # Only do it when stock is full. (nothing else can be done)
-        self._find_opponent_well_network.add_precondition(
-            Negation(self._shared_components.can_fit_more_ingredients_cond))
+        self._find_well_location_network.add_precondition(Disjunction(
+            Negation(self._shared_components.can_fit_more_ingredients_cond),
+            self._shared_components.is_forever_exploring_agent_cond
+        ))
         # Only do it after exploration phase is over
-        self._find_opponent_well_network.add_precondition(
+        self._find_well_location_network.add_precondition(
             self._shared_components.exploration_phase_finished_condition)
 
         # The main effect is to increase the number of known opponent wells. It is hard to create proper goals for this.
         # Therefore use a fake effect: resource discovery, which is a side effect of this behaviour too.
-        self._find_opponent_well_network.add_effect(
+        self._find_well_location_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
                 indicator=1.0,

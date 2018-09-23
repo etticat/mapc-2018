@@ -97,7 +97,7 @@ class ForeverExploringAgentSensor(Sensor):
 
     def sync(self):
 
-        result = self.agent_name in ["agentA1"]
+        result = self.agent_name in ["agentA1", "agentB1", "TUBDAI1"]
 
         self.update(result)
         return super(ForeverExploringAgentSensor, self).sync()

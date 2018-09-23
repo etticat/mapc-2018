@@ -29,7 +29,7 @@ class ChooseWellToBuildDecision(object):
         self._agent_name = agent_name
 
         self.task_prices = {}
-        
+
         self._init_config()
 
         self._stats_provider = StatsProvider()
@@ -39,68 +39,21 @@ class ChooseWellToBuildDecision(object):
         self._facility_provider = FacilityProvider(agent_name=agent_name)
         self._distance_provider = DistanceProvider(agent_name=agent_name)
 
+        self._drone_positions = []
 
-        self.positions_copenhagen = [
-            Position(lat=55.600226, long=12.548),
-            Position(lat=55.600226, long=12.545),
-            Position(lat=55.600226, long=12.542),
-            Position(lat=55.600226, long=12.539),
-            Position(lat=55.600226, long=12.539),
-            Position(lat=55.600226, long=12.536),
-            Position(lat=55.600226, long=12.532),
-            Position(lat=55.600226, long=12.529),
+        # Use these positions if graphhoppper fails to load on axeltower
+        # These are just random positions retreived from graphhopper, that road agents cant access
+        self._add_unreachable_square(55.602586, 12.548, 55.600226, 12.529)
+        self._add_unreachable_square(52.487, 13.49876, 52.479, 13.4999)
+        self._add_unreachable_square(-23.64888, -46.72131, -23.64574, -46.72868)
 
-            Position(lat=55.601286, long=12.548),
-            Position(lat=55.601286, long=12.545),
-            Position(lat=55.601286, long=12.542),
-            Position(lat=55.601286, long=12.539),
-            Position(lat=55.601286, long=12.539),
-            Position(lat=55.601286, long=12.536),
-            Position(lat=55.601286, long=12.532),
-            Position(lat=55.601286, long=12.529),
+    def _add_unreachable_square(self, max_lat, max_lon, min_lat, min_lon):
+        for lat in self.linspace(min_lat, max_lat):
+            for lon in self.linspace(min_lon, max_lon):
+                self._drone_positions.append(Position(lat=lat, long=lon))
 
-            Position(lat=55.602586, long=12.548),
-            Position(lat=55.602586, long=12.545),
-            Position(lat=55.602586, long=12.542),
-            Position(lat=55.602586, long=12.539),
-            Position(lat=55.602586, long=12.539),
-            Position(lat=55.602586, long=12.536),
-            Position(lat=55.602586, long=12.532),
-            Position(lat=55.602586, long=12.529),
-        ]
-
-        self.positions_berlin = [
-            Position(lat=52.487, long=13.4999),
-            Position(lat=52.486, long=13.4999),
-            Position(lat=52.485, long=13.4999),
-            Position(lat=52.484, long=13.4999),
-            Position(lat=52.483, long=13.4999),
-            Position(lat=52.482, long=13.4999),
-            Position(lat=52.481, long=13.4999),
-            Position(lat=52.480, long=13.4999),
-            Position(lat=52.479, long=13.4999),
-
-            Position(lat=52.486, long=13.49876),
-            Position(lat=52.485, long=13.49876),
-            Position(lat=52.484, long=13.49876),
-            Position(lat=52.483, long=13.49876),
-            Position(lat=52.482, long=13.49876),
-            Position(lat=52.481, long=13.49876),
-            Position(lat=52.480, long=13.49876),
-            Position(lat=52.479, long=13.49876),
-            Position(lat=52.487, long=13.49876),
-        ]
-        self.positions_saopaolo = []
-        for lat in np.linspace(-23.64574, -23.64888, 3):
-            for lon in np.linspace(-46.72868, -46.72131, 6):
-                self.positions_saopaolo.append(Position(lat=lat, long=lon))
-
-        self.well_positions = {
-            "saopaulo": self.positions_saopaolo,
-            "berlin": self.positions_berlin,
-            "copenhagen": self.positions_copenhagen
-        }
-
+    def linspace(self, a, b):
+        return np.linspace(a, b, num=int(abs((b - a) / 0.00022)))
 
     @staticmethod
     def _init_config(sim_start=None):
@@ -121,14 +74,11 @@ class ChooseWellToBuildDecision(object):
         if self._distance_provider.can_fly and current_well_task_decision.value is None and not agent.in_facility:
             well_type = self.choose_well_type()
 
-            wellpositions = self.well_positions.get(self._distance_provider.map_name)
+            current_drone_positions = list(filter(lambda x: not self._simulation_provider.out_of_bounds(x), self._drone_positions))
 
-            well_index = self._simulation_provider.step % len(wellpositions)
+            well_index = self._simulation_provider.step % len(current_drone_positions)
 
-            if self._agent_name[5] == "A":
-                wellpositions = wellpositions[::-1]
-
-            next_well_position = wellpositions[well_index]
+            next_well_position = current_drone_positions[well_index]
 
             if well_type is not None:
                 task = Task(
