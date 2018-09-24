@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 
 from agent_components.shared_components import SharedComponents
+from behaviour_components.activators import GreedyActivator
 from behaviour_components.condition_elements import Effect
-from behaviour_components.conditions import Negation, Disjunction
+from behaviour_components.conditions import Negation, Disjunction, Condition
 from behaviour_components.goals import GoalBase
 from common_utils import etti_logging
 from decisions.exploration_target import ExplorationDecision, ExploreCornersDecision
@@ -172,6 +173,8 @@ class MainRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
+        self._build_well_network.add_precondition(Negation(self._shared_components.is_forever_exploring_agent_cond))
+
         # Building wells has the effect of finishing a well task
         self._build_well_network.add_effect(
             Effect(
@@ -207,7 +210,7 @@ class MainRhbpComponent(object):
 
 
         ####################### Find Well Location Network Behaviour ########################
-        if self._agent_name in ["agentA1", "agentB2", "agentB3", "agentB4"]:
+        if self._agent_name in ["TUBDAI1", "TUBDAI2", "TUBDAI3", "TUBDAI4"]:
             find_well_exploration_decision =  ExploreCornersDecision(
                 self._self_organisation_provider.so_buffer, agent_name=self._agent_name)
         else:
@@ -222,24 +225,24 @@ class MainRhbpComponent(object):
             shared_components=self._shared_components,
             max_parallel_behaviours=1)
 
-        # Try to find opponent wells only when no tasks are assigned
-        self._find_well_location_network.add_precondition(
-            self._shared_components.has_no_task_assigned_cond)
-        # Only do it when stock is full. (nothing else can be done)
-        self._find_well_location_network.add_precondition(Disjunction(
-            Negation(self._shared_components.can_fit_more_ingredients_cond),
-            self._shared_components.is_forever_exploring_agent_cond
-        ))
-        # Only do it after exploration phase is over
-        self._find_well_location_network.add_precondition(
-            self._shared_components.exploration_phase_finished_condition)
+        if self._agent_name not in ["agentA1", "agentB1", "TUBDAI1"]:
+            # Try to find opponent wells only when no tasks are assigned
+            self._find_well_location_network.add_precondition(
+                self._shared_components.has_no_task_assigned_cond)
+            # Only do it when stock is full. (nothing else can be done)
+            self._find_well_location_network.add_precondition(
+                Negation(self._shared_components.can_fit_more_ingredients_cond)
+            )
+            # Only do it after exploration phase is over
+            self._find_well_location_network.add_precondition(
+                self._shared_components.exploration_phase_finished_condition)
 
         # The main effect is to increase the number of known opponent wells. It is hard to create proper goals for this.
         # Therefore use a fake effect: resource discovery, which is a side effect of this behaviour too.
         self._find_well_location_network.add_effect(
             Effect(
                 sensor_name=self._shared_components.resource_discovery_progress_sensor.name,
-                indicator=1.0,
+                indicator=2.0,
                 sensor_type=float
             )
         )
@@ -273,6 +276,17 @@ class MainRhbpComponent(object):
             priority=4,
             planner_prefix=self._agent_name,
             conditions=[Negation(self._shared_components.opponent_well_exists_cond)])
+
+        # If there are opponent wells, we want to destroy them
+        self._exploration_goal = GoalBase(
+            name='exploration_goal',
+            permanent=True,
+            priority=1,
+            planner_prefix=self._agent_name,
+            conditions=[Condition(
+                sensor=self._shared_components.resource_discovery_progress_sensor,
+                activator=GreedyActivator()
+            )])
 
     def step(self, guarantee_decision=True):
         """
