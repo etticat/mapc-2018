@@ -1,9 +1,6 @@
 # mapc_rhbp_ettlinger
 
-This is a very basic example that shows how RHBP can be used within the Multiagent Programming Contest Scenario of 2018.
-
-The implemented agents are traveling to randomly selected shops. 
-If the battery level is getting to low the agents will also recharge at a randomly selected charging station.
+This is the submission for the Multi-Agent Programming Contest 2018 (https://multiagentcontest.org/2018/) for the team TUBDAI. 
 
 ## Behaviour Model
 
@@ -11,23 +8,10 @@ If the battery level is getting to low the agents will also recharge at a random
 
 ## Execution
 
-* Start massim contest server `sh script/start_massim_contest.sh`
-* start agents: 
-  * either together with planner: 
-    * `roslaunch mapc_rhbp_ettlinger start_big_prod.launch`
-  * seperately from planner: 
-    * `roslaunch mapc_rhbp_ettlinger start_big_dev.launch`
-    * `roslaunch mapc_rhbp_ettlinger planner.launch`
-* start item observer: 
-  * `roslaunch mapc_rhbp_ettlinger debug_agent.launch`
-* go back to second tab (agents) and wait for all agents being initialised (Indicated by "Initialisation finished" message)
-* Go to first terminal and hit Enter to start contest
-* Overview of items and goals can be found in 3rd window
+* Make sure the  launch file  `src/mapc_rhbp_ettlinger/src/launch/start_big_prod_contest.launch` contains the correct connection strings and credentials.
+* Make sure all dependencies are met by pulling all git submodules and installing all modules from package.xml
+* Compile the project using `catkin_make`
+* start the agents using `roslaunch mapc_rhbp_ettlinger start_big_prod.launch`
 
-
-
-## Exercise
-
-A simple exercise using this example can be to implement a more useful selection of charging and shop destinations.
-
-
+## Paper
+* A detailed description of the strategy will follow soon ..
