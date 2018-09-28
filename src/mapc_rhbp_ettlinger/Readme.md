@@ -2,10 +2,6 @@
 
 This is the submission for the Multi-Agent Programming Contest 2018 (https://multiagentcontest.org/2018/) for the team TUBDAI. 
 
-## Behaviour Model
-
-![alt text](doc/mapc_rhbp_ettlinger.png)
-
 ## Execution
 
 * Make sure the  launch file  `src/mapc_rhbp_ettlinger/src/launch/start_big_prod_contest.launch` contains the correct connection strings and credentials.
